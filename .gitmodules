@@ -1,0 +1,4 @@
+[submodule ".harness"]
+	path = .harness
+	url = https://github.com/KUSITMS-BOTEM/BOTEM-FE-HARNESS.git
+	branch = main
