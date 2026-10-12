@@ -1,0 +1,44 @@
+name: Create Branch on Issue
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  create-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Parse issue and create branch
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TYPE=$(echo "$ISSUE_BODY" | awk '/브랜치 유형/{found=1; next} found && NF{print; exit}' | tr -d '\r' | xargs | tr '[:upper:]' '[:lower:]')
+          WORK=$(echo "$ISSUE_BODY" | awk '/브랜치에 포함될 작업 내용/{found=1; next} found && NF{print; exit}' | tr -d '\r' | xargs | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+
+          echo "TYPE=${TYPE}, WORK=${WORK}"
+
+          if ! [[ "$TYPE" =~ ^[a-z0-9_-]+$ ]]; then
+            echo "Invalid TYPE: $TYPE" && exit 1
+          fi
+          if ! [[ "$WORK" =~ ^[a-z0-9_-]+$ ]]; then
+            echo "Invalid WORK: $WORK" && exit 1
+          fi
+
+          BRANCH_NAME="${TYPE}/${ISSUE_NUMBER}-${WORK}"
+
+          git checkout -b "${BRANCH_NAME}"
+          git push origin "${BRANCH_NAME}"
+
+          gh issue comment "${ISSUE_NUMBER}" --body "🌿 브랜치가 생성되었습니다: \`${BRANCH_NAME}\`"
