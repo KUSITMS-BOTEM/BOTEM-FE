@@ -1,16 +1,14 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
 
-import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
+import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 
-import { playwright } from '@vitest/browser-playwright';
+import { playwright } from "@vitest/browser-playwright";
 
 const dirname =
-  typeof __dirname !== 'undefined'
-    ? __dirname
-    : path.dirname(fileURLToPath(import.meta.url));
+  typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
@@ -20,15 +18,15 @@ export default defineConfig({
         extends: true,
         resolve: {
           alias: {
-            '@': path.resolve(dirname, 'src'),
+            "@": path.resolve(dirname, "src"),
           },
         },
         test: {
-          name: 'unit',
-          environment: 'jsdom',
+          name: "unit",
+          environment: "jsdom",
           globals: true,
-          setupFiles: ['./vitest.setup.ts'],
-          include: ['src/**/__tests__/**/*.test.{ts,tsx}'],
+          setupFiles: ["./vitest.setup.ts"],
+          include: ["src/**/__tests__/**/*.test.{ts,tsx}"],
         },
       },
       {
@@ -36,15 +34,15 @@ export default defineConfig({
         plugins: [
           // The plugin will run tests for the stories defined in your Storybook config
           // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
-          storybookTest({ configDir: path.join(dirname, '.storybook') }),
+          storybookTest({ configDir: path.join(dirname, ".storybook") }),
         ],
         test: {
-          name: 'storybook',
+          name: "storybook",
           browser: {
             enabled: true,
             headless: true,
             provider: playwright({}),
-            instances: [{ browser: 'chromium' }],
+            instances: [{ browser: "chromium" }],
           },
         },
       },
