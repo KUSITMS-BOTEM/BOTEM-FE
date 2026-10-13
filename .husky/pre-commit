@@ -15,9 +15,11 @@ case "$harness_flags" in
     ;;
 esac
 
-harness_ahead="$(harness_git rev-list '@{u}..HEAD' --count 2>/dev/null)"
-if [ -n "$harness_ahead" ] && [ "$harness_ahead" != "0" ]; then
-  echo "❌ .harness에 push되지 않은 커밋이 ${harness_ahead}개 있습니다 (cd .harness && git push)"
+# submodule update는 항상 detached HEAD로 체크아웃하므로 @{u}가 없다.
+# 대신 현재 HEAD 커밋이 origin의 어떤 브랜치에든 포함돼 있는지로 push 여부를 판단한다.
+harness_pushed="$(harness_git branch -r --contains HEAD 2>/dev/null)"
+if [ -z "$harness_pushed" ]; then
+  echo "❌ .harness의 현재 커밋이 origin에 push되지 않았습니다 (cd .harness && git push)"
   exit 1
 fi
 
