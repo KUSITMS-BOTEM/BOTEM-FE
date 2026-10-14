@@ -10,7 +10,6 @@ const sd = new StyleDictionary({
     css: {
       transformGroup: "tokens-studio",
       transforms: ["name/kebab"],
-      prefix: "token",
       files: [
         {
           destination: "src/styles/tokens.css",
