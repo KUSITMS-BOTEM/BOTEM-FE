@@ -1,0 +1,55 @@
+name: Sync Design Tokens
+
+on:
+  push:
+    branches: [design-token]
+    paths:
+      - src/styles/tokens.json
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-and-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout design-token
+        uses: actions/checkout@v4
+        with:
+          ref: design-token
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: 토큰 변환 (tokens.json → tokens.css)
+        run: pnpm build:tokens
+
+      - name: tokens.css 변경사항을 design-token 브랜치에 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/styles/tokens.css
+          if ! git diff --cached --quiet; then
+            git commit -m "[CHORE] 디자인 토큰 자동 변환 (tokens.css 갱신)"
+            git push origin HEAD:design-token
+          fi
+
+      - name: dev로 PR 생성 (이미 열려있으면 스킵)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          OPEN_COUNT=$(gh pr list --base dev --head design-token --state open --json number --jq 'length')
+          if [ "$OPEN_COUNT" = "0" ]; then
+            gh pr create --base dev --head design-token \
+              --title "[CHORE] 디자인 토큰 업데이트" \
+              --body "Tokens Studio에서 push된 디자인 토큰 변경사항입니다. Style Dictionary로 자동 변환된 tokens.css를 함께 반영합니다."
+          fi
