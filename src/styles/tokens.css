@@ -80,6 +80,7 @@
   --color-semantic-fill-blue-weak: #ecf5fb; /** 블루 약한 색의 면 */
   --color-semantic-fill-danger: #f04452; /** 레드 색의 면 */
   --color-semantic-fill-danger-weak: #ffeeee; /** 레드 약한 색의 면 */
+  --color-semantic-fill-default: #ffffff;
   --color-semantic-text-strong: #000000; /** 제목 텍스트 */
   --color-semantic-text-primary: #222222; /** 본문 텍스트 */
   --color-semantic-text-secondary: #404040; /** 보조 텍스트 */
