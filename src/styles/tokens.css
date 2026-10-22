@@ -87,7 +87,7 @@
   --color-semantic-text-tertiary: #5e5e5e; /** 중요하지 않은 텍스트 */
   --color-semantic-text-quaternary: #808080; /** 안읽어도 되는 텍스트 */
   --color-semantic-text-on-fill: #ffffff; /** 어두운 배경 위 텍스트 */
-  --color-semantic-text-brand: #ff6200; /** 브랜드 텍스트 */
+  --color-semantic-text-brand: #d45000; /** 브랜드 텍스트 */
   --color-semantic-text-danger: #d22030; /** 에러 글자 */
   --color-semantic-text-success: #0092cd; /** 성공 글자 */
   --color-semantic-icon-default: #222222; /** 기본 아이콘 */
