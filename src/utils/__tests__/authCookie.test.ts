@@ -24,7 +24,9 @@ describe("setAuthCookies", () => {
     setAuthCookies("access-value", "refresh-value");
 
     expect(
-      setSpy.mock.calls.some(call => call[0] === "accessToken=access-value; path=/; max-age=3600"),
+      setSpy.mock.calls.some(
+        call => call[0] === "accessToken=access-value; path=/; max-age=3600; Secure; SameSite=Lax",
+      ),
     ).toBe(true);
   });
 
@@ -35,7 +37,8 @@ describe("setAuthCookies", () => {
 
     expect(
       setSpy.mock.calls.some(
-        call => call[0] === "refreshToken=refresh-value; path=/; max-age=604800",
+        call =>
+          call[0] === "refreshToken=refresh-value; path=/; max-age=604800; Secure; SameSite=Lax",
       ),
     ).toBe(true);
   });
@@ -52,9 +55,11 @@ describe("setAuthCookies", () => {
 
     setAuthCookies("", "refresh-value");
 
-    expect(setSpy.mock.calls.some(call => call[0] === "accessToken=; path=/; max-age=3600")).toBe(
-      true,
-    );
+    expect(
+      setSpy.mock.calls.some(
+        call => call[0] === "accessToken=; path=/; max-age=3600; Secure; SameSite=Lax",
+      ),
+    ).toBe(true);
   });
 
   it("다른 값으로 다시 호출하면 쿠키 값이 최신 값으로 교체된다", () => {
