@@ -191,26 +191,28 @@ export default function Button({
         )}
       />
       <span className={cn("relative z-10 inline-flex items-center", sizeStyle.gap)}>
-        {isLoading ? (
-          <LoadingAnimation
-            size={sizeStyle.loadingAnimationSize}
-            color={colorVariant.loadingColor}
-          />
-        ) : (
-          <>
-            {leftIcon && (
-              <span className={cn("shrink-0 [&>svg]:size-full", sizeStyle.icon, colorVariant.icon)}>
-                {leftIcon}
-              </span>
-            )}
-            {children}
-            {rightIcon && (
-              <span className={cn("shrink-0 [&>svg]:size-full", sizeStyle.icon, colorVariant.icon)}>
-                {rightIcon}
-              </span>
-            )}
-          </>
+        {isLoading && (
+          <span aria-hidden>
+            <LoadingAnimation
+              size={sizeStyle.loadingAnimationSize}
+              color={colorVariant.loadingColor}
+            />
+          </span>
         )}
+        {/* 로딩 중에도 접근 가능한 이름 유지를 위해 children은 시각적으로만 숨김(sr-only) */}
+        <span className={cn("inline-flex items-center", sizeStyle.gap, isLoading && "sr-only")}>
+          {!isLoading && leftIcon && (
+            <span className={cn("shrink-0 [&>svg]:size-full", sizeStyle.icon, colorVariant.icon)}>
+              {leftIcon}
+            </span>
+          )}
+          {children}
+          {!isLoading && rightIcon && (
+            <span className={cn("shrink-0 [&>svg]:size-full", sizeStyle.icon, colorVariant.icon)}>
+              {rightIcon}
+            </span>
+          )}
+        </span>
       </span>
     </button>
   );

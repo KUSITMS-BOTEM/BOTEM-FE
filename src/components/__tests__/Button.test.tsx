@@ -146,12 +146,18 @@ describe("Button", () => {
     expect(screen.getByRole("button")).toHaveAttribute("aria-busy", expected);
   });
 
-  it('states="loading"이면 children 텍스트 대신 로딩 애니메이션이 렌더된다', () => {
+  it('states="loading"이면 로딩 애니메이션이 렌더된다', () => {
     render(<Button states="loading">제출</Button>);
     const button = screen.getByRole("button");
 
-    expect(screen.queryByText("제출")).not.toBeInTheDocument();
     expect(button.querySelector("div")).not.toBeNull();
+  });
+
+  it('states="loading"이어도 children은 접근 가능한 이름으로 유지된다(시각적으로만 숨김)', () => {
+    render(<Button states="loading">제출</Button>);
+
+    expect(screen.getByRole("button", { name: "제출" })).toBeInTheDocument();
+    expect(screen.getByText("제출").closest("span")).toHaveClass("sr-only");
   });
 
   it('states="loading"이면 leftIcon·rightIcon이 렌더되지 않는다', () => {
