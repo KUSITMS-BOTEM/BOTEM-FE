@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "pretendard/dist/web/static/pretendard-subset.css";
 @import "../styles/tokens.css";
 
 :root {
