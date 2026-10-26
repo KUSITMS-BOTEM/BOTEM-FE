@@ -6,6 +6,9 @@ on:
     paths:
       - "**/*.stories.*"
 
+permissions:
+  contents: read
+
 jobs:
   notify:
     runs-on: ubuntu-latest
@@ -33,33 +36,37 @@ jobs:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           exitZeroOnChanges: true
 
-      - name: 변경된 stories 파일 목록 추출
-        id: changed-stories
-        uses: tj-actions/changed-files@v44
-        with:
-          files: |
-            **/*.stories.*
-
-      - name: 이 push의 커밋 메시지 추출 (stories 파일을 건드린 커밋만)
-        id: commits
+      # push 이벤트 payload의 commits 배열에서 직접 뽑는다 (외부 액션 의존 제거).
+      # GitHub가 이 배열 자체를 최대 20개로 자르므로, 그보다 큰 push는 20개 이후 stories 커밋이 누락되는 게 알려진 한계.
+      - name: stories 변경 파일·커밋 메시지 추출 (stories 파일을 건드린 커밋만)
+        id: changes
         run: |
+          DELIM="ghadelim_$(openssl rand -hex 8)"
           {
-            echo 'text<<COMMIT_EOF'
+            echo "files<<$DELIM"
+            jq -r '
+              [.commits[] | (.added + .removed + .modified)[] | select(test("\\.stories\\."))]
+              | unique | join("\n")
+            ' "$GITHUB_EVENT_PATH"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "messages<<$DELIM"
             jq -r '
               [.commits[]
                 | select((.added + .removed + .modified) | any(test("\\.stories\\.")))
                 | .message
               ] | join("\n\n")
             ' "$GITHUB_EVENT_PATH"
-            echo COMMIT_EOF
+            echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
       - name: Discord 알림 발송
         env:
           WEBHOOK_URL: ${{ secrets.BOTEM_DISCORD_DESIGN_REVIEW_WEBHOOK_URL }}
           STORYBOOK_URL: ${{ steps.chromatic.outputs.storybookUrl }}
-          CHANGED_FILES: ${{ steps.changed-stories.outputs.all_changed_files }}
-          COMMIT_MESSAGES: ${{ steps.commits.outputs.text }}
+          CHANGED_FILES: ${{ steps.changes.outputs.files }}
+          COMMIT_MESSAGES: ${{ steps.changes.outputs.messages }}
           BRANCH: ${{ github.ref_name }}
         run: |
           PAYLOAD=$(jq -n \
@@ -67,14 +74,16 @@ jobs:
             --arg url "$STORYBOOK_URL" \
             --arg files "$CHANGED_FILES" \
             --arg commits "$COMMIT_MESSAGES" \
-            '{
+            '
+            def clip: if (length > 1000) then .[0:1000] + "…(생략)" else . end;
+            {
               embeds: [{
                 title: ("🐿️ 모몽가가 디자인 리뷰 가져왔다고!! 빨리 봐줘~! — " + $branch),
                 url: $url,
                 fields: [
                   {name: "🌰 스토리북 보러 가라고~!!", value: $url},
-                  {name: "🍃 뭐가 바뀌었는지 당장 봐~!", value: $files},
-                  {name: "✨ 모몽가가 뭘 했냐면 말이야~!!", value: $commits}
+                  {name: "🍃 뭐가 바뀌었는지 당장 봐~!", value: ($files | clip)},
+                  {name: "✨ 모몽가가 뭘 했냐면 말이야~!!", value: ($commits | clip)}
                 ]
               }]
             }')
