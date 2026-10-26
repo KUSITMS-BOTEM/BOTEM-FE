@@ -85,9 +85,17 @@ export const Sizes: Story = {
 };
 
 export const Loading: Story = {
-  args: {
-    states: "loading",
-  },
+  render: () => (
+    <div className="flex gap-2">
+      <Button states="loading">neutral</Button>
+      <Button color="brand" states="loading">
+        brand
+      </Button>
+      <Button color="danger" states="loading">
+        danger
+      </Button>
+    </div>
+  ),
 };
 
 export const Disabled: Story = {
