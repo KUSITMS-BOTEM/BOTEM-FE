@@ -64,12 +64,12 @@ jobs:
             --arg commits "$COMMIT_MESSAGES" \
             '{
               embeds: [{
-                title: ("🎨 디자인 리뷰 요청 — " + $branch),
+                title: ("🐿️ 모몽가가 디자인 리뷰 가져왔다고!! 빨리 봐줘~! — " + $branch),
                 url: $url,
                 fields: [
-                  {name: "Storybook 링크", value: $url},
-                  {name: "변경된 컴포넌트 문서", value: $files},
-                  {name: "커밋 메시지", value: $commits}
+                  {name: "🌰 스토리북 보러 가라고~!!", value: $url},
+                  {name: "🍃 뭐가 바뀌었는지 당장 봐~!", value: $files},
+                  {name: "✨ 모몽가가 뭘 했냐면 말이야~!!", value: $commits}
                 ]
               }]
             }')
