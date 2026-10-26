@@ -105,7 +105,7 @@ const SIZE_STYLE: Record<ButtonSize, SizeStyle> = {
   small: {
     height: "h-8",
     padding: "px-2",
-    gap: "gap-0.5",
+    gap: "[gap:var(--gap-xx-small)]",
     font: "[font:var(--semantic-label-x-small)]",
     icon: "size-4",
     touchArea:
@@ -115,7 +115,7 @@ const SIZE_STYLE: Record<ButtonSize, SizeStyle> = {
   medium: {
     height: "h-[38px]",
     padding: "px-3",
-    gap: "gap-1",
+    gap: "[gap:var(--gap-x-small)]",
     font: "[font:var(--semantic-label-small)]",
     icon: "size-5",
     touchArea:
@@ -125,7 +125,7 @@ const SIZE_STYLE: Record<ButtonSize, SizeStyle> = {
   large: {
     height: "h-12",
     padding: "px-4",
-    gap: "gap-1",
+    gap: "[gap:var(--gap-x-small)]",
     font: "[font:var(--semantic-label-medium)]",
     icon: "size-5",
     touchArea: "",
@@ -134,7 +134,7 @@ const SIZE_STYLE: Record<ButtonSize, SizeStyle> = {
   xlarge: {
     height: "h-14",
     padding: "px-6",
-    gap: "gap-1",
+    gap: "[gap:var(--gap-x-small)]",
     font: "[font:var(--semantic-label-medium)]",
     icon: "size-5",
     touchArea: "",
