@@ -1,0 +1,76 @@
+name: Chromatic Design Review Notify
+
+on:
+  push:
+    branches-ignore: [dev, main]
+    paths:
+      - "**/*.stories.*"
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Chromatic publish
+        id: chromatic
+        uses: chromaui/action@v1
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          exitZeroOnChanges: true
+
+      - name: 변경된 stories 파일 목록 추출
+        id: changed-stories
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            **/*.stories.*
+
+      - name: 이 push의 커밋 메시지 추출
+        id: commits
+        run: |
+          {
+            echo 'text<<COMMIT_EOF'
+            jq -r '.commits[].message' "$GITHUB_EVENT_PATH"
+            echo COMMIT_EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Discord 알림 발송
+        env:
+          WEBHOOK_URL: ${{ secrets.BOTEM_DISCORD_DESIGN_REVIEW_WEBHOOK_URL }}
+          STORYBOOK_URL: ${{ steps.chromatic.outputs.storybookUrl }}
+          CHANGED_FILES: ${{ steps.changed-stories.outputs.all_changed_files }}
+          COMMIT_MESSAGES: ${{ steps.commits.outputs.text }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg branch "$BRANCH" \
+            --arg url "$STORYBOOK_URL" \
+            --arg files "$CHANGED_FILES" \
+            --arg commits "$COMMIT_MESSAGES" \
+            '{
+              embeds: [{
+                title: ("🎨 디자인 리뷰 요청 — " + $branch),
+                url: $url,
+                fields: [
+                  {name: "Storybook 링크", value: $url},
+                  {name: "변경된 컴포넌트 문서", value: $files},
+                  {name: "커밋 메시지", value: $commits}
+                ]
+              }]
+            }')
+          curl -sf -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
