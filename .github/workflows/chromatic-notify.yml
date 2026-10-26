@@ -40,12 +40,17 @@ jobs:
           files: |
             **/*.stories.*
 
-      - name: 이 push의 커밋 메시지 추출
+      - name: 이 push의 커밋 메시지 추출 (stories 파일을 건드린 커밋만)
         id: commits
         run: |
           {
             echo 'text<<COMMIT_EOF'
-            jq -r '.commits[].message' "$GITHUB_EVENT_PATH"
+            jq -r '
+              [.commits[]
+                | select((.added + .removed + .modified) | any(test("\\.stories\\.")))
+                | .message
+              ] | join("\n\n")
+            ' "$GITHUB_EVENT_PATH"
             echo COMMIT_EOF
           } >> "$GITHUB_OUTPUT"
 
