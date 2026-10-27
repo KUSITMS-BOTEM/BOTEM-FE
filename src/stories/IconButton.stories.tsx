@@ -26,6 +26,7 @@ const meta = {
   },
   args: {
     icon: <RightIcon />,
+    "aria-label": "다음",
   },
 } satisfies Meta<typeof IconButton>;
 
@@ -37,10 +38,10 @@ export const Default: Story = {};
 export const Sizes: Story = {
   render: () => (
     <div className="flex items-center gap-2">
-      <IconButton size="small" icon={<RightIcon />} />
-      <IconButton size="medium" icon={<RightIcon />} />
-      <IconButton size="large" icon={<RightIcon />} />
-      <IconButton size="xlarge" icon={<RightIcon />} />
+      <IconButton size="small" icon={<RightIcon />} aria-label="다음" />
+      <IconButton size="medium" icon={<RightIcon />} aria-label="다음" />
+      <IconButton size="large" icon={<RightIcon />} aria-label="다음" />
+      <IconButton size="xlarge" icon={<RightIcon />} aria-label="다음" />
     </div>
   ),
 };
@@ -48,8 +49,8 @@ export const Sizes: Story = {
 export const Variants: Story = {
   render: () => (
     <div className="flex gap-2">
-      <IconButton variant="ghost" icon={<RightIcon />} />
-      <IconButton variant="stroke" icon={<RightIcon />} />
+      <IconButton variant="ghost" icon={<RightIcon />} aria-label="다음" />
+      <IconButton variant="stroke" icon={<RightIcon />} aria-label="다음" />
     </div>
   ),
 };
