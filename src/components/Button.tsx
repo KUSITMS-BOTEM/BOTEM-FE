@@ -166,7 +166,13 @@ export default function Button({
   const isLoading = states === "loading";
   const isDisabled = disabled || isLoading;
   const satetsColor: SatetsColor =
-    color === "brand" || color === "danger" ? color : variant === "fill" ? "white" : "black";
+    color === "neutral"
+      ? variant === "fill"
+        ? "white"
+        : "black"
+      : variant === "weak"
+        ? color
+        : "black";
 
   return (
     <button
