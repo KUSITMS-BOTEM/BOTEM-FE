@@ -12,7 +12,14 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
       "*.svg": {
-        loaders: ["@svgr/webpack"],
+        loaders: [
+          {
+            loader: "@svgr/webpack",
+            options: {
+              replaceAttrValues: { "#222222": "currentColor" },
+            },
+          },
+        ],
         as: "*.js",
       },
     },

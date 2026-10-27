@@ -1,6 +1,7 @@
 import type { StorybookConfig } from "@storybook/nextjs-vite";
 
 import tailwindcss from "@tailwindcss/vite";
+import svgr from "vite-plugin-svgr";
 
 const config: StorybookConfig = {
   stories: ["../src/**/*.mdx", "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
@@ -15,7 +16,10 @@ const config: StorybookConfig = {
   staticDirs: ["../public"],
   async viteFinal(viteConfig) {
     viteConfig.plugins ??= [];
-    viteConfig.plugins.push(tailwindcss());
+    viteConfig.plugins.push(
+      tailwindcss(),
+      svgr({ svgrOptions: { replaceAttrValues: { "#222222": "currentColor" } } }),
+    );
     return viteConfig;
   },
 };
