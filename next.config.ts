@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
           {
             loader: "@svgr/webpack",
             options: {
-              replaceAttrValues: { "#222222": "currentColor" },
+              replaceAttrValues: { "#222222": "currentColor", "#222": "currentColor" },
               svgoConfig: {
                 plugins: [
                   {
