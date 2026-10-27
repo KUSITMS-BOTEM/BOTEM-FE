@@ -11,6 +11,7 @@ type IconButtonOwnProps = {
   variant?: IconButtonVariant;
   disabled?: boolean;
   icon: ReactNode;
+  "aria-label": string;
 };
 
 type IconButtonProps = IconButtonOwnProps &
