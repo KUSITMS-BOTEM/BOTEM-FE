@@ -52,7 +52,7 @@ export default function TextButton({
       type="button"
       disabled={disabled}
       className={cn(
-        "group rounded-x-small relative inline-flex items-center overflow-clip pl-px whitespace-nowrap",
+        "group relative inline-flex items-center pl-px whitespace-nowrap",
         "cursor-pointer disabled:pointer-events-none disabled:cursor-not-allowed",
         disabled && "opacity-30",
         "before:absolute before:inset-x-0 before:top-1/2 before:h-10 before:-translate-y-1/2 before:content-['']",
@@ -62,7 +62,7 @@ export default function TextButton({
         className,
       )}
       {...props}>
-      <Satets color="black" />
+      <Satets color="black" className="rounded-x-small" />
       <span className="relative z-10">{label}</span>
       {rightIcon && (
         <Asset icon={<IconRight />} size={sizeStyle.iconSize} className="relative z-10 shrink-0" />
