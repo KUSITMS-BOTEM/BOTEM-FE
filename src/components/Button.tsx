@@ -1,6 +1,8 @@
 import { type ButtonHTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/utils/cn";
+import Asset, { type AssetSize } from "@/components/Asset";
 import LoadingAnimation from "@/components/LoadingAnimation";
+import Satets, { type SatetsColor } from "@/components/Satets";
 
 type ButtonSize = "small" | "medium" | "large" | "xlarge";
 type ButtonStates = "default" | "loading";
@@ -23,6 +25,7 @@ type ButtonOwnProps = ButtonColorProps & {
   states?: ButtonStates;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
+  iconSize?: AssetSize;
   children: ReactNode;
 };
 
@@ -95,7 +98,6 @@ type SizeStyle = {
   padding: string;
   gap: string;
   font: string;
-  icon: string;
   touchArea: string;
   loadingAnimationSize: "small" | "large";
 };
@@ -107,7 +109,6 @@ const SIZE_STYLE: Record<ButtonSize, SizeStyle> = {
     padding: "px-2",
     gap: "[gap:var(--gap-xx-small)]",
     font: "[font:var(--semantic-label-x-small)]",
-    icon: "size-4",
     touchArea:
       "before:absolute before:inset-x-0 before:-top-1 before:-bottom-1 before:content-['']",
     loadingAnimationSize: "small",
@@ -117,7 +118,6 @@ const SIZE_STYLE: Record<ButtonSize, SizeStyle> = {
     padding: "px-3",
     gap: "[gap:var(--gap-x-small)]",
     font: "[font:var(--semantic-label-small)]",
-    icon: "size-5",
     touchArea:
       "before:absolute before:inset-x-0 before:-top-px before:-bottom-px before:content-['']",
     loadingAnimationSize: "large",
@@ -127,7 +127,6 @@ const SIZE_STYLE: Record<ButtonSize, SizeStyle> = {
     padding: "px-4",
     gap: "[gap:var(--gap-x-small)]",
     font: "[font:var(--semantic-label-medium)]",
-    icon: "size-5",
     touchArea: "",
     loadingAnimationSize: "large",
   },
@@ -136,10 +135,17 @@ const SIZE_STYLE: Record<ButtonSize, SizeStyle> = {
     padding: "px-6",
     gap: "[gap:var(--gap-x-small)]",
     font: "[font:var(--semantic-label-medium)]",
-    icon: "size-5",
     touchArea: "",
     loadingAnimationSize: "large",
   },
+};
+
+// Figma 기준 small은 size-4(xsmall), medium 이상은 size-5(small)
+const ICON_SIZE_BY_BUTTON_SIZE: Record<ButtonSize, AssetSize> = {
+  small: "xsmall",
+  medium: "small",
+  large: "small",
+  xlarge: "small",
 };
 
 export default function Button({
@@ -150,6 +156,7 @@ export default function Button({
   states = "default",
   leftIcon,
   rightIcon,
+  iconSize,
   className,
   children,
   ...props
@@ -158,8 +165,14 @@ export default function Button({
   const sizeStyle = SIZE_STYLE[size];
   const isLoading = states === "loading";
   const isDisabled = disabled || isLoading;
-  // ponytail: hover/pressed 투명도는 get_design_context 장애로 토큰 대신 렌더링된 PNG를 픽셀 역산한 근사치. 정확한 값은 디자인팀 확인 후 보정
-  const isDarkFill = color === "neutral" && variant === "fill";
+  const satetsColor: SatetsColor =
+    color === "neutral"
+      ? variant === "fill"
+        ? "white"
+        : "black"
+      : variant === "weak"
+        ? color
+        : "black";
 
   return (
     <button
@@ -181,15 +194,7 @@ export default function Button({
         className,
       )}
       {...props}>
-      <span
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute inset-0 rounded-full opacity-0 transition-opacity",
-          isDarkFill
-            ? "bg-semantic-icon-on-fill group-hover:opacity-[0.14] group-active:opacity-[0.30]"
-            : "bg-semantic-fill-neutral group-hover:opacity-[0.05] group-active:opacity-[0.12]",
-        )}
-      />
+      <Satets color={satetsColor} className="rounded-full" />
       <span className={cn("relative z-10 inline-flex items-center", sizeStyle.gap)}>
         {isLoading && (
           <span aria-hidden>
@@ -202,15 +207,19 @@ export default function Button({
         {/* 로딩 중에도 접근 가능한 이름 유지를 위해 children은 시각적으로만 숨김(sr-only) */}
         <span className={cn("inline-flex items-center", sizeStyle.gap, isLoading && "sr-only")}>
           {!isLoading && leftIcon && (
-            <span className={cn("shrink-0 [&>svg]:size-full", sizeStyle.icon, colorVariant.icon)}>
-              {leftIcon}
-            </span>
+            <Asset
+              icon={leftIcon}
+              size={iconSize ?? ICON_SIZE_BY_BUTTON_SIZE[size]}
+              className={colorVariant.icon}
+            />
           )}
           {children}
           {!isLoading && rightIcon && (
-            <span className={cn("shrink-0 [&>svg]:size-full", sizeStyle.icon, colorVariant.icon)}>
-              {rightIcon}
-            </span>
+            <Asset
+              icon={rightIcon}
+              size={iconSize ?? ICON_SIZE_BY_BUTTON_SIZE[size]}
+              className={colorVariant.icon}
+            />
           )}
         </span>
       </span>

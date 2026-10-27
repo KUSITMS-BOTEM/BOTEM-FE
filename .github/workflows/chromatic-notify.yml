@@ -36,28 +36,30 @@ jobs:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           exitZeroOnChanges: true
 
-      # push 이벤트 payload의 commits 배열에서 직접 뽑는다 (외부 액션 의존 제거).
-      # GitHub가 이 배열 자체를 최대 20개로 자르므로, 그보다 큰 push는 20개 이후 stories 커밋이 누락되는 게 알려진 한계.
+      # GitHub가 2019-10-16부터 push 이벤트 payload의 commits[].added/removed/modified를 비우기 때문에
+      # (https://github.blog/changelog/2019-10-16-changes-in-github-actions-push-event-payload/)
+      # payload 대신 fetch-depth: 0으로 받아둔 git 히스토리에서 before..after 범위를 직접 비교한다.
       - name: stories 변경 파일·커밋 메시지 추출 (stories 파일을 건드린 커밋만)
         id: changes
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
         run: |
           DELIM="ghadelim_$(openssl rand -hex 8)"
+          if git cat-file -e "$BEFORE" 2>/dev/null; then
+            RANGE="$BEFORE..$AFTER"
+          else
+            # 새 브랜치 최초 push: 비교 기준(before)이 없어 마지막 커밋 하나만 비교
+            RANGE="${AFTER}~1..$AFTER"
+          fi
           {
             echo "files<<$DELIM"
-            jq -r '
-              [.commits[] | (.added + .removed + .modified)[] | select(test("\\.stories\\."))]
-              | unique | join("\n")
-            ' "$GITHUB_EVENT_PATH"
+            git diff --name-only $RANGE -- '*.stories.*' | sort -u
             echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
           {
             echo "messages<<$DELIM"
-            jq -r '
-              [.commits[]
-                | select((.added + .removed + .modified) | any(test("\\.stories\\.")))
-                | .message
-              ] | join("\n\n")
-            ' "$GITHUB_EVENT_PATH"
+            git log --format='%B' $RANGE -- '*.stories.*'
             echo "$DELIM"
           } >> "$GITHUB_OUTPUT"
 
