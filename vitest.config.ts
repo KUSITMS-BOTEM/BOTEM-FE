@@ -7,6 +7,8 @@ import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 
 import { playwright } from "@vitest/browser-playwright";
 
+import svgr from "vite-plugin-svgr";
+
 const dirname =
   typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
@@ -16,6 +18,7 @@ export default defineConfig({
     projects: [
       {
         extends: true,
+        plugins: [svgr()],
         resolve: {
           alias: {
             "@": path.resolve(dirname, "src"),
