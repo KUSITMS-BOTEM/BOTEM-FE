@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import { cn } from "@/utils/cn";
 
-type AssetSize = "xsmall" | "small" | "medium" | "large";
+export type AssetSize = "xsmall" | "small" | "medium" | "large";
 
 const SIZE_STYLE: Record<AssetSize, string> = {
   xsmall: "size-4",
