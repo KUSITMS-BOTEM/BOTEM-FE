@@ -45,7 +45,7 @@ jobs:
           {
             echo "files<<$DELIM"
             jq -r '
-              [(.commits // [])[] | (.added + .removed + .modified)[] | select(test("\\.stories\\."))]
+              [(.commits // [])[] | ((.added // []) + (.removed // []) + (.modified // []))[] | select(test("\\.stories\\."))]
               | unique | join("\n")
             ' "$GITHUB_EVENT_PATH"
             echo "$DELIM"
@@ -54,7 +54,7 @@ jobs:
             echo "messages<<$DELIM"
             jq -r '
               [(.commits // [])[]
-                | select((.added + .removed + .modified) | any(test("\\.stories\\.")))
+                | select(((.added // []) + (.removed // []) + (.modified // [])) | any(test("\\.stories\\.")))
                 | .message
               ] | join("\n\n")
             ' "$GITHUB_EVENT_PATH"
