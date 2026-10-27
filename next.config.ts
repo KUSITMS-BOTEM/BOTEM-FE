@@ -17,6 +17,14 @@ const nextConfig: NextConfig = {
             loader: "@svgr/webpack",
             options: {
               replaceAttrValues: { "#222222": "currentColor" },
+              svgoConfig: {
+                plugins: [
+                  {
+                    name: "preset-default",
+                    params: { overrides: { removeViewBox: false } },
+                  },
+                ],
+              },
             },
           },
         ],
