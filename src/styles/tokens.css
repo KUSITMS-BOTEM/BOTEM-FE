@@ -101,11 +101,12 @@
   --color-semantic-icon-success: #0092cd; /** 성공 아이콘 */
   --color-semantic-border-weak: #eeeeee; /** 약한 구분선 */
   --color-semantic-border-default: #dddddd; /** 카드·입력창 테두리 */
-  --color-semantic-border-strong: #a3a3a3; /** 강한 테두리 */
+  --color-semantic-border-primary: #a3a3a3; /** 강한 테두리 */
   --color-semantic-border-brand: #ff6200; /** 브랜드 테두리 */
   --color-semantic-border-danger: #f04452; /** 에러 테두리 */
   --color-semantic-border-success: #00a1e2; /** 성공 테두리 */
   --color-semantic-border-inverted: #ffffff;
+  --color-semantic-border-strong: #222222;
   --color-semantic-shadow-weak: rgba(0, 0, 0, 0.05); /** 버튼·카드 */
   --color-semantic-shadow-default: rgba(0, 0, 0, 0.08); /** 드롭다운·팝오버 */
   --color-semantic-shadow-strong: rgba(0, 0, 0, 0.12); /** 모달·다이얼로그 */
