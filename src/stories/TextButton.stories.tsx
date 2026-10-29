@@ -50,3 +50,9 @@ export const Disabled: Story = {
     disabled: true,
   },
 };
+
+export const Pressed: Story = {
+  parameters: {
+    pseudo: { active: true },
+  },
+};
