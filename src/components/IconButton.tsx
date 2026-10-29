@@ -60,8 +60,8 @@ export default function IconButton({
       type="button"
       disabled={disabled}
       className={cn(
-        "group relative inline-flex items-center justify-center rounded-full transition-colors disabled:pointer-events-none",
-        "cursor-pointer disabled:cursor-not-allowed",
+        "group relative inline-flex items-center justify-center rounded-full transition-[colors,transform] disabled:pointer-events-none",
+        "cursor-pointer active:scale-95 disabled:cursor-not-allowed",
         disabled && "opacity-30",
         sizeStyle.container,
         variantStyle.background,
