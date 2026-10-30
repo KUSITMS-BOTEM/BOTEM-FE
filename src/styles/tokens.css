@@ -102,7 +102,7 @@
   --color-semantic-text-on-fill: #ffffff; /** 어두운 배경 위 텍스트 */
   --color-semantic-text-brand: #d45000; /** 브랜드 텍스트 */
   --color-semantic-text-danger: #d22030; /** 에러 글자 */
-  --color-semantic-text-success: #02a262; /** 성공 글자 */
+  --color-semantic-text-success: #028450; /** 성공 글자 */
   --color-semantic-icon-default: #222222; /** 기본 아이콘 */
   --color-semantic-icon-primary: #5e5e5e; /** 보조 아이콘 */
   --color-semantic-icon-secondary: #a3a3a3; /** 장식 아이콘 */
