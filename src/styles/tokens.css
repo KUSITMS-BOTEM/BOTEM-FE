@@ -64,6 +64,16 @@
   --color-base-gray-700: #404040;
   --color-base-gray-800: #222222;
   --color-base-gray-900: #000000;
+  --color-base-green-50: #f0faf6;
+  --color-base-green-100: #aeefd5;
+  --color-base-green-200: #76e4b8;
+  --color-base-green-300: #3fd599;
+  --color-base-green-400: #15c47e;
+  --color-base-green-500: #03b26c;
+  --color-base-green-600: #02a262;
+  --color-base-green-700: #029359;
+  --color-base-green-800: #028450;
+  --color-base-green-900: #027648;
   --color-semantic-background-default: #ffffff; /** 기본 배경 */
   --color-semantic-background-floated: #ffffff; /** 쌓아올리는 구성 요소 배경 */
   --color-semantic-background-lower: #f7f7f7; /** 회색 배경 */
@@ -78,9 +88,12 @@
   --color-semantic-fill-pink-weak: #ffeef2; /** 핑크 약한 색의 면 */
   --color-semantic-fill-blue: #00a1e2; /** 블루 색의 면 */
   --color-semantic-fill-blue-weak: #ecf5fb; /** 블루 약한 색의 면 */
+  --color-semantic-fill-success: #03b26c;
+  --color-semantic-fill-success-weak: #f0faf6;
   --color-semantic-fill-danger: #f04452; /** 레드 색의 면 */
   --color-semantic-fill-danger-weak: #ffeeee; /** 레드 약한 색의 면 */
   --color-semantic-fill-default: #ffffff;
+  --color-semantic-fill-default80: rgba(255, 255, 255, 0.8);
   --color-semantic-text-strong: #000000; /** 제목 텍스트 */
   --color-semantic-text-primary: #222222; /** 본문 텍스트 */
   --color-semantic-text-secondary: #404040; /** 보조 텍스트 */
@@ -89,7 +102,7 @@
   --color-semantic-text-on-fill: #ffffff; /** 어두운 배경 위 텍스트 */
   --color-semantic-text-brand: #d45000; /** 브랜드 텍스트 */
   --color-semantic-text-danger: #d22030; /** 에러 글자 */
-  --color-semantic-text-success: #0092cd; /** 성공 글자 */
+  --color-semantic-text-success: #028450; /** 성공 글자 */
   --color-semantic-icon-default: #222222; /** 기본 아이콘 */
   --color-semantic-icon-primary: #5e5e5e; /** 보조 아이콘 */
   --color-semantic-icon-secondary: #a3a3a3; /** 장식 아이콘 */
@@ -97,17 +110,20 @@
   --color-semantic-icon-on-fill: #ffffff; /** 어두운 배경 위 아이콘 */
   --color-semantic-icon-brand: #e85800; /** 브랜드 아이콘 */
   --color-semantic-icon-danger: #e42939; /** 에러 아이콘 */
-  --color-semantic-icon-success: #0092cd; /** 성공 아이콘 */
+  --color-semantic-icon-success: #02a262; /** 성공 아이콘 */
   --color-semantic-border-weak: #eeeeee; /** 약한 구분선 */
   --color-semantic-border-default: #dddddd; /** 카드·입력창 테두리 */
-  --color-semantic-border-strong: #a3a3a3; /** 강한 테두리 */
+  --color-semantic-border-primary: #a3a3a3; /** 강한 테두리 */
   --color-semantic-border-brand: #ff6200; /** 브랜드 테두리 */
   --color-semantic-border-danger: #f04452; /** 에러 테두리 */
-  --color-semantic-border-success: #00a1e2; /** 성공 테두리 */
+  --color-semantic-border-success: #03b26c; /** 성공 테두리 */
+  --color-semantic-border-inverted: #ffffff;
+  --color-semantic-border-strong: #222222;
   --color-semantic-shadow-weak: rgba(0, 0, 0, 0.05); /** 버튼·카드 */
   --color-semantic-shadow-default: rgba(0, 0, 0, 0.08); /** 드롭다운·팝오버 */
   --color-semantic-shadow-strong: rgba(0, 0, 0, 0.12); /** 모달·다이얼로그 */
   --font-family-pretendard: Pretendard;
+  --font-family-a2-z: A2Z;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semi-bold: 600;
@@ -173,6 +189,14 @@
   --semantic-label-medium: 600 17px/1.252 Pretendard; /** Pretendard SemiBold · 17px · LH 125.2% · LS -2% */
   --semantic-label-medium-strong: 700 17px/1.252 Pretendard; /** Pretendard Bold · 17px · LH 125.2% · LS -2% */
   --semantic-label-large: 600 19px/1.252 Pretendard; /** Pretendard SemiBold · 19px · LH 125.2% · LS -2% */
+  --semantic-title-a2-z-x-small-x-weak: 500 17px/1.35 A2Z; /** Pretendard Medium · 17px · LH 135% · LS -2% */
+  --semantic-title-a2-z-x-small-weak: 600 17px/1.35 A2Z; /** Pretendard SemiBold · 17px · LH 135% · LS -2% */
+  --semantic-title-a2-z-x-small: 700 17px/1.35 A2Z; /** Pretendard Bold · 17px · LH 135% · LS -2% */
+  --semantic-title-a2-z-small-x-weak: 500 20px/1.35 A2Z; /** Pretendard Medium · 20px · LH 135% · LS -2% */
+  --semantic-title-a2-z-small-weak: 600 20px/1.35 A2Z; /** Pretendard SemiBold · 20px · LH 135% · LS -2% */
+  --semantic-title-a2-z-small: 700 20px/1.35 A2Z; /** Pretendard Bold · 20px · LH 135% · LS -2% */
+  --semantic-title-a2-z-medium: 700 22px/1.35 A2Z; /** Pretendard Bold · 22px · LH 135% · LS -2% */
+  --semantic-title-a2-z-large: 700 24px/1.35 A2Z; /** Pretendard Bold · 24px · LH 135% · LS -2% */
   --margin-screen-compact: 16px; /** 좁은 화면 · 바텀시트 좌우 */
   --margin-screen: 20px; /** 모바일 기본 화면 좌우 */
   --margin-screen-wide: 24px; /** 태블릿 · 넓은 화면 좌우 */
