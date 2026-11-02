@@ -36,7 +36,13 @@ function AlertDemo({ confirmColor }: { confirmColor: "brand" | "danger" }) {
   );
 }
 
-function ConfirmDemo({ direction }: { direction: "horizontal" | "vertical" }) {
+function ConfirmDemo({
+  direction,
+  confirmColor,
+}: {
+  direction: "horizontal" | "vertical";
+  confirmColor?: "neutral" | "danger";
+}) {
   const [open, setOpen] = useState(true);
 
   return (
@@ -48,6 +54,7 @@ function ConfirmDemo({ direction }: { direction: "horizontal" | "vertical" }) {
         title="타이틀"
         description="추가설명"
         direction={direction}
+        confirmColor={confirmColor}
         onConfirm={() => setOpen(false)}
         onCancel={() => setOpen(false)}
       />
@@ -69,4 +76,12 @@ export const ConfirmHorizontal: Story = {
 
 export const ConfirmVertical: Story = {
   render: () => <ConfirmDemo direction="vertical" />,
+};
+
+export const ConfirmDangerHorizontal: Story = {
+  render: () => <ConfirmDemo direction="horizontal" confirmColor="danger" />,
+};
+
+export const ConfirmDangerVertical: Story = {
+  render: () => <ConfirmDemo direction="vertical" confirmColor="danger" />,
 };
