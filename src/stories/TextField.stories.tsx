@@ -5,7 +5,7 @@ import TextField, { type TextFieldRule } from "@/components/TextField";
 
 const NAME_RULES: TextFieldRule[] = [
   { message: "한글+영어 조합", validate: value => /[가-힣]/.test(value) && /[a-zA-Z]/.test(value) },
-  { message: "특수문자 1개 이상", validate: value => /[^가-힣a-zA-Z0-9\s]/.test(value) },
+  { message: "특수문자 1개 이상", validate: value => /[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9\s]/.test(value) },
   { message: "최소 12글자", validate: value => value.length >= 12 },
 ];
 
