@@ -104,6 +104,12 @@ export const Disabled: Story = {
   },
 };
 
+export const Pressed: Story = {
+  parameters: {
+    pseudo: { active: true },
+  },
+};
+
 export const WithIcons: Story = {
   args: {
     leftIcon: <PlusIcon />,
