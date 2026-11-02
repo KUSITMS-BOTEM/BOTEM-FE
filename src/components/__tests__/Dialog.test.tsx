@@ -113,6 +113,31 @@ describe("Dialog", () => {
     expect(screen.getAllByRole("button").map(b => b.textContent)).toEqual(["취소", "삭제"]);
   });
 
+  it("confirm에 confirmColor='danger'를 넘기면 '예' 버튼이 danger 색으로 칠해진다", () => {
+    render(
+      <Dialog
+        open
+        kind="confirm"
+        title="타이틀"
+        confirmColor="danger"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "예" }).className).toContain(
+      "bg-semantic-fill-danger",
+    );
+  });
+
+  it("confirm 기본 '예' 버튼은 neutral 색이다", () => {
+    render(<Dialog open kind="confirm" title="타이틀" onConfirm={vi.fn()} onCancel={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: "예" }).className).toContain(
+      "bg-semantic-fill-neutral",
+    );
+  });
+
   it("ESC(cancel 이벤트) 시 confirm은 onCancel을 호출하고 브라우저 기본 닫힘을 막는다", () => {
     const handleConfirm = vi.fn();
     const handleCancel = vi.fn();

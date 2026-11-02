@@ -16,6 +16,7 @@ type DialogConfirmProps = {
   kind: "confirm";
   confirmLabel?: string;
   cancelLabel?: string;
+  confirmColor?: "neutral" | "danger";
   direction?: "horizontal" | "vertical";
   onConfirm: () => void;
   onCancel: () => void;
@@ -53,7 +54,12 @@ export default function Dialog({ open, title, description, className, ...props }
   const isVertical = props.kind === "confirm" && props.direction === "vertical";
   const buttonClassName = isVertical ? "w-full" : "min-w-20 flex-1";
   const confirmButton = (
-    <Button size="large" variant="fill" className={buttonClassName} onClick={props.onConfirm}>
+    <Button
+      size="large"
+      variant="fill"
+      color={props.kind === "confirm" ? props.confirmColor : undefined}
+      className={buttonClassName}
+      onClick={props.onConfirm}>
       {props.confirmLabel ?? "예"}
     </Button>
   );
@@ -66,7 +72,7 @@ export default function Dialog({ open, title, description, className, ...props }
       aria-describedby={description ? descriptionId : undefined}
       onCancel={handleCancel}
       className={cn(
-        "bg-semantic-fill-default m-auto w-80 flex-col rounded-3xl p-0 shadow-[0_4px_32px_var(--color-semantic-shadow-default)] outline-none open:flex",
+        "bg-semantic-fill-default/70 m-auto w-80 flex-col rounded-3xl p-0 shadow-[0_4px_32px_var(--color-semantic-shadow-default)] backdrop-blur-[15px] outline-none open:flex",
         "backdrop:bg-semantic-background-dim",
         className,
       )}>
