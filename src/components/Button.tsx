@@ -180,7 +180,7 @@ export default function Button({
       disabled={isDisabled}
       aria-busy={isLoading}
       className={cn(
-        "group relative inline-flex items-center justify-center rounded-full whitespace-nowrap transition-[colors,transform] disabled:pointer-events-none",
+        "group relative inline-flex items-center justify-center rounded-full whitespace-nowrap transition-[color,background-color,border-color,transform] disabled:pointer-events-none",
         "cursor-pointer active:scale-95 disabled:cursor-not-allowed",
         disabled && "opacity-30",
         sizeStyle.height,
