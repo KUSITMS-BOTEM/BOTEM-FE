@@ -68,5 +68,7 @@ export default function useClearableInput<T extends ClearableElement>({
     elementRef.current?.focus();
   };
 
-  return { elementRef, currentValue, isOverLimit, handleChange, handleClear };
+  const canClear = !isControlled || onClear !== undefined;
+
+  return { elementRef, currentValue, isOverLimit, canClear, handleChange, handleClear };
 }

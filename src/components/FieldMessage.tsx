@@ -44,7 +44,7 @@ export default function FieldMessage({
   const { text, icon, Icon } = STATE_STYLE[state];
 
   return (
-    <p
+    <div
       id={id}
       className={cn(
         "flex items-start gap-1 pl-5",
@@ -54,6 +54,6 @@ export default function FieldMessage({
       )}>
       <Asset icon={<Icon aria-hidden />} size="xsmall" className={icon} />
       <span className="min-w-0 flex-1">{children}</span>
-    </p>
+    </div>
   );
 }

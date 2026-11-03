@@ -32,4 +32,10 @@ describe("TextCounter", () => {
     expect(screen.getByText("0")).toBeInTheDocument();
     expect(screen.getByText("/20")).toBeInTheDocument();
   });
+
+  it("id를 주면 카운터 요소에 그대로 붙는다", () => {
+    render(<TextCounter id="field-counter" length={3} maxLength={20} />);
+
+    expect(screen.getByText("3").parentElement).toHaveAttribute("id", "field-counter");
+  });
 });

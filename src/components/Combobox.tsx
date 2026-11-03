@@ -51,25 +51,37 @@ export default function Combobox({
   id,
   required,
   disabled,
+  readOnly,
   maxLength,
   className,
+  "aria-describedby": ariaDescribedBy,
   ...props
 }: ComboboxProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const helperTextId = `${inputId}-help`;
+  const counterId = `${inputId}-counter`;
+  const describedBy =
+    [
+      ariaDescribedBy,
+      helperText !== undefined && helperTextId,
+      maxLength !== undefined && counterId,
+    ]
+      .filter(Boolean)
+      .join(" ") || undefined;
 
-  const { elementRef, currentValue, isOverLimit, handleChange, handleClear } = useClearableInput({
-    value,
-    defaultValue,
-    ref,
-    maxLength,
-    onChange,
-    onClear,
-  });
+  const { elementRef, currentValue, isOverLimit, canClear, handleChange, handleClear } =
+    useClearableInput({
+      value,
+      defaultValue,
+      ref,
+      maxLength,
+      onChange,
+      onClear,
+    });
   const error = errorProp || isOverLimit;
 
-  const showClearButton = !disabled && currentValue.length > 0;
+  const showClearButton = !disabled && !readOnly && canClear && currentValue.length > 0;
   const showHelperRow = helperText !== undefined || maxLength !== undefined;
 
   const chipGroup = chips && chips.length > 0 && (
@@ -116,21 +128,22 @@ export default function Combobox({
           </div>
           <div className="flex h-10 items-center gap-1">
             <input
+              {...props}
               ref={elementRef}
               id={inputId}
               value={currentValue}
               onChange={handleChange}
               required={required}
               disabled={disabled}
+              readOnly={readOnly}
               aria-invalid={error}
-              aria-describedby={helperText !== undefined ? helperTextId : undefined}
+              aria-describedby={describedBy}
               className={cn(
                 "h-full min-w-0 flex-1 bg-transparent outline-none",
                 "[letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-medium-weak)]",
                 "text-semantic-text-primary placeholder:text-semantic-text-quaternary",
                 "disabled:cursor-not-allowed",
               )}
-              {...props}
             />
             {(showClearButton || suffix) && (
               <div className="flex h-full shrink-0 items-center justify-end gap-2 pl-2">
@@ -164,7 +177,12 @@ export default function Combobox({
               )}
             </div>
             {maxLength !== undefined && (
-              <TextCounter length={currentValue.length} maxLength={maxLength} error={error} />
+              <TextCounter
+                id={counterId}
+                length={currentValue.length}
+                maxLength={maxLength}
+                error={error}
+              />
             )}
           </div>
         )}

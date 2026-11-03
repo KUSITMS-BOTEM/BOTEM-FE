@@ -53,22 +53,27 @@ export default function TextField({
   id,
   required,
   disabled,
+  readOnly,
   maxLength,
   className,
+  "aria-describedby": ariaDescribedBy,
   ...props
 }: TextFieldProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const helperId = `${inputId}-help`;
+  const counterId = `${inputId}-counter`;
 
   const {
     elementRef,
     currentValue,
     isOverLimit,
+    canClear,
     handleChange: changeValue,
     handleClear: clearValue,
   } = useClearableInput({ value, defaultValue, ref, maxLength, onChange, onClear });
   const hasValue = currentValue.length > 0;
+  const showClearButton = !disabled && !readOnly && canClear && hasValue;
   const isRuleViolated = hasValue && !passesAllRules(rules, currentValue);
 
   // 규칙 미충족 Error는 포커스가 빠질 때 켜지고, 입력 중 모두 충족하거나 값을 비우면 꺼진다
@@ -98,6 +103,10 @@ export default function TextField({
   };
 
   const hasHelpTexts = helperText !== undefined || rules.length > 0;
+  const describedBy =
+    [ariaDescribedBy, hasHelpTexts && helperId, maxLength !== undefined && counterId]
+      .filter(Boolean)
+      .join(" ") || undefined;
 
   return (
     <div className={cn("flex w-full flex-col gap-2", disabled && "opacity-60", className)}>
@@ -123,6 +132,7 @@ export default function TextField({
         </div>
         <div className="flex h-10 items-center gap-1">
           <input
+            {...props}
             ref={elementRef}
             id={inputId}
             value={currentValue}
@@ -130,19 +140,19 @@ export default function TextField({
             onBlur={handleBlur}
             required={required}
             disabled={disabled}
+            readOnly={readOnly}
             aria-invalid={isError}
-            aria-describedby={hasHelpTexts ? helperId : undefined}
+            aria-describedby={describedBy}
             className={cn(
               "h-full min-w-0 flex-1 bg-transparent outline-none",
               "[letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-medium-weak)]",
               "text-semantic-text-primary placeholder:text-semantic-text-quaternary",
               "disabled:cursor-not-allowed",
             )}
-            {...props}
           />
-          {!disabled && (hasValue || suffix) && (
+          {(showClearButton || suffix) && (
             <div className="flex h-full shrink-0 items-center gap-2 pl-2">
-              {hasValue && (
+              {showClearButton && (
                 <button
                   type="button"
                   aria-label="입력 내용 지우기"
@@ -175,7 +185,12 @@ export default function TextField({
             ))}
           </div>
           {maxLength !== undefined && (
-            <TextCounter length={currentValue.length} maxLength={maxLength} error={isError} />
+            <TextCounter
+              id={counterId}
+              length={currentValue.length}
+              maxLength={maxLength}
+              error={isError}
+            />
           )}
         </div>
       )}

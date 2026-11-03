@@ -1,6 +1,7 @@
 import { cn } from "@/utils/cn";
 
 type TextCounterProps = {
+  id?: string;
   length: number;
   maxLength: number;
   error?: boolean;
@@ -8,6 +9,7 @@ type TextCounterProps = {
 };
 
 export default function TextCounter({
+  id,
   length,
   maxLength,
   error = false,
@@ -15,6 +17,7 @@ export default function TextCounter({
 }: TextCounterProps) {
   return (
     <span
+      id={id}
       className={cn(
         "flex shrink-0 items-center pr-4 pl-2 [letter-spacing:var(--letter-spacing-default)]",
         error ? "text-semantic-text-danger" : "text-semantic-text-tertiary",

@@ -7,7 +7,7 @@ const CLEAR_BUTTON = { name: "입력 내용 지우기" };
 const MIN_LENGTH_RULE = { message: "8자 이상", validate: (value: string) => value.length >= 8 };
 const HAS_DIGIT_RULE = { message: "숫자 포함", validate: (value: string) => /\d/.test(value) };
 
-const getRuleText = (message: string) => screen.getByText(message).closest("p");
+const getRuleText = (message: string) => screen.getByText(message).closest("div");
 
 describe("TextField", () => {
   it("레이블을 클릭하면 input에 포커스가 간다", async () => {
@@ -90,16 +90,55 @@ describe("TextField", () => {
     expect(input).toHaveAccessibleDescription("필수 항목입니다");
   });
 
+  it("helperText 없이 maxLength만 있어도 글자 수 카운터가 설명으로 연결된다", () => {
+    render(<TextField label="이름" maxLength={20} defaultValue="보탬" />);
+
+    expect(screen.getByLabelText("이름")).toHaveAccessibleDescription(/2\s*\/\s*20/);
+  });
+
+  it("호출하는 쪽의 aria-describedby는 내부 도움말과 합쳐지고, aria-invalid는 내부 상태가 우선한다", () => {
+    render(
+      <>
+        <span id="external">외부 설명</span>
+        <TextField
+          label="이름"
+          helperText="도움말"
+          aria-describedby="external"
+          aria-invalid={false}
+          error
+        />
+      </>,
+    );
+    const input = screen.getByLabelText("이름");
+
+    expect(input).toHaveAccessibleDescription(/외부 설명.*도움말/);
+    expect(input).toHaveAttribute("aria-invalid", "true");
+  });
+
   it("suffix를 넘기면 표시된다", () => {
     render(<TextField label="금액" suffix="원" />);
 
     expect(screen.getByText("원")).toBeInTheDocument();
   });
 
-  it("disabled이면 suffix가 숨겨진다", () => {
-    render(<TextField label="금액" suffix="원" disabled />);
+  it("disabled여도 suffix는 보이고 지우기 버튼은 없다", () => {
+    render(<TextField label="금액" suffix="원" defaultValue="10000" disabled />);
 
-    expect(screen.queryByText("원")).not.toBeInTheDocument();
+    expect(screen.getByText("원")).toBeInTheDocument();
+    expect(screen.queryByRole("button", CLEAR_BUTTON)).not.toBeInTheDocument();
+  });
+
+  it("readOnly이면 값이 있어도 지우기 버튼이 없고 input이 읽기 전용이다", () => {
+    render(<TextField label="이름" defaultValue="보탬" readOnly />);
+
+    expect(screen.queryByRole("button", CLEAR_BUTTON)).not.toBeInTheDocument();
+    expect(screen.getByLabelText("이름")).toHaveAttribute("readonly");
+  });
+
+  it("제어 모드에서 onClear가 없으면 지우기 버튼이 없다", () => {
+    render(<TextField label="이름" value="보탬" onChange={() => {}} />);
+
+    expect(screen.queryByRole("button", CLEAR_BUTTON)).not.toBeInTheDocument();
   });
 
   it("값이 없으면 rules 문구가 모두 default 색이다", () => {

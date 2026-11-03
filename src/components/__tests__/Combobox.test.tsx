@@ -114,6 +114,19 @@ describe("Combobox", () => {
       expect(screen.queryByRole("button", { name: CLEAR_LABEL })).not.toBeInTheDocument();
     });
 
+    it("readOnly이면 값이 있어도 지우기 버튼이 없고 input이 읽기 전용이다", () => {
+      render(<Combobox label="브랜드" defaultValue="abc" readOnly />);
+
+      expect(screen.queryByRole("button", { name: CLEAR_LABEL })).not.toBeInTheDocument();
+      expect(screen.getByLabelText("브랜드", { selector: "input" })).toHaveAttribute("readonly");
+    });
+
+    it("제어 모드에서 onClear가 없으면 지우기 버튼이 없다", () => {
+      render(<Combobox label="브랜드" value="abc" onChange={() => {}} />);
+
+      expect(screen.queryByRole("button", { name: CLEAR_LABEL })).not.toBeInTheDocument();
+    });
+
     it("input과 Chip이 모두 disabled이다", () => {
       render(<Combobox label="브랜드" disabled chips={CHIPS} />);
 
@@ -184,6 +197,23 @@ describe("Combobox", () => {
       render(<Combobox label="브랜드" />);
 
       expect(screen.getByLabelText("브랜드")).not.toHaveAttribute("aria-describedby");
+    });
+
+    it("helperText 없이 maxLength만 있어도 글자 수 카운터가 설명으로 연결된다", () => {
+      render(<Combobox label="브랜드" maxLength={50} defaultValue="abc" />);
+
+      expect(screen.getByLabelText("브랜드")).toHaveAccessibleDescription(/3\s*\/\s*50/);
+    });
+
+    it("호출하는 쪽의 aria-describedby는 내부 도움말과 합쳐진다", () => {
+      render(
+        <>
+          <span id="external">외부 설명</span>
+          <Combobox label="브랜드" helperText="도움말" aria-describedby="external" />
+        </>,
+      );
+
+      expect(screen.getByLabelText("브랜드")).toHaveAccessibleDescription(/외부 설명.*도움말/);
     });
 
     it("error면 aria-invalid가 true이다", () => {

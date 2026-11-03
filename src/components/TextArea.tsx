@@ -38,22 +38,34 @@ export default function TextArea({
   id,
   required,
   disabled,
+  readOnly,
   maxLength,
   className,
+  "aria-describedby": ariaDescribedBy,
   ...props
 }: TextAreaProps) {
   const generatedId = useId();
   const textareaId = id ?? generatedId;
   const helperTextId = `${textareaId}-help`;
+  const counterId = `${textareaId}-counter`;
+  const describedBy =
+    [
+      ariaDescribedBy,
+      helperText !== undefined && helperTextId,
+      maxLength !== undefined && counterId,
+    ]
+      .filter(Boolean)
+      .join(" ") || undefined;
 
-  const { elementRef, currentValue, isOverLimit, handleChange, handleClear } = useClearableInput({
-    value,
-    defaultValue,
-    ref,
-    maxLength,
-    onChange,
-    onClear,
-  });
+  const { elementRef, currentValue, isOverLimit, canClear, handleChange, handleClear } =
+    useClearableInput({
+      value,
+      defaultValue,
+      ref,
+      maxLength,
+      onChange,
+      onClear,
+    });
   const error = errorProp || isOverLimit;
 
   useLayoutEffect(() => {
@@ -63,7 +75,7 @@ export default function TextArea({
     textarea.style.height = `${textarea.scrollHeight}px`;
   }, [currentValue, elementRef]);
 
-  const showClearButton = !disabled && currentValue.length > 0;
+  const showClearButton = !disabled && !readOnly && canClear && currentValue.length > 0;
   const showHelperRow = helperText !== undefined || maxLength !== undefined;
 
   return (
@@ -90,21 +102,22 @@ export default function TextArea({
         </div>
         <div className="flex min-h-24 items-start gap-1">
           <textarea
+            {...props}
             ref={elementRef}
             id={textareaId}
             value={currentValue}
             onChange={handleChange}
             required={required}
             disabled={disabled}
+            readOnly={readOnly}
             aria-invalid={error}
-            aria-describedby={helperText !== undefined ? helperTextId : undefined}
+            aria-describedby={describedBy}
             className={cn(
               "min-h-24 min-w-0 flex-1 resize-none overflow-hidden bg-transparent outline-none",
               "[letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-medium-weak)]",
               "text-semantic-text-primary placeholder:text-semantic-text-quaternary",
               "disabled:cursor-not-allowed",
             )}
-            {...props}
           />
           {showClearButton && (
             <button
@@ -129,7 +142,12 @@ export default function TextArea({
             )}
           </div>
           {maxLength !== undefined && (
-            <TextCounter length={currentValue.length} maxLength={maxLength} error={error} />
+            <TextCounter
+              id={counterId}
+              length={currentValue.length}
+              maxLength={maxLength}
+              error={error}
+            />
           )}
         </div>
       )}

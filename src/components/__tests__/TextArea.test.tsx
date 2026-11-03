@@ -110,8 +110,38 @@ describe("TextArea", () => {
     expect(textarea).toHaveAccessibleDescription("필수 항목입니다");
   });
 
+  it("helperText 없이 maxLength만 있어도 글자 수 카운터가 설명으로 연결된다", () => {
+    render(<TextArea label="소개" maxLength={100} defaultValue="내용" />);
+
+    expect(screen.getByLabelText("소개")).toHaveAccessibleDescription(/2\s*\/\s*100/);
+  });
+
+  it("호출하는 쪽의 aria-describedby는 내부 도움말과 합쳐진다", () => {
+    render(
+      <>
+        <span id="external">외부 설명</span>
+        <TextArea label="소개" helperText="도움말" aria-describedby="external" />
+      </>,
+    );
+
+    expect(screen.getByLabelText("소개")).toHaveAccessibleDescription(/외부 설명.*도움말/);
+  });
+
   it("disabled이면 값이 있어도 지우기 버튼이 없다", () => {
     render(<TextArea label="소개" defaultValue="내용" disabled />);
+
+    expect(screen.queryByRole("button", CLEAR_BUTTON)).not.toBeInTheDocument();
+  });
+
+  it("readOnly이면 값이 있어도 지우기 버튼이 없고 textarea가 읽기 전용이다", () => {
+    render(<TextArea label="소개" defaultValue="내용" readOnly />);
+
+    expect(screen.queryByRole("button", CLEAR_BUTTON)).not.toBeInTheDocument();
+    expect(screen.getByLabelText("소개")).toHaveAttribute("readonly");
+  });
+
+  it("제어 모드에서 onClear가 없으면 지우기 버튼이 없다", () => {
+    render(<TextArea label="소개" value="내용" onChange={() => {}} />);
 
     expect(screen.queryByRole("button", CLEAR_BUTTON)).not.toBeInTheDocument();
   });
