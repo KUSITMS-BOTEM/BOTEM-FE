@@ -27,6 +27,10 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+html:has(dialog:modal) {
+  overflow: hidden;
+}
+
 @keyframes dot-pulse {
   0%,
   100% {
