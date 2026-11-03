@@ -1,0 +1,148 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+# 같은 PR에 새 커밋이 올라오면 이전 실행은 취소
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # PR에서 base 브랜치와 비교하려면 전체 히스토리가 필요
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # PR: base 브랜치 대비 이 PR에서 바뀐 파일과 관련된 테스트만 실행
+      # (package.json·vitest 설정·setup 파일이 바뀌면 Vitest가 알아서 전체 실행)
+      # push(머지): 전체 실행
+      - name: 테스트 범위 결정
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+          # 의존성만 바뀐 경우는 Vitest가 감지하지 못하므로 전체 실행
+          elif git diff --name-only "origin/$BASE_REF...HEAD" | grep -qxE 'pnpm-lock\.yaml|\.github/workflows/ci\.yml'; then
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=changed" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 단위 테스트 + 커버리지
+        id: test
+        env:
+          MODE: ${{ steps.scope.outputs.mode }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          ARGS=(--coverage --reporter=default --reporter=json --outputFile.json="$RUNNER_TEMP/test-results.json")
+          if [ "$MODE" = "changed" ]; then
+            pnpm test --changed "origin/$BASE_REF" "${ARGS[@]}"
+          else
+            pnpm test "${ARGS[@]}"
+          fi
+
+      - name: 결과 요약 + 디스코드 알림
+        # 테스트가 실패해도 알림은 보내고, 새 커밋으로 취소된 실행은 건너뛴다
+        if: ${{ !cancelled() }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.BOTEM_DISCORD_PR_ISSUE_WEBHOOK_URL }}
+          BOT_NAME: BOTEM 알림봇 💰
+          TEST_OUTCOME: ${{ steps.test.outcome }}
+          MODE: ${{ steps.scope.outputs.mode }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          HEAD_BRANCH: ${{ github.head_ref || github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          RESULTS="$RUNNER_TEMP/test-results.json"
+          SUMMARY="coverage/coverage-summary.json"
+          # 설치 실패 등으로 테스트가 안 돌았으면 결과 파일이 없으므로 빈 값으로 채운다
+          mkdir -p coverage
+          [ -f "$RESULTS" ] || echo '{}' > "$RESULTS"
+          [ -f "$SUMMARY" ] || echo '{}' > "$SUMMARY"
+
+          case "$TEST_OUTCOME" in
+            success) STATUS="✅ 테스트 통과"; COLOR=2067276 ;;
+            failure) STATUS="❌ 테스트 실패"; COLOR=15158332 ;;
+            *)       STATUS="⚠️ 테스트 실행 못 함 (설치 등 이전 단계 실패)"; COLOR=16750848 ;;
+          esac
+          if [ "$MODE" = "full" ]; then SCOPE="전체"; else SCOPE="변경 관련"; fi
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            TITLE="$PR_TITLE"; LINK="$PR_URL"
+          else
+            TITLE="$HEAD_BRANCH 브랜치 push"; LINK="$RUN_URL"
+          fi
+
+          # 관련 테스트가 없으면 커버리지 pct가 "Unknown"이므로 숫자일 때만 표시
+          COVERAGE=$(jq -r '
+            def pct(k): (.total[k].pct // null) | if type == "number" then "\(.)%" else "-" end;
+            "라인 \(pct("lines")) · 브랜치 \(pct("branches")) · 함수 \(pct("functions"))"
+          ' "$SUMMARY")
+          TESTS=$(jq -r '
+            if .numTotalTests == null then "-"
+            elif .numTotalTests == 0 then "관련 테스트 없음"
+            else "\(.numPassedTests)/\(.numTotalTests) 통과" + (if .numFailedTests > 0 then " (실패 \(.numFailedTests))" else "" end)
+            end
+          ' "$RESULTS")
+
+          {
+            echo "### $STATUS"
+            echo "- 범위: $SCOPE"
+            echo "- 테스트: $TESTS"
+            echo "- 커버리지: $COVERAGE"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "웹훅 secret이 없어 디스코드 알림을 건너뜁니다"
+            exit 0
+          fi
+
+          jq -n \
+            --arg status "$STATUS" --argjson color "$COLOR" \
+            --arg title "$TITLE" --arg link "$LINK" \
+            --arg scope "$SCOPE" --arg tests "$TESTS" --arg coverage "$COVERAGE" \
+            '{
+              username: env.BOT_NAME,
+              content: ("📢 **[FE] " + $status + "**"),
+              embeds: [{
+                title: $title,
+                url: $link,
+                color: $color,
+                fields: [
+                  {name: "🌿 브랜치", value: ("`" + env.HEAD_BRANCH + "`"), inline: true},
+                  {name: "👤 실행한 사람", value: env.ACTOR, inline: true},
+                  {name: "🎯 범위", value: $scope, inline: true},
+                  {name: "🧪 테스트", value: $tests, inline: true},
+                  {name: "📊 커버리지", value: $coverage, inline: false},
+                  {name: "🔗 실행 로그", value: ("[GitHub Actions에서 보기](" + env.RUN_URL + ")"), inline: false}
+                ],
+                footer: {text: "BOTEM Frontend 💰 CI"}
+              }]
+            }' | curl -sf -H "Content-Type: application/json" -d @- "$DISCORD_WEBHOOK_URL"
