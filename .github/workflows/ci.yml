@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+# 같은 PR에 새 커밋이 올라오면 이전 실행은 취소
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # PR에서 base 브랜치와 비교하려면 전체 히스토리가 필요
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # PR: base 브랜치 대비 이 PR에서 바뀐 파일과 관련된 테스트만 실행
+      # (package.json·vitest 설정·setup 파일이 바뀌면 Vitest가 알아서 전체 실행)
+      # push(머지): 전체 실행
+      - name: 단위 테스트
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            pnpm test
+            exit 0
+          fi
+
+          # 의존성만 바뀐 경우는 Vitest가 감지하지 못하므로 전체 실행
+          if git diff --name-only "origin/$BASE_REF...HEAD" | grep -qxE 'pnpm-lock\.yaml|\.github/workflows/ci\.yml'; then
+            echo "의존성 또는 CI 설정 변경 → 전체 테스트 실행"
+            pnpm test
+          else
+            pnpm test --changed "origin/$BASE_REF"
+          fi
