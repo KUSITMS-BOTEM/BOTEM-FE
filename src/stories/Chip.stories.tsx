@@ -92,5 +92,8 @@ function ToggleChip(args: Story["args"]) {
 }
 
 export const Toggle: Story = {
+  argTypes: {
+    selected: { control: false },
+  },
   render: args => <ToggleChip {...args} />,
 };
