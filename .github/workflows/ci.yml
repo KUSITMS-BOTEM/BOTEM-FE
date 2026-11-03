@@ -130,7 +130,7 @@ jobs:
             --arg scope "$SCOPE" --arg tests "$TESTS" --arg coverage "$COVERAGE" \
             '{
               username: env.BOT_NAME,
-              content: ("🧪 **[FE] " + $status + "**"),
+              content: ("📢 **[FE] " + $status + "**"),
               embeds: [{
                 title: $title,
                 url: $link,
