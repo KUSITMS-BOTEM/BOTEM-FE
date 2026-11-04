@@ -67,7 +67,11 @@ export default function SelectBox({
             )}>
             {isFilled ? value : placeholder}
           </span>
-          <Asset icon={<Icon aria-hidden />} size="medium" className="text-semantic-icon-default" />
+          <Asset
+            icon={<Icon aria-hidden />}
+            size="medium"
+            className="text-semantic-icon-secondary"
+          />
         </span>
       </button>
       {helperText !== undefined && <FieldMessage id={helperTextId}>{helperText}</FieldMessage>}
