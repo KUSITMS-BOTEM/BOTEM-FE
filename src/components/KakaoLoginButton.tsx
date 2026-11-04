@@ -1,5 +1,5 @@
 import { type ButtonHTMLAttributes, type ReactNode } from "react";
-import Image from "next/image";
+import IconKakao from "@/assets/icons/icon-kakao.svg?react";
 import { cn } from "@/utils/cn";
 
 type KakaoLoginButtonOwnProps = {
@@ -14,12 +14,12 @@ export default function KakaoLoginButton({ children, className, ...props }: Kaka
     <button
       type="button"
       className={cn(
-        "rounded-large inline-flex h-12 w-full items-center justify-center [gap:var(--gap-x-small)] bg-[#FEE500] px-4",
+        "inline-flex h-14 w-full cursor-pointer items-center justify-center gap-1.25 rounded-full bg-[#FEE500]",
         className,
       )}
       {...props}>
-      <Image src="/icons/icon-kakao.png" alt="" width={36} height={36} />
-      <span className="text-black/85 [font:var(--semantic-label-medium)]">{children}</span>
+      <IconKakao className="text-black" />
+      <span className="text-black/80 [font:var(--semantic-label-medium)]">{children}</span>
     </button>
   );
 }
