@@ -138,10 +138,8 @@ export default function BottomSheet({
                     </Button>
                   </div>
                 </div>
-                {/* height=auto는 콘텐츠만큼 박스가 줄어들어 -bottom-6 오프셋이 그대로 하단을 가리므로, 늘어난 24px를 상쇄할 여백을 직접 채워준다 (height=max는 SHEET_HEIGHT_MAX 계산식 자체에 이미 포함됨) */}
-                {height === "auto" && (
-                  <div aria-hidden className="bg-semantic-fill-default h-6 w-full shrink-0" />
-                )}
+                {/* -bottom-6 오프셋은 height와 무관하게 시트 하단을 뷰포트보다 24px 아래에 고정하므로, 버튼 영역이 가려지지 않도록 두 모드 모두에서 여백을 채워준다 */}
+                <div aria-hidden className="bg-semantic-fill-default h-6 w-full shrink-0" />
               </motion.div>
             </>
           )}
