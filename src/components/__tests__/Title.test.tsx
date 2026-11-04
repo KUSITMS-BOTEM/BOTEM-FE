@@ -22,20 +22,14 @@ describe("Title", () => {
     expect(screen.getByText("설명")).toBeInTheDocument();
   });
 
-  it("showButton을 생략하면 기본값 true로 버튼이 렌더되고 기본 buttonLabel이 표시된다", () => {
+  it("showButton을 생략하면 기본값 false로 버튼이 렌더되지 않는다", () => {
     render(<Title title="제목" />);
-
-    expect(screen.getByRole("button", { name: "버튼" })).toBeInTheDocument();
-  });
-
-  it("showButton=false면 버튼이 렌더되지 않는다", () => {
-    render(<Title title="제목" showButton={false} />);
 
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
-  it("buttonLabel을 전달하면 해당 텍스트로 버튼이 렌더된다", () => {
-    render(<Title title="제목" buttonLabel="확인" />);
+  it("showButton과 buttonLabel을 전달하면 해당 텍스트로 버튼이 렌더된다", () => {
+    render(<Title title="제목" showButton buttonLabel="확인" onButtonClick={() => {}} />);
 
     expect(screen.getByRole("button", { name: "확인" })).toBeInTheDocument();
   });
@@ -43,7 +37,7 @@ describe("Title", () => {
   it("버튼 클릭 시 onButtonClick이 호출된다", async () => {
     const handleClick = vi.fn();
     const user = userEvent.setup();
-    render(<Title title="제목" onButtonClick={handleClick} />);
+    render(<Title title="제목" showButton buttonLabel="버튼" onButtonClick={handleClick} />);
 
     await user.click(screen.getByRole("button", { name: "버튼" }));
 

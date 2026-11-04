@@ -48,34 +48,36 @@ export default function ToastMessage({
         : "text-semantic-icon-default";
 
   return (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.5, y: 8 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.5, y: 8 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
-          className={cn(
-            "bg-semantic-fill-default/70 flex w-fit max-w-80 items-center gap-4 rounded-2xl px-5 py-4 shadow-[0px_4px_16px_0px_var(--color-semantic-shadow-default)]",
-            className,
-          )}>
-          <div className={cn("flex min-w-0 flex-1 items-start", icon && "gap-2")}>
-            {icon && (
-              <span className="flex h-4 shrink-0 items-center">
-                <Asset icon={icon} size="small" className={iconColor} />
-              </span>
+    <div role="status" className="contents">
+      <AnimatePresence>
+        {show && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.5, y: 8 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className={cn(
+              "bg-semantic-fill-default/70 flex w-fit max-w-80 items-center gap-4 rounded-2xl px-5 py-4 shadow-[0px_4px_16px_0px_var(--color-semantic-shadow-default)]",
+              className,
+            )}>
+            <div className={cn("flex min-w-0 flex-1 items-start", icon && "gap-2")}>
+              {icon && (
+                <span className="flex h-4 shrink-0 items-center">
+                  <Asset icon={icon} size="small" className={iconColor} />
+                </span>
+              )}
+              <p className="text-semantic-text-primary min-w-0 flex-1 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-x-small)]">
+                {text}
+              </p>
+            </div>
+            {showButton && (
+              <Button color="neutral" variant="weak" size="small" onClick={onButtonClick}>
+                {buttonText}
+              </Button>
             )}
-            <p className="text-semantic-text-primary min-w-0 flex-1 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-x-small)]">
-              {text}
-            </p>
-          </div>
-          {showButton && (
-            <Button color="neutral" variant="weak" size="small" onClick={onButtonClick}>
-              {buttonText}
-            </Button>
-          )}
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

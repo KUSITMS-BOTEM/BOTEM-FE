@@ -3,17 +3,20 @@ import Button from "@/components/Button";
 
 type TitleFontType = "pretendard" | "a2z";
 
-type TitleProps = {
+type TitleBaseProps = {
   type?: TitleFontType;
   title: string;
   description?: string;
   titleSize?: number;
   descriptionSize?: number;
-  showButton?: boolean;
-  buttonLabel?: string;
-  onButtonClick?: () => void;
   className?: string;
 };
+
+type TitleProps = TitleBaseProps &
+  (
+    | { showButton: true; buttonLabel: string; onButtonClick: () => void }
+    | { showButton?: false; buttonLabel?: never; onButtonClick?: never }
+  );
 
 export default function Title({
   type = "pretendard",
@@ -21,8 +24,8 @@ export default function Title({
   description,
   titleSize = 24,
   descriptionSize = 15,
-  showButton = true,
-  buttonLabel = "버튼",
+  showButton = false,
+  buttonLabel,
   onButtonClick,
   className,
 }: TitleProps) {

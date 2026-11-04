@@ -74,11 +74,17 @@ describe("ToastMessage", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
-  it("className을 전달하면 기본 클래스와 병합되어 루트 요소에 적용된다", () => {
+  it("className을 전달하면 기본 클래스와 병합되어 토스트 요소에 적용된다", () => {
     const { container } = render(<ToastMessage show text="문구" className="mt-4" />);
 
-    const root = container.firstChild as HTMLElement;
-    expect(root.className).toContain("mt-4");
-    expect(root.className).toContain("w-80");
+    const toast = container.querySelector(".rounded-2xl") as HTMLElement;
+    expect(toast.className).toContain("mt-4");
+    expect(toast.className).toContain("w-80");
+  });
+
+  it("루트 요소에 role=status가 적용되어 스크린리더가 토스트 등장을 읽을 수 있다", () => {
+    const { container } = render(<ToastMessage show text="문구" />);
+
+    expect(container.querySelector('[role="status"]')).toBeInTheDocument();
   });
 });

@@ -67,12 +67,24 @@ export default function BottomSheet({
       event.preventDefault();
       onClose();
     };
+    // 브라우저가 ESC 남용 방지 규칙 등으로 cancel을 막지 못하고 dialog를 강제로 닫는 경우,
+    // open prop과 실제 DOM 상태가 어긋나지 않도록 동기화한다.
+    const handleClose = () => {
+      if (open) onClose();
+    };
     dialog.addEventListener("cancel", handleCancel);
-    return () => dialog.removeEventListener("cancel", handleCancel);
-  }, [onClose]);
+    dialog.addEventListener("close", handleClose);
+    return () => {
+      dialog.removeEventListener("cancel", handleCancel);
+      dialog.removeEventListener("close", handleClose);
+    };
+  }, [open, onClose]);
 
   return (
-    <dialog ref={dialogRef} className="m-0 border-none bg-transparent p-0 outline-none">
+    <dialog
+      ref={dialogRef}
+      aria-labelledby={titleId}
+      className="m-0 border-none bg-transparent p-0 outline-none backdrop:bg-transparent">
       <MotionConfig reducedMotion="user">
         <AnimatePresence onExitComplete={() => dialogRef.current?.close()}>
           {visible && (
@@ -88,9 +100,6 @@ export default function BottomSheet({
               />
               <motion.div
                 key="sheet"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby={titleId}
                 className={cn(
                   "rounded-t-xxx-large bg-semantic-fill-default fixed inset-x-0 -bottom-6 mx-auto flex w-full flex-col overflow-clip",
                   SHEET_MAX_WIDTH,
