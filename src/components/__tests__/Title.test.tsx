@@ -50,21 +50,27 @@ describe("Title", () => {
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
-  it("type을 생략하면 기본값 pretendard로 title에 font-pretendard font-bold 클래스가 적용된다", () => {
+  it("type을 생략하면 기본값 pretendard로 title에 Pretendard 폰트와 font-bold 클래스가 적용된다", () => {
     render(<Title title="제목" />);
     const titleElement = screen.getByText("제목");
 
-    expect(titleElement.className).toContain("font-pretendard");
+    expect(titleElement.className).toContain("--font-family-pretendard");
     expect(titleElement.className).toContain("font-bold");
   });
 
-  it('type="a2z"면 title에 font-a2-z font-semibold 클래스가 적용된다', () => {
+  it('type="a2z"면 title에 A2Z 폰트와 font-semibold 클래스가 적용된다', () => {
     render(<Title title="제목" type="a2z" />);
     const titleElement = screen.getByText("제목");
 
-    expect(titleElement.className).toContain("font-a2-z");
+    expect(titleElement.className).toContain("--font-family-a2-z");
     expect(titleElement.className).toContain("font-semibold");
-    expect(titleElement.className).not.toContain("font-pretendard");
+    expect(titleElement.className).not.toContain("--font-family-pretendard");
+  });
+
+  it("title에 \\n이 포함되면 줄바꿈되어 보이도록 whitespace-pre-line 클래스가 적용된다", () => {
+    render(<Title title={"첫째 줄\n둘째 줄"} />);
+
+    expect(screen.getByText(/첫째 줄/).className).toContain("whitespace-pre-line");
   });
 
   it("titleSize를 생략하면 기본값 24px이 title에 적용된다", () => {

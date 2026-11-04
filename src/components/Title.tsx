@@ -32,15 +32,17 @@ export default function Title({
         <p
           style={{ fontSize: titleSize }}
           className={cn(
-            "text-semantic-text-strong w-full [line-height:var(--line-height-default)] [letter-spacing:var(--letter-spacing-default)]",
-            type === "pretendard" ? "font-pretendard font-bold" : "font-a2-z font-semibold",
+            "text-semantic-text-strong w-full [line-height:var(--line-height-default)] [letter-spacing:var(--letter-spacing-default)] whitespace-pre-line",
+            type === "pretendard"
+              ? "[font-family:var(--font-family-pretendard)] font-bold"
+              : "[font-family:var(--font-family-a2-z)] font-semibold",
           )}>
           {title}
         </p>
         {description && (
           <p
             style={{ fontSize: descriptionSize }}
-            className="font-pretendard text-semantic-text-secondary w-full [line-height:var(--line-height-default)] font-normal [letter-spacing:var(--letter-spacing-default)]">
+            className="text-semantic-text-secondary w-full [font-family:var(--font-family-pretendard)] [line-height:var(--line-height-default)] font-normal [letter-spacing:var(--letter-spacing-default)]">
             {description}
           </p>
         )}
