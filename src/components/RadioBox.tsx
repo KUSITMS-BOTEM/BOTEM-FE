@@ -1,10 +1,14 @@
-import { type InputHTMLAttributes, type ReactNode } from "react";
+import { type InputHTMLAttributes, type ReactNode, type Ref } from "react";
 import { cn } from "@/utils/cn";
 
-type RadioBoxProps = {
+type RadioBoxOwnProps = {
   label?: ReactNode;
   className?: string;
-} & Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "className">;
+  ref?: Ref<HTMLInputElement>;
+};
+
+type RadioBoxProps = RadioBoxOwnProps &
+  Omit<InputHTMLAttributes<HTMLInputElement>, keyof RadioBoxOwnProps | "type">;
 
 export default function RadioBox({ label, disabled = false, className, ...props }: RadioBoxProps) {
   return (

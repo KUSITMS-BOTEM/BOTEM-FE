@@ -1,9 +1,17 @@
+import { createRef } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import RadioBox from "@/components/RadioBox";
 
 describe("RadioBox", () => {
+  it("ref가 내부 radio input에 연결된다", () => {
+    const ref = createRef<HTMLInputElement>();
+    render(<RadioBox ref={ref} label="1만원" />);
+
+    expect(ref.current).toBe(screen.getByRole("radio"));
+  });
+
   it("label 텍스트를 클릭하면 라디오가 선택되고 onChange가 호출된다", async () => {
     const handleChange = vi.fn();
     const user = userEvent.setup();

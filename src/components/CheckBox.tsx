@@ -1,11 +1,16 @@
-import { type InputHTMLAttributes, type ReactNode } from "react";
+import { type InputHTMLAttributes, type ReactNode, type Ref } from "react";
 import { cn } from "@/utils/cn";
 import Asset from "@/components/Asset";
 import CheckIcon from "@/assets/icons/icon-check.svg?react";
 
-type CheckBoxProps = {
+type CheckBoxOwnProps = {
   label?: ReactNode;
-} & Omit<InputHTMLAttributes<HTMLInputElement>, "type">;
+  className?: string;
+  ref?: Ref<HTMLInputElement>;
+};
+
+type CheckBoxProps = CheckBoxOwnProps &
+  Omit<InputHTMLAttributes<HTMLInputElement>, keyof CheckBoxOwnProps | "type">;
 
 export default function CheckBox({ label, disabled = false, className, ...props }: CheckBoxProps) {
   return (

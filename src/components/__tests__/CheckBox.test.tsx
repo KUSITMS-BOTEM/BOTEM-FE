@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { createRef, useState } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import CheckBox from "@/components/CheckBox";
 
 describe("CheckBox", () => {
+  it("ref가 내부 checkbox input에 연결된다", () => {
+    const ref = createRef<HTMLInputElement>();
+    render(<CheckBox ref={ref} label="약관 동의" />);
+
+    expect(ref.current).toBe(screen.getByRole("checkbox"));
+  });
+
   describe("label", () => {
     it("label을 전달하면 checkbox의 접근 가능한 이름이 된다", () => {
       render(<CheckBox label="약관 동의" />);
