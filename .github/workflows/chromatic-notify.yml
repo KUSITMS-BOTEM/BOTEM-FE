@@ -1,0 +1,92 @@
+name: Chromatic Design Review Notify
+
+on:
+  push:
+    branches-ignore: [dev, main]
+    paths:
+      - "**/*.stories.*"
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Chromatic publish
+        id: chromatic
+        uses: chromaui/action@v1
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          exitZeroOnChanges: true
+
+      # GitHub가 2019-10-16부터 push 이벤트 payload의 commits[].added/removed/modified를 비우기 때문에
+      # (https://github.blog/changelog/2019-10-16-changes-in-github-actions-push-event-payload/)
+      # payload 대신 fetch-depth: 0으로 받아둔 git 히스토리에서 before..after 범위를 직접 비교한다.
+      - name: stories 변경 파일·커밋 메시지 추출 (stories 파일을 건드린 커밋만)
+        id: changes
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+        run: |
+          DELIM="ghadelim_$(openssl rand -hex 8)"
+          if git cat-file -e "$BEFORE" 2>/dev/null; then
+            RANGE="$BEFORE..$AFTER"
+          else
+            # 새 브랜치 최초 push: 비교 기준(before)이 없어 마지막 커밋 하나만 비교
+            RANGE="${AFTER}~1..$AFTER"
+          fi
+          {
+            echo "files<<$DELIM"
+            git diff --name-only $RANGE -- '*.stories.*' | sort -u
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "messages<<$DELIM"
+            git log --format='%B' $RANGE -- '*.stories.*'
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Discord 알림 발송
+        env:
+          WEBHOOK_URL: ${{ secrets.BOTEM_DISCORD_DESIGN_REVIEW_WEBHOOK_URL }}
+          STORYBOOK_URL: ${{ steps.chromatic.outputs.storybookUrl }}
+          CHANGED_FILES: ${{ steps.changes.outputs.files }}
+          COMMIT_MESSAGES: ${{ steps.changes.outputs.messages }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg branch "$BRANCH" \
+            --arg url "$STORYBOOK_URL" \
+            --arg files "$CHANGED_FILES" \
+            --arg commits "$COMMIT_MESSAGES" \
+            '
+            def clip: if (length > 1000) then .[0:1000] + "…(생략)" else . end;
+            {
+              embeds: [{
+                title: ("🐿️ 모몽가가 디자인 리뷰 가져왔다고!! 빨리 봐줘~! — " + $branch),
+                url: $url,
+                fields: [
+                  {name: "🌰 스토리북 보러 가라고~!!", value: $url},
+                  {name: "🍃 뭐가 바뀌었는지 당장 봐~!", value: ($files | clip)},
+                  {name: "✨ 모몽가가 뭘 했냐면 말이야~!!", value: ($commits | clip)}
+                ]
+              }]
+            }')
+          curl -sf -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
