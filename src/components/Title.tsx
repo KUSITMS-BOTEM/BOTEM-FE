@@ -1,0 +1,55 @@
+import { cn } from "@/utils/cn";
+import Button from "@/components/Button";
+
+type TitleFontType = "pretendard" | "a2z";
+
+type TitleProps = {
+  type?: TitleFontType;
+  title: string;
+  description?: string;
+  titleSize?: number;
+  descriptionSize?: number;
+  showButton?: boolean;
+  buttonLabel?: string;
+  onButtonClick?: () => void;
+  className?: string;
+};
+
+export default function Title({
+  type = "pretendard",
+  title,
+  description,
+  titleSize = 24,
+  descriptionSize = 15,
+  showButton = true,
+  buttonLabel = "버튼",
+  onButtonClick,
+  className,
+}: TitleProps) {
+  return (
+    <div className={cn("flex w-full flex-col items-start gap-4 pt-2 pb-5", className)}>
+      <div className="flex w-full flex-col items-start gap-2">
+        <p
+          style={{ fontSize: titleSize }}
+          className={cn(
+            "text-semantic-text-strong w-full [line-height:var(--line-height-default)] [letter-spacing:var(--letter-spacing-default)]",
+            type === "pretendard" ? "font-pretendard font-bold" : "font-a2-z font-semibold",
+          )}>
+          {title}
+        </p>
+        {description && (
+          <p
+            style={{ fontSize: descriptionSize }}
+            className="font-pretendard text-semantic-text-secondary w-full [line-height:var(--line-height-default)] font-normal [letter-spacing:var(--letter-spacing-default)]">
+            {description}
+          </p>
+        )}
+      </div>
+      {showButton && (
+        <Button color="neutral" variant="weak" size="small" onClick={onButtonClick}>
+          {buttonLabel}
+        </Button>
+      )}
+    </div>
+  );
+}
