@@ -12,7 +12,6 @@ const meta = {
   tags: ["autodocs"],
   args: {
     label: "라디오박스 레이블",
-    name: "radio-box",
   },
 } satisfies Meta<typeof RadioBox>;
 
@@ -23,8 +22,7 @@ export const Default: Story = {};
 
 export const Checked: Story = {
   args: {
-    checked: true,
-    readOnly: true,
+    defaultChecked: true,
   },
 };
 
@@ -37,8 +35,7 @@ export const Disabled: Story = {
 export const DisabledChecked: Story = {
   args: {
     disabled: true,
-    checked: true,
-    readOnly: true,
+    defaultChecked: true,
   },
 };
 
