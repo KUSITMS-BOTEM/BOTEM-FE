@@ -11,8 +11,8 @@ const meta = {
   tags: ["autodocs"],
   argTypes: {
     label: { control: "text" },
-    color: { control: "inline-radio", options: ["neutral", "brand", "danger", "ghost"] },
-    variant: { control: "inline-radio", options: ["fill", "weak"] },
+    color: { control: false },
+    variant: { control: false },
     size: { control: "inline-radio", options: ["small", "medium"] },
   },
   args: {
