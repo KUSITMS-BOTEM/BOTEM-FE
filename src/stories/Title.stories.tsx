@@ -2,13 +2,14 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import Title from "@/components/Title";
 
-const meta = {
+const meta: Meta<typeof Title> = {
   title: "Components/Title",
   component: Title,
+  tags: ["autodocs"],
   parameters: {
     layout: "centered",
+    controls: { disable: true },
   },
-  tags: ["autodocs"],
   decorators: [
     Story => (
       <div className="w-[320px]">
@@ -16,58 +17,46 @@ const meta = {
       </div>
     ),
   ],
-  argTypes: {
-    type: { control: "radio", options: ["pretendard", "a2z"] },
-    title: { control: "text" },
-    description: { control: "text" },
-    titleSize: { control: "number" },
-    descriptionSize: { control: "number" },
-    showButton: { control: "boolean" },
-    buttonLabel: { control: "text" },
-    onButtonClick: { control: false },
-  },
-  args: {
-    title: "타이틀",
-    description: "서브텍스트",
-    onButtonClick: () => {},
-  },
-} satisfies Meta<typeof Title>;
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<typeof Title>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  render: () => <Title title="타이틀" description="서브텍스트" />,
+};
 
 export const FontTypes: Story = {
-  render: args => (
+  render: () => (
     <div className="flex flex-col gap-4">
-      <Title {...args} type="pretendard" />
-      <Title {...args} type="a2z" />
+      <Title title="타이틀" description="서브텍스트" type="pretendard" />
+      <Title title="타이틀" description="서브텍스트" type="a2z" />
     </div>
   ),
 };
 
-export const WithoutButton: Story = {
-  args: {
-    showButton: false,
-  },
+export const WithButton: Story = {
+  render: () => (
+    <Title
+      title="타이틀"
+      description="서브텍스트"
+      showButton
+      buttonLabel="버튼"
+      onButtonClick={() => {}}
+    />
+  ),
 };
 
 export const WithoutDescription: Story = {
-  args: {
-    description: undefined,
-  },
+  render: () => <Title title="타이틀" />,
 };
 
 export const CustomSizes: Story = {
-  args: {
-    titleSize: 28,
-    descriptionSize: 17,
-  },
+  render: () => (
+    <Title title="타이틀" description="서브텍스트" titleSize={28} descriptionSize={17} />
+  ),
 };
 
 export const MultilineTitle: Story = {
-  args: {
-    title: "첫째 줄\n둘째 줄",
-  },
+  render: () => <Title title={"첫째 줄\n둘째 줄"} description="서브텍스트" />,
 };
