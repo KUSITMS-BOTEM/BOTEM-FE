@@ -110,6 +110,12 @@ export const clientApi = {
       .post(getUrl(path), { json: body, timeout: options?.timeout })
       .json<ApiResponse<T>>()
       .then(json => unwrap<T>(json)),
+  // 쿠키(refreshToken)를 다루는 엔드포인트 전용 — 로컬 개발은 BFF(getAuthUrl)로 우회
+  postAuth: <T>(path: string, body?: unknown) =>
+    clientKy
+      .post(getAuthUrl(path), { json: body })
+      .json<ApiResponse<T>>()
+      .then(json => unwrap<T>(json)),
   put: <T>(path: string, body?: unknown) =>
     clientKy
       .put(getUrl(path), { json: body })
