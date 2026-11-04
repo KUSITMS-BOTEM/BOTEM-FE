@@ -52,9 +52,10 @@ export default function BottomSheet({
       // showModal()은 내부적으로 다이얼로그에 포커스를 주며 스크롤을 동기적으로 발생시켜,
       // 그 뒤의 focus({ preventScroll: true })로는 이미 일어난 스크롤을 되돌릴 수 없다.
       // 호출 전 스크롤 위치를 저장해두고 그대로 복원한다(시트는 fixed라 스크롤 위치와 무관하게 항상 화면에 붙어 있다).
+      const scrollX = window.scrollX;
       const scrollY = window.scrollY;
       dialog.showModal();
-      window.scrollTo(0, scrollY);
+      window.scrollTo(scrollX, scrollY);
       dialog.focus({ preventScroll: true });
     }
     setVisible(open);
