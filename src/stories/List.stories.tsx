@@ -49,7 +49,11 @@ const RIGHT_TEXT = (
   <ListText title="타이틀" description="설명" align="right" className="w-[95px]" />
 );
 const RIGHT_ICON = (
-  <Asset icon={<IconCheck />} size="small" className="text-semantic-icon-default" />
+  <Asset
+    icon={<IconCheck />}
+    size="small"
+    className="text-semantic-icon-default [&_path]:[vector-effect:non-scaling-stroke]"
+  />
 );
 
 export const ProductButton: Story = {
