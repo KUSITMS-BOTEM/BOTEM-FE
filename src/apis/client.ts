@@ -6,6 +6,9 @@ import { isTokenExpired } from "@/utils/isTokenExpired";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 const getUrl = (path: string) => `${BASE_URL}${path}`;
+// 로컬 개발(localhost)은 운영 백엔드와 다른 site라 SameSite=Lax인 refreshToken 쿠키가 전송되지 않는다 —
+// 쿠키를 다루는 인증 엔드포인트만 로컬에서 BFF(src/app/api/auth/*)로 우회한다.
+const getAuthUrl = (path: string) => (process.env.NODE_ENV === "production" ? getUrl(path) : path);
 
 function unwrap<T>(json: ApiResponse<T>): T | null {
   if (!json.success) throw new ApiError(json.error?.code ?? "UNKNOWN_ERROR", json.error?.message);
@@ -26,7 +29,9 @@ const baseKy = ky.create({
 let refreshPromise: Promise<ReissueTokens> | null = null;
 
 async function requestReissue(): Promise<ReissueTokens> {
-  const json = await baseKy.post(getUrl("/api/auth/reissue")).json<ApiResponse<ReissueTokens>>();
+  const json = await baseKy
+    .post(getAuthUrl("/api/auth/reissue"))
+    .json<ApiResponse<ReissueTokens>>();
   const data = unwrap(json);
   if (!data) throw new ApiError("REISSUE_FAILED", "토큰 재발급에 실패했습니다.");
   return data;
