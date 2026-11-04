@@ -48,7 +48,7 @@ export default function ToastMessage({
         : "text-semantic-icon-default";
 
   return (
-    <div role="status" className="contents">
+    <div role="status">
       <AnimatePresence>
         {show && (
           <motion.div
