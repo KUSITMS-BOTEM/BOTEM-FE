@@ -234,4 +234,23 @@
   --radius-xx-large: 20px; /** 바텀시트 상단 */
   --radius-xxx-large: 24px; /** 모달 */
   --radius-full: 9999px; /** 알약 버튼 · 아바타 */
+  --duration-enter: 450; /** ms · 화면·바텀시트 진입, 타이틀 등장 */
+  --duration-move: 400; /** ms · 필드 등장, 키보드 올라옴·내려감, 화면 전환 */
+  --duration-exit: 300; /** ms · 바텀시트·딤 닫힘 (진입보다 짧게) */
+  --duration-state: 200; /** ms · 컴포넌트 상태 전환 디졸브 (Default → Focused 등) */
+  --delay-start: 300; /** ms · 화면이 열린 뒤 첫 요소 등장까지 */
+  --delay-stagger: 50; /** ms · 타이틀 → 필드 사이, 바텀시트 진입 전 */
+  --delay-focus: 300; /** ms · 필드 등장 끝 → 포커싱 + 키보드 */
+  --delay-complete: 900; /** ms · 마지막 칸 입력 → 키패드 내려감 */
+  --distance-title: 32px; /** 타이틀 시작 위치 (아래 → 위), 투명도 0 → 1 */
+  --distance-field: 28px; /** 입력 필드 시작 위치 (아래 → 위), 투명도 0 → 1 */
+  --distance-reverse: 24px; /** 기존 필드 위에 새로 생기는 필드 (위 → 아래) */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1); /** 모든 등장·이동·화면 전환에 쓰는 기본 곡선 */
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15); /** 닫힘 전용 · 천천히 출발해서 빠르게 사라짐 */
+  --spring-bouncy-stiffness: 600; /** 선물상자 팝 (커지기) */
+  --spring-bouncy-damping: 15; /** 선물상자 팝 */
+  --spring-gentle-stiffness: 100; /** 선물상자 제자리로 */
+  --spring-gentle-damping: 15; /** 선물상자 제자리로 */
+  --opacity-dim: 0.2; /** 딤 최종 투명도 (0 → 20%) */
+  --scale-dialog: 0.95; /** 다이얼로그 시작 크기 (95% → 100%) · 제안값 */
 }
