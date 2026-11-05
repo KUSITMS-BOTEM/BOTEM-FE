@@ -8,6 +8,16 @@ import { setSignupFlow } from "@/utils/signupFlowStorage";
 type KakaoLoginMutate = ReturnType<typeof useKakaoLoginMutation>["mutate"];
 type Router = ReturnType<typeof useRouter>;
 
+const FAILURE_REDIRECT_DELAY_MS = 3000;
+
+// 콜백 실패 시 화면에 머물지 않도록, 안내 후 랜딩으로 되돌린다.
+export const redirectToLandingAfterFailure = (router: Router) => {
+  setTimeout(() => {
+    alert("로그인에 실패했습니다. 다시 시도해주세요.");
+    router.replace("/");
+  }, FAILURE_REDIRECT_DELAY_MS);
+};
+
 export const handleKakaoCallback = (
   code: string,
   state: string | null,
@@ -15,7 +25,7 @@ export const handleKakaoCallback = (
   router: Router,
 ) => {
   if (!state || state !== consumeKakaoOauthState()) {
-    router.replace("/");
+    redirectToLandingAfterFailure(router);
     return;
   }
 
@@ -33,6 +43,7 @@ export const handleKakaoCallback = (
         }
         router.replace("/main");
       },
+      onError: () => redirectToLandingAfterFailure(router),
     },
   );
 };

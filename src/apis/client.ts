@@ -44,6 +44,16 @@ export function reissue(): Promise<ReissueTokens> {
   return refreshPromise;
 }
 
+// beforeRequest(선제 재발급)·afterResponse(401 재시도) 양쪽에서 재발급 실패를 동일하게 처리한다.
+async function reissueOrThrow(): Promise<ReissueTokens> {
+  try {
+    return await reissue();
+  } catch {
+    useAuthStore.getState().clearAccessToken();
+    throw new ApiError("AUTH_EXPIRED", "인증이 만료되었습니다. 다시 로그인해주세요.");
+  }
+}
+
 const clientKy = ky.create({
   credentials: "include",
   throwHttpErrors: false,
@@ -58,7 +68,7 @@ const clientKy = ky.create({
         let { accessToken } = useAuthStore.getState();
 
         if (accessToken && isTokenExpired(accessToken)) {
-          const tokens = await reissue();
+          const tokens = await reissueOrThrow();
           useAuthStore.getState().setAccessToken(tokens.accessToken);
           accessToken = tokens.accessToken;
         }
@@ -78,22 +88,17 @@ const clientKy = ky.create({
       async ({ request, response, retryCount }) => {
         if (response.status !== 401 || retryCount > 0) return;
 
-        try {
-          const tokens = await reissue();
-          useAuthStore.getState().setAccessToken(tokens.accessToken);
+        const tokens = await reissueOrThrow();
+        useAuthStore.getState().setAccessToken(tokens.accessToken);
 
-          const headers = new Headers(request.headers);
-          headers.set("Authorization", `Bearer ${tokens.accessToken}`);
+        const headers = new Headers(request.headers);
+        headers.set("Authorization", `Bearer ${tokens.accessToken}`);
 
-          // 새 토큰으로 헤더를 교체한 요청을 ky에 재시도 지시 (retryCount → 1, 무한루프 방지)
-          return ky.retry({
-            request: new Request(request, { headers }),
-            code: "TOKEN_REFRESHED",
-          });
-        } catch {
-          useAuthStore.getState().clearAccessToken();
-          throw new ApiError("AUTH_EXPIRED", "인증이 만료되었습니다. 다시 로그인해주세요.");
-        }
+        // 새 토큰으로 헤더를 교체한 요청을 ky에 재시도 지시 (retryCount → 1, 무한루프 방지)
+        return ky.retry({
+          request: new Request(request, { headers }),
+          code: "TOKEN_REFRESHED",
+        });
       },
     ],
   },
