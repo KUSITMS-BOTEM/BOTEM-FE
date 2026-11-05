@@ -20,7 +20,7 @@ beforeAll(async () => {
   // getAuthUrl이 production 분기에서만 절대 URL(BASE_URL)을 쓰므로, 테스트는 운영 경로로 고정해 검증한다.
   vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", BASE_URL);
   vi.stubEnv("NODE_ENV", "production");
-  server.listen({ onUnhandledRequest: "error" });
+  server.listen({ onUnhandledFrame: "error" });
   ({ clientApi } = await import("../client"));
   ({ useAuthStore } = await import("@/store/authStore"));
 });

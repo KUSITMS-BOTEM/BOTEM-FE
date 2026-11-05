@@ -10,7 +10,7 @@ let helpers: typeof import("../helpers");
 
 beforeAll(async () => {
   vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", BACKEND_URL);
-  server.listen({ onUnhandledRequest: "error" });
+  server.listen({ onUnhandledFrame: "error" });
   helpers = await import("../helpers");
 });
 

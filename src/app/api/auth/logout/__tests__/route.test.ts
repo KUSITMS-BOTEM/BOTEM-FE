@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { clearRefreshCookie, cookieHeaderFrom, relayToBackend } from "../../helpers";
 import { POST } from "../route";
@@ -13,7 +13,7 @@ describe("POST /api/auth/logout", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("refreshToken 쿠키를 Cookie 헤더로 전달하고, 백엔드 응답과 무관하게 로컬 쿠키를 지운다", async () => {
-    const response = new Response(null);
+    const response = new NextResponse(null);
     vi.mocked(cookieHeaderFrom).mockReturnValue("refreshToken=abc123");
     vi.mocked(relayToBackend).mockResolvedValue({ response, backendRes: null });
 
@@ -30,7 +30,7 @@ describe("POST /api/auth/logout", () => {
   });
 
   it("refreshToken 쿠키가 없어도 로컬 쿠키 제거를 시도한다", async () => {
-    const response = new Response(null);
+    const response = new NextResponse(null);
     vi.mocked(cookieHeaderFrom).mockReturnValue(undefined);
     vi.mocked(relayToBackend).mockResolvedValue({ response, backendRes: null });
 

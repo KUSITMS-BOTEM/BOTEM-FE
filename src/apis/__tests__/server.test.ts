@@ -9,7 +9,7 @@ let ApiError: (typeof import("@/types/api"))["ApiError"];
 
 beforeAll(async () => {
   vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", BASE_URL);
-  server.listen({ onUnhandledRequest: "error" });
+  server.listen({ onUnhandledFrame: "error" });
   ({ serverApi } = await import("../server"));
   ({ ApiError } = await import("@/types/api"));
 });
