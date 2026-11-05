@@ -37,6 +37,15 @@ type RelayResult = {
 };
 
 export async function relayToBackend(path: string, init: RequestInit): Promise<RelayResult> {
+  // 이 BFF는 로컬 개발 전용 우회 경로(SameSite=Lax 쿠키 문제 해결용)라, 운영 빌드에서는 호출될 일이 없어야 한다.
+  if (process.env.NODE_ENV === "production") {
+    const response = NextResponse.json(
+      { success: false, data: null, error: { code: "NOT_FOUND", message: "Not Found" } },
+      { status: 404 },
+    );
+    return { response, backendRes: null };
+  }
+
   try {
     const backendRes = await fetch(backendUrl(path), init);
     const body = await backendRes.text();
