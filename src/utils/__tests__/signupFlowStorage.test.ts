@@ -27,17 +27,17 @@ describe("setSignupFlow", () => {
     });
   });
 
-  it("step이 firstWish인 state도 정상적으로 저장·조회된다", () => {
-    setSignupFlow({ step: "firstWish", nickname: "보탬이" });
+  it("step이 accountEntry인 state도 정상적으로 저장·조회된다", () => {
+    setSignupFlow({ step: "accountEntry", nickname: "보탬이" });
 
-    expect(getSignupFlow()).toEqual({ step: "firstWish", nickname: "보탬이" });
+    expect(getSignupFlow()).toEqual({ step: "accountEntry", nickname: "보탬이" });
   });
 
   it("여러 번 호출하면 가장 최근 값으로 덮어써진다", () => {
     setSignupFlow({ step: "profile", nickname: "첫번째" });
-    setSignupFlow({ step: "firstWish", nickname: "두번째" });
+    setSignupFlow({ step: "accountEntry", nickname: "두번째" });
 
-    expect(getSignupFlow()).toEqual({ step: "firstWish", nickname: "두번째" });
+    expect(getSignupFlow()).toEqual({ step: "accountEntry", nickname: "두번째" });
   });
 });
 

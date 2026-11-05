@@ -11,6 +11,7 @@ type KakaoLoginRequest = {
 
 type KakaoLoginResponse = {
   accessToken: string;
+  isNewUser: boolean;
 };
 
 export const authService = {

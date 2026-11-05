@@ -24,7 +24,7 @@ const createWrapper = () => {
 
 describe("useKakaoLoginMutation", () => {
   it("mutate 호출 시 authService.postKakaoLogin이 전달한 인자로 호출되고 성공 시 응답 데이터를 받는다", async () => {
-    const response = { accessToken: "access-token" };
+    const response = { accessToken: "access-token", isNewUser: false };
     vi.mocked(authService.postKakaoLogin).mockResolvedValue(response);
     const { result } = renderHook(() => useKakaoLoginMutation(), { wrapper: createWrapper() });
 
