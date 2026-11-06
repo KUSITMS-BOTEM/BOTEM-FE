@@ -12,6 +12,8 @@ import Header from "@/components/Header";
 import SelectBox from "@/components/SelectBox";
 import TextField from "@/components/TextField";
 import Title from "@/components/Title";
+import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
+import { useAuthStore } from "@/store/authStore";
 import { getSignupFlow, setSignupFlow } from "@/utils/signupFlowStorage";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 
@@ -22,6 +24,7 @@ const FIELD_TRANSITION = { delay: 0.8, duration: 0.4, ease: EASE_STANDARD };
 
 export default function ProfileCheck() {
   const router = useRouter();
+  const { mutate: logout } = useLogoutMutation();
   const [nickname, setNickname] = useState("");
   const [birthday, setBirthday] = useState("");
 
@@ -34,11 +37,20 @@ export default function ProfileCheck() {
     router.push("/auth/account-entry");
   };
 
+  const handleBack = () => {
+    logout(undefined, {
+      onSuccess: () => {
+        useAuthStore.getState().clearAccessToken();
+        router.replace("/");
+      },
+    });
+  };
+
   return (
     <MotionConfig reducedMotion="user">
       <Header
         title="회원가입"
-        leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
+        leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: handleBack }}
       />
       <main className="flex flex-col gap-1 px-5">
         <motion.div
