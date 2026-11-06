@@ -20,7 +20,7 @@ export default function BankSelectBottomSheet({
   className,
 }: BankSelectBottomSheetProps) {
   return (
-    <BottomSheet open={open} title="" height="auto" onClose={onClose} className={className}>
+    <BottomSheet open={open} title="" height="max" onClose={onClose} className={className}>
       <p className="text-semantic-text-strong w-full pt-2 pb-5 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-title-a2-z-large)]">
         은행을 선택해주세요
       </p>

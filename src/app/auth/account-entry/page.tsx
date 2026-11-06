@@ -12,7 +12,9 @@ import Header from "@/components/Header";
 import SelectBox from "@/components/SelectBox";
 import TextField from "@/components/TextField";
 import Title from "@/components/Title";
+import { BANKS, type BankCode } from "@/constants/bank";
 import { clearSignupFlow, getSignupFlow } from "@/utils/signupFlowStorage";
+import BankSelectBottomSheet from "@/widgets/transfer/BankSelectBottomSheet";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 
 // Figma "01 모션 토큰" 기준: ease.standard / duration.enter·move / delay.start·stagger / distance.title·field
@@ -23,8 +25,9 @@ const FIELD_TRANSITION = { delay: 0.8, duration: 0.4, ease: EASE_STANDARD };
 export default function AccountEntry() {
   const router = useRouter();
   const [accountNumber, setAccountNumber] = useState("");
-  // 은행 선택 바텀시트는 다음 세션에서 연동 — 그 전까지는 항상 미선택 상태
-  const bank = "";
+  const [bankSheetOpen, setBankSheetOpen] = useState(false);
+  const [selectedBank, setSelectedBank] = useState<BankCode | null>(null);
+  const bankName = BANKS.find(bank => bank.code === selectedBank)?.name ?? "";
 
   useEffect(() => {
     if (getSignupFlow()?.step !== "accountEntry") router.replace("/auth/profile-check");
@@ -67,9 +70,18 @@ export default function AccountEntry() {
             value={accountNumber}
             onChange={event => setAccountNumber(event.target.value)}
           />
-          <SelectBox label="은행" value={bank} />
+          <SelectBox label="은행" value={bankName} onClick={() => setBankSheetOpen(true)} />
         </motion.div>
       </main>
+      <BankSelectBottomSheet
+        open={bankSheetOpen}
+        selectedBank={selectedBank}
+        onSelectBank={code => {
+          setSelectedBank(code);
+          setBankSheetOpen(false);
+        }}
+        onClose={() => setBankSheetOpen(false)}
+      />
       <BottomCTA>
         <Button
           color="neutral"
@@ -81,7 +93,7 @@ export default function AccountEntry() {
         <Button
           color="brand"
           size="xlarge"
-          disabled={!accountNumber || !bank}
+          disabled={!accountNumber || !selectedBank}
           onClick={handleStart}>
           시작하기
         </Button>
