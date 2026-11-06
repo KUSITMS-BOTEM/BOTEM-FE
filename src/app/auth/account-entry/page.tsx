@@ -12,30 +12,50 @@ import Header from "@/components/Header";
 import SelectBox from "@/components/SelectBox";
 import TextField from "@/components/TextField";
 import Title from "@/components/Title";
+import ToastMessage from "@/components/ToastMessage";
 import { BANKS, type BankCode } from "@/constants/bank";
 import { clearSignupFlow, getSignupFlow } from "@/utils/signupFlowStorage";
+import { parseClipboardAccount } from "@/utils/parseClipboardAccount";
 import BankSelectBottomSheet from "@/widgets/transfer/BankSelectBottomSheet";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
+
+import { readClipboardText, resolveClipboardPasteAction } from "./helpers";
 
 // Figma "01 모션 토큰" 기준: ease.standard / duration.enter·move / delay.start·stagger / distance.title·field
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
 const TITLE_TRANSITION = { delay: 0.3, duration: 0.45, ease: EASE_STANDARD };
 const FIELD_TRANSITION = { delay: 0.8, duration: 0.4, ease: EASE_STANDARD };
+const TOAST_DURATION_MS = 2500;
 
 export default function AccountEntry() {
   const router = useRouter();
   const [accountNumber, setAccountNumber] = useState("");
   const [bankSheetOpen, setBankSheetOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState<BankCode | null>(null);
+  const [toastText, setToastText] = useState<string | null>(null);
   const bankName = BANKS.find(bank => bank.code === selectedBank)?.name ?? "";
 
   useEffect(() => {
     if (getSignupFlow()?.step !== "accountEntry") router.replace("/auth/profile-check");
   }, [router]);
 
+  useEffect(() => {
+    if (!toastText) return;
+    const timer = setTimeout(() => setToastText(null), TOAST_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [toastText]);
+
   const handleStart = () => {
     clearSignupFlow();
     router.replace("/main");
+  };
+
+  const handlePasteFromClipboard = async () => {
+    const text = await readClipboardText();
+    const action = resolveClipboardPasteAction(parseClipboardAccount(text));
+    if (action.accountNumber) setAccountNumber(action.accountNumber);
+    if (action.bankCode) setSelectedBank(action.bankCode);
+    if (action.toastText) setToastText(action.toastText);
   };
 
   return (
@@ -55,8 +75,7 @@ export default function AccountEntry() {
             description={"친구들이 보탤 때 이 계좌로 송금해요.\n보탬은 돈을 보관하지 않아요."}
             showButton
             buttonLabel="복사한 계좌 붙여넣기"
-            // 클립보드 붙여넣기 로직은 다음 세션에서 추가 예정
-            onButtonClick={() => {}}
+            onButtonClick={handlePasteFromClipboard}
           />
         </motion.div>
         <motion.div
@@ -71,6 +90,7 @@ export default function AccountEntry() {
             onChange={event => setAccountNumber(event.target.value)}
           />
           <SelectBox label="은행" value={bankName} onClick={() => setBankSheetOpen(true)} />
+          <ToastMessage show={toastText !== null} text={toastText ?? ""} state={false} />
         </motion.div>
       </main>
       <BankSelectBottomSheet
