@@ -65,8 +65,7 @@ export default function ProfileCheck() {
             variant="birth"
             label="생일"
             value={birthday}
-            // 날짜 선택 바텀시트는 이번 범위 밖 — 추후 연결
-            onClick={() => {}}
+            onDateChange={(month, day) => setBirthday(`${month}월 ${day}일`)}
           />
         </motion.div>
       </main>
