@@ -34,7 +34,7 @@ export default function ProfileCheck() {
 
   const handleNext = () => {
     setSignupFlow({ step: "accountEntry", nickname, birthday });
-    router.push("/auth/account-entry");
+    router.push("/auth/payout-account");
   };
 
   const handleBack = () => {

@@ -29,7 +29,7 @@ describe("parseClipboardAccount", () => {
     it("등록된 은행 별칭과 정상 계좌번호면 bankAndAccount를 반환한다", () => {
       expect(parseClipboardAccount("토스 1234567890")).toEqual({
         status: "bankAndAccount",
-        bankCode: "toss",
+        bankCode: "TOSS_BANK",
         accountNumber: "1234567890",
       });
     });
@@ -37,7 +37,7 @@ describe("parseClipboardAccount", () => {
     it("다른 은행 별칭도 bankAndAccount를 반환한다", () => {
       expect(parseClipboardAccount("국민 1234567890")).toEqual({
         status: "bankAndAccount",
-        bankCode: "kb",
+        bankCode: "KB_KOOKMIN",
         accountNumber: "1234567890",
       });
     });
@@ -57,7 +57,7 @@ describe("parseClipboardAccount", () => {
     it("전체 은행명 별칭으로도 bankAndAccount를 반환한다", () => {
       expect(parseClipboardAccount("토스뱅크 1234567890")).toEqual({
         status: "bankAndAccount",
-        bankCode: "toss",
+        bankCode: "TOSS_BANK",
         accountNumber: "1234567890",
       });
     });
@@ -81,7 +81,7 @@ describe("parseClipboardAccount", () => {
     it("은행 별칭 접두사를 분리해 bankAndAccount를 반환한다", () => {
       expect(parseClipboardAccount("토스1234567890")).toEqual({
         status: "bankAndAccount",
-        bankCode: "toss",
+        bankCode: "TOSS_BANK",
         accountNumber: "1234567890",
       });
     });
@@ -89,7 +89,7 @@ describe("parseClipboardAccount", () => {
     it("접두 후보가 여러 개면 가장 긴 별칭으로 분리한다", () => {
       expect(parseClipboardAccount("토스뱅크1234567890")).toEqual({
         status: "bankAndAccount",
-        bankCode: "toss",
+        bankCode: "TOSS_BANK",
         accountNumber: "1234567890",
       });
     });
@@ -117,7 +117,7 @@ describe("parseClipboardAccount", () => {
     it("앞뒤 공백은 trim 후 정상 매칭된다", () => {
       expect(parseClipboardAccount("  토스 1234567890  ")).toEqual({
         status: "bankAndAccount",
-        bankCode: "toss",
+        bankCode: "TOSS_BANK",
         accountNumber: "1234567890",
       });
     });

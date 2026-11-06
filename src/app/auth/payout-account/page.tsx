@@ -16,7 +16,7 @@ import ToastMessage from "@/components/ToastMessage";
 import { BANKS, type BankCode } from "@/constants/bank";
 import { clearSignupFlow, getSignupFlow } from "@/utils/signupFlowStorage";
 import { parseClipboardAccount } from "@/utils/parseClipboardAccount";
-import BankSelectBottomSheet from "@/widgets/transfer/BankSelectBottomSheet";
+import BankSelectBottomSheet from "@/widgets/payout-account/BankSelectBottomSheet";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 
 import { readClipboardText, resolveClipboardPasteAction } from "./helpers";

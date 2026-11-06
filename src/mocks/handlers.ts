@@ -4,7 +4,7 @@ import { delay, http, HttpResponse } from "msw";
 // 로그인 흉내만으론 /main 가드를 통과하지 못한다. 핸들러 안에서 직접 document.cookie를 심어 흉내 낸다.
 const MOCK_REFRESH_TOKEN_COOKIE = "refreshToken";
 
-// 카카오 신규 유저 온보딩(profile-check → account-entry) 테스트용 — 계정 탈퇴 API가 없어 실제 카카오 계정으로는
+// 카카오 신규 유저 온보딩(profile-check → payout-account) 테스트용 — 계정 탈퇴 API가 없어 실제 카카오 계정으로는
 // isNewUser: true를 재현할 수 없어 로그인 교환 응답만 가로채 고정한다. 그 외 요청(카카오 리다이렉트 등)은 그대로 흘려보낸다.
 export const handlers = [
   http.post("/api/auth/kakao/login", async () => {

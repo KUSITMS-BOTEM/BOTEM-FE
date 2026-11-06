@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import BankSelectBottomSheet from "@/widgets/transfer/BankSelectBottomSheet";
+import BankSelectBottomSheet from "@/widgets/payout-account/BankSelectBottomSheet";
 import { BANKS } from "@/constants/bank";
 
 // vitest(jsdom) 환경은 Storybook의 @storybook/nextjs-vite 플러그인과 달리 정적 png import를
 // {src,width,height} 객체가 아닌 문자열로 반환해, next/image가 "width 누락" 에러를 던진다.
-// BANKS의 실제 로고(toss-bank.png, k-bank.png)를 그대로 쓰기 위해 next/image만 단순 img로 대체한다.
+// BANKS의 실제 로고(TOSS_BANK.png, K_BANK.png)를 그대로 쓰기 위해 next/image만 단순 img로 대체한다.
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element
@@ -53,10 +53,10 @@ describe("BankSelectBottomSheet", () => {
   });
 
   it("selectedBank와 일치하는 은행 버튼만 aria-pressed=true이고 나머지는 false다", () => {
-    render(<BankSelectBottomSheet {...baseProps} open selectedBank="kakao" />);
+    render(<BankSelectBottomSheet {...baseProps} open selectedBank="KAKAO_BANK" />);
 
     BANKS.forEach(bank => {
-      const expected = bank.code === "kakao" ? "true" : "false";
+      const expected = bank.code === "KAKAO_BANK" ? "true" : "false";
       expect(screen.getByRole("button", { name: new RegExp(bank.name) })).toHaveAttribute(
         "aria-pressed",
         expected,
@@ -80,10 +80,10 @@ describe("BankSelectBottomSheet", () => {
     const user = userEvent.setup();
     render(<BankSelectBottomSheet {...baseProps} open onSelectBank={handleSelectBank} />);
 
-    await user.click(screen.getByRole("button", { name: "신한" }));
+    await user.click(screen.getByRole("button", { name: "신한은행" }));
 
     expect(handleSelectBank).toHaveBeenCalledTimes(1);
-    expect(handleSelectBank).toHaveBeenCalledWith("shinhan");
+    expect(handleSelectBank).toHaveBeenCalledWith("SHINHAN");
   });
 
   it("닫기 아이콘 클릭 시 onClose가 1회 호출된다", async () => {
