@@ -196,7 +196,7 @@
   --semantic-title-a2-z-small-weak: 600 20px/1.35 A2Z; /** Pretendard SemiBold · 20px · LH 135% · LS -2% */
   --semantic-title-a2-z-small: 700 20px/1.35 A2Z; /** Pretendard Bold · 20px · LH 135% · LS -2% */
   --semantic-title-a2-z-medium: 700 22px/1.35 A2Z; /** Pretendard Bold · 22px · LH 135% · LS -2% */
-  --semantic-title-a2-z-large: 700 24px/1.35 A2Z; /** Pretendard Bold · 24px · LH 135% · LS -2% */
+  --semantic-title-a2-z-large: 600 24px/1.35 A2Z; /** A2Z SemiBold · 24px · LH 135% · LS -2% */
   --margin-screen-compact: 16px; /** 좁은 화면 · 바텀시트 좌우 */
   --margin-screen: 20px; /** 모바일 기본 화면 좌우 */
   --margin-screen-wide: 24px; /** 태블릿 · 넓은 화면 좌우 */
