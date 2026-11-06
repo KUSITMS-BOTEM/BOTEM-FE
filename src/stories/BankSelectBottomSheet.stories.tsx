@@ -2,11 +2,11 @@ import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import Button from "@/components/Button";
-import BankSelectBottomSheet from "@/widgets/transfer/BankSelectBottomSheet";
+import BankSelectBottomSheet from "@/widgets/payout-account/BankSelectBottomSheet";
 import type { BankCode } from "@/constants/bank";
 
 const meta: Meta<typeof BankSelectBottomSheet> = {
-  title: "Widgets/Transfer/BankSelectBottomSheet",
+  title: "Widgets/PayoutAccount/BankSelectBottomSheet",
   component: BankSelectBottomSheet,
   tags: ["autodocs"],
   parameters: {
@@ -48,5 +48,5 @@ export const Default: Story = {
 };
 
 export const WithSelection: Story = {
-  render: () => <BankSelectBottomSheetDemo initialSelectedBank="kakao" />,
+  render: () => <BankSelectBottomSheetDemo initialSelectedBank="KAKAO_BANK" />,
 };

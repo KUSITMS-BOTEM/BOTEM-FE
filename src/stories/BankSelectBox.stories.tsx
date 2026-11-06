@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import BankSelectBox from "@/components/BankSelectBox";
-import KakaoBankLogo from "@/assets/images/banks/kakao-bank.svg?react";
+import KakaoBankLogo from "@/assets/images/banks/KAKAO_BANK.svg?react";
 
 const Logo = () => <KakaoBankLogo className="size-6" />;
 
