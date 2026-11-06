@@ -30,9 +30,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ko" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col pt-[env(safe-area-inset-top)]">
-        <MswProvider>
-          <QueryProvider>{children}</QueryProvider>
-        </MswProvider>
+        {/* 현재 디자인이 모바일 비율만 나와 있어 임시로 폭을 고정함(Figma 디자인 프레임 폭 360px 기준). 태블릿·PC 비율 디자인이 나오면 이 wrapper를 제거할 것 */}
+        <div className="mx-auto flex w-full max-w-[360px] flex-1 flex-col">
+          <MswProvider>
+            <QueryProvider>{children}</QueryProvider>
+          </MswProvider>
+        </div>
       </body>
     </html>
   );
