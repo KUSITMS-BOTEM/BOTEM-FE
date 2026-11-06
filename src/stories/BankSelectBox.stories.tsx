@@ -1,11 +1,10 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import Image from "next/image";
 
 import BankSelectBox from "@/components/BankSelectBox";
-import kakaoBankLogo from "@/assets/images/banks/kakao-bank.png";
+import KakaoBankLogo from "@/assets/images/banks/kakao-bank.svg?react";
 
-const Logo = () => <Image src={kakaoBankLogo} alt="카카오뱅크" className="size-6 object-contain" />;
+const Logo = () => <KakaoBankLogo className="size-6" />;
 
 const meta = {
   title: "Components/BankSelectBox",
