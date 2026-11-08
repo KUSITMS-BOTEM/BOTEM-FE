@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { userService } from "@/apis/user/userService";
 import { queryClient } from "@/lib/queryClient";
 import { clearSignupFlow } from "@/utils/signupFlowStorage";
+import { markWishPromptPending } from "@/utils/wishPromptStorage";
 
 export const useCompleteOnboardingMutation = () => {
   const router = useRouter();
@@ -16,6 +17,7 @@ export const useCompleteOnboardingMutation = () => {
     // onSuccess/onError를 훅 레벨에 둬야 호출 화면이 언마운트돼도 실행된다 (mutate에 넘긴 콜백은 언마운트 시 미실행)
     onSuccess: () => {
       clearSignupFlow();
+      markWishPromptPending();
       router.replace("/main");
     },
     onError: () => {
