@@ -68,8 +68,12 @@ describe("parseClipboardAccount", () => {
   });
 
   describe("공백이 2개 이상인 경우", () => {
-    it("공백 2개(중간 빈 토큰 포함 3토큰)면 notFound를 반환한다", () => {
-      expect(parseClipboardAccount("토스  1234567890")).toEqual({ status: "notFound" });
+    it("연속 공백은 구분자 하나로 처리해 bankAndAccount를 반환한다", () => {
+      expect(parseClipboardAccount("토스  1234567890")).toEqual({
+        status: "bankAndAccount",
+        bankCode: "TOSS_BANK",
+        accountNumber: "1234567890",
+      });
     });
 
     it("토큰이 3개 이상이면 notFound를 반환한다", () => {
@@ -141,6 +145,14 @@ describe("parseClipboardAccount", () => {
 
     it("은행명과 계좌번호 사이에 줄바꿈이 있으면 공백처럼 처리한다", () => {
       expect(parseClipboardAccount("토스뱅크\n1234567890")).toEqual({
+        status: "bankAndAccount",
+        bankCode: "TOSS_BANK",
+        accountNumber: "1234567890",
+      });
+    });
+
+    it("은행명과 계좌번호 사이에 CRLF가 있어도 공백처럼 처리한다", () => {
+      expect(parseClipboardAccount("토스뱅크\r\n1234567890")).toEqual({
         status: "bankAndAccount",
         bankCode: "TOSS_BANK",
         accountNumber: "1234567890",
