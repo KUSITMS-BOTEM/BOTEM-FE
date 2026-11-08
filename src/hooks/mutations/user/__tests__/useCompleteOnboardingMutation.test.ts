@@ -25,7 +25,7 @@ const createWrapper = () => {
 
 const body: RegisterOnboardingRequest = {
   name: "홍길동",
-  birthday: "1999-01-01",
+  birthday: "01-01",
   bank: "KB_KOOKMIN",
   accountNumber: "123456789",
 };

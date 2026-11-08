@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import SelectBox from "@/components/SelectBox";
@@ -114,5 +114,40 @@ describe("SelectBox", () => {
     const wrapper = screen.getByRole("button").parentElement;
 
     expect(wrapper).toHaveClass("mt-4", "w-full");
+  });
+
+  describe("variant=birth", () => {
+    it("날짜를 선택하면 onDateChange가 월·일로 호출된다", () => {
+      const handleDateChange = vi.fn();
+      const { container } = render(
+        <SelectBox variant="birth" label="생일" onDateChange={handleDateChange} />,
+      );
+      const dateInput = container.querySelector('input[type="date"]')!;
+
+      fireEvent.change(dateInput, { target: { value: "2000-03-15" } });
+
+      expect(handleDateChange).toHaveBeenCalledWith(3, 15);
+    });
+
+    it("날짜를 지우면 onDateChange가 (null, null)로 호출된다", () => {
+      const handleDateChange = vi.fn();
+      const { container } = render(
+        <SelectBox variant="birth" label="생일" onDateChange={handleDateChange} />,
+      );
+      const dateInput = container.querySelector('input[type="date"]')!;
+
+      fireEvent.change(dateInput, { target: { value: "2000-03-15" } });
+      fireEvent.change(dateInput, { target: { value: "" } });
+
+      expect(handleDateChange).toHaveBeenLastCalledWith(null, null);
+    });
+
+    it("나머지 props는 감싸는 영역에 그대로 전달된다", () => {
+      const { container } = render(
+        <SelectBox variant="birth" label="생일" aria-label="생일 영역" />,
+      );
+
+      expect(container.querySelector('[aria-label="생일 영역"]')).not.toBeNull();
+    });
   });
 });

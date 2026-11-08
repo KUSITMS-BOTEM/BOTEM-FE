@@ -41,7 +41,7 @@ export const BANKS: Bank[] = [
     code: "TOSS_BANK",
     name: "토스뱅크",
     aliases: ["토스뱅크", "토스"],
-    logo: <Image src={TossBankLogo} alt="토스뱅크" className="size-6 object-contain" />,
+    logo: <Image src={TossBankLogo} alt="" className="size-6 object-contain" />,
   },
   {
     code: "KAKAO_BANK",
@@ -83,7 +83,7 @@ export const BANKS: Bank[] = [
     code: "K_BANK",
     name: "케이뱅크",
     aliases: ["케이뱅크", "K뱅크", "KBank"],
-    logo: <Image src={KBankLogo} alt="케이뱅크" className="size-6 object-contain" />,
+    logo: <Image src={KBankLogo} alt="" className="size-6 object-contain" />,
   },
   {
     code: "IBK",
@@ -122,7 +122,7 @@ export const BANKS: Bank[] = [
     aliases: ["KDB산업은행", "KDB산업", "산업은행", "산업"],
     logo: (
       <span className="bg-semantic-fill-default flex size-6 shrink-0 items-center justify-center overflow-clip rounded-full">
-        <Image src={KdbBankLogo} alt="KDB산업" className="h-3.5 w-auto object-contain" />
+        <Image src={KdbBankLogo} alt="" className="h-3.5 w-auto object-contain" />
       </span>
     ),
   },

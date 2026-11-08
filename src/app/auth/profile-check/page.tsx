@@ -14,7 +14,9 @@ import TextField from "@/components/TextField";
 import Title from "@/components/Title";
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
+import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/store/authStore";
+import type { MyProfile } from "@/types/user/profile";
 import { getSignupFlow, setSignupFlow } from "@/utils/signupFlowStorage";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 
@@ -33,19 +35,21 @@ export default function ProfileCheck() {
   const router = useRouter();
   const { mutate: logout } = useLogoutMutation();
   const { data: profile } = useMyProfileQuery();
-  const [nickname, setNickname] = useState("");
-  const [birthday, setBirthday] = useState("");
-  const [syncedProfile, setSyncedProfile] = useState(profile);
+  const [nickname, setNickname] = useState(() => getSignupFlow()?.nickname ?? "");
+  const [birthday, setBirthday] = useState(() => getSignupFlow()?.birthday ?? "");
+  const [syncedProfile, setSyncedProfile] = useState<MyProfile>();
 
   useEffect(() => {
     if (!getSignupFlow()) router.replace("/");
   }, [router]);
 
   // 렌더 중 state 동기화 — useEffect 안에서 setState하면 커밋 후 리렌더가 한 번 더 발생해 react-hooks/set-state-in-effect에 걸린다
+  // payout-account에서 "이전"으로 돌아온 경우 signupFlow에 저장된 수정값을 우선한다
   if (profile && profile !== syncedProfile) {
     setSyncedProfile(profile);
-    setNickname(profile.nickname);
-    setBirthday(profile.birthday);
+    const flow = getSignupFlow();
+    setNickname(flow?.nickname ?? profile.nickname);
+    setBirthday(flow?.birthday ?? profile.birthday);
   }
 
   const handleNext = () => {
@@ -57,6 +61,7 @@ export default function ProfileCheck() {
     logout(undefined, {
       onSuccess: () => {
         useAuthStore.getState().clearAccessToken();
+        queryClient.removeQueries({ queryKey: ["users", "me"] });
         router.replace("/");
       },
     });
@@ -94,7 +99,11 @@ export default function ProfileCheck() {
             label="생일"
             value={birthday ? formatBirthdayDisplay(birthday) : ""}
             onDateChange={(month, day) =>
-              setBirthday(`${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`)
+              setBirthday(
+                month && day
+                  ? `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+                  : "",
+              )
             }
           />
         </motion.div>

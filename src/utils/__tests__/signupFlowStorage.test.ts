@@ -18,12 +18,12 @@ describe("setSignupFlow", () => {
   });
 
   it("nickname과 birthday를 포함한 state를 저장하면 모든 필드가 그대로 보존된다", () => {
-    setSignupFlow({ step: "profile", nickname: "보탬이", birthday: "2000-01-01" });
+    setSignupFlow({ step: "profile", nickname: "보탬이", birthday: "01-01" });
 
     expect(getSignupFlow()).toEqual({
       step: "profile",
       nickname: "보탬이",
-      birthday: "2000-01-01",
+      birthday: "01-01",
     });
   });
 

@@ -20,10 +20,12 @@ beforeEach(() => {
 
 const baseProps = {
   title: "타이틀",
-  leftButtonLabel: "취소",
-  rightButtonLabel: "확인",
-  onLeftButtonClick: vi.fn(),
-  onRightButtonClick: vi.fn(),
+  buttons: {
+    leftLabel: "취소",
+    rightLabel: "확인",
+    onLeftClick: vi.fn(),
+    onRightClick: vi.fn(),
+  },
   onClose: vi.fn(),
 };
 
@@ -77,7 +79,7 @@ describe("BottomSheet", () => {
     );
   });
 
-  it("왼쪽 버튼을 클릭하면 onLeftButtonClick만 호출된다", async () => {
+  it("왼쪽 버튼을 클릭하면 onLeftClick만 호출된다", async () => {
     const handleLeft = vi.fn();
     const handleRight = vi.fn();
     const user = userEvent.setup();
@@ -86,8 +88,12 @@ describe("BottomSheet", () => {
         {...baseProps}
         open
         height="auto"
-        onLeftButtonClick={handleLeft}
-        onRightButtonClick={handleRight}>
+        buttons={{
+          leftLabel: "취소",
+          rightLabel: "확인",
+          onLeftClick: handleLeft,
+          onRightClick: handleRight,
+        }}>
         본문 내용
       </BottomSheet>,
     );
@@ -98,7 +104,7 @@ describe("BottomSheet", () => {
     expect(handleRight).not.toHaveBeenCalled();
   });
 
-  it("오른쪽 버튼을 클릭하면 onRightButtonClick만 호출된다", async () => {
+  it("오른쪽 버튼을 클릭하면 onRightClick만 호출된다", async () => {
     const handleLeft = vi.fn();
     const handleRight = vi.fn();
     const user = userEvent.setup();
@@ -107,8 +113,12 @@ describe("BottomSheet", () => {
         {...baseProps}
         open
         height="auto"
-        onLeftButtonClick={handleLeft}
-        onRightButtonClick={handleRight}>
+        buttons={{
+          leftLabel: "취소",
+          rightLabel: "확인",
+          onLeftClick: handleLeft,
+          onRightClick: handleRight,
+        }}>
         본문 내용
       </BottomSheet>,
     );
@@ -117,6 +127,17 @@ describe("BottomSheet", () => {
 
     expect(handleRight).toHaveBeenCalledTimes(1);
     expect(handleLeft).not.toHaveBeenCalled();
+  });
+
+  it("buttons를 넘기지 않으면 버튼 영역이 렌더되지 않는다", () => {
+    render(
+      <BottomSheet open height="auto" title="타이틀" onClose={vi.fn()}>
+        본문 내용
+      </BottomSheet>,
+    );
+
+    expect(screen.queryByRole("button", { name: "취소" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "확인" })).not.toBeInTheDocument();
   });
 
   it("닫기 아이콘 클릭 시 onClose가 바로 호출된다", async () => {

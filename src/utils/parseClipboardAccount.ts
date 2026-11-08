@@ -27,7 +27,11 @@ function findBankByAliasPrefix(text: string) {
 }
 
 export function parseClipboardAccount(text: string): ClipboardAccountParseResult {
-  const trimmed = text.trim();
+  // 은행 앱 복사 형식 대응: 계좌번호의 하이픈은 제거하고, 줄바꿈은 공백으로 취급한다
+  const trimmed = text
+    .replace(/[\r\n\t]/g, " ")
+    .replace(/-/g, "")
+    .trim();
   if (!trimmed) return { status: "notFound" };
   if (ACCOUNT_NUMBER_REGEX.test(trimmed)) return { status: "accountOnly", accountNumber: trimmed };
 

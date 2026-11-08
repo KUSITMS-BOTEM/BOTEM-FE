@@ -15,8 +15,9 @@ import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
 import { BANKS, type BankCode } from "@/constants/bank";
 import { useCompleteOnboardingMutation } from "@/hooks/mutations/user/useCompleteOnboardingMutation";
+import { queryClient } from "@/lib/queryClient";
 import { clearSignupFlow, getSignupFlow } from "@/utils/signupFlowStorage";
-import { parseClipboardAccount } from "@/utils/parseClipboardAccount";
+import { ACCOUNT_NUMBER_REGEX, parseClipboardAccount } from "@/utils/parseClipboardAccount";
 import BankSelectBottomSheet from "@/widgets/payout-account/BankSelectBottomSheet";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 
@@ -49,7 +50,12 @@ export default function AccountEntry() {
 
   const handleStart = () => {
     const flow = getSignupFlow();
-    if (!flow?.nickname || !selectedBank) return;
+    if (!flow?.nickname) {
+      alert("에러가 발생했습니다");
+      router.replace("/");
+      return;
+    }
+    if (!selectedBank) return;
 
     completeOnboarding(
       { name: flow.nickname, birthday: flow.birthday, bank: selectedBank, accountNumber },
@@ -57,6 +63,11 @@ export default function AccountEntry() {
         onSuccess: () => {
           clearSignupFlow();
           router.replace("/main");
+        },
+        onError: () => {
+          alert("에러가 발생했습니다");
+          queryClient.removeQueries({ queryKey: ["users", "me"] });
+          router.replace("/");
         },
       },
     );
@@ -85,7 +96,11 @@ export default function AccountEntry() {
     <MotionConfig reducedMotion="user">
       <Header
         title="회원가입"
-        leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.push("/") }}
+        leftItem={{
+          icon: <IconLeft />,
+          ariaLabel: "뒤로 가기",
+          onClick: () => router.push("/auth/profile-check"),
+        }}
       />
       <main className="flex flex-col gap-1 px-5">
         <motion.div
@@ -138,7 +153,7 @@ export default function AccountEntry() {
         <Button
           color="brand"
           size="xlarge"
-          disabled={!accountNumber || !selectedBank}
+          disabled={!ACCOUNT_NUMBER_REGEX.test(accountNumber) || !selectedBank}
           states={isPending ? "loading" : "default"}
           onClick={handleStart}>
           시작하기

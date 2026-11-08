@@ -6,14 +6,18 @@ import { cn } from "@/utils/cn";
 import Button from "@/components/Button";
 import BottomSheetHeader from "@/components/BottomSheetHeader";
 
+type BottomSheetButtons = {
+  leftLabel: string;
+  rightLabel: string;
+  onLeftClick?: () => void;
+  onRightClick?: () => void;
+};
+
 type BottomSheetProps = {
   open: boolean;
   title: string;
   height: "auto" | "max";
-  leftButtonLabel?: string;
-  rightButtonLabel?: string;
-  onLeftButtonClick?: () => void;
-  onRightButtonClick?: () => void;
+  buttons?: BottomSheetButtons;
   onClose: () => void;
   children: ReactNode;
   className?: string;
@@ -33,10 +37,7 @@ export default function BottomSheet({
   open,
   title,
   height,
-  leftButtonLabel,
-  rightButtonLabel,
-  onLeftButtonClick,
-  onRightButtonClick,
+  buttons,
   onClose,
   children,
   className,
@@ -117,7 +118,7 @@ export default function BottomSheet({
                 <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pt-1 pb-4">
                   {children}
                 </div>
-                {leftButtonLabel && rightButtonLabel && (
+                {buttons && (
                   <div className="flex w-full shrink-0 flex-col items-start">
                     <div className="from-semantic-background-default/0 to-semantic-background-default h-9 w-full bg-gradient-to-b" />
                     <div className="bg-semantic-background-default flex w-full items-start justify-center gap-2 px-5 pb-5">
@@ -126,16 +127,16 @@ export default function BottomSheet({
                         variant="weak"
                         size="xlarge"
                         className="flex-1"
-                        onClick={onLeftButtonClick}>
-                        {leftButtonLabel}
+                        onClick={buttons.onLeftClick}>
+                        {buttons.leftLabel}
                       </Button>
                       <Button
                         color="brand"
                         variant="fill"
                         size="xlarge"
                         className="flex-1"
-                        onClick={onRightButtonClick}>
-                        {rightButtonLabel}
+                        onClick={buttons.onRightClick}>
+                        {buttons.rightLabel}
                       </Button>
                     </div>
                   </div>

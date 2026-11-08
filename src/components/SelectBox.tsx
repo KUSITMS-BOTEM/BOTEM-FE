@@ -1,6 +1,7 @@
 import {
   type ButtonHTMLAttributes,
   type ChangeEvent,
+  type HTMLAttributes,
   type ReactNode,
   useId,
   useState,
@@ -24,8 +25,8 @@ type SelectBoxOwnProps = {
   value?: string;
   placeholder?: string;
   helperText?: ReactNode;
-  // variant="birth"에서만 쓰인다. 기기 기본 캘린더로 고른 날짜의 연도를 뺀 월·일만 전달한다.
-  onDateChange?: (month: number, day: number) => void;
+  // variant="birth"에서만 쓰인다. 기기 기본 캘린더로 고른 날짜의 연도를 뺀 월·일만 전달한다. 날짜를 지우면 둘 다 null로 전달된다.
+  onDateChange?: (month: number | null, day: number | null) => void;
 };
 
 type SelectBoxProps = SelectBoxOwnProps &
@@ -57,7 +58,7 @@ export default function SelectBox({
   const handleDateChange = (event: ChangeEvent<HTMLInputElement>) => {
     setPickedDate(event.target.value);
     const [, month, day] = event.target.value.split("-").map(Number);
-    if (month && day) onDateChange?.(month, day);
+    onDateChange?.(month || null, day || null);
   };
 
   const triggerContent = (
@@ -110,7 +111,10 @@ export default function SelectBox({
   return (
     <div className={cn("flex w-full flex-col gap-2", disabled && "opacity-60", className)}>
       {variant === "birth" ? (
-        <div className="bg-semantic-fill-neutral-weak flex w-full flex-col items-start justify-center overflow-clip rounded-3xl border-2 border-transparent px-5 py-3">
+        <div
+          className="bg-semantic-fill-neutral-weak flex w-full flex-col items-start justify-center overflow-clip rounded-3xl border-2 border-transparent px-5 py-3"
+          // button 전용 attrs(type 등)를 제외하면 div와 호환되는 공통 DOM attrs만 남는다
+          {...(props as HTMLAttributes<HTMLDivElement>)}>
           {triggerContent}
         </div>
       ) : (

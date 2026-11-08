@@ -122,4 +122,29 @@ describe("parseClipboardAccount", () => {
       });
     });
   });
+
+  describe("은행 앱 복사 형식(하이픈·줄바꿈)", () => {
+    it("계좌번호에 하이픈이 섞여 있으면 제거한 뒤 매칭한다", () => {
+      expect(parseClipboardAccount("카카오뱅크 3333-01-1234567")).toEqual({
+        status: "bankAndAccount",
+        bankCode: "KAKAO_BANK",
+        accountNumber: "3333011234567",
+      });
+    });
+
+    it("계좌번호만 하이픈과 함께 있어도 accountOnly로 인식한다", () => {
+      expect(parseClipboardAccount("3333-01-1234567")).toEqual({
+        status: "accountOnly",
+        accountNumber: "3333011234567",
+      });
+    });
+
+    it("은행명과 계좌번호 사이에 줄바꿈이 있으면 공백처럼 처리한다", () => {
+      expect(parseClipboardAccount("토스뱅크\n1234567890")).toEqual({
+        status: "bankAndAccount",
+        bankCode: "TOSS_BANK",
+        accountNumber: "1234567890",
+      });
+    });
+  });
 });

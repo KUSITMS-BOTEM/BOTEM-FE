@@ -15,6 +15,17 @@ function unwrap<T>(json: ApiResponse<T>): T | null {
   return json.data;
 }
 
+async function parseDeleteResponse<T>(response: Response): Promise<T | null> {
+  if (response.status === 204 || response.headers.get("content-length") === "0") {
+    return null;
+  }
+
+  const text = await response.text();
+  if (!text) return null;
+
+  return unwrap<T>(JSON.parse(text) as ApiResponse<T>);
+}
+
 type ReissueTokens = {
   accessToken: string;
 };
@@ -131,31 +142,11 @@ export const clientApi = {
       .patch(getUrl(path), { json: body })
       .json<ApiResponse<T>>()
       .then(json => unwrap<T>(json)),
-  delete: async <T>(path: string) => {
-    const response = await clientKy.delete(getUrl(path));
-
-    if (response.status === 204 || response.headers.get("content-length") === "0") {
-      return null as T | null;
-    }
-
-    const text = await response.text();
-    if (!text) return null as T | null;
-
-    return unwrap<T>(JSON.parse(text) as ApiResponse<T>);
-  },
+  delete: <T>(path: string) =>
+    clientKy.delete(getUrl(path)).then(response => parseDeleteResponse<T>(response)),
   // 쿠키(refreshToken)를 다루는 엔드포인트 전용 — 로컬 개발은 BFF(getAuthUrl)로 우회
-  deleteAuth: async <T>(path: string) => {
-    const response = await clientKy.delete(getAuthUrl(path));
-
-    if (response.status === 204 || response.headers.get("content-length") === "0") {
-      return null as T | null;
-    }
-
-    const text = await response.text();
-    if (!text) return null as T | null;
-
-    return unwrap<T>(JSON.parse(text) as ApiResponse<T>);
-  },
+  deleteAuth: <T>(path: string) =>
+    clientKy.delete(getAuthUrl(path)).then(response => parseDeleteResponse<T>(response)),
 };
 
 export { clientApi as api };
