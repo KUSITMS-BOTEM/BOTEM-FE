@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { forwardRefreshCookie, relayToBackend } from "../../../helpers";
+import {
+  forwardIsLoggedInCookie,
+  forwardRefreshCookie,
+  relayToBackend,
+} from "../../../../_lib/helpers";
 import { POST } from "../route";
 
-vi.mock("../../../helpers", () => ({
+vi.mock("../../../../_lib/helpers", () => ({
   relayToBackend: vi.fn(),
   forwardRefreshCookie: vi.fn(),
+  forwardIsLoggedInCookie: vi.fn(),
 }));
 
 describe("POST /api/auth/kakao/login", () => {
@@ -27,6 +32,7 @@ describe("POST /api/auth/kakao/login", () => {
       expect.objectContaining({ method: "POST", body: JSON.stringify({ code: "abc" }) }),
     );
     expect(forwardRefreshCookie).toHaveBeenCalledWith(response, expect.any(Response));
+    expect(forwardIsLoggedInCookie).toHaveBeenCalledWith(response, expect.any(Response));
     expect(result).toBe(response);
   });
 
@@ -42,5 +48,6 @@ describe("POST /api/auth/kakao/login", () => {
     await POST(request);
 
     expect(forwardRefreshCookie).not.toHaveBeenCalled();
+    expect(forwardIsLoggedInCookie).not.toHaveBeenCalled();
   });
 });

@@ -4,6 +4,7 @@ import { parseSetCookieValue } from "@/utils/parseSetCookieValue";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 const REFRESH_TOKEN_COOKIE = "refreshToken";
+const IS_LOGGED_IN_COOKIE = "isLoggedIn";
 
 const backendUrl = (path: string) => `${BACKEND_URL}${path}`;
 
@@ -14,11 +15,11 @@ export function cookieHeaderFrom(request: NextRequest): string | undefined {
 }
 
 // 백엔드 Set-Cookie를 그대로 전달하지 않고 localhost 자신의 명의로 재발급한다 (SameSite=Lax가 다른 site로는 전송되지 않기 때문).
-export function forwardRefreshCookie(response: NextResponse, backendRes: Response) {
-  const parsed = parseSetCookieValue(backendRes.headers.getSetCookie(), REFRESH_TOKEN_COOKIE);
+function syncCookieFromBackend(response: NextResponse, backendRes: Response, name: string) {
+  const parsed = parseSetCookieValue(backendRes.headers.getSetCookie(), name);
   if (!parsed) return;
 
-  response.cookies.set(REFRESH_TOKEN_COOKIE, parsed.value, {
+  response.cookies.set(name, parsed.value, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -27,8 +28,21 @@ export function forwardRefreshCookie(response: NextResponse, backendRes: Respons
   });
 }
 
+export function forwardRefreshCookie(response: NextResponse, backendRes: Response) {
+  syncCookieFromBackend(response, backendRes, REFRESH_TOKEN_COOKIE);
+}
+
+// proxy.ts의 로그인 가드가 isLoggedIn 쿠키를 보므로, 로컬 BFF도 refreshToken과 동일하게 재발급해야 한다.
+export function forwardIsLoggedInCookie(response: NextResponse, backendRes: Response) {
+  syncCookieFromBackend(response, backendRes, IS_LOGGED_IN_COOKIE);
+}
+
 export function clearRefreshCookie(response: NextResponse) {
   response.cookies.delete(REFRESH_TOKEN_COOKIE);
+}
+
+export function clearIsLoggedInCookie(response: NextResponse) {
+  response.cookies.delete(IS_LOGGED_IN_COOKIE);
 }
 
 type RelayResult = {
