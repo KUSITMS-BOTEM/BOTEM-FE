@@ -14,6 +14,7 @@ import TextField from "@/components/TextField";
 import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
 import { BANKS, type BankCode } from "@/constants/bank";
+import { useCompleteOnboardingMutation } from "@/hooks/mutations/user/useCompleteOnboardingMutation";
 import { clearSignupFlow, getSignupFlow } from "@/utils/signupFlowStorage";
 import { parseClipboardAccount } from "@/utils/parseClipboardAccount";
 import BankSelectBottomSheet from "@/widgets/payout-account/BankSelectBottomSheet";
@@ -29,6 +30,7 @@ const TOAST_DURATION_MS = 2500;
 
 export default function AccountEntry() {
   const router = useRouter();
+  const { mutate: completeOnboarding, isPending } = useCompleteOnboardingMutation();
   const [accountNumber, setAccountNumber] = useState("");
   const [bankSheetOpen, setBankSheetOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState<BankCode | null>(null);
@@ -46,8 +48,18 @@ export default function AccountEntry() {
   }, [toastText]);
 
   const handleStart = () => {
-    clearSignupFlow();
-    router.replace("/main");
+    const flow = getSignupFlow();
+    if (!flow?.nickname || !selectedBank) return;
+
+    completeOnboarding(
+      { name: flow.nickname, birthday: flow.birthday, bank: selectedBank, accountNumber },
+      {
+        onSuccess: () => {
+          clearSignupFlow();
+          router.replace("/main");
+        },
+      },
+    );
   };
 
   const handlePasteFromClipboard = async () => {
@@ -127,6 +139,7 @@ export default function AccountEntry() {
           color="brand"
           size="xlarge"
           disabled={!accountNumber || !selectedBank}
+          states={isPending ? "loading" : "default"}
           onClick={handleStart}>
           시작하기
         </Button>

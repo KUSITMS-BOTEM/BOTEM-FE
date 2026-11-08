@@ -45,7 +45,7 @@ export default function ProfileCheck() {
   if (profile && profile !== syncedProfile) {
     setSyncedProfile(profile);
     setNickname(profile.nickname);
-    setBirthday(formatBirthdayDisplay(profile.birthday));
+    setBirthday(profile.birthday);
   }
 
   const handleNext = () => {
@@ -92,8 +92,10 @@ export default function ProfileCheck() {
           <SelectBox
             variant="birth"
             label="생일"
-            value={birthday}
-            onDateChange={(month, day) => setBirthday(`${month}월 ${day}일`)}
+            value={birthday ? formatBirthdayDisplay(birthday) : ""}
+            onDateChange={(month, day) =>
+              setBirthday(`${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`)
+            }
           />
         </motion.div>
       </main>
