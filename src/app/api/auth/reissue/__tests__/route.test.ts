@@ -45,7 +45,7 @@ describe("POST /api/auth/reissue", () => {
     expect(result).toBe(response);
   });
 
-  it("backendRes가 거부 응답이면 로컬 쿠키를 지운다", async () => {
+  it("backendRes가 401/403으로 인증 거부되면 로컬 쿠키를 지운다", async () => {
     const response = new NextResponse(null);
     vi.mocked(cookieHeaderFrom).mockReturnValue("refreshToken=abc123");
     vi.mocked(relayToBackend).mockResolvedValue({
@@ -59,6 +59,24 @@ describe("POST /api/auth/reissue", () => {
 
     expect(clearRefreshCookie).toHaveBeenCalledWith(response);
     expect(clearIsLoggedInCookie).toHaveBeenCalledWith(response);
+    expect(forwardRefreshCookie).not.toHaveBeenCalled();
+    expect(forwardIsLoggedInCookie).not.toHaveBeenCalled();
+  });
+
+  it("backendRes가 5xx면 일시 장애로 보고 로컬 쿠키를 건드리지 않는다", async () => {
+    const response = new NextResponse(null);
+    vi.mocked(cookieHeaderFrom).mockReturnValue("refreshToken=abc123");
+    vi.mocked(relayToBackend).mockResolvedValue({
+      response,
+      backendRes: new Response(null, { status: 503 }),
+    });
+
+    const request = new NextRequest("http://localhost/api/auth/reissue", { method: "POST" });
+
+    await POST(request);
+
+    expect(clearRefreshCookie).not.toHaveBeenCalled();
+    expect(clearIsLoggedInCookie).not.toHaveBeenCalled();
     expect(forwardRefreshCookie).not.toHaveBeenCalled();
     expect(forwardIsLoggedInCookie).not.toHaveBeenCalled();
   });

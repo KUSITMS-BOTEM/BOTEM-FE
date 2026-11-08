@@ -20,8 +20,8 @@ export async function POST(request: NextRequest) {
   if (backendRes?.ok) {
     forwardRefreshCookie(response, backendRes);
     forwardIsLoggedInCookie(response, backendRes);
-  } else if (backendRes) {
-    // 재발급 거부 시 로컬 isLoggedIn이 남으면 proxy가 로그인 화면 진입을 계속 막는다
+  } else if (backendRes?.status === 401 || backendRes?.status === 403) {
+    // 재발급이 인증 거부(401/403)된 경우만 지운다 — 5xx 등 일시 장애로 로그아웃시키지 않기 위해
     clearRefreshCookie(response);
     clearIsLoggedInCookie(response);
   }
