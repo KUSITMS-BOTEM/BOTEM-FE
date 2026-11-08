@@ -140,4 +140,34 @@ describe("AddWishBottomSheet", () => {
       price: "30000",
     });
   });
+
+  it("가격을 입력한 뒤 상품명을 지우면 추가하기 버튼이 다시 비활성화되고 onSubmit이 호출되지 않는다", async () => {
+    const handleSubmit = vi.fn();
+    const user = userEvent.setup();
+    const { container } = render(<AddWishBottomSheet {...baseProps} onSubmit={handleSubmit} />);
+
+    await user.type(
+      screen.getByRole("textbox", { name: "상품 링크" }),
+      "https://www.coupang.com/vp/products/123",
+    );
+    await screen.findByText("상품 사진을 추가해주세요", {}, { timeout: 2000 });
+
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+    await userEvent.upload(fileInput, new File(["dummy"], "photo.png", { type: "image/png" }));
+    await screen.findByText("상품명이 무엇인가요?");
+
+    const nameInput = screen.getByRole("textbox", { name: "상품명" });
+    await user.type(nameInput, "치이카와 인형");
+    await screen.findByText("상품의 가격이 얼마인가요?", {}, { timeout: 2000 });
+
+    await user.type(screen.getByRole("textbox", { name: "가격" }), "30000");
+    await screen.findByText("이대로 위시를 추가할까요?");
+    expect(screen.getByRole("button", { name: "추가하기" })).not.toBeDisabled();
+
+    await user.clear(nameInput);
+
+    expect(screen.getByRole("button", { name: "추가하기" })).toBeDisabled();
+    expect(screen.queryByText("이대로 위시를 추가할까요?")).not.toBeInTheDocument();
+    expect(handleSubmit).not.toHaveBeenCalled();
+  });
 });

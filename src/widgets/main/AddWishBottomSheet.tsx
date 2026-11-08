@@ -55,6 +55,7 @@ export default function AddWishBottomSheet({
     debouncedUrl,
     productImageUrl,
     debouncedName,
+    productName,
     price,
   });
 
@@ -87,6 +88,7 @@ export default function AddWishBottomSheet({
       return;
     }
     if (!productImageUrl) return;
+    if (!productName.trim()) return;
     onSubmit({ productUrl, productImage: productImageUrl, productName, price });
   };
 
