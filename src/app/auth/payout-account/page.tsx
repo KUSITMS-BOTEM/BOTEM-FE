@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ClipboardEvent, useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -58,6 +58,17 @@ export default function AccountEntry() {
     if (action.toastText) setToastText(action.toastText);
   };
 
+  // "은행명 계좌번호" 형식일 때만 가로채 은행까지 채운다. 그 외엔 기본 붙여넣기에 맡겨 숫자만 필터링되게 한다
+  const handleAccountNumberPaste = (event: ClipboardEvent<HTMLInputElement>) => {
+    const action = resolveClipboardPasteAction(
+      parseClipboardAccount(event.clipboardData.getData("text")),
+    );
+    if (!action.bankCode) return;
+    event.preventDefault();
+    setAccountNumber(action.accountNumber ?? "");
+    setSelectedBank(action.bankCode);
+  };
+
   return (
     <MotionConfig reducedMotion="user">
       <Header
@@ -86,8 +97,10 @@ export default function AccountEntry() {
           <TextField
             label="계좌번호"
             placeholder="입력해주세요"
+            inputMode="numeric"
             value={accountNumber}
-            onChange={event => setAccountNumber(event.target.value)}
+            onChange={event => setAccountNumber(event.target.value.replace(/\D/g, ""))}
+            onPaste={handleAccountNumberPaste}
           />
           <SelectBox label="은행" value={bankName} onClick={() => setBankSheetOpen(true)} />
           <ToastMessage show={toastText !== null} text={toastText ?? ""} state={false} />
