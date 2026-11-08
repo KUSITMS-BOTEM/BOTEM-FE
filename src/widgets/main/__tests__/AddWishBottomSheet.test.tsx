@@ -22,9 +22,12 @@ beforeAll(() => {
     this.removeAttribute("open");
     this.dispatchEvent(new Event("close"));
   });
-  // jsdom에는 URL.createObjectURL/revokeObjectURL이 구현되어 있지 않아 AddImage 미리보기용으로 직접 모킹한다
+  // jsdom에는 URL.createObjectURL/revokeObjectURL·createImageBitmap이 구현되어 있지 않아 AddImage 미리보기·디코딩 검증용으로 직접 모킹한다
   URL.createObjectURL = vi.fn(() => "blob:mock-url");
   URL.revokeObjectURL = vi.fn();
+  global.createImageBitmap = vi.fn(() =>
+    Promise.resolve({ close: vi.fn() }),
+  ) as unknown as typeof createImageBitmap;
 });
 
 beforeEach(() => {

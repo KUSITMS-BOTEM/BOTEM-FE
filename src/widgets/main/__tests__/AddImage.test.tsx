@@ -14,11 +14,13 @@ vi.mock("next/image", () => ({
 
 const mockCreateObjectURL = vi.fn(() => "blob:mock-url");
 const mockRevokeObjectURL = vi.fn();
+const mockCreateImageBitmap = vi.fn(() => Promise.resolve({ close: vi.fn() }));
 
-// jsdom에는 URL.createObjectURL/revokeObjectURL이 구현되어 있지 않아 직접 모킹한다.
+// jsdom에는 URL.createObjectURL/revokeObjectURL·createImageBitmap이 구현되어 있지 않아 직접 모킹한다.
 beforeAll(() => {
   URL.createObjectURL = mockCreateObjectURL;
   URL.revokeObjectURL = mockRevokeObjectURL;
+  global.createImageBitmap = mockCreateImageBitmap as unknown as typeof createImageBitmap;
 });
 
 beforeEach(() => {
@@ -58,7 +60,7 @@ describe("AddImage", () => {
     expect(clickSpy).toHaveBeenCalled();
   });
 
-  it("파일 input에서 파일을 선택하면 onChange가 선택된 파일로 호출된다", async () => {
+  it("선택한 파일이 이미지로 디코딩되면 onChange가 해당 파일로 호출된다", async () => {
     const handleChange = vi.fn();
     const file = new File(["dummy"], "photo.png", { type: "image/png" });
     const { container } = render(<AddImage value={null} onChange={handleChange} />);
@@ -67,6 +69,22 @@ describe("AddImage", () => {
     await userEvent.upload(input, file);
 
     expect(handleChange).toHaveBeenCalledWith(file);
+  });
+
+  it("선택한 파일이 이미지로 디코딩되지 않으면 onChange 대신 에러 토스트가 표시된다", async () => {
+    mockCreateImageBitmap.mockRejectedValueOnce(new Error("decode failed"));
+    const handleChange = vi.fn();
+    // 확장자·MIME은 이미지이지만 내용이 손상된 파일(디코딩 실패) 시나리오
+    const file = new File(["corrupted"], "broken.png", { type: "image/png" });
+    const { container } = render(<AddImage value={null} onChange={handleChange} />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+    await userEvent.upload(input, file);
+
+    expect(handleChange).not.toHaveBeenCalled();
+    expect(
+      await screen.findByText("이미지를 불러올 수 없어요. 다른 파일을 선택해주세요"),
+    ).toBeInTheDocument();
   });
 
   it("파일 input에서 파일을 선택하지 않으면 onChange가 호출되지 않는다", () => {
