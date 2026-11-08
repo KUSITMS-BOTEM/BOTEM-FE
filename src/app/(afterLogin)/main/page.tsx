@@ -15,7 +15,7 @@ export default function Main() {
   const router = useRouter();
   const { mutate: logout } = useLogoutMutation();
   const { mutate: withdraw } = useWithdrawMutation();
-  const [wishSheetOpen, setWishSheetOpen] = useState(true);
+  const [wishSheetOpen, setWishSheetOpen] = useState(false);
 
   return (
     <div>
