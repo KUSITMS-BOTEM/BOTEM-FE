@@ -98,14 +98,16 @@ reviews:
     - path: "src/app/**"
       instructions: |
         Next.js App Router 파일을 리뷰할 때 다음을 확인해주세요:
-        - URL·route configuration(page/layout/loading 등)만 존재해야 하며 UI·비즈니스 로직이 섞여 있으면 지적
-        - 페이지 UI는 widgets로 위임하고, app 디렉터리 안에서 직접 데이터 조회·변경 로직을 구현하고 있으면 지적
+        - 페이지 상태·로직을 page.tsx에 두는 것은 이 프로젝트의 기존 관행이므로, 로직이 있다는 이유만으로 widgets 분리를 요구하지 말 것
+        - 함수(컴포넌트) 길이가 JSX 포함 60줄을 넘으면 도메인 로직을 같은 폴더의 helpers.ts로 추출했는지 확인
+        - api를 직접 호출(ky 등)하고 있으면 지적 (hooks를 통한 호출은 허용)
 
     - path: "src/widgets/**"
       instructions: |
         페이지를 구성하는 대단위 UI를 리뷰할 때 다음을 확인해주세요:
         - 도메인 폴더로 구분되어 있는지 확인 (단일 폴더에 여러 도메인 UI가 섞여 있으면 지적)
         - 함수(컴포넌트) 길이가 JSX 포함 60줄을 넘으면 도메인 로직을 같은 폴더의 helpers.ts로 추출했는지 확인
+        - widgets는 페이지의 상태·로직을 반드시 보관해야 하는 곳이 아니므로, page.tsx가 상태를 들고 있다는 이유만으로 widgets로 옮기라고 지적하지 말 것
 
     - path: "src/components/**"
       instructions: |
@@ -161,7 +163,7 @@ reviews:
     - 단순히 줄 수를 줄이려고 의미 없는 헬퍼를 만드는 것은 지양
 
     [아키텍처 의존성 — app(routes) → widgets → hooks → api → Backend]
-    - app(페이지/라우팅)은 widgets에만 의존해야 하며 hooks/api를 직접 호출하면 지적
+    - app(페이지/라우팅)은 widgets·hooks에 의존할 수 있으며, api를 직접 호출(ky 등)하면 지적
     - widgets는 hooks를 통해서만 서버와 통신해야 하며, axios 직접 호출은 지적
     - components는 api에 의존하면 안 되며, axios 직접 호출도 지적
     - hooks(queries/mutations)는 widgets/components를 import하면 안 되며, HTTP 요청은 반드시 api service를 통해 처리
