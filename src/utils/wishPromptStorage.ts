@@ -11,3 +11,7 @@ export const consumeWishPromptPending = (): boolean => {
   sessionStorage.removeItem(WISH_PROMPT_KEY);
   return pending;
 };
+
+export const clearWishPromptPending = () => {
+  sessionStorage.removeItem(WISH_PROMPT_KEY);
+};

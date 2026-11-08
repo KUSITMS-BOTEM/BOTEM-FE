@@ -1,4 +1,8 @@
-import { consumeWishPromptPending, markWishPromptPending } from "../wishPromptStorage";
+import {
+  clearWishPromptPending,
+  consumeWishPromptPending,
+  markWishPromptPending,
+} from "../wishPromptStorage";
 
 beforeEach(() => {
   sessionStorage.clear();
@@ -19,6 +23,16 @@ describe("consumeWishPromptPending", () => {
     markWishPromptPending();
 
     consumeWishPromptPending();
+
+    expect(consumeWishPromptPending()).toBe(false);
+  });
+});
+
+describe("clearWishPromptPending", () => {
+  it("대기 중인 플래그를 제거해 이후 consumeWishPromptPending이 false를 반환한다", () => {
+    markWishPromptPending();
+
+    clearWishPromptPending();
 
     expect(consumeWishPromptPending()).toBe(false);
   });
