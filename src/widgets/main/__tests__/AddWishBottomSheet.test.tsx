@@ -54,7 +54,7 @@ describe("AddWishBottomSheet", () => {
     expect(screen.getByText("아직 상품 링크가 없나요?")).toBeInTheDocument();
   });
 
-  it("유효한 URL을 입력하면 쿠팡 이동 가이드가 사라지고 추가하기 버튼이 활성화된다", async () => {
+  it("유효한 URL을 입력하고 1초가 지나면 쿠팡 이동 가이드가 사라지고 상품 사진 추가 영역이 보인다", async () => {
     const user = userEvent.setup();
     render(<AddWishBottomSheet {...baseProps} />);
 
@@ -63,8 +63,13 @@ describe("AddWishBottomSheet", () => {
       "https://www.coupang.com/vp/products/123",
     );
 
-    expect(screen.queryByText("아직 상품 링크가 없나요?")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "추가하기" })).not.toBeDisabled();
+    await waitFor(
+      () => expect(screen.queryByText("아직 상품 링크가 없나요?")).not.toBeInTheDocument(),
+      { timeout: 2000 },
+    );
+    expect(screen.getByText("상품 사진을 추가해주세요")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "상품 이미지 선택" })).toBeInTheDocument();
   });
 
   it("유효하지 않은 값으로 추가하기를 클릭하면 에러 토스트가 보이고 onSubmit은 호출되지 않는다", async () => {
