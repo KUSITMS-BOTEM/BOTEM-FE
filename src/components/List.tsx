@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
-import Image from "next/image";
+import Image, { type StaticImageData } from "next/image";
 import { cn } from "@/utils/cn";
 import Asset from "@/components/Asset";
 import ListText from "@/components/ListText";
@@ -11,7 +11,7 @@ type ListType = "product" | "default";
 type ListProps = {
   type?: ListType;
   leading?: ReactNode;
-  thumbnailSrc?: string;
+  thumbnailSrc?: string | StaticImageData;
   thumbnailAlt?: string;
   title: string;
   description?: string;
@@ -30,7 +30,7 @@ export default function List({
   className,
 }: ListProps) {
   const isProduct = type === "product";
-  const [failedSrc, setFailedSrc] = useState<string>();
+  const [failedSrc, setFailedSrc] = useState<string | StaticImageData>();
   const showThumbnail = thumbnailSrc && thumbnailSrc !== failedSrc;
 
   return (
