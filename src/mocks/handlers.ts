@@ -1,8 +1,9 @@
 import { delay, http, HttpResponse } from "msw";
 
-// proxy.ts는 refreshToken 쿠키 존재 여부만 보는데, MSW는 응답 바디만 가로채고 실제 백엔드의 Set-Cookie를 거치지 않아
+// proxy.ts는 isLoggedIn 쿠키 존재 여부만 보는데, MSW는 응답 바디만 가로채고 실제 백엔드의 Set-Cookie를 거치지 않아
 // 로그인 흉내만으론 /main 가드를 통과하지 못한다. 핸들러 안에서 직접 document.cookie를 심어 흉내 낸다.
 const MOCK_REFRESH_TOKEN_COOKIE = "refreshToken";
+const MOCK_IS_LOGGED_IN_COOKIE = "isLoggedIn";
 
 // 평범한 문자열이면 isTokenExpired가 JWT로 파싱하지 못해 항상 만료로 보고 매 요청마다 reissue를 탄다
 // (reissue는 mock이 없어 실제 백엔드로 릴레이되다 가짜 쿠키라 401) — exp가 먼 미래인 JWT 형태로 흉내 낸다.
@@ -18,6 +19,7 @@ export const handlers = [
     // 실제 네트워크 왕복 없이 응답이 바로 와서 /auth/callback 경유 화면이 깜빡할 새도 없이 지나가버린다 — 눈으로 보려고 지연을 둔다.
     await delay(1000);
     document.cookie = `${MOCK_REFRESH_TOKEN_COOKIE}=mock-refresh-token; path=/`;
+    document.cookie = `${MOCK_IS_LOGGED_IN_COOKIE}=true; path=/`;
 
     return HttpResponse.json({
       success: true,
@@ -27,6 +29,7 @@ export const handlers = [
   }),
   http.post("/api/auth/logout", () => {
     document.cookie = `${MOCK_REFRESH_TOKEN_COOKIE}=; path=/; max-age=0`;
+    document.cookie = `${MOCK_IS_LOGGED_IN_COOKIE}=; path=/; max-age=0`;
 
     return HttpResponse.json({ success: true, data: null, error: null });
   }),
@@ -51,6 +54,7 @@ export const handlers = [
   }),
   http.delete("/api/users/me", () => {
     document.cookie = `${MOCK_REFRESH_TOKEN_COOKIE}=; path=/; max-age=0`;
+    document.cookie = `${MOCK_IS_LOGGED_IN_COOKIE}=; path=/; max-age=0`;
 
     return HttpResponse.json({ success: true, data: null, error: null });
   }),
