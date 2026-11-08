@@ -13,6 +13,7 @@ import SelectBox from "@/components/SelectBox";
 import TextField from "@/components/TextField";
 import Title from "@/components/Title";
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
+import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { useAuthStore } from "@/store/authStore";
 import { getSignupFlow, setSignupFlow } from "@/utils/signupFlowStorage";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
@@ -22,15 +23,30 @@ const EASE_STANDARD = [0.2, 0, 0, 1] as const;
 const TITLE_TRANSITION = { delay: 0.3, duration: 0.45, ease: EASE_STANDARD };
 const FIELD_TRANSITION = { delay: 0.8, duration: 0.4, ease: EASE_STANDARD };
 
+// SelectBox의 onDateChange가 쓰는 표시 형식과 동일하게 맞춘다 ("MM-DD" → "M월 D일")
+const formatBirthdayDisplay = (birthday: string) => {
+  const [month, day] = birthday.split("-").map(Number);
+  return `${month}월 ${day}일`;
+};
+
 export default function ProfileCheck() {
   const router = useRouter();
   const { mutate: logout } = useLogoutMutation();
+  const { data: profile } = useMyProfileQuery();
   const [nickname, setNickname] = useState("");
   const [birthday, setBirthday] = useState("");
+  const [syncedProfile, setSyncedProfile] = useState(profile);
 
   useEffect(() => {
     if (!getSignupFlow()) router.replace("/");
   }, [router]);
+
+  // 렌더 중 state 동기화 — useEffect 안에서 setState하면 커밋 후 리렌더가 한 번 더 발생해 react-hooks/set-state-in-effect에 걸린다
+  if (profile && profile !== syncedProfile) {
+    setSyncedProfile(profile);
+    setNickname(profile.nickname);
+    setBirthday(formatBirthdayDisplay(profile.birthday));
+  }
 
   const handleNext = () => {
     setSignupFlow({ step: "accountEntry", nickname, birthday });
