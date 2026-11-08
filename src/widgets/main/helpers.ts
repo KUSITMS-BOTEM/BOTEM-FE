@@ -1,8 +1,31 @@
+import { isValidUrl } from "@/utils/isValidUrl";
+
 type WishStageTitleParams = {
   isLinkValid: boolean;
   showNameField: boolean;
   showPriceField: boolean;
   isPriceEntered: boolean;
+};
+
+type WishStageFlagsParams = {
+  debouncedUrl: string;
+  productImageUrl: File | null;
+  debouncedName: string;
+  price: string;
+};
+
+export const resolveWishStageFlags = ({
+  debouncedUrl,
+  productImageUrl,
+  debouncedName,
+  price,
+}: WishStageFlagsParams) => {
+  const isLinkValid = debouncedUrl.trim().length > 0 && isValidUrl(debouncedUrl);
+  const showNameField = isLinkValid && productImageUrl !== null;
+  const showPriceField = showNameField && debouncedName.trim().length > 0;
+  const isPriceEntered = price.length > 0;
+
+  return { isLinkValid, showNameField, showPriceField, isPriceEntered };
 };
 
 export const resolveWishStageTitle = ({

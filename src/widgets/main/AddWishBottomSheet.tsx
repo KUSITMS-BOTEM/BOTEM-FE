@@ -11,7 +11,7 @@ import ToastMessage from "@/components/ToastMessage";
 import { isValidUrl } from "@/utils/isValidUrl";
 import AddImage from "@/widgets/main/AddImage";
 import CoupangMoveGuide from "@/widgets/main/CoupangMoveGuide";
-import { resolveWishStageTitle } from "@/widgets/main/helpers";
+import { resolveWishStageFlags, resolveWishStageTitle } from "@/widgets/main/helpers";
 
 // 시트가 다 올라온 뒤(스프링 delay 0.05 + duration 0.55 ≈ 0.6s) 내부 콘텐츠가 나타나도록 지연시킨다
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
@@ -44,10 +44,12 @@ export default function AddWishBottomSheet({
   const [price, setPrice] = useState("");
   const [toastText, setToastText] = useState<string | null>(null);
 
-  const isLinkValid = debouncedUrl.trim().length > 0 && isValidUrl(debouncedUrl);
-  const showNameField = isLinkValid && productImageUrl !== null;
-  const showPriceField = showNameField && debouncedName.trim().length > 0;
-  const isPriceEntered = price.length > 0;
+  const { isLinkValid, showNameField, showPriceField, isPriceEntered } = resolveWishStageFlags({
+    debouncedUrl,
+    productImageUrl,
+    debouncedName,
+    price,
+  });
 
   // 입력이 멈춘 뒤 1초가 지나야 링크 형식을 검사해, 타이핑 도중에는 타이틀·AddImage·가이드·토스트가 흔들리지 않게 한다
   useEffect(() => {
