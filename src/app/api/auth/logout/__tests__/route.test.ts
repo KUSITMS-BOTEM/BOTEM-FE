@@ -5,10 +5,10 @@ import {
   clearRefreshCookie,
   cookieHeaderFrom,
   relayToBackend,
-} from "../../helpers";
+} from "../../../_lib/helpers";
 import { POST } from "../route";
 
-vi.mock("../../helpers", () => ({
+vi.mock("../../../_lib/helpers", () => ({
   relayToBackend: vi.fn(),
   clearRefreshCookie: vi.fn(),
   clearIsLoggedInCookie: vi.fn(),

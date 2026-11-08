@@ -1,6 +1,10 @@
 import { type NextRequest } from "next/server";
 
-import { forwardIsLoggedInCookie, forwardRefreshCookie, relayToBackend } from "../../helpers";
+import {
+  forwardIsLoggedInCookie,
+  forwardRefreshCookie,
+  relayToBackend,
+} from "../../../_lib/helpers";
 
 export async function POST(request: NextRequest) {
   const body = await request.text();

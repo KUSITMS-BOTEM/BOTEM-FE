@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { forwardIsLoggedInCookie, forwardRefreshCookie, relayToBackend } from "../../../helpers";
+import {
+  forwardIsLoggedInCookie,
+  forwardRefreshCookie,
+  relayToBackend,
+} from "../../../../_lib/helpers";
 import { POST } from "../route";
 
-vi.mock("../../../helpers", () => ({
+vi.mock("../../../../_lib/helpers", () => ({
   relayToBackend: vi.fn(),
   forwardRefreshCookie: vi.fn(),
   forwardIsLoggedInCookie: vi.fn(),

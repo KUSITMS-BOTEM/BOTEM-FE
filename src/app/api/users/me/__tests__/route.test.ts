@@ -5,11 +5,11 @@ import {
   clearRefreshCookie,
   cookieHeaderFrom,
   relayToBackend,
-} from "@/app/api/auth/helpers";
+} from "@/app/api/_lib/helpers";
 
 import { DELETE } from "../route";
 
-vi.mock("@/app/api/auth/helpers", () => ({
+vi.mock("@/app/api/_lib/helpers", () => ({
   relayToBackend: vi.fn(),
   clearRefreshCookie: vi.fn(),
   clearIsLoggedInCookie: vi.fn(),

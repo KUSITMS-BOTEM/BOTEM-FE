@@ -5,7 +5,7 @@ import {
   clearRefreshCookie,
   cookieHeaderFrom,
   relayToBackend,
-} from "@/app/api/auth/helpers";
+} from "@/app/api/_lib/helpers";
 
 export async function DELETE(request: NextRequest) {
   const cookie = cookieHeaderFrom(request);

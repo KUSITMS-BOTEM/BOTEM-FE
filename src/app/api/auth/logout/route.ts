@@ -5,7 +5,7 @@ import {
   clearRefreshCookie,
   cookieHeaderFrom,
   relayToBackend,
-} from "../helpers";
+} from "../../_lib/helpers";
 
 export async function POST(request: NextRequest) {
   const cookie = cookieHeaderFrom(request);
