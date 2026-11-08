@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef } from "react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 
+import LoadingAnimation from "@/components/LoadingAnimation";
 import { useKakaoLoginMutation } from "@/hooks/mutations/auth/useKakaoLoginMutation";
 
 import { handleKakaoCallback, redirectToLandingAfterFailure } from "./helpers";
@@ -28,7 +29,15 @@ function CallbackContent() {
     handleKakaoCallback(code, searchParams.get("state"), mutate, router);
   }, [searchParams, mutate, router]);
 
-  return <div>카카오 로그인 콜백 페이지 — 로그인 처리 중</div>;
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="bg-semantic-background-dim fixed inset-0 flex items-center justify-center">
+      <LoadingAnimation size="large" color="white" />
+      <span className="sr-only">로그인 처리 중입니다</span>
+    </div>
+  );
 }
 
 export default function Callback() {

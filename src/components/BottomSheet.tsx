@@ -6,14 +6,18 @@ import { cn } from "@/utils/cn";
 import Button from "@/components/Button";
 import BottomSheetHeader from "@/components/BottomSheetHeader";
 
+type BottomSheetButtons = {
+  leftLabel: string;
+  rightLabel: string;
+  onLeftClick?: () => void;
+  onRightClick?: () => void;
+};
+
 type BottomSheetProps = {
   open: boolean;
   title: string;
   height: "auto" | "max";
-  leftButtonLabel: string;
-  rightButtonLabel: string;
-  onLeftButtonClick: () => void;
-  onRightButtonClick: () => void;
+  buttons?: BottomSheetButtons;
   onClose: () => void;
   children: ReactNode;
   className?: string;
@@ -33,10 +37,7 @@ export default function BottomSheet({
   open,
   title,
   height,
-  leftButtonLabel,
-  rightButtonLabel,
-  onLeftButtonClick,
-  onRightButtonClick,
+  buttons,
   onClose,
   children,
   className,
@@ -117,27 +118,29 @@ export default function BottomSheet({
                 <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pt-1 pb-4">
                   {children}
                 </div>
-                <div className="flex w-full shrink-0 flex-col items-start">
-                  <div className="from-semantic-background-default/0 to-semantic-background-default h-9 w-full bg-gradient-to-b" />
-                  <div className="bg-semantic-background-default flex w-full items-start justify-center gap-2 px-5 pb-5">
-                    <Button
-                      color="neutral"
-                      variant="weak"
-                      size="xlarge"
-                      className="flex-1"
-                      onClick={onLeftButtonClick}>
-                      {leftButtonLabel}
-                    </Button>
-                    <Button
-                      color="brand"
-                      variant="fill"
-                      size="xlarge"
-                      className="flex-1"
-                      onClick={onRightButtonClick}>
-                      {rightButtonLabel}
-                    </Button>
+                {buttons && (
+                  <div className="flex w-full shrink-0 flex-col items-start">
+                    <div className="from-semantic-background-default/0 to-semantic-background-default h-9 w-full bg-gradient-to-b" />
+                    <div className="bg-semantic-background-default flex w-full items-start justify-center gap-2 px-5 pb-5">
+                      <Button
+                        color="neutral"
+                        variant="weak"
+                        size="xlarge"
+                        className="flex-1"
+                        onClick={buttons.onLeftClick}>
+                        {buttons.leftLabel}
+                      </Button>
+                      <Button
+                        color="brand"
+                        variant="fill"
+                        size="xlarge"
+                        className="flex-1"
+                        onClick={buttons.onRightClick}>
+                        {buttons.rightLabel}
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
                 {/* -bottom-6 오프셋은 height와 무관하게 시트 하단을 뷰포트보다 24px 아래에 고정하므로, 버튼 영역이 가려지지 않도록 두 모드 모두에서 여백을 채워준다 */}
                 <div aria-hidden className="bg-semantic-fill-default h-6 w-full shrink-0" />
               </motion.div>

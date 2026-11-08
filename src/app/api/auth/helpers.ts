@@ -49,9 +49,10 @@ export async function relayToBackend(path: string, init: RequestInit): Promise<R
   try {
     const backendRes = await fetch(backendUrl(path), init);
     const body = await backendRes.text();
-    const response = new NextResponse(body, {
+    // 204/205/304는 body가 null이어야 하며, 빈 문자열이라도 넘기면 NextResponse 생성자가 던진다.
+    const response = new NextResponse(body || null, {
       status: backendRes.status,
-      headers: { "Content-Type": "application/json" },
+      headers: body ? { "Content-Type": "application/json" } : undefined,
     });
     return { response, backendRes };
   } catch {

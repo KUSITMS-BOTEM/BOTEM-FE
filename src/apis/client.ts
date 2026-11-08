@@ -15,6 +15,30 @@ function unwrap<T>(json: ApiResponse<T>): T | null {
   return json.data;
 }
 
+// 502 등 게이트웨이 오류는 JSON이 아닌 HTML body를 반환해 JSON.parse가 SyntaxError를 던진다 —
+// 전역 에러 핸들러가 error.message를 그대로 노출하므로 사용자에게 보여줄 수 있는 ApiError로 바꿔준다.
+function toJsonParseError(error: unknown): never {
+  if (error instanceof SyntaxError) {
+    throw new ApiError("INVALID_RESPONSE", "서버 응답을 처리할 수 없습니다.");
+  }
+  throw error;
+}
+
+async function parseDeleteResponse<T>(response: Response): Promise<T | null> {
+  if (response.status === 204 || response.headers.get("content-length") === "0") {
+    return null;
+  }
+
+  const text = await response.text();
+  if (!text) return null;
+
+  try {
+    return unwrap<T>(JSON.parse(text) as ApiResponse<T>);
+  } catch (error) {
+    return toJsonParseError(error);
+  }
+}
+
 type ReissueTokens = {
   accessToken: string;
 };
@@ -109,40 +133,33 @@ export const clientApi = {
     clientKy
       .get(getUrl(path), { searchParams: params })
       .json<ApiResponse<T>>()
-      .then(json => unwrap<T>(json)),
+      .then(json => unwrap<T>(json), toJsonParseError),
   post: <T>(path: string, body?: unknown, options?: { timeout?: number | false }) =>
     clientKy
       .post(getUrl(path), { json: body, timeout: options?.timeout })
       .json<ApiResponse<T>>()
-      .then(json => unwrap<T>(json)),
+      .then(json => unwrap<T>(json), toJsonParseError),
   // 쿠키(refreshToken)를 다루는 엔드포인트 전용 — 로컬 개발은 BFF(getAuthUrl)로 우회
   postAuth: <T>(path: string, body?: unknown) =>
     clientKy
       .post(getAuthUrl(path), { json: body })
       .json<ApiResponse<T>>()
-      .then(json => unwrap<T>(json)),
+      .then(json => unwrap<T>(json), toJsonParseError),
   put: <T>(path: string, body?: unknown) =>
     clientKy
       .put(getUrl(path), { json: body })
       .json<ApiResponse<T>>()
-      .then(json => unwrap<T>(json)),
+      .then(json => unwrap<T>(json), toJsonParseError),
   patch: <T>(path: string, body?: unknown) =>
     clientKy
       .patch(getUrl(path), { json: body })
       .json<ApiResponse<T>>()
-      .then(json => unwrap<T>(json)),
-  delete: async <T>(path: string) => {
-    const response = await clientKy.delete(getUrl(path));
-
-    if (response.status === 204 || response.headers.get("content-length") === "0") {
-      return null as T | null;
-    }
-
-    const text = await response.text();
-    if (!text) return null as T | null;
-
-    return unwrap<T>(JSON.parse(text) as ApiResponse<T>);
-  },
+      .then(json => unwrap<T>(json), toJsonParseError),
+  delete: <T>(path: string) =>
+    clientKy.delete(getUrl(path)).then(response => parseDeleteResponse<T>(response)),
+  // 쿠키(refreshToken)를 다루는 엔드포인트 전용 — 로컬 개발은 BFF(getAuthUrl)로 우회
+  deleteAuth: <T>(path: string) =>
+    clientKy.delete(getAuthUrl(path)).then(response => parseDeleteResponse<T>(response)),
 };
 
 export { clientApi as api };

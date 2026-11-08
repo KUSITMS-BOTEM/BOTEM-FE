@@ -5,6 +5,9 @@ export const queryClient = new QueryClient({
     onError: error => alert(error.message),
   }),
   mutationCache: new MutationCache({
-    onError: error => alert(error.message),
+    onError: (error, _variables, _context, mutation) => {
+      if (mutation.meta?.skipGlobalError) return;
+      alert(error.message);
+    },
   }),
 });
