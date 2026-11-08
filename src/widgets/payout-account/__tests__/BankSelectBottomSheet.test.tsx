@@ -80,7 +80,7 @@ describe("BankSelectBottomSheet", () => {
     const user = userEvent.setup();
     render(<BankSelectBottomSheet {...baseProps} open onSelectBank={handleSelectBank} />);
 
-    await user.click(screen.getByRole("button", { name: "신한은행" }));
+    await user.click(screen.getByRole("button", { name: "신한" }));
 
     expect(handleSelectBank).toHaveBeenCalledTimes(1);
     expect(handleSelectBank).toHaveBeenCalledWith("SHINHAN");
