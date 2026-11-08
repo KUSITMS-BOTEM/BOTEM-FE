@@ -42,13 +42,6 @@ export default function FloatingButton({ items, onSelect, className }: FloatingB
           "pointer-events-none fixed inset-x-0 bottom-0 z-10 flex items-center justify-end px-5 pb-5",
           className,
         )}>
-        {open && (
-          <MenuDropdown
-            items={items}
-            onSelect={handleSelect}
-            className="pointer-events-auto absolute right-5 bottom-full mb-3"
-          />
-        )}
         <button
           type="button"
           aria-label={open ? "추가 메뉴 닫기" : "추가 메뉴 열기"}
@@ -67,6 +60,13 @@ export default function FloatingButton({ items, onSelect, className }: FloatingB
             )}
           />
         </button>
+        {open && (
+          <MenuDropdown
+            items={items}
+            onSelect={handleSelect}
+            className="pointer-events-auto absolute right-5 bottom-full mb-3"
+          />
+        )}
       </div>
     </>
   );
