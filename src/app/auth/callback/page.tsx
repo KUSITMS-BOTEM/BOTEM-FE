@@ -30,7 +30,7 @@ function CallbackContent() {
   }, [searchParams, mutate, router]);
 
   return (
-    <div className="bg-semantic-background-dim flex h-screen items-center justify-center">
+    <div className="bg-semantic-background-dim fixed inset-0 flex items-center justify-center">
       <LoadingAnimation size="large" color="white" />
     </div>
   );
