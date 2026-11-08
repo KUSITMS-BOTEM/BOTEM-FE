@@ -45,7 +45,7 @@ export default function ProfileCheck() {
 
   // 렌더 중 state 동기화 — useEffect 안에서 setState하면 커밋 후 리렌더가 한 번 더 발생해 react-hooks/set-state-in-effect에 걸린다
   // payout-account에서 "이전"으로 돌아온 경우 signupFlow에 저장된 수정값을 우선한다
-  if (profile && profile !== syncedProfile) {
+  if (profile && !syncedProfile) {
     setSyncedProfile(profile);
     const flow = getSignupFlow();
     setNickname(flow?.nickname ?? profile.nickname);
