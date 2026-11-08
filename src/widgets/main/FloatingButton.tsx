@@ -45,6 +45,7 @@ export default function FloatingButton({ items, onSelect, className }: FloatingB
         <button
           type="button"
           aria-label={open ? "추가 메뉴 닫기" : "추가 메뉴 열기"}
+          aria-expanded={open}
           onClick={() => setOpen(prev => !prev)}
           className={cn(
             "group pointer-events-auto relative flex size-12 cursor-pointer items-center justify-center rounded-full transition-transform active:scale-95",
