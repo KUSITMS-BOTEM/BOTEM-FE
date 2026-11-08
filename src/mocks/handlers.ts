@@ -49,4 +49,9 @@ export const handlers = [
     await delay(800);
     return HttpResponse.json({ success: true, data: null, error: null });
   }),
+  http.delete("/api/users/me", () => {
+    document.cookie = `${MOCK_REFRESH_TOKEN_COOKIE}=; path=/; max-age=0`;
+
+    return HttpResponse.json({ success: true, data: null, error: null });
+  }),
 ];

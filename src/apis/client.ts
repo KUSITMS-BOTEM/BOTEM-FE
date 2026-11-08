@@ -143,6 +143,19 @@ export const clientApi = {
 
     return unwrap<T>(JSON.parse(text) as ApiResponse<T>);
   },
+  // 쿠키(refreshToken)를 다루는 엔드포인트 전용 — 로컬 개발은 BFF(getAuthUrl)로 우회
+  deleteAuth: async <T>(path: string) => {
+    const response = await clientKy.delete(getAuthUrl(path));
+
+    if (response.status === 204 || response.headers.get("content-length") === "0") {
+      return null as T | null;
+    }
+
+    const text = await response.text();
+    if (!text) return null as T | null;
+
+    return unwrap<T>(JSON.parse(text) as ApiResponse<T>);
+  },
 };
 
 export { clientApi as api };
