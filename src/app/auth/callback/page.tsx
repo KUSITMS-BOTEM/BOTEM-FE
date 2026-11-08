@@ -30,8 +30,12 @@ function CallbackContent() {
   }, [searchParams, mutate, router]);
 
   return (
-    <div className="bg-semantic-background-dim fixed inset-0 flex items-center justify-center">
+    <div
+      role="status"
+      aria-live="polite"
+      className="bg-semantic-background-dim fixed inset-0 flex items-center justify-center">
       <LoadingAnimation size="large" color="white" />
+      <span className="sr-only">로그인 처리 중입니다</span>
     </div>
   );
 }
