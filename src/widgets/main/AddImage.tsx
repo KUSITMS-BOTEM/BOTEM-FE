@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 
 import Image from "next/image";
 
@@ -15,13 +15,19 @@ type AddImageProps = {
 
 export default function AddImage({ value, onChange, className }: AddImageProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const previewUrl = useMemo(() => (value ? URL.createObjectURL(value) : null), [value]);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!value) return;
+    const url = URL.createObjectURL(value);
+    // objectURL 생성이 브라우저 리소스를 할당하는 부수효과라 렌더/useMemo가 아닌 이펙트에서 생성·해제를 같이 묶어야 함
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPreviewUrl(url);
     return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      URL.revokeObjectURL(url);
+      setPreviewUrl(null);
     };
-  }, [previewUrl]);
+  }, [value]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
