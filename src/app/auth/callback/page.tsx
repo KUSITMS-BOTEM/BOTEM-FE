@@ -31,7 +31,7 @@ function CallbackContent() {
 
   return (
     <div className="bg-semantic-background-dim flex h-screen items-center justify-center">
-      <LoadingAnimation size="large" color="black" />
+      <LoadingAnimation size="large" color="white" />
     </div>
   );
 }
