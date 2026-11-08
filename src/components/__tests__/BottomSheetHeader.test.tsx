@@ -25,4 +25,18 @@ describe("BottomSheetHeader", () => {
 
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
+
+  it("showHandle을 생략하면 드래그 핸들이 보인다", () => {
+    const { container } = render(<BottomSheetHeader title="타이틀" onClose={vi.fn()} />);
+
+    expect(container.querySelector(".bg-semantic-border-default")).toBeInTheDocument();
+  });
+
+  it("showHandle이 false면 드래그 핸들이 보이지 않는다", () => {
+    const { container } = render(
+      <BottomSheetHeader title="타이틀" onClose={vi.fn()} showHandle={false} />,
+    );
+
+    expect(container.querySelector(".bg-semantic-border-default")).not.toBeInTheDocument();
+  });
 });

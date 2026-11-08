@@ -62,8 +62,8 @@ describe("BottomSheet", () => {
       </BottomSheet>,
     );
 
-    expect(container.querySelector(".rounded-t-xxx-large")?.className).toContain(
-      "h-[calc(100dvh_-_env(safe-area-inset-top)_-_32px)]",
+    expect(container.querySelector(".overflow-clip")?.className).toContain(
+      "h-[calc(100dvh_-_env(safe-area-inset-top)_+_24px)]",
     );
   });
 
@@ -74,9 +74,33 @@ describe("BottomSheet", () => {
       </BottomSheet>,
     );
 
-    expect(container.querySelector(".rounded-t-xxx-large")?.className).toContain(
+    expect(container.querySelector(".overflow-clip")?.className).toContain(
       "max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_32px)]",
     );
+  });
+
+  it('height="max"면 상단 모서리가 둥글지 않고 드래그 핸들이 보이지 않는다', () => {
+    const { container } = render(
+      <BottomSheet {...baseProps} open height="max">
+        본문 내용
+      </BottomSheet>,
+    );
+
+    expect(container.querySelector(".overflow-clip")?.className).not.toContain(
+      "rounded-t-xxx-large",
+    );
+    expect(container.querySelector(".bg-semantic-border-default")).not.toBeInTheDocument();
+  });
+
+  it('height="auto"면 상단 모서리가 둥글고 드래그 핸들이 보인다', () => {
+    const { container } = render(
+      <BottomSheet {...baseProps} open height="auto">
+        본문 내용
+      </BottomSheet>,
+    );
+
+    expect(container.querySelector(".overflow-clip")?.className).toContain("rounded-t-xxx-large");
+    expect(container.querySelector(".bg-semantic-border-default")).toBeInTheDocument();
   });
 
   it("왼쪽 버튼을 클릭하면 onLeftClick만 호출된다", async () => {

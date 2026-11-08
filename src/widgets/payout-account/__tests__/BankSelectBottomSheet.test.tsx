@@ -99,6 +99,6 @@ describe("BankSelectBottomSheet", () => {
   it("className을 전달하면 BottomSheet 시트 요소에 반영된다", () => {
     const { container } = render(<BankSelectBottomSheet {...baseProps} open className="mt-4" />);
 
-    expect(container.querySelector(".rounded-t-xxx-large")?.className).toContain("mt-4");
+    expect(container.querySelector(".overflow-clip")?.className).toContain("mt-4");
   });
 });

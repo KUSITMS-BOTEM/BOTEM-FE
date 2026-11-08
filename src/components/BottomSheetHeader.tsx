@@ -6,6 +6,7 @@ type BottomSheetHeaderProps = {
   title: string;
   titleId?: string;
   onClose: () => void;
+  showHandle?: boolean;
   className?: string;
 };
 
@@ -13,15 +14,19 @@ export default function BottomSheetHeader({
   title,
   titleId,
   onClose,
+  showHandle = true,
   className,
 }: BottomSheetHeaderProps) {
   return (
     <div
       className={cn(
-        "from-semantic-background-default to-semantic-background-default/0 relative flex h-16 w-full shrink-0 flex-col items-center justify-between bg-gradient-to-b py-2 backdrop-blur-[2px]",
+        "from-semantic-background-default to-semantic-background-default/0 relative flex h-16 w-full shrink-0 flex-col items-center bg-gradient-to-b py-2 backdrop-blur-[2px]",
+        showHandle ? "justify-between" : "justify-center",
         className,
       )}>
-      <div className="bg-semantic-border-default h-1.5 w-[46px] shrink-0 rounded-full" />
+      {showHandle && (
+        <div className="bg-semantic-border-default h-1.5 w-[46px] shrink-0 rounded-full" />
+      )}
       <div className="flex h-[42px] items-center justify-center">
         <p
           id={titleId}
