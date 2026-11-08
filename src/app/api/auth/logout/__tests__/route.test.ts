@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { clearRefreshCookie, cookieHeaderFrom, relayToBackend } from "../../helpers";
+import {
+  clearIsLoggedInCookie,
+  clearRefreshCookie,
+  cookieHeaderFrom,
+  relayToBackend,
+} from "../../helpers";
 import { POST } from "../route";
 
 vi.mock("../../helpers", () => ({
   relayToBackend: vi.fn(),
   clearRefreshCookie: vi.fn(),
+  clearIsLoggedInCookie: vi.fn(),
   cookieHeaderFrom: vi.fn(),
 }));
 
@@ -26,6 +32,7 @@ describe("POST /api/auth/logout", () => {
       expect.objectContaining({ headers: { Cookie: "refreshToken=abc123" } }),
     );
     expect(clearRefreshCookie).toHaveBeenCalledWith(response);
+    expect(clearIsLoggedInCookie).toHaveBeenCalledWith(response);
     expect(result).toBe(response);
   });
 
@@ -43,5 +50,6 @@ describe("POST /api/auth/logout", () => {
       expect.objectContaining({ headers: undefined }),
     );
     expect(clearRefreshCookie).toHaveBeenCalledWith(response);
+    expect(clearIsLoggedInCookie).toHaveBeenCalledWith(response);
   });
 });

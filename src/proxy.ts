@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
-  const isLoggedIn = Boolean(request.cookies.get("isLoggedIn"));
+  const isLoggedIn = request.cookies.get("isLoggedIn")?.value === "true";
   const isLandingPage = request.nextUrl.pathname === "/";
 
   if (isLoggedIn && isLandingPage) {

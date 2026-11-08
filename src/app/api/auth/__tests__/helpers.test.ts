@@ -71,6 +71,39 @@ describe("clearRefreshCookie", () => {
   });
 });
 
+describe("forwardIsLoggedInCookie", () => {
+  it("백엔드 Set-Cookie의 isLoggedIn 값을 로컬 쿠키로 재발급한다", () => {
+    const backendRes = new Response(null, {
+      headers: { "set-cookie": "isLoggedIn=true; Max-Age=604800; Path=/" },
+    });
+    const response = NextResponse.json({});
+
+    helpers.forwardIsLoggedInCookie(response, backendRes);
+
+    expect(response.cookies.get("isLoggedIn")?.value).toBe("true");
+  });
+
+  it("대상 Set-Cookie가 없으면 쿠키를 설정하지 않는다", () => {
+    const backendRes = new Response(null);
+    const response = NextResponse.json({});
+
+    helpers.forwardIsLoggedInCookie(response, backendRes);
+
+    expect(response.cookies.get("isLoggedIn")).toBeUndefined();
+  });
+});
+
+describe("clearIsLoggedInCookie", () => {
+  it("isLoggedIn 쿠키를 제거한다", () => {
+    const response = NextResponse.json({});
+    response.cookies.set("isLoggedIn", "true");
+
+    helpers.clearIsLoggedInCookie(response);
+
+    expect(response.cookies.get("isLoggedIn")?.value).toBe("");
+  });
+});
+
 describe("relayToBackend", () => {
   it("운영 환경에서는 백엔드를 호출하지 않고 404를 반환한다", async () => {
     vi.stubEnv("NODE_ENV", "production");

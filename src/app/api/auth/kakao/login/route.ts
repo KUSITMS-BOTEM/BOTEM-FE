@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 
-import { forwardRefreshCookie, relayToBackend } from "../../helpers";
+import { forwardIsLoggedInCookie, forwardRefreshCookie, relayToBackend } from "../../helpers";
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -11,6 +11,9 @@ export async function POST(request: NextRequest) {
     body,
   });
 
-  if (backendRes) forwardRefreshCookie(response, backendRes);
+  if (backendRes) {
+    forwardRefreshCookie(response, backendRes);
+    forwardIsLoggedInCookie(response, backendRes);
+  }
   return response;
 }

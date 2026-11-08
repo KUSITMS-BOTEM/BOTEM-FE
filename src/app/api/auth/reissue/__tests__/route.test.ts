@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { cookieHeaderFrom, forwardRefreshCookie, relayToBackend } from "../../helpers";
+import {
+  cookieHeaderFrom,
+  forwardIsLoggedInCookie,
+  forwardRefreshCookie,
+  relayToBackend,
+} from "../../helpers";
 import { POST } from "../route";
 
 vi.mock("../../helpers", () => ({
   relayToBackend: vi.fn(),
   forwardRefreshCookie: vi.fn(),
+  forwardIsLoggedInCookie: vi.fn(),
   cookieHeaderFrom: vi.fn(),
 }));
 
@@ -26,6 +32,7 @@ describe("POST /api/auth/reissue", () => {
       expect.objectContaining({ headers: { Cookie: "refreshToken=abc123" } }),
     );
     expect(forwardRefreshCookie).toHaveBeenCalledWith(response, expect.any(Response));
+    expect(forwardIsLoggedInCookie).toHaveBeenCalledWith(response, expect.any(Response));
     expect(result).toBe(response);
   });
 
@@ -39,5 +46,6 @@ describe("POST /api/auth/reissue", () => {
     await POST(request);
 
     expect(forwardRefreshCookie).not.toHaveBeenCalled();
+    expect(forwardIsLoggedInCookie).not.toHaveBeenCalled();
   });
 });

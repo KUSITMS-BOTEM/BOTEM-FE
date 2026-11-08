@@ -1,6 +1,11 @@
 import { type NextRequest } from "next/server";
 
-import { clearRefreshCookie, cookieHeaderFrom, relayToBackend } from "@/app/api/auth/helpers";
+import {
+  clearIsLoggedInCookie,
+  clearRefreshCookie,
+  cookieHeaderFrom,
+  relayToBackend,
+} from "@/app/api/auth/helpers";
 
 export async function DELETE(request: NextRequest) {
   const cookie = cookieHeaderFrom(request);
@@ -15,6 +20,9 @@ export async function DELETE(request: NextRequest) {
     headers,
   });
 
-  if (backendRes?.ok) clearRefreshCookie(response);
+  if (backendRes?.ok) {
+    clearRefreshCookie(response);
+    clearIsLoggedInCookie(response);
+  }
   return response;
 }
