@@ -11,19 +11,22 @@ import ToastMessage from "@/components/ToastMessage";
 import { isValidUrl } from "@/utils/isValidUrl";
 import AddImage from "@/widgets/main/AddImage";
 import CoupangMoveGuide from "@/widgets/main/CoupangMoveGuide";
+import { resolveWishStageTitle } from "@/widgets/main/helpers";
 
 // 시트가 다 올라온 뒤(스프링 delay 0.05 + duration 0.55 ≈ 0.6s) 내부 콘텐츠가 나타나도록 지연시킨다
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
 const TITLE_TRANSITION = { delay: 0.6, duration: 0.45, ease: EASE_STANDARD };
 const FIELD_TRANSITION = { delay: 0.9, duration: 0.4, ease: EASE_STANDARD };
+const FIELD_ENTER_TRANSITION = { duration: 0.3, ease: EASE_STANDARD };
 const TOAST_DURATION_MS = 2500;
-const LINK_CHECK_DEBOUNCE_MS = 1000;
+const INPUT_DEBOUNCE_MS = 1000;
+const PRODUCT_NAME_MAX_LENGTH = 20;
 const INVALID_LINK_MESSAGE = "올바른 링크 형식이 아니에요";
 
 type AddWishBottomSheetProps = {
   open: boolean;
   onClose: () => void;
-  onSubmit: (productLink: string) => void;
+  onSubmit: (productUrl: string) => void;
   className?: string;
 };
 
@@ -33,23 +36,35 @@ export default function AddWishBottomSheet({
   onSubmit,
   className,
 }: AddWishBottomSheetProps) {
-  const [productLink, setProductLink] = useState("");
-  const [debouncedLink, setDebouncedLink] = useState("");
-  const [productImage, setProductImage] = useState<File | null>(null);
+  const [productUrl, setProductUrl] = useState("");
+  const [debouncedUrl, setDebouncedUrl] = useState("");
+  const [productImageUrl, setProductImageUrl] = useState<File | null>(null);
+  const [productName, setProductName] = useState("");
+  const [debouncedName, setDebouncedName] = useState("");
+  const [price, setPrice] = useState("");
   const [toastText, setToastText] = useState<string | null>(null);
 
-  const isLinkValid = debouncedLink.trim().length > 0 && isValidUrl(debouncedLink);
+  const isLinkValid = debouncedUrl.trim().length > 0 && isValidUrl(debouncedUrl);
+  const showNameField = isLinkValid && productImageUrl !== null;
+  const showPriceField = showNameField && debouncedName.trim().length > 0;
+  const isPriceEntered = price.length > 0;
 
   // 입력이 멈춘 뒤 1초가 지나야 링크 형식을 검사해, 타이핑 도중에는 타이틀·AddImage·가이드·토스트가 흔들리지 않게 한다
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedLink(productLink);
+      setDebouncedUrl(productUrl);
       setToastText(
-        productLink.trim().length === 0 || isValidUrl(productLink) ? null : INVALID_LINK_MESSAGE,
+        productUrl.trim().length === 0 || isValidUrl(productUrl) ? null : INVALID_LINK_MESSAGE,
       );
-    }, LINK_CHECK_DEBOUNCE_MS);
+    }, INPUT_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [productLink]);
+  }, [productUrl]);
+
+  // 상품명 입력이 멈춘 뒤 1초가 지나야 가격 단계로 넘어간다
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedName(productName), INPUT_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [productName]);
 
   useEffect(() => {
     if (!toastText) return;
@@ -58,12 +73,19 @@ export default function AddWishBottomSheet({
   }, [toastText]);
 
   const handleSubmit = () => {
-    if (!isValidUrl(productLink)) {
+    if (!isValidUrl(productUrl)) {
       setToastText(INVALID_LINK_MESSAGE);
       return;
     }
-    onSubmit(productLink);
+    onSubmit(productUrl);
   };
+
+  const title = resolveWishStageTitle({
+    isLinkValid,
+    showNameField,
+    showPriceField,
+    isPriceEntered,
+  });
 
   return (
     <BottomSheet
@@ -75,17 +97,14 @@ export default function AddWishBottomSheet({
       buttons={{
         rightLabel: "추가하기",
         onRightClick: handleSubmit,
-        rightDisabled: productLink.trim().length === 0,
+        rightDisabled: !isPriceEntered,
       }}>
       <motion.div
         initial={{ opacity: 0, y: 32 }}
         animate={{ opacity: 1, y: 0 }}
         transition={TITLE_TRANSITION}
         className="w-full">
-        <Title
-          type="a2z"
-          title={isLinkValid ? "상품 사진을\n추가해주세요" : "갖고 싶은 상품 링크를\n넣어주세요"}
-        />
+        <Title type="a2z" title={title} />
       </motion.div>
       <motion.div
         initial={{ opacity: 0, y: 28 }}
@@ -93,22 +112,60 @@ export default function AddWishBottomSheet({
         transition={FIELD_TRANSITION}
         className="flex w-full flex-col gap-4">
         <AnimatePresence initial={false}>
+          {showPriceField && (
+            <motion.div
+              key="price-field"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={FIELD_ENTER_TRANSITION}>
+              <TextField
+                label="가격"
+                placeholder="입력해주세요"
+                suffix="원"
+                inputMode="numeric"
+                autoComplete="off"
+                value={price}
+                onChange={event => setPrice(event.target.value.replace(/\D/g, ""))}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <AnimatePresence initial={false}>
+          {showNameField && (
+            <motion.div
+              key="name-field"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={FIELD_ENTER_TRANSITION}>
+              <TextField
+                label="상품명"
+                placeholder="입력해주세요"
+                maxLength={PRODUCT_NAME_MAX_LENGTH}
+                value={productName}
+                onChange={event => setProductName(event.target.value)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <AnimatePresence initial={false}>
           {isLinkValid && (
             <motion.div
               key="add-image"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3, ease: EASE_STANDARD }}>
-              <AddImage value={productImage} onChange={setProductImage} />
+              transition={FIELD_ENTER_TRANSITION}>
+              <AddImage value={productImageUrl} onChange={setProductImageUrl} />
             </motion.div>
           )}
         </AnimatePresence>
         <TextField
           label="상품 링크"
           placeholder="입력해주세요"
-          value={productLink}
-          onChange={event => setProductLink(event.target.value)}
+          value={productUrl}
+          onChange={event => setProductUrl(event.target.value)}
         />
         <ToastMessage show={toastText !== null} text={toastText ?? ""} state={false} />
         {!isLinkValid && <CoupangMoveGuide />}
