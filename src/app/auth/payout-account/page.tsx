@@ -15,8 +15,7 @@ import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
 import { BANKS, type BankCode } from "@/constants/bank";
 import { useCompleteOnboardingMutation } from "@/hooks/mutations/user/useCompleteOnboardingMutation";
-import { queryClient } from "@/lib/queryClient";
-import { clearSignupFlow, getSignupFlow } from "@/utils/signupFlowStorage";
+import { getSignupFlow } from "@/utils/signupFlowStorage";
 import { ACCOUNT_NUMBER_REGEX, parseClipboardAccount } from "@/utils/parseClipboardAccount";
 import BankSelectBottomSheet from "@/widgets/payout-account/BankSelectBottomSheet";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
@@ -57,20 +56,12 @@ export default function AccountEntry() {
     }
     if (!selectedBank) return;
 
-    completeOnboarding(
-      { name: flow.nickname, birthday: flow.birthday, bank: selectedBank, accountNumber },
-      {
-        onSuccess: () => {
-          clearSignupFlow();
-          router.replace("/main");
-        },
-        onError: () => {
-          alert("에러가 발생했습니다");
-          queryClient.removeQueries({ queryKey: ["users", "me"] });
-          router.replace("/");
-        },
-      },
-    );
+    completeOnboarding({
+      name: flow.nickname,
+      birthday: flow.birthday,
+      bank: selectedBank,
+      accountNumber,
+    });
   };
 
   const handlePasteFromClipboard = async () => {

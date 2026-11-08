@@ -5,12 +5,18 @@ import { renderHook, waitFor } from "@testing-library/react";
 
 import { userService } from "@/apis/user/userService";
 import { useCompleteOnboardingMutation } from "@/hooks/mutations/user/useCompleteOnboardingMutation";
+import { setSignupFlow } from "@/utils/signupFlowStorage";
 import type { RegisterOnboardingRequest } from "@/types/user/onboarding";
 
 vi.mock("@/apis/user/userService", () => ({
   userService: {
     completeOnboarding: vi.fn(),
   },
+}));
+
+const replace = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace }),
 }));
 
 const createWrapper = () => {
@@ -31,8 +37,13 @@ const body: RegisterOnboardingRequest = {
 };
 
 describe("useCompleteOnboardingMutation", () => {
-  it("mutate 호출 시 userService.completeOnboarding이 올바른 body로 호출되고 성공 시 isSuccess가 true가 된다", async () => {
+  beforeEach(() => {
+    replace.mockClear();
+  });
+
+  it("성공 시 signupFlow를 비우고 /main으로 이동한다 (호출 화면이 언마운트돼도 실행돼야 함)", async () => {
     vi.mocked(userService.completeOnboarding).mockResolvedValue(null);
+    setSignupFlow({ step: "accountEntry" });
     const { result } = renderHook(() => useCompleteOnboardingMutation(), {
       wrapper: createWrapper(),
     });
@@ -41,9 +52,11 @@ describe("useCompleteOnboardingMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(userService.completeOnboarding).toHaveBeenCalledWith(body, expect.anything());
+    expect(sessionStorage.getItem("signupFlow")).toBeNull();
+    expect(replace).toHaveBeenCalledWith("/main");
   });
 
-  it("userService.completeOnboarding이 실패하면 mutation이 error 상태가 된다", async () => {
+  it("userService.completeOnboarding이 실패하면 mutation이 error 상태가 되고 /로 이동한다", async () => {
     const error = new Error("온보딩 완료 실패");
     vi.mocked(userService.completeOnboarding).mockRejectedValue(error);
     const { result } = renderHook(() => useCompleteOnboardingMutation(), {
@@ -54,5 +67,6 @@ describe("useCompleteOnboardingMutation", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBe(error);
+    expect(replace).toHaveBeenCalledWith("/");
   });
 });
