@@ -28,10 +28,12 @@ function BottomSheetDemo({ height }: { height: "auto" | "max" }) {
         open={open}
         title="타이틀 최대 한줄"
         height={height}
-        leftButtonLabel="버튼"
-        rightButtonLabel="버튼"
-        onLeftButtonClick={() => setOpen(false)}
-        onRightButtonClick={() => setOpen(false)}
+        buttons={{
+          leftLabel: "버튼",
+          rightLabel: "버튼",
+          onLeftClick: () => setOpen(false),
+          onRightClick: () => setOpen(false),
+        }}
         onClose={() => setOpen(false)}>
         {height === "max" ? (
           Array.from({ length: 20 }, (_, index) => (
