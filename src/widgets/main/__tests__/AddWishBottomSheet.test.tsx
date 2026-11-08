@@ -108,7 +108,7 @@ describe("AddWishBottomSheet", () => {
     );
   }, 8000);
 
-  it("링크 → 사진 → 상품명 → 가격을 모두 채우면 추가하기 버튼이 활성화되고 onSubmit이 링크로 호출된다", async () => {
+  it("링크 → 사진 → 상품명 → 가격을 모두 채우면 추가하기 버튼이 활성화되고 onSubmit이 입력값 전체로 호출된다", async () => {
     const handleSubmit = vi.fn();
     const user = userEvent.setup();
     const { container } = render(<AddWishBottomSheet {...baseProps} onSubmit={handleSubmit} />);
@@ -118,7 +118,8 @@ describe("AddWishBottomSheet", () => {
     await screen.findByText("상품 사진을 추가해주세요", {}, { timeout: 2000 });
 
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
-    await userEvent.upload(fileInput, new File(["dummy"], "photo.png", { type: "image/png" }));
+    const productImage = new File(["dummy"], "photo.png", { type: "image/png" });
+    await userEvent.upload(fileInput, productImage);
     await screen.findByText("상품명이 무엇인가요?");
 
     await user.type(screen.getByRole("textbox", { name: "상품명" }), "치이카와 인형");
@@ -132,6 +133,11 @@ describe("AddWishBottomSheet", () => {
     await user.click(submitButton);
 
     expect(handleSubmit).toHaveBeenCalledTimes(1);
-    expect(handleSubmit).toHaveBeenCalledWith(productLink);
+    expect(handleSubmit).toHaveBeenCalledWith({
+      productUrl: productLink,
+      productImage,
+      productName: "치이카와 인형",
+      price: "30000",
+    });
   });
 });

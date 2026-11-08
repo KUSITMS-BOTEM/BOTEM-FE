@@ -23,10 +23,17 @@ const INPUT_DEBOUNCE_MS = 1000;
 const PRODUCT_NAME_MAX_LENGTH = 20;
 const INVALID_LINK_MESSAGE = "올바른 링크 형식이 아니에요";
 
+type AddWishPayload = {
+  productUrl: string;
+  productImage: File;
+  productName: string;
+  price: string;
+};
+
 type AddWishBottomSheetProps = {
   open: boolean;
   onClose: () => void;
-  onSubmit: (productUrl: string) => void;
+  onSubmit: (payload: AddWishPayload) => void;
   className?: string;
 };
 
@@ -79,7 +86,8 @@ export default function AddWishBottomSheet({
       setToastText(INVALID_LINK_MESSAGE);
       return;
     }
-    onSubmit(productUrl);
+    if (!productImageUrl) return;
+    onSubmit({ productUrl, productImage: productImageUrl, productName, price });
   };
 
   const title = resolveWishStageTitle({
