@@ -16,6 +16,9 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "public/mockServiceWorker.js",
+    // orval 생성 코드 (orval.config.ts) — 수동 작성 코드의 lint 규칙 대상이 아님
+    "src/apis/generated/**",
+    "src/mocks/generated/**",
   ]),
   ...storybook.configs["flat/recommended"],
 ]);
