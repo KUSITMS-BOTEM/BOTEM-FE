@@ -63,3 +63,6 @@ node_modules/
 
 *storybook.log
 storybook-static
+
+# lighthouse ci 로컬 측정 결과
+.lighthouseci

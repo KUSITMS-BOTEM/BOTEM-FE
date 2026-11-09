@@ -1,0 +1,58 @@
+name: Lighthouse
+
+on:
+  pull_request:
+    branches: [dev, main]
+
+# 같은 PR에 새 커밋이 올라오면 이전 실행은 취소
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build
+
+      # 점수 기준은 lighthouserc.json에서 warn으로만 두어 PR을 막지 않는다
+      - name: Lighthouse 측정
+        run: pnpm exec lhci autorun
+
+      - name: 결과 요약
+        if: ${{ !cancelled() }}
+        run: |
+          LINKS=".lighthouseci/links.json"
+          if [ ! -f "$LINKS" ]; then
+            echo "### ⚠️ Lighthouse 리포트를 만들지 못했습니다" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          {
+            echo "### 🔦 Lighthouse 결과"
+            echo "| 페이지 | 성능 | 접근성 | 권장사항 | SEO | 리포트 |"
+            echo "|---|---|---|---|---|---|"
+            # 여러 번 측정한 결과 중 lhci가 대표로 고른 실행(isRepresentativeRun)의 점수를 쓴다
+            jq -r --slurpfile links "$LINKS" '
+              def pct(k): (.summary[k] // 0) * 100 | round;
+              .[] | select(.isRepresentativeRun)
+              | "| \(.url) | \(pct("performance")) | \(pct("accessibility")) | \(pct("best-practices")) | \(pct("seo")) | [보기](\($links[0][.url])) |"
+            ' .lighthouseci/manifest.json
+          } >> "$GITHUB_STEP_SUMMARY"
