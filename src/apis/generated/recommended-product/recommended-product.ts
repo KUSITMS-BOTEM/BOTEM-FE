@@ -23,6 +23,10 @@ import type {
   GetRecommendedProductsParams,
 } from "../model";
 
+import { customFetch } from "../../orvalFetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
@@ -73,17 +77,12 @@ export const getGetRecommendedProductsUrl = (params?: GetRecommendedProductsPara
  */
 export const getRecommendedProducts = async (
   params?: GetRecommendedProductsParams,
-  options?: RequestInit,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<getRecommendedProductsResponse> => {
-  const res = await fetch(getGetRecommendedProductsUrl(params), {
+  return customFetch<getRecommendedProductsResponse>(getGetRecommendedProductsUrl(params), {
     ...options,
     method: "GET",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getRecommendedProductsResponse["data"] = body !== null ? body : "";
-  return { data, status: res.status, headers: res.headers } as getRecommendedProductsResponse;
 };
 
 export const getGetRecommendedProductsQueryKey = (params?: GetRecommendedProductsParams) => {
@@ -99,15 +98,15 @@ export const getGetRecommendedProductsQueryOptions = <
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData>
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getGetRecommendedProductsQueryKey(params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecommendedProducts>>> = ({ signal }) =>
-    getRecommendedProducts(params, { signal, ...fetchOptions });
+    getRecommendedProducts(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getRecommendedProducts>>,
@@ -144,7 +143,7 @@ export function useGetRecommendedProducts<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -171,7 +170,7 @@ export function useGetRecommendedProducts<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -190,7 +189,7 @@ export function useGetRecommendedProducts<
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData>
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -209,7 +208,7 @@ export function useGetRecommendedProducts<
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData>
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -245,17 +244,12 @@ export const getGetRecommendedProductUrl = (productId: number) => {
  */
 export const getRecommendedProduct = async (
   productId: number,
-  options?: RequestInit,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<getRecommendedProductResponse> => {
-  const res = await fetch(getGetRecommendedProductUrl(productId), {
+  return customFetch<getRecommendedProductResponse>(getGetRecommendedProductUrl(productId), {
     ...options,
     method: "GET",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getRecommendedProductResponse["data"] = body !== null ? body : "";
-  return { data, status: res.status, headers: res.headers } as getRecommendedProductResponse;
 };
 
 export const getGetRecommendedProductQueryKey = (productId: number) => {
@@ -271,15 +265,15 @@ export const getGetRecommendedProductQueryOptions = <
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData>
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getGetRecommendedProductQueryKey(productId);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecommendedProduct>>> = ({ signal }) =>
-    getRecommendedProduct(productId, { signal, ...fetchOptions });
+    getRecommendedProduct(productId, { signal, ...requestOptions });
 
   return {
     queryKey,
@@ -319,7 +313,7 @@ export function useGetRecommendedProduct<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -346,7 +340,7 @@ export function useGetRecommendedProduct<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -365,7 +359,7 @@ export function useGetRecommendedProduct<
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData>
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -384,7 +378,7 @@ export function useGetRecommendedProduct<
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData>
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

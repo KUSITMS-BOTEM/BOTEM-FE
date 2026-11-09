@@ -22,6 +22,10 @@ import type {
 
 import type { GetKakaoLoginUriParams, KakaoLoginRequest } from "../model";
 
+import { customFetch } from "../../orvalFetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
@@ -60,33 +64,30 @@ export const getReissueUrl = () => {
  *             API 요청이 `AUTH_003`(만료된 토큰)으로 실패하면 이 API를 호출합니다.
  * @summary 토큰 재발급
  */
-export const reissue = async (options?: RequestInit): Promise<reissueResponse> => {
-  const res = await fetch(getReissueUrl(), {
+export const reissue = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<reissueResponse> => {
+  return customFetch<reissueResponse>(getReissueUrl(), {
     ...options,
     method: "POST",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: reissueResponse["data"] = body ? JSON.parse(body) : {};
-  return { data, status: res.status, headers: res.headers } as reissueResponse;
 };
 
 export const getReissueMutationKey = () => ["reissue"] as const;
 
 export const getReissueMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<Awaited<ReturnType<typeof reissue>>, TError, void, TContext>;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<Awaited<ReturnType<typeof reissue>>, TError, void, TContext> => {
   const mutationKey = getReissueMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<Awaited<ReturnType<typeof reissue>>, void> = () => {
-    return reissue(fetchOptions);
+    return reissue(requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -107,7 +108,7 @@ export type ReissueMutationError = unknown;
 export const useReissue = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<Awaited<ReturnType<typeof reissue>>, TError, void, TContext>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof reissue>>, TError, void, TContext> => {
@@ -135,33 +136,30 @@ export const getLogoutUrl = () => {
  *             요청에 `credentials: 'include'`를 설정해야 하며, 클라이언트는 보관 중인 Access 토큰을 폐기해야 합니다.
  * @summary 로그아웃
  */
-export const logout = async (options?: RequestInit): Promise<logoutResponse> => {
-  const res = await fetch(getLogoutUrl(), {
+export const logout = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<logoutResponse> => {
+  return customFetch<logoutResponse>(getLogoutUrl(), {
     ...options,
     method: "POST",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: logoutResponse["data"] = body ? JSON.parse(body) : {};
-  return { data, status: res.status, headers: res.headers } as logoutResponse;
 };
 
 export const getLogoutMutationKey = () => ["logout"] as const;
 
 export const getLogoutMutationOptions = <TError = unknown, TContext = unknown>(options?: {
   mutation?: UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError, void, TContext>;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError, void, TContext> => {
   const mutationKey = getLogoutMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<Awaited<ReturnType<typeof logout>>, void> = () => {
-    return logout(fetchOptions);
+    return logout(requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -181,7 +179,7 @@ export type LogoutMutationError = unknown;
 export const useLogout = <TError = unknown, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError, void, TContext>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof logout>>, TError, void, TContext> => {
@@ -217,7 +215,7 @@ export const getKakaoLoginUrl = () => {
  */
 export const kakaoLogin = async (
   kakaoLoginRequest: KakaoLoginRequest,
-  options?: RequestInit,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<kakaoLoginResponse> => {
   const getHeaders = (
     h?: NonNullable<RequestInit["headers"]>,
@@ -235,17 +233,12 @@ export const kakaoLogin = async (
     }
     return headers;
   };
-  const res = await fetch(getKakaoLoginUrl(), {
+  return customFetch<kakaoLoginResponse>(getKakaoLoginUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(kakaoLoginRequest),
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: kakaoLoginResponse["data"] = body ? JSON.parse(body) : {};
-  return { data, status: res.status, headers: res.headers } as kakaoLoginResponse;
 };
 
 export const getKakaoLoginMutationKey = () => ["kakaoLogin"] as const;
@@ -257,7 +250,7 @@ export const getKakaoLoginMutationOptions = <TError = unknown, TContext = unknow
     KakaoLoginMutationVariables,
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof kakaoLogin>>,
   TError,
@@ -265,11 +258,11 @@ export const getKakaoLoginMutationOptions = <TError = unknown, TContext = unknow
   TContext
 > => {
   const mutationKey = getKakaoLoginMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof kakaoLogin>>,
@@ -277,7 +270,7 @@ export const getKakaoLoginMutationOptions = <TError = unknown, TContext = unknow
   > = props => {
     const { data } = props ?? {};
 
-    return kakaoLogin(data, fetchOptions);
+    return kakaoLogin(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -309,7 +302,7 @@ export const useKakaoLogin = <TError = unknown, TContext = unknown>(
       KakaoLoginMutationVariables,
       TContext
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -357,17 +350,12 @@ export const getGetKakaoLoginUriUrl = (params?: GetKakaoLoginUriParams) => {
  */
 export const getKakaoLoginUri = async (
   params?: GetKakaoLoginUriParams,
-  options?: RequestInit,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<getKakaoLoginUriResponse> => {
-  const res = await fetch(getGetKakaoLoginUriUrl(params), {
+  return customFetch<getKakaoLoginUriResponse>(getGetKakaoLoginUriUrl(params), {
     ...options,
     method: "GET",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getKakaoLoginUriResponse["data"] = body ? JSON.parse(body) : {};
-  return { data, status: res.status, headers: res.headers } as getKakaoLoginUriResponse;
 };
 
 export const getGetKakaoLoginUriQueryKey = (params?: GetKakaoLoginUriParams) => {
@@ -381,15 +369,15 @@ export const getGetKakaoLoginUriQueryOptions = <
   params?: GetKakaoLoginUriParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getKakaoLoginUri>>, TError, TData>>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getGetKakaoLoginUriQueryKey(params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getKakaoLoginUri>>> = ({ signal }) =>
-    getKakaoLoginUri(params, { signal, ...fetchOptions });
+    getKakaoLoginUri(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getKakaoLoginUri>>,
@@ -424,7 +412,7 @@ export function useGetKakaoLoginUri<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -451,7 +439,7 @@ export function useGetKakaoLoginUri<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -470,7 +458,7 @@ export function useGetKakaoLoginUri<
   params?: GetKakaoLoginUriParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getKakaoLoginUri>>, TError, TData>>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -489,7 +477,7 @@ export function useGetKakaoLoginUri<
   params?: GetKakaoLoginUriParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getKakaoLoginUri>>, TError, TData>>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

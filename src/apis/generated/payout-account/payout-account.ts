@@ -27,6 +27,10 @@ import type {
   SavePayoutAccountRequest,
 } from "../model";
 
+import { customFetch } from "../../orvalFetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
@@ -93,7 +97,7 @@ export const getUpdatePayoutAccountUrl = (accountId: number) => {
 export const updatePayoutAccount = async (
   accountId: number,
   savePayoutAccountRequest: SavePayoutAccountRequest,
-  options?: RequestInit,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<updatePayoutAccountResponse> => {
   const getHeaders = (
     h?: NonNullable<RequestInit["headers"]>,
@@ -111,17 +115,12 @@ export const updatePayoutAccount = async (
     }
     return headers;
   };
-  const res = await fetch(getUpdatePayoutAccountUrl(accountId), {
+  return customFetch<updatePayoutAccountResponse>(getUpdatePayoutAccountUrl(accountId), {
     ...options,
     method: "PUT",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(savePayoutAccountRequest),
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: updatePayoutAccountResponse["data"] = body !== null ? body : "";
-  return { data, status: res.status, headers: res.headers } as updatePayoutAccountResponse;
 };
 
 export const getUpdatePayoutAccountMutationKey = () => ["updatePayoutAccount"] as const;
@@ -136,7 +135,7 @@ export const getUpdatePayoutAccountMutationOptions = <
     UpdatePayoutAccountMutationVariables,
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof updatePayoutAccount>>,
   TError,
@@ -144,11 +143,11 @@ export const getUpdatePayoutAccountMutationOptions = <
   TContext
 > => {
   const mutationKey = getUpdatePayoutAccountMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof updatePayoutAccount>>,
@@ -156,7 +155,7 @@ export const getUpdatePayoutAccountMutationOptions = <
   > = props => {
     const { accountId, data } = props ?? {};
 
-    return updatePayoutAccount(accountId, data, fetchOptions);
+    return updatePayoutAccount(accountId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -187,7 +186,7 @@ export const useUpdatePayoutAccount = <
       UpdatePayoutAccountMutationVariables,
       TContext
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -227,17 +226,12 @@ export const getGetPayoutAccountsUrl = () => {
  * @summary 받을 계좌 목록 조회
  */
 export const getPayoutAccounts = async (
-  options?: RequestInit,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<getPayoutAccountsResponse> => {
-  const res = await fetch(getGetPayoutAccountsUrl(), {
+  return customFetch<getPayoutAccountsResponse>(getGetPayoutAccountsUrl(), {
     ...options,
     method: "GET",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getPayoutAccountsResponse["data"] = body !== null ? body : "";
-  return { data, status: res.status, headers: res.headers } as getPayoutAccountsResponse;
 };
 
 export const getGetPayoutAccountsQueryKey = () => {
@@ -249,14 +243,14 @@ export const getGetPayoutAccountsQueryOptions = <
   TError = ApiResponseListPayoutAccountResponse,
 >(options?: {
   query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPayoutAccounts>>, TError, TData>>;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getGetPayoutAccountsQueryKey();
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getPayoutAccounts>>> = ({ signal }) =>
-    getPayoutAccounts({ signal, ...fetchOptions });
+    getPayoutAccounts({ signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getPayoutAccounts>>,
@@ -288,7 +282,7 @@ export function useGetPayoutAccounts<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -310,7 +304,7 @@ export function useGetPayoutAccounts<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -324,7 +318,7 @@ export function useGetPayoutAccounts<
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPayoutAccounts>>, TError, TData>>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -338,7 +332,7 @@ export function useGetPayoutAccounts<
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPayoutAccounts>>, TError, TData>>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -393,7 +387,7 @@ export const getCreatePayoutAccountUrl = () => {
  */
 export const createPayoutAccount = async (
   savePayoutAccountRequest: SavePayoutAccountRequest,
-  options?: RequestInit,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<createPayoutAccountResponse> => {
   const getHeaders = (
     h?: NonNullable<RequestInit["headers"]>,
@@ -411,17 +405,12 @@ export const createPayoutAccount = async (
     }
     return headers;
   };
-  const res = await fetch(getCreatePayoutAccountUrl(), {
+  return customFetch<createPayoutAccountResponse>(getCreatePayoutAccountUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(savePayoutAccountRequest),
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: createPayoutAccountResponse["data"] = body !== null ? body : "";
-  return { data, status: res.status, headers: res.headers } as createPayoutAccountResponse;
 };
 
 export const getCreatePayoutAccountMutationKey = () => ["createPayoutAccount"] as const;
@@ -436,7 +425,7 @@ export const getCreatePayoutAccountMutationOptions = <
     CreatePayoutAccountMutationVariables,
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof createPayoutAccount>>,
   TError,
@@ -444,11 +433,11 @@ export const getCreatePayoutAccountMutationOptions = <
   TContext
 > => {
   const mutationKey = getCreatePayoutAccountMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof createPayoutAccount>>,
@@ -456,7 +445,7 @@ export const getCreatePayoutAccountMutationOptions = <
   > = props => {
     const { data } = props ?? {};
 
-    return createPayoutAccount(data, fetchOptions);
+    return createPayoutAccount(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -484,7 +473,7 @@ export const useCreatePayoutAccount = <
       CreatePayoutAccountMutationVariables,
       TContext
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -532,17 +521,12 @@ export const getDesignateDefaultAccountUrl = (accountId: number) => {
  */
 export const designateDefaultAccount = async (
   accountId: number,
-  options?: RequestInit,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<designateDefaultAccountResponse> => {
-  const res = await fetch(getDesignateDefaultAccountUrl(accountId), {
+  return customFetch<designateDefaultAccountResponse>(getDesignateDefaultAccountUrl(accountId), {
     ...options,
     method: "PATCH",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: designateDefaultAccountResponse["data"] = body !== null ? body : "";
-  return { data, status: res.status, headers: res.headers } as designateDefaultAccountResponse;
 };
 
 export const getDesignateDefaultAccountMutationKey = () => ["designateDefaultAccount"] as const;
@@ -557,7 +541,7 @@ export const getDesignateDefaultAccountMutationOptions = <
     DesignateDefaultAccountMutationVariables,
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof designateDefaultAccount>>,
   TError,
@@ -565,11 +549,11 @@ export const getDesignateDefaultAccountMutationOptions = <
   TContext
 > => {
   const mutationKey = getDesignateDefaultAccountMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof designateDefaultAccount>>,
@@ -577,7 +561,7 @@ export const getDesignateDefaultAccountMutationOptions = <
   > = props => {
     const { accountId } = props ?? {};
 
-    return designateDefaultAccount(accountId, fetchOptions);
+    return designateDefaultAccount(accountId, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -605,7 +589,7 @@ export const useDesignateDefaultAccount = <
       DesignateDefaultAccountMutationVariables,
       TContext
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -645,17 +629,12 @@ export const getGetSupportedBanksUrl = () => {
  * @summary 지원 은행 목록 조회
  */
 export const getSupportedBanks = async (
-  options?: RequestInit,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<getSupportedBanksResponse> => {
-  const res = await fetch(getGetSupportedBanksUrl(), {
+  return customFetch<getSupportedBanksResponse>(getGetSupportedBanksUrl(), {
     ...options,
     method: "GET",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getSupportedBanksResponse["data"] = body !== null ? body : "";
-  return { data, status: res.status, headers: res.headers } as getSupportedBanksResponse;
 };
 
 export const getGetSupportedBanksQueryKey = () => {
@@ -667,14 +646,14 @@ export const getGetSupportedBanksQueryOptions = <
   TError = ApiResponseListBankResponse,
 >(options?: {
   query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupportedBanks>>, TError, TData>>;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getGetSupportedBanksQueryKey();
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getSupportedBanks>>> = ({ signal }) =>
-    getSupportedBanks({ signal, ...fetchOptions });
+    getSupportedBanks({ signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getSupportedBanks>>,
@@ -706,7 +685,7 @@ export function useGetSupportedBanks<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -728,7 +707,7 @@ export function useGetSupportedBanks<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -742,7 +721,7 @@ export function useGetSupportedBanks<
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupportedBanks>>, TError, TData>>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -756,7 +735,7 @@ export function useGetSupportedBanks<
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getSupportedBanks>>, TError, TData>>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

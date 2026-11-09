@@ -23,6 +23,10 @@ import type {
   GetNoFundingHomeParams,
 } from "../model";
 
+import { customFetch } from "../../orvalFetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
@@ -74,17 +78,12 @@ export const getGetNoFundingHomeUrl = (params?: GetNoFundingHomeParams) => {
  */
 export const getNoFundingHome = async (
   params?: GetNoFundingHomeParams,
-  options?: RequestInit,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<getNoFundingHomeResponse> => {
-  const res = await fetch(getGetNoFundingHomeUrl(params), {
+  return customFetch<getNoFundingHomeResponse>(getGetNoFundingHomeUrl(params), {
     ...options,
     method: "GET",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getNoFundingHomeResponse["data"] = body !== null ? body : "";
-  return { data, status: res.status, headers: res.headers } as getNoFundingHomeResponse;
 };
 
 export const getGetNoFundingHomeQueryKey = (params?: GetNoFundingHomeParams) => {
@@ -98,15 +97,15 @@ export const getGetNoFundingHomeQueryOptions = <
   params?: GetNoFundingHomeParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData>>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
 ) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getGetNoFundingHomeQueryKey(params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getNoFundingHome>>> = ({ signal }) =>
-    getNoFundingHome(params, { signal, ...fetchOptions });
+    getNoFundingHome(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getNoFundingHome>>,
@@ -140,7 +139,7 @@ export function useGetNoFundingHome<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -166,7 +165,7 @@ export function useGetNoFundingHome<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -184,7 +183,7 @@ export function useGetNoFundingHome<
   params?: GetNoFundingHomeParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData>>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -202,7 +201,7 @@ export function useGetNoFundingHome<
   params?: GetNoFundingHomeParams,
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData>>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -237,16 +236,13 @@ export const getGetHomeFundingsUrl = () => {
  *             확정 및 확인 대기 달성률과 진행 중인 펀딩 개수를 함께 반환합니다.
  * @summary 홈 펀딩 카드 조회
  */
-export const getHomeFundings = async (options?: RequestInit): Promise<getHomeFundingsResponse> => {
-  const res = await fetch(getGetHomeFundingsUrl(), {
+export const getHomeFundings = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<getHomeFundingsResponse> => {
+  return customFetch<getHomeFundingsResponse>(getGetHomeFundingsUrl(), {
     ...options,
     method: "GET",
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getHomeFundingsResponse["data"] = body !== null ? body : "";
-  return { data, status: res.status, headers: res.headers } as getHomeFundingsResponse;
 };
 
 export const getGetHomeFundingsQueryKey = () => {
@@ -258,14 +254,14 @@ export const getGetHomeFundingsQueryOptions = <
   TError = ApiResponseHomeFundingListResponse,
 >(options?: {
   query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData>>;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }) => {
-  const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getGetHomeFundingsQueryKey();
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getHomeFundings>>> = ({ signal }) =>
-    getHomeFundings({ signal, ...fetchOptions });
+    getHomeFundings({ signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getHomeFundings>>,
@@ -298,7 +294,7 @@ export function useGetHomeFundings<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -323,7 +319,7 @@ export function useGetHomeFundings<
         >,
         "initialData"
       >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -340,7 +336,7 @@ export function useGetHomeFundings<
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData>>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
@@ -357,7 +353,7 @@ export function useGetHomeFundings<
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData>>;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

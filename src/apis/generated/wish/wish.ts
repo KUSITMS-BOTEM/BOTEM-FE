@@ -14,6 +14,10 @@ import type {
 
 import type { AddWishRequest, ApiResponseWishResponse } from "../model";
 
+import { customFetch } from "../../orvalFetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 export type addWishResponse400 = {
   data: ApiResponseWishResponse;
   status: 400;
@@ -42,7 +46,7 @@ export const getAddWishUrl = () => {
  */
 export const addWish = async (
   addWishRequest: AddWishRequest,
-  options?: RequestInit,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<addWishResponse> => {
   const getHeaders = (
     h?: NonNullable<RequestInit["headers"]>,
@@ -60,17 +64,12 @@ export const addWish = async (
     }
     return headers;
   };
-  const res = await fetch(getAddWishUrl(), {
+  return customFetch<addWishResponse>(getAddWishUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(addWishRequest),
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: addWishResponse["data"] = body !== null ? body : "";
-  return { data, status: res.status, headers: res.headers } as addWishResponse;
 };
 
 export const getAddWishMutationKey = () => ["addWish"] as const;
@@ -85,7 +84,7 @@ export const getAddWishMutationOptions = <
     AddWishMutationVariables,
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof addWish>>,
   TError,
@@ -93,11 +92,11 @@ export const getAddWishMutationOptions = <
   TContext
 > => {
   const mutationKey = getAddWishMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof addWish>>,
@@ -105,7 +104,7 @@ export const getAddWishMutationOptions = <
   > = props => {
     const { data } = props ?? {};
 
-    return addWish(data, fetchOptions);
+    return addWish(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -130,7 +129,7 @@ export const useAddWish = <TError = ApiResponseWishResponse, TContext = unknown>
       AddWishMutationVariables,
       TContext
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<

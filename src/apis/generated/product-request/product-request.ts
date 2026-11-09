@@ -14,6 +14,10 @@ import type {
 
 import type { ApiResponse, RequestProductRequest } from "../model";
 
+import { customFetch } from "../../orvalFetch";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 export type requestProductResponse401 = {
   data: ApiResponse;
   status: 401;
@@ -39,7 +43,7 @@ export const getRequestProductUrl = () => {
  */
 export const requestProduct = async (
   requestProductRequest: RequestProductRequest,
-  options?: RequestInit,
+  options?: Parameters<typeof customFetch>[1],
 ): Promise<requestProductResponse> => {
   const getHeaders = (
     h?: NonNullable<RequestInit["headers"]>,
@@ -57,17 +61,12 @@ export const requestProduct = async (
     }
     return headers;
   };
-  const res = await fetch(getRequestProductUrl(), {
+  return customFetch<requestProductResponse>(getRequestProductUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
     body: JSON.stringify(requestProductRequest),
   });
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: requestProductResponse["data"] = body !== null ? body : "";
-  return { data, status: res.status, headers: res.headers } as requestProductResponse;
 };
 
 export const getRequestProductMutationKey = () => ["requestProduct"] as const;
@@ -82,7 +81,7 @@ export const getRequestProductMutationOptions = <
     RequestProductMutationVariables,
     TContext
   >;
-  fetch?: RequestInit;
+  request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof requestProduct>>,
   TError,
@@ -90,11 +89,11 @@ export const getRequestProductMutationOptions = <
   TContext
 > => {
   const mutationKey = getRequestProductMutationKey();
-  const { mutation: mutationOptions, fetch: fetchOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, fetch: undefined };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof requestProduct>>,
@@ -102,7 +101,7 @@ export const getRequestProductMutationOptions = <
   > = props => {
     const { data } = props ?? {};
 
-    return requestProduct(data, fetchOptions);
+    return requestProduct(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -129,7 +128,7 @@ export const useRequestProduct = <TError = ApiResponse, TContext = unknown>(
       RequestProductMutationVariables,
       TContext
     >;
-    fetch?: RequestInit;
+    request?: SecondParameter<typeof customFetch>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<

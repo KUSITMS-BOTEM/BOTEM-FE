@@ -21,6 +21,9 @@ export default defineConfig({
       target: "./src/apis/generated",
       schemas: "./src/apis/generated/model",
       clean: true,
+      override: {
+        mutator: { path: "./src/apis/orvalFetch.ts", name: "customFetch" },
+      },
       mock: { generators: [{ type: "msw", path: "./src/mocks/generated" }] },
     },
   },
