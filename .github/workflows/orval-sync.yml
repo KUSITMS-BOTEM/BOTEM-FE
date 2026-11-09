@@ -1,0 +1,61 @@
+name: Orval Sync
+
+on:
+  repository_dispatch:
+    types: [backend-deployed]
+
+concurrency:
+  group: orval-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: orval로 API 타입/함수/훅/MSW 목 재생성
+        env:
+          BOTEM_SWAGGER_USER: ${{ secrets.BOTEM_SWAGGER_USER }}
+          BOTEM_SWAGGER_PASSWORD: ${{ secrets.BOTEM_SWAGGER_PASSWORD }}
+        run: pnpm orval
+
+      - name: 변경사항 있으면 커밋 후 dev로 PR 생성
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B chore/orval-sync
+          git add src/apis/generated src/mocks/generated
+          if git diff --cached --quiet; then
+            echo "변경사항 없음, PR 생성 스킵"
+            exit 0
+          fi
+          # .husky/pre-commit은 .harness 서브모듈 포인터 동기화를 검사하는 훅이라
+          # .harness를 체크아웃하지 않는 이 워크플로에서는 항상 실패한다 — 생성 파일만 다루는 이 커밋에서 끈다.
+          git -c core.hooksPath=/dev/null commit -m "[CHORE] 백엔드 API 스펙 동기화 (orval 재생성)"
+          git push -f origin HEAD:chore/orval-sync
+          OPEN_COUNT=$(gh pr list --base dev --head chore/orval-sync --state open --json number --jq 'length')
+          if [ "$OPEN_COUNT" = "0" ]; then
+            gh pr create --base dev --head chore/orval-sync \
+              --title "[CHORE] 백엔드 API 스펙 동기화" \
+              --body "백엔드 배포로 Swagger 스펙이 갱신되어 orval이 재생성한 PR입니다. 리뷰 후 머지해주세요."
+          fi
