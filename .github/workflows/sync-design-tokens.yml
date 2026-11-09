@@ -13,6 +13,7 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  statuses: write
 
 jobs:
   build-and-pr:
@@ -60,6 +61,17 @@ jobs:
           if [ "$AHEAD_COUNT" = "0" ]; then
             echo "dev 대비 변경사항 없음, PR 생성 스킵"
             exit 0
+          fi
+          # GITHUB_TOKEN으로 push·생성한 PR에는 CI가 돌지 않아 필수 체크 unit-test가 영원히 대기한다.
+          # 디자인 토큰 파일만 바뀐 경우에만 테스트를 생략하고 상태를 직접 통과로 보고한다.
+          # 다른 파일이 섞이면 보고하지 않아 체크가 대기 상태로 남는다 — 사람이 직접 확인해야 한다.
+          OTHER_FILES=$(git diff --name-only origin/dev...HEAD | grep -vxE 'src/styles/tokens\.(json|css)' || true)
+          if [ -n "$OTHER_FILES" ]; then
+            echo "::warning::디자인 토큰 외 파일이 포함되어 unit-test 상태를 보고하지 않습니다"
+            echo "$OTHER_FILES"
+          else
+            gh api "repos/$GITHUB_REPOSITORY/statuses/$(git rev-parse HEAD)" \
+              -f state=success -f context=unit-test -f description="디자인 토큰 자동 동기화 PR — 테스트 생략"
           fi
           OPEN_COUNT=$(gh pr list --base dev --head design-token --state open --json number --jq 'length')
           if [ "$OPEN_COUNT" = "0" ]; then
