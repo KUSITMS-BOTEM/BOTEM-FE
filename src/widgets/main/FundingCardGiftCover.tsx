@@ -29,7 +29,7 @@ export default function FundingCardGiftCover({
           alt=""
           fill
           unoptimized
-          className="object-cover opacity-30 grayscale"
+          className="object-cover opacity-30 blur-[11.71px] grayscale"
         />
       </div>
       <GiftAnimation
