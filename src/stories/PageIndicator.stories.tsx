@@ -29,7 +29,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  render: args => <PageIndicator {...args} current={Math.min(args.current, args.total)} />,
+};
 
 export const AllCombinations: Story = {
   render: () => (
