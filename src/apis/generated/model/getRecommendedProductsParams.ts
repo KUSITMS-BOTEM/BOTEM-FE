@@ -4,7 +4,7 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { GetRecommendedProductsCategory } from "./getRecommendedProductsCategory";
+import type { GetRecommendedProductsCategory } from './getRecommendedProductsCategory';
 
 export type GetRecommendedProductsParams = {
   /** 카테고리 (생략 시 전체) */

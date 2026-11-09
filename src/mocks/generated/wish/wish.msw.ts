@@ -4,29 +4,64 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import { HttpResponse, http } from "msw";
-import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from "msw";
+import {
+  HttpResponse,
+  http
+} from 'msw';
+import type {
+  HttpResponseResolver,
+  PathParams,
+  RequestHandlerOptions
+} from 'msw';
 
-import type { AddWishRequest } from "../../../apis/generated/model";
+import type {
+  AddWishRequest
+} from '../../../apis/generated/model';
 
-export const getAddWishMockHandler = (
-  overrideResponse?:
-    | unknown
-    | ((
-        info: Parameters<HttpResponseResolver<PathParams, AddWishRequest>>[0],
-      ) => Promise<unknown> | unknown),
-  options?: RequestHandlerOptions,
-) => {
-  return http.post<PathParams, AddWishRequest>(
-    "*/api/wishes",
-    async (info: Parameters<HttpResponseResolver<PathParams, AddWishRequest>>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
 
-      return new HttpResponse(null, { status: 200 });
-    },
-    options,
-  );
-};
-export const getWishMock = () => [getAddWishMockHandler()];
+
+export const getGetWishesMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.get('*/api/wishes', async (info: Parameters<HttpResponseResolver>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getAddWishMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver<PathParams, AddWishRequest>>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.post<PathParams, AddWishRequest>('*/api/wishes', async (info: Parameters<HttpResponseResolver<PathParams, AddWishRequest>>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getGetWishMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver<{ wishId: string }>>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.get<{ wishId: string }>('*/api/wishes/:wishId', async (info: Parameters<HttpResponseResolver<{ wishId: string }>>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getDeleteWishMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver<{ wishId: string }>>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.delete<{ wishId: string }>('*/api/wishes/:wishId', async (info: Parameters<HttpResponseResolver<{ wishId: string }>>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+export const getWishMock = () => [
+  getGetWishesMockHandler(),
+  getAddWishMockHandler(),
+  getGetWishMockHandler(),
+  getDeleteWishMockHandler()
+]

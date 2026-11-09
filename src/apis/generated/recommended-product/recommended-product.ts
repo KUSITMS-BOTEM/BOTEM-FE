@@ -4,7 +4,9 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import { useQuery } from "@tanstack/react-query";
+import {
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -14,25 +16,28 @@ import type {
   QueryKey,
   UndefinedInitialDataOptions,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   ApiResponseListRecommendedProductResponse,
   ApiResponseRecommendedProductResponse,
-  GetRecommendedProductsParams,
-} from "../model";
+  GetRecommendedProductsParams
+} from '../model';
 
-import { customFetch } from "../../orvalFetch";
+import { customFetch } from '../../orvalFetch';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
     // The explicit queryKey always wins, matching the previous
     // `{ ...query, queryKey }` spread where it was set last.
-    if (key === "queryKey") continue;
+    if (key === 'queryKey') continue;
     Object.defineProperty(result, key, {
       enumerable: true,
       configurable: true,
@@ -43,31 +48,31 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type getRecommendedProductsResponse401 = {
-  data: ApiResponseListRecommendedProductResponse;
-  status: 401;
-};
+  data: ApiResponseListRecommendedProductResponse
+  status: 401
+}
 
-export type getRecommendedProductsResponseError = getRecommendedProductsResponse401 & {
+;
+export type getRecommendedProductsResponseError = (getRecommendedProductsResponse401) & {
   headers: Headers;
 };
 
-export type getRecommendedProductsResponse = getRecommendedProductsResponseError;
+export type getRecommendedProductsResponse = (getRecommendedProductsResponseError)
 
-export const getGetRecommendedProductsUrl = (params?: GetRecommendedProductsParams) => {
+export const getGetRecommendedProductsUrl = (params?: GetRecommendedProductsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : String(value));
+      normalizedParams.append(key, value === null ? 'null' : String(value))
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/api/recommended-products?${stringifiedParams}`
-    : `/api/recommended-products`;
-};
+  return stringifiedParams.length > 0 ? `/api/recommended-products?${stringifiedParams}` : `/api/recommended-products`
+}
 
 /**
  *
@@ -75,50 +80,49 @@ export const getGetRecommendedProductsUrl = (params?: GetRecommendedProductsPara
  *             category를 생략하면 전체 카테고리를 조회하며, 판매 종료된 상품은 제외됩니다.
  * @summary 추천 선물 목록 조회
  */
-export const getRecommendedProducts = async (
-  params?: GetRecommendedProductsParams,
-  options?: Parameters<typeof customFetch>[1],
-): Promise<getRecommendedProductsResponse> => {
-  return customFetch<getRecommendedProductsResponse>(getGetRecommendedProductsUrl(params), {
+export const getRecommendedProducts = async (params?: GetRecommendedProductsParams, options?: Parameters<typeof customFetch>[1]): Promise<getRecommendedProductsResponse> => {
+
+  return customFetch<getRecommendedProductsResponse>(getGetRecommendedProductsUrl(params),
+  {
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
 
-export const getGetRecommendedProductsQueryKey = (params?: GetRecommendedProductsParams) => {
-  return [`/api/recommended-products`, ...(params ? [params] : [])] as const;
-};
 
-export const getGetRecommendedProductsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getRecommendedProducts>>,
-  TError = ApiResponseListRecommendedProductResponse,
->(
-  params?: GetRecommendedProductsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
+  }
+);}
+
+
+
+
+
+export const getGetRecommendedProductsQueryKey = (params?: GetRecommendedProductsParams,) => {
+    return [
+    `/api/recommended-products`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetRecommendedProductsQueryOptions = <TData = Awaited<ReturnType<typeof getRecommendedProducts>>, TError = ApiResponseListRecommendedProductResponse>(params?: GetRecommendedProductsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetRecommendedProductsQueryKey(params);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecommendedProducts>>> = ({ signal }) =>
-    getRecommendedProducts(params, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetRecommendedProductsQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getRecommendedProducts>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
 
-export type GetRecommendedProductsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getRecommendedProducts>>
->;
-export type GetRecommendedProductsQueryError = ApiResponseListRecommendedProductResponse;
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecommendedProducts>>> = ({ signal }) => getRecommendedProducts(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetRecommendedProductsQueryResult = NonNullable<Awaited<ReturnType<typeof getRecommendedProducts>>>
+export type GetRecommendedProductsQueryError = ApiResponseListRecommendedProductResponse
+
 
 /**
  *
@@ -126,115 +130,84 @@ export type GetRecommendedProductsQueryError = ApiResponseListRecommendedProduct
  *             category를 생략하면 전체 카테고리를 조회하며, 판매 종료된 상품은 제외됩니다.
  * @summary 추천 선물 목록 조회
  */
-export function useGetRecommendedProducts<
-  TData = Awaited<ReturnType<typeof getRecommendedProducts>>,
-  TError = ApiResponseListRecommendedProductResponse,
->(
-  params: undefined | GetRecommendedProductsParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData>
-    > &
-      Pick<
+export function useGetRecommendedProducts<TData = Awaited<ReturnType<typeof getRecommendedProducts>>, TError = ApiResponseListRecommendedProductResponse>(
+ params: undefined |  GetRecommendedProductsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRecommendedProducts>>,
           TError,
           Awaited<ReturnType<typeof getRecommendedProducts>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  *
  *             위시 추가 화면의 추천 선물 카드를 노출 순서대로 조회합니다.
  *             category를 생략하면 전체 카테고리를 조회하며, 판매 종료된 상품은 제외됩니다.
  * @summary 추천 선물 목록 조회
  */
-export function useGetRecommendedProducts<
-  TData = Awaited<ReturnType<typeof getRecommendedProducts>>,
-  TError = ApiResponseListRecommendedProductResponse,
->(
-  params?: GetRecommendedProductsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData>
-    > &
-      Pick<
+export function useGetRecommendedProducts<TData = Awaited<ReturnType<typeof getRecommendedProducts>>, TError = ApiResponseListRecommendedProductResponse>(
+ params?: GetRecommendedProductsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRecommendedProducts>>,
           TError,
           Awaited<ReturnType<typeof getRecommendedProducts>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  *
  *             위시 추가 화면의 추천 선물 카드를 노출 순서대로 조회합니다.
  *             category를 생략하면 전체 카테고리를 조회하며, 판매 종료된 상품은 제외됩니다.
  * @summary 추천 선물 목록 조회
  */
-export function useGetRecommendedProducts<
-  TData = Awaited<ReturnType<typeof getRecommendedProducts>>,
-  TError = ApiResponseListRecommendedProductResponse,
->(
-  params?: GetRecommendedProductsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecommendedProducts<TData = Awaited<ReturnType<typeof getRecommendedProducts>>, TError = ApiResponseListRecommendedProductResponse>(
+ params?: GetRecommendedProductsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  *
  *             위시 추가 화면의 추천 선물 카드를 노출 순서대로 조회합니다.
  *             category를 생략하면 전체 카테고리를 조회하며, 판매 종료된 상품은 제외됩니다.
  * @summary 추천 선물 목록 조회
  */
-export function useGetRecommendedProducts<
-  TData = Awaited<ReturnType<typeof getRecommendedProducts>>,
-  TError = ApiResponseListRecommendedProductResponse,
->(
-  params?: GetRecommendedProductsParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetRecommendedProductsQueryOptions(params, options);
+export function useGetRecommendedProducts<TData = Awaited<ReturnType<typeof getRecommendedProducts>>, TError = ApiResponseListRecommendedProductResponse>(
+ params?: GetRecommendedProductsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProducts>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  const queryOptions = getGetRecommendedProductsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export type getRecommendedProductResponse401 = {
-  data: ApiResponseRecommendedProductResponse;
-  status: 401;
-};
 
-export type getRecommendedProductResponseError = getRecommendedProductResponse401 & {
+
+
+
+
+export type getRecommendedProductResponse401 = {
+  data: ApiResponseRecommendedProductResponse
+  status: 401
+}
+
+;
+export type getRecommendedProductResponseError = (getRecommendedProductResponse401) & {
   headers: Headers;
 };
 
-export type getRecommendedProductResponse = getRecommendedProductResponseError;
+export type getRecommendedProductResponse = (getRecommendedProductResponseError)
 
-export const getGetRecommendedProductUrl = (productId: number) => {
-  return `/api/recommended-products/${productId}`;
-};
+export const getGetRecommendedProductUrl = (productId: number,) => {
+
+
+
+
+  return `/api/recommended-products/${productId}`
+}
 
 /**
  *
@@ -242,53 +215,49 @@ export const getGetRecommendedProductUrl = (productId: number) => {
  *             판매 종료된 상품도 조회되며, status가 DISCONTINUED이면 "지금은 고를 수 없는 선물" 화면을 표시합니다.
  * @summary 추천 선물 상세 조회
  */
-export const getRecommendedProduct = async (
-  productId: number,
-  options?: Parameters<typeof customFetch>[1],
-): Promise<getRecommendedProductResponse> => {
-  return customFetch<getRecommendedProductResponse>(getGetRecommendedProductUrl(productId), {
+export const getRecommendedProduct = async (productId: number, options?: Parameters<typeof customFetch>[1]): Promise<getRecommendedProductResponse> => {
+
+  return customFetch<getRecommendedProductResponse>(getGetRecommendedProductUrl(productId),
+  {
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
 
-export const getGetRecommendedProductQueryKey = (productId: number) => {
-  return [`/api/recommended-products/${productId}`] as const;
-};
 
-export const getGetRecommendedProductQueryOptions = <
-  TData = Awaited<ReturnType<typeof getRecommendedProduct>>,
-  TError = ApiResponseRecommendedProductResponse,
->(
-  productId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
+  }
+);}
+
+
+
+
+
+export const getGetRecommendedProductQueryKey = (productId: number,) => {
+    return [
+    `/api/recommended-products/${productId}`
+    ] as const;
+    }
+
+
+export const getGetRecommendedProductQueryOptions = <TData = Awaited<ReturnType<typeof getRecommendedProduct>>, TError = ApiResponseRecommendedProductResponse>(productId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetRecommendedProductQueryKey(productId);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecommendedProduct>>> = ({ signal }) =>
-    getRecommendedProduct(productId, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetRecommendedProductQueryKey(productId);
 
-  return {
-    queryKey,
-    queryFn,
-    enabled: productId !== null && productId !== undefined,
-    ...queryOptions,
-  } as UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-};
 
-export type GetRecommendedProductQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getRecommendedProduct>>
->;
-export type GetRecommendedProductQueryError = ApiResponseRecommendedProductResponse;
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecommendedProduct>>> = ({ signal }) => getRecommendedProduct(productId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: productId !== null && productId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetRecommendedProductQueryResult = NonNullable<Awaited<ReturnType<typeof getRecommendedProduct>>>
+export type GetRecommendedProductQueryError = ApiResponseRecommendedProductResponse
+
 
 /**
  *
@@ -296,97 +265,62 @@ export type GetRecommendedProductQueryError = ApiResponseRecommendedProductRespo
  *             판매 종료된 상품도 조회되며, status가 DISCONTINUED이면 "지금은 고를 수 없는 선물" 화면을 표시합니다.
  * @summary 추천 선물 상세 조회
  */
-export function useGetRecommendedProduct<
-  TData = Awaited<ReturnType<typeof getRecommendedProduct>>,
-  TError = ApiResponseRecommendedProductResponse,
->(
-  productId: number,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData>
-    > &
-      Pick<
+export function useGetRecommendedProduct<TData = Awaited<ReturnType<typeof getRecommendedProduct>>, TError = ApiResponseRecommendedProductResponse>(
+ productId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRecommendedProduct>>,
           TError,
           Awaited<ReturnType<typeof getRecommendedProduct>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  *
  *             추천 선물 하나를 조회합니다.
  *             판매 종료된 상품도 조회되며, status가 DISCONTINUED이면 "지금은 고를 수 없는 선물" 화면을 표시합니다.
  * @summary 추천 선물 상세 조회
  */
-export function useGetRecommendedProduct<
-  TData = Awaited<ReturnType<typeof getRecommendedProduct>>,
-  TError = ApiResponseRecommendedProductResponse,
->(
-  productId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData>
-    > &
-      Pick<
+export function useGetRecommendedProduct<TData = Awaited<ReturnType<typeof getRecommendedProduct>>, TError = ApiResponseRecommendedProductResponse>(
+ productId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRecommendedProduct>>,
           TError,
           Awaited<ReturnType<typeof getRecommendedProduct>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  *
  *             추천 선물 하나를 조회합니다.
  *             판매 종료된 상품도 조회되며, status가 DISCONTINUED이면 "지금은 고를 수 없는 선물" 화면을 표시합니다.
  * @summary 추천 선물 상세 조회
  */
-export function useGetRecommendedProduct<
-  TData = Awaited<ReturnType<typeof getRecommendedProduct>>,
-  TError = ApiResponseRecommendedProductResponse,
->(
-  productId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecommendedProduct<TData = Awaited<ReturnType<typeof getRecommendedProduct>>, TError = ApiResponseRecommendedProductResponse>(
+ productId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  *
  *             추천 선물 하나를 조회합니다.
  *             판매 종료된 상품도 조회되며, status가 DISCONTINUED이면 "지금은 고를 수 없는 선물" 화면을 표시합니다.
  * @summary 추천 선물 상세 조회
  */
-export function useGetRecommendedProduct<
-  TData = Awaited<ReturnType<typeof getRecommendedProduct>>,
-  TError = ApiResponseRecommendedProductResponse,
->(
-  productId: number,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetRecommendedProductQueryOptions(productId, options);
+export function useGetRecommendedProduct<TData = Awaited<ReturnType<typeof getRecommendedProduct>>, TError = ApiResponseRecommendedProductResponse>(
+ productId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecommendedProduct>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  const queryOptions = getGetRecommendedProductQueryOptions(productId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+

@@ -4,8 +4,8 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { ErrorResponse } from "./errorResponse";
-import type { HomeFundingListResponse } from "./homeFundingListResponse";
+import type { ErrorResponse } from './errorResponse';
+import type { HomeFundingListResponse } from './homeFundingListResponse';
 
 export interface ApiResponseHomeFundingListResponse {
   success?: boolean;

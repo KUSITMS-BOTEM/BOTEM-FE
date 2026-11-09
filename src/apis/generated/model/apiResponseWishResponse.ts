@@ -4,8 +4,8 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { ErrorResponse } from "./errorResponse";
-import type { WishResponse } from "./wishResponse";
+import type { ErrorResponse } from './errorResponse';
+import type { WishResponse } from './wishResponse';
 
 export interface ApiResponseWishResponse {
   success?: boolean;

@@ -4,8 +4,8 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { BankResponse } from "./bankResponse";
-import type { ErrorResponse } from "./errorResponse";
+import type { BankResponse } from './bankResponse';
+import type { ErrorResponse } from './errorResponse';
 
 export interface ApiResponseListBankResponse {
   success?: boolean;

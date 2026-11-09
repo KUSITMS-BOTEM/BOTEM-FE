@@ -4,6 +4,7 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
+import type { WishResponseStatus } from './wishResponseStatus';
 
 export interface WishResponse {
   id?: number;
@@ -11,4 +12,7 @@ export interface WishResponse {
   productImageUrl?: string;
   price?: number;
   productUrl?: string;
+  status?: WishResponseStatus;
+  /** @nullable */
+  fundingId?: number | null;
 }

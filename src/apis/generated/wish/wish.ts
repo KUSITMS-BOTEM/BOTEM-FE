@@ -4,39 +4,236 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import { useMutation } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
-} from "@tanstack/react-query";
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
 
-import type { AddWishRequest, ApiResponseWishResponse } from "../model";
+import type {
+  AddWishRequest,
+  ApiResponse,
+  ApiResponseWishPageResponse,
+  ApiResponseWishResponse,
+  GetWishesParams
+} from '../model';
 
-import { customFetch } from "../../orvalFetch";
+import { customFetch } from '../../orvalFetch';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-export type addWishResponse400 = {
-  data: ApiResponseWishResponse;
-  status: 400;
+
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === 'queryKey') continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
 };
+
+export type getWishesResponse400 = {
+  data: ApiResponseWishPageResponse
+  status: 400
+}
+
+export type getWishesResponse401 = {
+  data: ApiResponseWishPageResponse
+  status: 401
+}
+
+;
+export type getWishesResponseError = (getWishesResponse400 | getWishesResponse401) & {
+  headers: Headers;
+};
+
+export type getWishesResponse = (getWishesResponseError)
+
+export const getGetWishesUrl = (params?: GetWishesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/wishes?${stringifiedParams}` : `/api/wishes`
+}
+
+/**
+ *
+ *             위시 탭의 내 위시를 최근에 담은 순서로 조회합니다. size는 1~20, 기본 10입니다.
+ *             status: AVAILABLE(펀딩 열기 가능), FUNDING(내가 연 펀딩이 끝나지 않음, fundingId 포함),
+ *             DISCONTINUED(추천 상품 판매 종료). FUNDING이 DISCONTINUED보다 우선합니다.
+ *             닉네임·생일 등 상단 정보는 내 정보 조회 API를 사용합니다.
+ * @summary 내 위시 목록 조회
+ */
+export const getWishes = async (params?: GetWishesParams, options?: Parameters<typeof customFetch>[1]): Promise<getWishesResponse> => {
+
+  return customFetch<getWishesResponse>(getGetWishesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWishesQueryKey = (params?: GetWishesParams,) => {
+    return [
+    `/api/wishes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetWishesQueryOptions = <TData = Awaited<ReturnType<typeof getWishes>>, TError = ApiResponseWishPageResponse>(params?: GetWishesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWishes>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWishesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWishes>>> = ({ signal }) => getWishes(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWishes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetWishesQueryResult = NonNullable<Awaited<ReturnType<typeof getWishes>>>
+export type GetWishesQueryError = ApiResponseWishPageResponse
+
+
+/**
+ *
+ *             위시 탭의 내 위시를 최근에 담은 순서로 조회합니다. size는 1~20, 기본 10입니다.
+ *             status: AVAILABLE(펀딩 열기 가능), FUNDING(내가 연 펀딩이 끝나지 않음, fundingId 포함),
+ *             DISCONTINUED(추천 상품 판매 종료). FUNDING이 DISCONTINUED보다 우선합니다.
+ *             닉네임·생일 등 상단 정보는 내 정보 조회 API를 사용합니다.
+ * @summary 내 위시 목록 조회
+ */
+export function useGetWishes<TData = Awaited<ReturnType<typeof getWishes>>, TError = ApiResponseWishPageResponse>(
+ params: undefined |  GetWishesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWishes>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getWishes>>,
+          TError,
+          Awaited<ReturnType<typeof getWishes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ *
+ *             위시 탭의 내 위시를 최근에 담은 순서로 조회합니다. size는 1~20, 기본 10입니다.
+ *             status: AVAILABLE(펀딩 열기 가능), FUNDING(내가 연 펀딩이 끝나지 않음, fundingId 포함),
+ *             DISCONTINUED(추천 상품 판매 종료). FUNDING이 DISCONTINUED보다 우선합니다.
+ *             닉네임·생일 등 상단 정보는 내 정보 조회 API를 사용합니다.
+ * @summary 내 위시 목록 조회
+ */
+export function useGetWishes<TData = Awaited<ReturnType<typeof getWishes>>, TError = ApiResponseWishPageResponse>(
+ params?: GetWishesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWishes>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getWishes>>,
+          TError,
+          Awaited<ReturnType<typeof getWishes>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ *
+ *             위시 탭의 내 위시를 최근에 담은 순서로 조회합니다. size는 1~20, 기본 10입니다.
+ *             status: AVAILABLE(펀딩 열기 가능), FUNDING(내가 연 펀딩이 끝나지 않음, fundingId 포함),
+ *             DISCONTINUED(추천 상품 판매 종료). FUNDING이 DISCONTINUED보다 우선합니다.
+ *             닉네임·생일 등 상단 정보는 내 정보 조회 API를 사용합니다.
+ * @summary 내 위시 목록 조회
+ */
+export function useGetWishes<TData = Awaited<ReturnType<typeof getWishes>>, TError = ApiResponseWishPageResponse>(
+ params?: GetWishesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWishes>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ *
+ *             위시 탭의 내 위시를 최근에 담은 순서로 조회합니다. size는 1~20, 기본 10입니다.
+ *             status: AVAILABLE(펀딩 열기 가능), FUNDING(내가 연 펀딩이 끝나지 않음, fundingId 포함),
+ *             DISCONTINUED(추천 상품 판매 종료). FUNDING이 DISCONTINUED보다 우선합니다.
+ *             닉네임·생일 등 상단 정보는 내 정보 조회 API를 사용합니다.
+ * @summary 내 위시 목록 조회
+ */
+export function useGetWishes<TData = Awaited<ReturnType<typeof getWishes>>, TError = ApiResponseWishPageResponse>(
+ params?: GetWishesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWishes>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetWishesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type addWishResponse400 = {
+  data: ApiResponseWishResponse
+  status: 400
+}
 
 export type addWishResponse401 = {
-  data: ApiResponseWishResponse;
-  status: 401;
-};
+  data: ApiResponseWishResponse
+  status: 401
+}
 
+;
 export type addWishResponseError = (addWishResponse400 | addWishResponse401) & {
   headers: Headers;
 };
 
-export type addWishResponse = addWishResponseError;
+export type addWishResponse = (addWishResponseError)
 
 export const getAddWishUrl = () => {
-  return `/api/wishes`;
-};
+
+
+
+
+  return `/api/wishes`
+}
 
 /**
  *
@@ -44,18 +241,14 @@ export const getAddWishUrl = () => {
  *             판매 종료된 상품이나 이미 담은 상품은 담을 수 없습니다.
  * @summary 추천 선물 위시 담기
  */
-export const addWish = async (
-  addWishRequest: AddWishRequest,
-  options?: Parameters<typeof customFetch>[1],
-): Promise<addWishResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
+export const addWish = async (addWishRequest: AddWishRequest, options?: Parameters<typeof customFetch>[1]): Promise<addWishResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
       return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, entry => Array.from(entry) as [string, string]),
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
       );
     }
     const headers: Record<string, string | readonly string[]> = {};
@@ -64,79 +257,285 @@ export const addWish = async (
     }
     return headers;
   };
-  return customFetch<addWishResponse>(getAddWishUrl(), {
+return customFetch<addWishResponse>(getAddWishUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
-    body: JSON.stringify(addWishRequest),
-  });
-};
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(addWishRequest)
+  }
+);}
 
-export const getAddWishMutationKey = () => ["addWish"] as const;
 
-export const getAddWishMutationOptions = <
-  TError = ApiResponseWishResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof addWish>>,
-    TError,
-    AddWishMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof addWish>>,
-  TError,
-  AddWishMutationVariables,
-  TContext
-> => {
-  const mutationKey = getAddWishMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof addWish>>,
-    AddWishMutationVariables
-  > = props => {
-    const { data } = props ?? {};
 
-    return addWish(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getAddWishMutationKey = () => ['addWish'] as const;
 
-export type AddWishMutationResult = NonNullable<Awaited<ReturnType<typeof addWish>>>;
-export type AddWishMutationBody = AddWishRequest;
-export type AddWishMutationError = ApiResponseWishResponse;
-export type AddWishMutationVariables = { data: AddWishRequest };
+export const getAddWishMutationOptions = <TError = ApiResponseWishResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addWish>>, TError,AddWishMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addWish>>, TError,AddWishMutationVariables, TContext> => {
 
-/**
+const mutationKey = getAddWishMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addWish>>, AddWishMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  addWish(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddWishMutationResult = NonNullable<Awaited<ReturnType<typeof addWish>>>
+    export type AddWishMutationBody = AddWishRequest
+    export type AddWishMutationError = ApiResponseWishResponse
+    export type AddWishMutationVariables = {data: AddWishRequest}
+
+    /**
  *
  *             추천 선물을 내 위시에 담습니다. 담은 시점의 상품 정보가 위시에 저장됩니다.
  *             판매 종료된 상품이나 이미 담은 상품은 담을 수 없습니다.
  * @summary 추천 선물 위시 담기
  */
-export const useAddWish = <TError = ApiResponseWishResponse, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof addWish>>,
-      TError,
-      AddWishMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof addWish>>,
-  TError,
-  AddWishMutationVariables,
-  TContext
-> => {
-  return useMutation(getAddWishMutationOptions(options), queryClient);
+export const useAddWish = <TError = ApiResponseWishResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addWish>>, TError,AddWishMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof addWish>>,
+        TError,
+        AddWishMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAddWishMutationOptions(options), queryClient);
+    }
+    export type getWishResponse401 = {
+  data: ApiResponseWishResponse
+  status: 401
+}
+
+;
+export type getWishResponseError = (getWishResponse401) & {
+  headers: Headers;
 };
+
+export type getWishResponse = (getWishResponseError)
+
+export const getGetWishUrl = (wishId: number,) => {
+
+
+
+
+  return `/api/wishes/${wishId}`
+}
+
+/**
+ *
+ *             내 위시 하나를 조회합니다. status가 FUNDING이면 "펀딩 보기" 버튼으로 fundingId의 펀딩으로 이동합니다.
+ * @summary 위시 상세 조회
+ */
+export const getWish = async (wishId: number, options?: Parameters<typeof customFetch>[1]): Promise<getWishResponse> => {
+
+  return customFetch<getWishResponse>(getGetWishUrl(wishId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWishQueryKey = (wishId: number,) => {
+    return [
+    `/api/wishes/${wishId}`
+    ] as const;
+    }
+
+
+export const getGetWishQueryOptions = <TData = Awaited<ReturnType<typeof getWish>>, TError = ApiResponseWishResponse>(wishId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWish>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWishQueryKey(wishId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWish>>> = ({ signal }) => getWish(wishId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: wishId !== null && wishId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWish>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetWishQueryResult = NonNullable<Awaited<ReturnType<typeof getWish>>>
+export type GetWishQueryError = ApiResponseWishResponse
+
+
+/**
+ *
+ *             내 위시 하나를 조회합니다. status가 FUNDING이면 "펀딩 보기" 버튼으로 fundingId의 펀딩으로 이동합니다.
+ * @summary 위시 상세 조회
+ */
+export function useGetWish<TData = Awaited<ReturnType<typeof getWish>>, TError = ApiResponseWishResponse>(
+ wishId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWish>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getWish>>,
+          TError,
+          Awaited<ReturnType<typeof getWish>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ *
+ *             내 위시 하나를 조회합니다. status가 FUNDING이면 "펀딩 보기" 버튼으로 fundingId의 펀딩으로 이동합니다.
+ * @summary 위시 상세 조회
+ */
+export function useGetWish<TData = Awaited<ReturnType<typeof getWish>>, TError = ApiResponseWishResponse>(
+ wishId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWish>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getWish>>,
+          TError,
+          Awaited<ReturnType<typeof getWish>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ *
+ *             내 위시 하나를 조회합니다. status가 FUNDING이면 "펀딩 보기" 버튼으로 fundingId의 펀딩으로 이동합니다.
+ * @summary 위시 상세 조회
+ */
+export function useGetWish<TData = Awaited<ReturnType<typeof getWish>>, TError = ApiResponseWishResponse>(
+ wishId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWish>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ *
+ *             내 위시 하나를 조회합니다. status가 FUNDING이면 "펀딩 보기" 버튼으로 fundingId의 펀딩으로 이동합니다.
+ * @summary 위시 상세 조회
+ */
+export function useGetWish<TData = Awaited<ReturnType<typeof getWish>>, TError = ApiResponseWishResponse>(
+ wishId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWish>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetWishQueryOptions(wishId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export type deleteWishResponse401 = {
+  data: ApiResponse
+  status: 401
+}
+
+;
+export type deleteWishResponseError = (deleteWishResponse401) & {
+  headers: Headers;
+};
+
+export type deleteWishResponse = (deleteWishResponseError)
+
+export const getDeleteWishUrl = (wishId: number,) => {
+
+
+
+
+  return `/api/wishes/${wishId}`
+}
+
+/**
+ *
+ *             내 위시를 삭제합니다. 내가 연 펀딩이 끝나지 않은(완료·취소 외) 위시는 삭제할 수 없습니다.
+ * @summary 위시 삭제
+ */
+export const deleteWish = async (wishId: number, options?: Parameters<typeof customFetch>[1]): Promise<deleteWishResponse> => {
+
+  return customFetch<deleteWishResponse>(getDeleteWishUrl(wishId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteWishMutationKey = () => ['deleteWish'] as const;
+
+export const getDeleteWishMutationOptions = <TError = ApiResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteWish>>, TError,DeleteWishMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteWish>>, TError,DeleteWishMutationVariables, TContext> => {
+
+const mutationKey = getDeleteWishMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteWish>>, DeleteWishMutationVariables> = (props) => {
+          const {wishId} = props ?? {};
+
+          return  deleteWish(wishId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteWishMutationResult = NonNullable<Awaited<ReturnType<typeof deleteWish>>>
+
+    export type DeleteWishMutationError = ApiResponse
+    export type DeleteWishMutationVariables = {wishId: number}
+
+    /**
+ *
+ *             내 위시를 삭제합니다. 내가 연 펀딩이 끝나지 않은(완료·취소 외) 위시는 삭제할 수 없습니다.
+ * @summary 위시 삭제
+ */
+export const useDeleteWish = <TError = ApiResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteWish>>, TError,DeleteWishMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteWish>>,
+        TError,
+        DeleteWishMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteWishMutationOptions(options), queryClient);
+    }

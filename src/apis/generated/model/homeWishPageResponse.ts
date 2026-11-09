@@ -4,7 +4,7 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { HomeWishCardResponse } from "./homeWishCardResponse";
+import type { HomeWishCardResponse } from './homeWishCardResponse';
 
 export interface HomeWishPageResponse {
   content?: HomeWishCardResponse[];

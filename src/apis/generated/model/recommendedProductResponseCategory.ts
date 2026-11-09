@@ -5,14 +5,14 @@
  * OpenAPI spec version: v1
  */
 
-export type RecommendedProductResponseCategory =
-  (typeof RecommendedProductResponseCategory)[keyof typeof RecommendedProductResponseCategory];
+export type RecommendedProductResponseCategory = typeof RecommendedProductResponseCategory[keyof typeof RecommendedProductResponseCategory];
+
 
 export const RecommendedProductResponseCategory = {
-  EARPHONE_HEADPHONE: "EARPHONE_HEADPHONE",
-  SMART_DEVICE_GAME: "SMART_DEVICE_GAME",
-  HAIR_BEAUTY_DEVICE: "HAIR_BEAUTY_DEVICE",
-  SKINCARE_MAKEUP: "SKINCARE_MAKEUP",
-  PERFUME: "PERFUME",
-  TUMBLER_LIVING: "TUMBLER_LIVING",
+  EARPHONE_HEADPHONE: 'EARPHONE_HEADPHONE',
+  SMART_DEVICE_GAME: 'SMART_DEVICE_GAME',
+  HAIR_BEAUTY_DEVICE: 'HAIR_BEAUTY_DEVICE',
+  SKINCARE_MAKEUP: 'SKINCARE_MAKEUP',
+  PERFUME: 'PERFUME',
+  TUMBLER_LIVING: 'TUMBLER_LIVING',
 } as const;

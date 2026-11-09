@@ -4,94 +4,65 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import { HttpResponse, http } from "msw";
-import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from "msw";
+import {
+  HttpResponse,
+  http
+} from 'msw';
+import type {
+  HttpResponseResolver,
+  PathParams,
+  RequestHandlerOptions
+} from 'msw';
 
 import type {
   RegisterOnboardingRequest,
-  UpdateMyProfileRequest,
-} from "../../../apis/generated/model";
+  UpdateMyProfileRequest
+} from '../../../apis/generated/model';
 
-export const getGetMyProfileMockHandler = (
-  overrideResponse?:
-    unknown | ((info: Parameters<HttpResponseResolver>[0]) => Promise<unknown> | unknown),
-  options?: RequestHandlerOptions,
-) => {
-  return http.get(
-    "*/api/users/me/profile",
-    async (info: Parameters<HttpResponseResolver>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
 
-      return new HttpResponse(null, { status: 200 });
-    },
-    options,
-  );
-};
 
-export const getUpdateMyProfileMockHandler = (
-  overrideResponse?:
-    | unknown
-    | ((
-        info: Parameters<HttpResponseResolver<PathParams, UpdateMyProfileRequest>>[0],
-      ) => Promise<unknown> | unknown),
-  options?: RequestHandlerOptions,
-) => {
-  return http.put<PathParams, UpdateMyProfileRequest>(
-    "*/api/users/me/profile",
-    async (info: Parameters<HttpResponseResolver<PathParams, UpdateMyProfileRequest>>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
+export const getGetMyProfileMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.get('*/api/users/me/profile', async (info: Parameters<HttpResponseResolver>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
-      return new HttpResponse(null, { status: 200 });
-    },
-    options,
-  );
-};
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
 
-export const getCompleteOnboardingMockHandler = (
-  overrideResponse?:
-    | unknown
-    | ((
-        info: Parameters<HttpResponseResolver<PathParams, RegisterOnboardingRequest>>[0],
-      ) => Promise<unknown> | unknown),
-  options?: RequestHandlerOptions,
-) => {
-  return http.post<PathParams, RegisterOnboardingRequest>(
-    "*/api/users/me/onboarding",
-    async (info: Parameters<HttpResponseResolver<PathParams, RegisterOnboardingRequest>>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
+export const getUpdateMyProfileMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver<PathParams, UpdateMyProfileRequest>>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.put<PathParams, UpdateMyProfileRequest>('*/api/users/me/profile', async (info: Parameters<HttpResponseResolver<PathParams, UpdateMyProfileRequest>>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
-      return new HttpResponse(null, { status: 200 });
-    },
-    options,
-  );
-};
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
 
-export const getWithdrawMockHandler = (
-  overrideResponse?:
-    unknown | ((info: Parameters<HttpResponseResolver>[0]) => Promise<unknown> | unknown),
-  options?: RequestHandlerOptions,
-) => {
-  return http.delete(
-    "*/api/users/me",
-    async (info: Parameters<HttpResponseResolver>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
+export const getCompleteOnboardingMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver<PathParams, RegisterOnboardingRequest>>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.post<PathParams, RegisterOnboardingRequest>('*/api/users/me/onboarding', async (info: Parameters<HttpResponseResolver<PathParams, RegisterOnboardingRequest>>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
-      return new HttpResponse(null, { status: 200 });
-    },
-    options,
-  );
-};
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getWithdrawMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.delete('*/api/users/me', async (info: Parameters<HttpResponseResolver>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
 export const getUserMock = () => [
   getGetMyProfileMockHandler(),
   getUpdateMyProfileMockHandler(),
   getCompleteOnboardingMockHandler(),
-  getWithdrawMockHandler(),
-];
+  getWithdrawMockHandler()
+]

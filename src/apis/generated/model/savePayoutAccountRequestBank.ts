@@ -5,20 +5,20 @@
  * OpenAPI spec version: v1
  */
 
-export type SavePayoutAccountRequestBank =
-  (typeof SavePayoutAccountRequestBank)[keyof typeof SavePayoutAccountRequestBank];
+export type SavePayoutAccountRequestBank = typeof SavePayoutAccountRequestBank[keyof typeof SavePayoutAccountRequestBank];
+
 
 export const SavePayoutAccountRequestBank = {
-  TOSS_BANK: "TOSS_BANK",
-  KAKAO_BANK: "KAKAO_BANK",
-  KB_KOOKMIN: "KB_KOOKMIN",
-  SHINHAN: "SHINHAN",
-  HANA: "HANA",
-  WOORI: "WOORI",
-  NH_NONGHYUP: "NH_NONGHYUP",
-  K_BANK: "K_BANK",
-  IBK: "IBK",
-  SC: "SC",
-  CITI: "CITI",
-  KDB: "KDB",
+  TOSS_BANK: 'TOSS_BANK',
+  KAKAO_BANK: 'KAKAO_BANK',
+  KB_KOOKMIN: 'KB_KOOKMIN',
+  SHINHAN: 'SHINHAN',
+  HANA: 'HANA',
+  WOORI: 'WOORI',
+  NH_NONGHYUP: 'NH_NONGHYUP',
+  K_BANK: 'K_BANK',
+  IBK: 'IBK',
+  SC: 'SC',
+  CITI: 'CITI',
+  KDB: 'KDB',
 } as const;

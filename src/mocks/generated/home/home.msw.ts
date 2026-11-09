@@ -4,45 +4,37 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import { HttpResponse, http } from "msw";
-import type { HttpResponseResolver, RequestHandlerOptions } from "msw";
+import {
+  HttpResponse,
+  http
+} from 'msw';
+import type {
+  HttpResponseResolver,
+  RequestHandlerOptions
+} from 'msw';
 
-export const getGetNoFundingHomeMockHandler = (
-  overrideResponse?:
-    unknown | ((info: Parameters<HttpResponseResolver>[0]) => Promise<unknown> | unknown),
-  options?: RequestHandlerOptions,
-) => {
-  return http.get(
-    "*/api/home/no-funding",
-    async (info: Parameters<HttpResponseResolver>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
 
-      return new HttpResponse(null, { status: 200 });
-    },
-    options,
-  );
-};
 
-export const getGetHomeFundingsMockHandler = (
-  overrideResponse?:
-    unknown | ((info: Parameters<HttpResponseResolver>[0]) => Promise<unknown> | unknown),
-  options?: RequestHandlerOptions,
-) => {
-  return http.get(
-    "*/api/home/fundings",
-    async (info: Parameters<HttpResponseResolver>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
+export const getGetNoFundingHomeMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.get('*/api/home/no-funding', async (info: Parameters<HttpResponseResolver>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
-      return new HttpResponse(null, { status: 200 });
-    },
-    options,
-  );
-};
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getGetHomeFundingsMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.get('*/api/home/fundings', async (info: Parameters<HttpResponseResolver>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
 export const getHomeMock = () => [
   getGetNoFundingHomeMockHandler(),
-  getGetHomeFundingsMockHandler(),
-];
+  getGetHomeFundingsMockHandler()
+]

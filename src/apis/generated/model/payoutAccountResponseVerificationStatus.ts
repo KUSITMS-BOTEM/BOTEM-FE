@@ -5,12 +5,12 @@
  * OpenAPI spec version: v1
  */
 
-export type PayoutAccountResponseVerificationStatus =
-  (typeof PayoutAccountResponseVerificationStatus)[keyof typeof PayoutAccountResponseVerificationStatus];
+export type PayoutAccountResponseVerificationStatus = typeof PayoutAccountResponseVerificationStatus[keyof typeof PayoutAccountResponseVerificationStatus];
+
 
 export const PayoutAccountResponseVerificationStatus = {
-  UNVERIFIED: "UNVERIFIED",
-  VERIFYING: "VERIFYING",
-  VERIFIED: "VERIFIED",
-  FAILED: "FAILED",
+  UNVERIFIED: 'UNVERIFIED',
+  VERIFYING: 'VERIFYING',
+  VERIFIED: 'VERIFIED',
+  FAILED: 'FAILED',
 } as const;

@@ -7,9 +7,9 @@
 
 export interface RequestProductRequest {
   /**
-   * @minLength 0
-   * @maxLength 2048
-   */
+     * @minLength 0
+     * @maxLength 2048
+     */
   productUrl: string;
   /** @nullable */
   productName?: string | null;

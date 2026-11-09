@@ -4,14 +4,14 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { SavePayoutAccountRequestBank } from "./savePayoutAccountRequestBank";
+import type { SavePayoutAccountRequestBank } from './savePayoutAccountRequestBank';
 
 export interface SavePayoutAccountRequest {
   bank?: SavePayoutAccountRequestBank;
   /**
-   * @minLength 0
-   * @maxLength 30
-   */
+     * @minLength 0
+     * @maxLength 30
+     */
   accountNumber: string;
   /** @nullable */
   accountHolder?: string | null;

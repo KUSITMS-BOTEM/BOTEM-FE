@@ -4,17 +4,16 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { RegisterOnboardingRequestBank } from "./registerOnboardingRequestBank";
+import type { RegisterOnboardingRequestBank } from './registerOnboardingRequestBank';
 
 export interface RegisterOnboardingRequest {
   /** @minLength 1 */
   name: string;
-  /** @nullable */
-  birthday?: string | null;
+  birthday: string;
   bank?: RegisterOnboardingRequestBank;
   /**
-   * @minLength 0
-   * @maxLength 30
-   */
+     * @minLength 0
+     * @maxLength 30
+     */
   accountNumber: string;
 }

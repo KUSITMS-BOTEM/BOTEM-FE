@@ -4,8 +4,8 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { ErrorResponse } from "./errorResponse";
-import type { RecommendedProductResponse } from "./recommendedProductResponse";
+import type { ErrorResponse } from './errorResponse';
+import type { RecommendedProductResponse } from './recommendedProductResponse';
 
 export interface ApiResponseListRecommendedProductResponse {
   success?: boolean;

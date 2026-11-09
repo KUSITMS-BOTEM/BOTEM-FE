@@ -5,10 +5,10 @@
  * OpenAPI spec version: v1
  */
 
-export type HomeFundingCardResponseFundingType =
-  (typeof HomeFundingCardResponseFundingType)[keyof typeof HomeFundingCardResponseFundingType];
+export type HomeFundingCardResponseFundingType = typeof HomeFundingCardResponseFundingType[keyof typeof HomeFundingCardResponseFundingType];
+
 
 export const HomeFundingCardResponseFundingType = {
-  BIRTHDAY: "BIRTHDAY",
-  SURPRISE: "SURPRISE",
+  BIRTHDAY: 'BIRTHDAY',
+  SURPRISE: 'SURPRISE',
 } as const;

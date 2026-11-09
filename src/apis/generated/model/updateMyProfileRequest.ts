@@ -8,6 +8,5 @@
 export interface UpdateMyProfileRequest {
   /** @minLength 1 */
   nickname: string;
-  /** @nullable */
-  birthday?: string | null;
+  birthday: string;
 }

@@ -4,48 +4,37 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import { HttpResponse, http } from "msw";
-import type { HttpResponseResolver, RequestHandlerOptions } from "msw";
+import {
+  HttpResponse,
+  http
+} from 'msw';
+import type {
+  HttpResponseResolver,
+  RequestHandlerOptions
+} from 'msw';
 
-export const getGetRecommendedProductsMockHandler = (
-  overrideResponse?:
-    unknown | ((info: Parameters<HttpResponseResolver>[0]) => Promise<unknown> | unknown),
-  options?: RequestHandlerOptions,
-) => {
-  return http.get(
-    "*/api/recommended-products",
-    async (info: Parameters<HttpResponseResolver>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
 
-      return new HttpResponse(null, { status: 200 });
-    },
-    options,
-  );
-};
 
-export const getGetRecommendedProductMockHandler = (
-  overrideResponse?:
-    | unknown
-    | ((
-        info: Parameters<HttpResponseResolver<{ productId: string }>>[0],
-      ) => Promise<unknown> | unknown),
-  options?: RequestHandlerOptions,
-) => {
-  return http.get<{ productId: string }>(
-    "*/api/recommended-products/:productId",
-    async (info: Parameters<HttpResponseResolver<{ productId: string }>>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
+export const getGetRecommendedProductsMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.get('*/api/recommended-products', async (info: Parameters<HttpResponseResolver>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
 
-      return new HttpResponse(null, { status: 200 });
-    },
-    options,
-  );
-};
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+
+export const getGetRecommendedProductMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver<{ productId: string }>>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.get<{ productId: string }>('*/api/recommended-products/:productId', async (info: Parameters<HttpResponseResolver<{ productId: string }>>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
 export const getRecommendedProductMock = () => [
   getGetRecommendedProductsMockHandler(),
-  getGetRecommendedProductMockHandler(),
-];
+  getGetRecommendedProductMockHandler()
+]

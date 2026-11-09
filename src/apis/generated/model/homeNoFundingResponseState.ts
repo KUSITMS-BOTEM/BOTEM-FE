@@ -5,10 +5,10 @@
  * OpenAPI spec version: v1
  */
 
-export type HomeNoFundingResponseState =
-  (typeof HomeNoFundingResponseState)[keyof typeof HomeNoFundingResponseState];
+export type HomeNoFundingResponseState = typeof HomeNoFundingResponseState[keyof typeof HomeNoFundingResponseState];
+
 
 export const HomeNoFundingResponseState = {
-  WISH_RECOMMENDATION: "WISH_RECOMMENDATION",
-  EMPTY: "EMPTY",
+  WISH_RECOMMENDATION: 'WISH_RECOMMENDATION',
+  EMPTY: 'EMPTY',
 } as const;

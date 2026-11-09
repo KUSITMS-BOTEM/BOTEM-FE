@@ -4,34 +4,47 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import { useMutation } from "@tanstack/react-query";
+import {
+  useMutation
+} from '@tanstack/react-query';
 import type {
   MutationFunction,
   QueryClient,
   UseMutationOptions,
-  UseMutationResult,
-} from "@tanstack/react-query";
+  UseMutationResult
+} from '@tanstack/react-query';
 
-import type { ApiResponse, RequestProductRequest } from "../model";
+import type {
+  ApiResponse,
+  RequestProductRequest
+} from '../model';
 
-import { customFetch } from "../../orvalFetch";
+import { customFetch } from '../../orvalFetch';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
-export type requestProductResponse401 = {
-  data: ApiResponse;
-  status: 401;
-};
 
-export type requestProductResponseError = requestProductResponse401 & {
+
+export type requestProductResponse401 = {
+  data: ApiResponse
+  status: 401
+}
+
+;
+export type requestProductResponseError = (requestProductResponse401) & {
   headers: Headers;
 };
 
-export type requestProductResponse = requestProductResponseError;
+export type requestProductResponse = (requestProductResponseError)
 
 export const getRequestProductUrl = () => {
-  return `/api/product-requests`;
-};
+
+
+
+
+  return `/api/product-requests`
+}
 
 /**
  *
@@ -41,18 +54,14 @@ export const getRequestProductUrl = () => {
  *             요청 처리 결과는 따로 알리지 않습니다.
  * @summary 쿠팡 상품 추가 요청
  */
-export const requestProduct = async (
-  requestProductRequest: RequestProductRequest,
-  options?: Parameters<typeof customFetch>[1],
-): Promise<requestProductResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
+export const requestProduct = async (requestProductRequest: RequestProductRequest, options?: Parameters<typeof customFetch>[1]): Promise<requestProductResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
       return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, entry => Array.from(entry) as [string, string]),
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
       );
     }
     const headers: Record<string, string | readonly string[]> = {};
@@ -61,58 +70,54 @@ export const requestProduct = async (
     }
     return headers;
   };
-  return customFetch<requestProductResponse>(getRequestProductUrl(), {
+return customFetch<requestProductResponse>(getRequestProductUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
-    body: JSON.stringify(requestProductRequest),
-  });
-};
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(requestProductRequest)
+  }
+);}
 
-export const getRequestProductMutationKey = () => ["requestProduct"] as const;
 
-export const getRequestProductMutationOptions = <
-  TError = ApiResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof requestProduct>>,
-    TError,
-    RequestProductMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof requestProduct>>,
-  TError,
-  RequestProductMutationVariables,
-  TContext
-> => {
-  const mutationKey = getRequestProductMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof requestProduct>>,
-    RequestProductMutationVariables
-  > = props => {
-    const { data } = props ?? {};
 
-    return requestProduct(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getRequestProductMutationKey = () => ['requestProduct'] as const;
 
-export type RequestProductMutationResult = NonNullable<Awaited<ReturnType<typeof requestProduct>>>;
-export type RequestProductMutationBody = RequestProductRequest;
-export type RequestProductMutationError = ApiResponse;
-export type RequestProductMutationVariables = { data: RequestProductRequest };
+export const getRequestProductMutationOptions = <TError = ApiResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestProduct>>, TError,RequestProductMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestProduct>>, TError,RequestProductMutationVariables, TContext> => {
 
-/**
+const mutationKey = getRequestProductMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestProduct>>, RequestProductMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestProduct(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestProductMutationResult = NonNullable<Awaited<ReturnType<typeof requestProduct>>>
+    export type RequestProductMutationBody = RequestProductRequest
+    export type RequestProductMutationError = ApiResponse
+    export type RequestProductMutationVariables = {data: RequestProductRequest}
+
+    /**
  *
  *             찾는 선물이 추천 목록에 없을 때 쿠팡 상품 링크로 추가를 요청합니다.
  *             링크는 https:// 형식과 쿠팡 도메인(coupang.com, www.coupang.com, m.coupang.com, link.coupang.com, coupa.ng)만 확인하며,
@@ -120,22 +125,13 @@ export type RequestProductMutationVariables = { data: RequestProductRequest };
  *             요청 처리 결과는 따로 알리지 않습니다.
  * @summary 쿠팡 상품 추가 요청
  */
-export const useRequestProduct = <TError = ApiResponse, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof requestProduct>>,
-      TError,
-      RequestProductMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof requestProduct>>,
-  TError,
-  RequestProductMutationVariables,
-  TContext
-> => {
-  return useMutation(getRequestProductMutationOptions(options), queryClient);
-};
+export const useRequestProduct = <TError = ApiResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestProduct>>, TError,RequestProductMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof requestProduct>>,
+        TError,
+        RequestProductMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRequestProductMutationOptions(options), queryClient);
+    }

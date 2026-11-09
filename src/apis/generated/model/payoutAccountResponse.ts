@@ -4,8 +4,8 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { PayoutAccountResponseBank } from "./payoutAccountResponseBank";
-import type { PayoutAccountResponseVerificationStatus } from "./payoutAccountResponseVerificationStatus";
+import type { PayoutAccountResponseBank } from './payoutAccountResponseBank';
+import type { PayoutAccountResponseVerificationStatus } from './payoutAccountResponseVerificationStatus';
 
 export interface PayoutAccountResponse {
   id?: number;

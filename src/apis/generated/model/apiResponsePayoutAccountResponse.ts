@@ -4,8 +4,8 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { ErrorResponse } from "./errorResponse";
-import type { PayoutAccountResponse } from "./payoutAccountResponse";
+import type { ErrorResponse } from './errorResponse';
+import type { PayoutAccountResponse } from './payoutAccountResponse';
 
 export interface ApiResponsePayoutAccountResponse {
   success?: boolean;

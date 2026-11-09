@@ -5,10 +5,10 @@
  * OpenAPI spec version: v1
  */
 
-export type HomeFundingCardResponseCardType =
-  (typeof HomeFundingCardResponseCardType)[keyof typeof HomeFundingCardResponseCardType];
+export type HomeFundingCardResponseCardType = typeof HomeFundingCardResponseCardType[keyof typeof HomeFundingCardResponseCardType];
+
 
 export const HomeFundingCardResponseCardType = {
-  CLOSED_UNOPENED: "CLOSED_UNOPENED",
-  IN_PROGRESS: "IN_PROGRESS",
+  CLOSED_UNOPENED: 'CLOSED_UNOPENED',
+  IN_PROGRESS: 'IN_PROGRESS',
 } as const;

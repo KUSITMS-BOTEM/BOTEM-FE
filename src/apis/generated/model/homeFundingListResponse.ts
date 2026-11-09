@@ -4,7 +4,7 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { HomeFundingCardResponse } from "./homeFundingCardResponse";
+import type { HomeFundingCardResponse } from './homeFundingCardResponse';
 
 export interface HomeFundingListResponse {
   fundingCards?: HomeFundingCardResponse[];

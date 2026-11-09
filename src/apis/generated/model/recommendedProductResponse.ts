@@ -4,8 +4,8 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { RecommendedProductResponseCategory } from "./recommendedProductResponseCategory";
-import type { RecommendedProductResponseStatus } from "./recommendedProductResponseStatus";
+import type { RecommendedProductResponseCategory } from './recommendedProductResponseCategory';
+import type { RecommendedProductResponseStatus } from './recommendedProductResponseStatus';
 
 export interface RecommendedProductResponse {
   id?: number;

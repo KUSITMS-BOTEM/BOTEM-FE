@@ -4,7 +4,10 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -17,26 +20,29 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   ApiResponse,
   ApiResponseMyProfileResponse,
   RegisterOnboardingRequest,
-  UpdateMyProfileRequest,
-} from "../model";
+  UpdateMyProfileRequest
+} from '../model';
 
-import { customFetch } from "../../orvalFetch";
+import { customFetch } from '../../orvalFetch';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
     // The explicit queryKey always wins, matching the previous
     // `{ ...query, queryKey }` spread where it was set last.
-    if (key === "queryKey") continue;
+    if (key === 'queryKey') continue;
     Object.defineProperty(result, key, {
       enumerable: true,
       configurable: true,
@@ -47,173 +53,162 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type getMyProfileResponse401 = {
-  data: ApiResponseMyProfileResponse;
-  status: 401;
-};
+  data: ApiResponseMyProfileResponse
+  status: 401
+}
 
-export type getMyProfileResponseError = getMyProfileResponse401 & {
+;
+export type getMyProfileResponseError = (getMyProfileResponse401) & {
   headers: Headers;
 };
 
-export type getMyProfileResponse = getMyProfileResponseError;
+export type getMyProfileResponse = (getMyProfileResponseError)
 
 export const getGetMyProfileUrl = () => {
-  return `/api/users/me/profile`;
-};
+
+
+
+
+  return `/api/users/me/profile`
+}
 
 /**
  * 로그인한 사용자의 닉네임, 프로필 이미지, 생일, 위시 프로필 링크와 카카오 계정 연결 상태를 조회합니다.
  * @summary 내 프로필 조회
  */
-export const getMyProfile = async (
-  options?: Parameters<typeof customFetch>[1],
-): Promise<getMyProfileResponse> => {
-  return customFetch<getMyProfileResponse>(getGetMyProfileUrl(), {
+export const getMyProfile = async ( options?: Parameters<typeof customFetch>[1]): Promise<getMyProfileResponse> => {
+
+  return customFetch<getMyProfileResponse>(getGetMyProfileUrl(),
+  {
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
 
 export const getGetMyProfileQueryKey = () => {
-  return [`/api/users/me/profile`] as const;
-};
+    return [
+    `/api/users/me/profile`
+    ] as const;
+    }
 
-export const getGetMyProfileQueryOptions = <
-  TData = Awaited<ReturnType<typeof getMyProfile>>,
-  TError = ApiResponseMyProfileResponse,
->(options?: {
-  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>>;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetMyProfileQueryKey();
+export const getGetMyProfileQueryOptions = <TData = Awaited<ReturnType<typeof getMyProfile>>, TError = ApiResponseMyProfileResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyProfile>>> = ({ signal }) =>
-    getMyProfile({ signal, ...requestOptions });
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getMyProfile>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  const queryKey =  queryOptions?.queryKey ?? getGetMyProfileQueryKey();
 
-export type GetMyProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getMyProfile>>>;
-export type GetMyProfileQueryError = ApiResponseMyProfileResponse;
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyProfile>>> = ({ signal }) => getMyProfile({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getMyProfile>>>
+export type GetMyProfileQueryError = ApiResponseMyProfileResponse
+
 
 /**
  * 로그인한 사용자의 닉네임, 프로필 이미지, 생일, 위시 프로필 링크와 카카오 계정 연결 상태를 조회합니다.
  * @summary 내 프로필 조회
  */
-export function useGetMyProfile<
-  TData = Awaited<ReturnType<typeof getMyProfile>>,
-  TError = ApiResponseMyProfileResponse,
->(
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>> &
-      Pick<
+export function useGetMyProfile<TData = Awaited<ReturnType<typeof getMyProfile>>, TError = ApiResponseMyProfileResponse>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyProfile>>,
           TError,
           Awaited<ReturnType<typeof getMyProfile>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * 로그인한 사용자의 닉네임, 프로필 이미지, 생일, 위시 프로필 링크와 카카오 계정 연결 상태를 조회합니다.
  * @summary 내 프로필 조회
  */
-export function useGetMyProfile<
-  TData = Awaited<ReturnType<typeof getMyProfile>>,
-  TError = ApiResponseMyProfileResponse,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>> &
-      Pick<
+export function useGetMyProfile<TData = Awaited<ReturnType<typeof getMyProfile>>, TError = ApiResponseMyProfileResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMyProfile>>,
           TError,
           Awaited<ReturnType<typeof getMyProfile>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * 로그인한 사용자의 닉네임, 프로필 이미지, 생일, 위시 프로필 링크와 카카오 계정 연결 상태를 조회합니다.
  * @summary 내 프로필 조회
  */
-export function useGetMyProfile<
-  TData = Awaited<ReturnType<typeof getMyProfile>>,
-  TError = ApiResponseMyProfileResponse,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>>;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyProfile<TData = Awaited<ReturnType<typeof getMyProfile>>, TError = ApiResponseMyProfileResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * 로그인한 사용자의 닉네임, 프로필 이미지, 생일, 위시 프로필 링크와 카카오 계정 연결 상태를 조회합니다.
  * @summary 내 프로필 조회
  */
-export function useGetMyProfile<
-  TData = Awaited<ReturnType<typeof getMyProfile>>,
-  TError = ApiResponseMyProfileResponse,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>>;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetMyProfileQueryOptions(options);
+export function useGetMyProfile<TData = Awaited<ReturnType<typeof getMyProfile>>, TError = ApiResponseMyProfileResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  const queryOptions = getGetMyProfileQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export type updateMyProfileResponse401 = {
-  data: ApiResponseMyProfileResponse;
-  status: 401;
-};
 
-export type updateMyProfileResponseError = updateMyProfileResponse401 & {
+
+
+
+
+export type updateMyProfileResponse401 = {
+  data: ApiResponseMyProfileResponse
+  status: 401
+}
+
+;
+export type updateMyProfileResponseError = (updateMyProfileResponse401) & {
   headers: Headers;
 };
 
-export type updateMyProfileResponse = updateMyProfileResponseError;
+export type updateMyProfileResponse = (updateMyProfileResponseError)
 
 export const getUpdateMyProfileUrl = () => {
-  return `/api/users/me/profile`;
-};
+
+
+
+
+  return `/api/users/me/profile`
+}
 
 /**
- * 로그인한 사용자의 닉네임과 생일을 수정합니다. 전체 수정 값을 전달해야 합니다. 생일은 연도 없이 `MM-dd` 형식으로 전달합니다.
+ * 로그인한 사용자의 닉네임과 생일을 수정합니다. 전체 수정 값을 전달해야 합니다. 생일은 필수이며 연도 없이 `MM-dd` 형식으로 전달합니다.
  * @summary 내 프로필 수정
  */
-export const updateMyProfile = async (
-  updateMyProfileRequest: UpdateMyProfileRequest,
-  options?: Parameters<typeof customFetch>[1],
-): Promise<updateMyProfileResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
+export const updateMyProfile = async (updateMyProfileRequest: UpdateMyProfileRequest, options?: Parameters<typeof customFetch>[1]): Promise<updateMyProfileResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
       return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, entry => Array.from(entry) as [string, string]),
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
       );
     }
     const headers: Record<string, string | readonly string[]> = {};
@@ -222,118 +217,104 @@ export const updateMyProfile = async (
     }
     return headers;
   };
-  return customFetch<updateMyProfileResponse>(getUpdateMyProfileUrl(), {
+return customFetch<updateMyProfileResponse>(getUpdateMyProfileUrl(),
+  {
     ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
-    body: JSON.stringify(updateMyProfileRequest),
-  });
-};
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateMyProfileRequest)
+  }
+);}
 
-export const getUpdateMyProfileMutationKey = () => ["updateMyProfile"] as const;
 
-export const getUpdateMyProfileMutationOptions = <
-  TError = ApiResponseMyProfileResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof updateMyProfile>>,
-    TError,
-    UpdateMyProfileMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof updateMyProfile>>,
-  TError,
-  UpdateMyProfileMutationVariables,
-  TContext
-> => {
-  const mutationKey = getUpdateMyProfileMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof updateMyProfile>>,
-    UpdateMyProfileMutationVariables
-  > = props => {
-    const { data } = props ?? {};
 
-    return updateMyProfile(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getUpdateMyProfileMutationKey = () => ['updateMyProfile'] as const;
 
-export type UpdateMyProfileMutationResult = NonNullable<
-  Awaited<ReturnType<typeof updateMyProfile>>
->;
-export type UpdateMyProfileMutationBody = UpdateMyProfileRequest;
-export type UpdateMyProfileMutationError = ApiResponseMyProfileResponse;
-export type UpdateMyProfileMutationVariables = { data: UpdateMyProfileRequest };
+export const getUpdateMyProfileMutationOptions = <TError = ApiResponseMyProfileResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyProfile>>, TError,UpdateMyProfileMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMyProfile>>, TError,UpdateMyProfileMutationVariables, TContext> => {
 
-/**
- * 로그인한 사용자의 닉네임과 생일을 수정합니다. 전체 수정 값을 전달해야 합니다. 생일은 연도 없이 `MM-dd` 형식으로 전달합니다.
+const mutationKey = getUpdateMyProfileMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMyProfile>>, UpdateMyProfileMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateMyProfile(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMyProfileMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyProfile>>>
+    export type UpdateMyProfileMutationBody = UpdateMyProfileRequest
+    export type UpdateMyProfileMutationError = ApiResponseMyProfileResponse
+    export type UpdateMyProfileMutationVariables = {data: UpdateMyProfileRequest}
+
+    /**
+ * 로그인한 사용자의 닉네임과 생일을 수정합니다. 전체 수정 값을 전달해야 합니다. 생일은 필수이며 연도 없이 `MM-dd` 형식으로 전달합니다.
  * @summary 내 프로필 수정
  */
-export const useUpdateMyProfile = <TError = ApiResponseMyProfileResponse, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof updateMyProfile>>,
-      TError,
-      UpdateMyProfileMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof updateMyProfile>>,
-  TError,
-  UpdateMyProfileMutationVariables,
-  TContext
-> => {
-  return useMutation(getUpdateMyProfileMutationOptions(options), queryClient);
-};
-export type completeOnboardingResponse401 = {
-  data: ApiResponse;
-  status: 401;
-};
+export const useUpdateMyProfile = <TError = ApiResponseMyProfileResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyProfile>>, TError,UpdateMyProfileMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateMyProfile>>,
+        TError,
+        UpdateMyProfileMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateMyProfileMutationOptions(options), queryClient);
+    }
+    export type completeOnboardingResponse401 = {
+  data: ApiResponse
+  status: 401
+}
 
-export type completeOnboardingResponseError = completeOnboardingResponse401 & {
+;
+export type completeOnboardingResponseError = (completeOnboardingResponse401) & {
   headers: Headers;
 };
 
-export type completeOnboardingResponse = completeOnboardingResponseError;
+export type completeOnboardingResponse = (completeOnboardingResponseError)
 
 export const getCompleteOnboardingUrl = () => {
-  return `/api/users/me/onboarding`;
-};
+
+
+
+
+  return `/api/users/me/onboarding`
+}
 
 /**
  *
  *             회원가입 온보딩의 마지막 단계("시작하기")에서 이름, 생일, 받을 계좌를 한 번에 등록합니다.
- *             생일은 연도 없이 `MM-dd` 형식으로 전달하며 생략할 수 있습니다.
+ *             생일은 필수이며 연도 없이 `MM-dd` 형식으로 전달합니다.
  *             계좌번호는 형식만 검증하며, 실제 계좌 존재 여부는 확인하지 않습니다.
  *             모든 정보가 함께 저장되며, 하나라도 실패하면 아무것도 저장되지 않습니다.
  *             받을 계좌가 이미 있는 회원(온보딩 완료)은 요청할 수 없습니다.
  * @summary 온보딩 정보 등록
  */
-export const completeOnboarding = async (
-  registerOnboardingRequest: RegisterOnboardingRequest,
-  options?: Parameters<typeof customFetch>[1],
-): Promise<completeOnboardingResponse> => {
-  const getHeaders = (
-    h?: NonNullable<RequestInit["headers"]>,
-  ): Record<string, string | readonly string[]> => {
+export const completeOnboarding = async (registerOnboardingRequest: RegisterOnboardingRequest, options?: Parameters<typeof customFetch>[1]): Promise<completeOnboardingResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
     if (h instanceof Headers) return Object.fromEntries(h.entries());
     if (Symbol.iterator in h) {
       return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, entry => Array.from(entry) as [string, string]),
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
       );
     }
     const headers: Record<string, string | readonly string[]> = {};
@@ -342,101 +323,91 @@ export const completeOnboarding = async (
     }
     return headers;
   };
-  return customFetch<completeOnboardingResponse>(getCompleteOnboardingUrl(), {
+return customFetch<completeOnboardingResponse>(getCompleteOnboardingUrl(),
+  {
     ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...getHeaders(options?.headers) },
-    body: JSON.stringify(registerOnboardingRequest),
-  });
-};
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(registerOnboardingRequest)
+  }
+);}
 
-export const getCompleteOnboardingMutationKey = () => ["completeOnboarding"] as const;
 
-export const getCompleteOnboardingMutationOptions = <
-  TError = ApiResponse,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof completeOnboarding>>,
-    TError,
-    CompleteOnboardingMutationVariables,
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof completeOnboarding>>,
-  TError,
-  CompleteOnboardingMutationVariables,
-  TContext
-> => {
-  const mutationKey = getCompleteOnboardingMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof completeOnboarding>>,
-    CompleteOnboardingMutationVariables
-  > = props => {
-    const { data } = props ?? {};
 
-    return completeOnboarding(data, requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
+export const getCompleteOnboardingMutationKey = () => ['completeOnboarding'] as const;
 
-export type CompleteOnboardingMutationResult = NonNullable<
-  Awaited<ReturnType<typeof completeOnboarding>>
->;
-export type CompleteOnboardingMutationBody = RegisterOnboardingRequest;
-export type CompleteOnboardingMutationError = ApiResponse;
-export type CompleteOnboardingMutationVariables = { data: RegisterOnboardingRequest };
+export const getCompleteOnboardingMutationOptions = <TError = ApiResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeOnboarding>>, TError,CompleteOnboardingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeOnboarding>>, TError,CompleteOnboardingMutationVariables, TContext> => {
 
-/**
+const mutationKey = getCompleteOnboardingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeOnboarding>>, CompleteOnboardingMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  completeOnboarding(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CompleteOnboardingMutationResult = NonNullable<Awaited<ReturnType<typeof completeOnboarding>>>
+    export type CompleteOnboardingMutationBody = RegisterOnboardingRequest
+    export type CompleteOnboardingMutationError = ApiResponse
+    export type CompleteOnboardingMutationVariables = {data: RegisterOnboardingRequest}
+
+    /**
  *
  *             회원가입 온보딩의 마지막 단계("시작하기")에서 이름, 생일, 받을 계좌를 한 번에 등록합니다.
- *             생일은 연도 없이 `MM-dd` 형식으로 전달하며 생략할 수 있습니다.
+ *             생일은 필수이며 연도 없이 `MM-dd` 형식으로 전달합니다.
  *             계좌번호는 형식만 검증하며, 실제 계좌 존재 여부는 확인하지 않습니다.
  *             모든 정보가 함께 저장되며, 하나라도 실패하면 아무것도 저장되지 않습니다.
  *             받을 계좌가 이미 있는 회원(온보딩 완료)은 요청할 수 없습니다.
  * @summary 온보딩 정보 등록
  */
-export const useCompleteOnboarding = <TError = ApiResponse, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<
-      Awaited<ReturnType<typeof completeOnboarding>>,
-      TError,
-      CompleteOnboardingMutationVariables,
-      TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<
-  Awaited<ReturnType<typeof completeOnboarding>>,
-  TError,
-  CompleteOnboardingMutationVariables,
-  TContext
-> => {
-  return useMutation(getCompleteOnboardingMutationOptions(options), queryClient);
-};
-export type withdrawResponse401 = {
-  data: ApiResponse;
-  status: 401;
-};
+export const useCompleteOnboarding = <TError = ApiResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeOnboarding>>, TError,CompleteOnboardingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof completeOnboarding>>,
+        TError,
+        CompleteOnboardingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCompleteOnboardingMutationOptions(options), queryClient);
+    }
+    export type withdrawResponse401 = {
+  data: ApiResponse
+  status: 401
+}
 
-export type withdrawResponseError = withdrawResponse401 & {
+;
+export type withdrawResponseError = (withdrawResponse401) & {
   headers: Headers;
 };
 
-export type withdrawResponse = withdrawResponseError;
+export type withdrawResponse = (withdrawResponseError)
 
 export const getWithdrawUrl = () => {
-  return `/api/users/me`;
-};
+
+
+
+
+  return `/api/users/me`
+}
 
 /**
  *
@@ -445,52 +416,69 @@ export const getWithdrawUrl = () => {
  *             탈퇴하면 Refresh 토큰과 받을 계좌를 삭제하고 개인정보를 익명화합니다.
  * @summary 회원 탈퇴
  */
-export const withdraw = async (
-  options?: Parameters<typeof customFetch>[1],
-): Promise<withdrawResponse> => {
-  return customFetch<withdrawResponse>(getWithdrawUrl(), {
+export const withdraw = async ( options?: Parameters<typeof customFetch>[1]): Promise<withdrawResponse> => {
+
+  return customFetch<withdrawResponse>(getWithdrawUrl(),
+  {
     ...options,
-    method: "DELETE",
-  });
-};
+    method: 'DELETE'
 
-export const getWithdrawMutationKey = () => ["withdraw"] as const;
 
-export const getWithdrawMutationOptions = <TError = ApiResponse, TContext = unknown>(options?: {
-  mutation?: UseMutationOptions<Awaited<ReturnType<typeof withdraw>>, TError, void, TContext>;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<Awaited<ReturnType<typeof withdraw>>, TError, void, TContext> => {
-  const mutationKey = getWithdrawMutationKey();
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+  }
+);}
 
-  const mutationFn: MutationFunction<Awaited<ReturnType<typeof withdraw>>, void> = () => {
-    return withdraw(requestOptions);
-  };
 
-  return { mutationFn, ...mutationOptions };
-};
 
-export type WithdrawMutationResult = NonNullable<Awaited<ReturnType<typeof withdraw>>>;
 
-export type WithdrawMutationError = ApiResponse;
 
-/**
+export const getWithdrawMutationKey = () => ['withdraw'] as const;
+
+export const getWithdrawMutationOptions = <TError = ApiResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof withdraw>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof withdraw>>, TError,void, TContext> => {
+
+const mutationKey = getWithdrawMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof withdraw>>, void> = () => {
+
+
+          return  withdraw(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WithdrawMutationResult = NonNullable<Awaited<ReturnType<typeof withdraw>>>
+
+    export type WithdrawMutationError = ApiResponse
+
+
+    /**
  *
  *             로그인한 사용자를 탈퇴 처리합니다.
  *             진행 중인 일반 펀딩 또는 서프라이즈 펀딩이 있으면 탈퇴할 수 없습니다.
  *             탈퇴하면 Refresh 토큰과 받을 계좌를 삭제하고 개인정보를 익명화합니다.
  * @summary 회원 탈퇴
  */
-export const useWithdraw = <TError = ApiResponse, TContext = unknown>(
-  options?: {
-    mutation?: UseMutationOptions<Awaited<ReturnType<typeof withdraw>>, TError, void, TContext>;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseMutationResult<Awaited<ReturnType<typeof withdraw>>, TError, void, TContext> => {
-  return useMutation(getWithdrawMutationOptions(options), queryClient);
-};
+export const useWithdraw = <TError = ApiResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof withdraw>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof withdraw>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getWithdrawMutationOptions(options), queryClient);
+    }

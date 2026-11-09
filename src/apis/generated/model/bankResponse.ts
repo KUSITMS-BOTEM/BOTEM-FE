@@ -4,7 +4,7 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { BankResponseCode } from "./bankResponseCode";
+import type { BankResponseCode } from './bankResponseCode';
 
 export interface BankResponse {
   code?: BankResponseCode;

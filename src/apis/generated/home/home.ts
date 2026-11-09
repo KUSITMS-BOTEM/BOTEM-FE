@@ -4,7 +4,9 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import { useQuery } from "@tanstack/react-query";
+import {
+  useQuery
+} from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -14,25 +16,28 @@ import type {
   QueryKey,
   UndefinedInitialDataOptions,
   UseQueryOptions,
-  UseQueryResult,
-} from "@tanstack/react-query";
+  UseQueryResult
+} from '@tanstack/react-query';
 
 import type {
   ApiResponseHomeFundingListResponse,
   ApiResponseHomeNoFundingResponse,
-  GetNoFundingHomeParams,
-} from "../model";
+  GetNoFundingHomeParams
+} from '../model';
 
-import { customFetch } from "../../orvalFetch";
+import { customFetch } from '../../orvalFetch';
+
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
     // The explicit queryKey always wins, matching the previous
     // `{ ...query, queryKey }` spread where it was set last.
-    if (key === "queryKey") continue;
+    if (key === 'queryKey') continue;
     Object.defineProperty(result, key, {
       enumerable: true,
       configurable: true,
@@ -43,31 +48,31 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type getNoFundingHomeResponse401 = {
-  data: ApiResponseHomeNoFundingResponse;
-  status: 401;
-};
+  data: ApiResponseHomeNoFundingResponse
+  status: 401
+}
 
-export type getNoFundingHomeResponseError = getNoFundingHomeResponse401 & {
+;
+export type getNoFundingHomeResponseError = (getNoFundingHomeResponse401) & {
   headers: Headers;
 };
 
-export type getNoFundingHomeResponse = getNoFundingHomeResponseError;
+export type getNoFundingHomeResponse = (getNoFundingHomeResponseError)
 
-export const getGetNoFundingHomeUrl = (params?: GetNoFundingHomeParams) => {
+export const getGetNoFundingHomeUrl = (params?: GetNoFundingHomeParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : String(value));
+      normalizedParams.append(key, value === null ? 'null' : String(value))
     }
   });
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0
-    ? `/api/home/no-funding?${stringifiedParams}`
-    : `/api/home/no-funding`;
-};
+  return stringifiedParams.length > 0 ? `/api/home/no-funding?${stringifiedParams}` : `/api/home/no-funding`
+}
 
 /**
  *
@@ -76,46 +81,49 @@ export const getGetNoFundingHomeUrl = (params?: GetNoFundingHomeParams) => {
  *             홈에 표시할 펀딩이 존재하면 409 Conflict를 반환합니다.
  * @summary 펀딩 없는 홈 상태 조회
  */
-export const getNoFundingHome = async (
-  params?: GetNoFundingHomeParams,
-  options?: Parameters<typeof customFetch>[1],
-): Promise<getNoFundingHomeResponse> => {
-  return customFetch<getNoFundingHomeResponse>(getGetNoFundingHomeUrl(params), {
+export const getNoFundingHome = async (params?: GetNoFundingHomeParams, options?: Parameters<typeof customFetch>[1]): Promise<getNoFundingHomeResponse> => {
+
+  return customFetch<getNoFundingHomeResponse>(getGetNoFundingHomeUrl(params),
+  {
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
 
-export const getGetNoFundingHomeQueryKey = (params?: GetNoFundingHomeParams) => {
-  return [`/api/home/no-funding`, ...(params ? [params] : [])] as const;
-};
 
-export const getGetNoFundingHomeQueryOptions = <
-  TData = Awaited<ReturnType<typeof getNoFundingHome>>,
-  TError = ApiResponseHomeNoFundingResponse,
->(
-  params?: GetNoFundingHomeParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData>>;
-    request?: SecondParameter<typeof customFetch>;
-  },
+  }
+);}
+
+
+
+
+
+export const getGetNoFundingHomeQueryKey = (params?: GetNoFundingHomeParams,) => {
+    return [
+    `/api/home/no-funding`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetNoFundingHomeQueryOptions = <TData = Awaited<ReturnType<typeof getNoFundingHome>>, TError = ApiResponseHomeNoFundingResponse>(params?: GetNoFundingHomeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetNoFundingHomeQueryKey(params);
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getNoFundingHome>>> = ({ signal }) =>
-    getNoFundingHome(params, { signal, ...requestOptions });
+  const queryKey =  queryOptions?.queryKey ?? getGetNoFundingHomeQueryKey(params);
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getNoFundingHome>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
 
-export type GetNoFundingHomeQueryResult = NonNullable<Awaited<ReturnType<typeof getNoFundingHome>>>;
-export type GetNoFundingHomeQueryError = ApiResponseHomeNoFundingResponse;
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getNoFundingHome>>> = ({ signal }) => getNoFundingHome(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetNoFundingHomeQueryResult = NonNullable<Awaited<ReturnType<typeof getNoFundingHome>>>
+export type GetNoFundingHomeQueryError = ApiResponseHomeNoFundingResponse
+
 
 /**
  *
@@ -124,25 +132,16 @@ export type GetNoFundingHomeQueryError = ApiResponseHomeNoFundingResponse;
  *             홈에 표시할 펀딩이 존재하면 409 Conflict를 반환합니다.
  * @summary 펀딩 없는 홈 상태 조회
  */
-export function useGetNoFundingHome<
-  TData = Awaited<ReturnType<typeof getNoFundingHome>>,
-  TError = ApiResponseHomeNoFundingResponse,
->(
-  params: undefined | GetNoFundingHomeParams,
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData>> &
-      Pick<
+export function useGetNoFundingHome<TData = Awaited<ReturnType<typeof getNoFundingHome>>, TError = ApiResponseHomeNoFundingResponse>(
+ params: undefined |  GetNoFundingHomeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getNoFundingHome>>,
           TError,
           Awaited<ReturnType<typeof getNoFundingHome>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  *
  *             홈에 표시할 펀딩이 없는 사용자의 위시 추천 또는 빈 홈 상태를 조회합니다.
@@ -150,25 +149,16 @@ export function useGetNoFundingHome<
  *             홈에 표시할 펀딩이 존재하면 409 Conflict를 반환합니다.
  * @summary 펀딩 없는 홈 상태 조회
  */
-export function useGetNoFundingHome<
-  TData = Awaited<ReturnType<typeof getNoFundingHome>>,
-  TError = ApiResponseHomeNoFundingResponse,
->(
-  params?: GetNoFundingHomeParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData>> &
-      Pick<
+export function useGetNoFundingHome<TData = Awaited<ReturnType<typeof getNoFundingHome>>, TError = ApiResponseHomeNoFundingResponse>(
+ params?: GetNoFundingHomeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getNoFundingHome>>,
           TError,
           Awaited<ReturnType<typeof getNoFundingHome>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  *
  *             홈에 표시할 펀딩이 없는 사용자의 위시 추천 또는 빈 홈 상태를 조회합니다.
@@ -176,17 +166,10 @@ export function useGetNoFundingHome<
  *             홈에 표시할 펀딩이 존재하면 409 Conflict를 반환합니다.
  * @summary 펀딩 없는 홈 상태 조회
  */
-export function useGetNoFundingHome<
-  TData = Awaited<ReturnType<typeof getNoFundingHome>>,
-  TError = ApiResponseHomeNoFundingResponse,
->(
-  params?: GetNoFundingHomeParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData>>;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetNoFundingHome<TData = Awaited<ReturnType<typeof getNoFundingHome>>, TError = ApiResponseHomeNoFundingResponse>(
+ params?: GetNoFundingHomeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  *
  *             홈에 표시할 펀딩이 없는 사용자의 위시 추천 또는 빈 홈 상태를 조회합니다.
@@ -194,40 +177,42 @@ export function useGetNoFundingHome<
  *             홈에 표시할 펀딩이 존재하면 409 Conflict를 반환합니다.
  * @summary 펀딩 없는 홈 상태 조회
  */
-export function useGetNoFundingHome<
-  TData = Awaited<ReturnType<typeof getNoFundingHome>>,
-  TError = ApiResponseHomeNoFundingResponse,
->(
-  params?: GetNoFundingHomeParams,
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData>>;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetNoFundingHomeQueryOptions(params, options);
+export function useGetNoFundingHome<TData = Awaited<ReturnType<typeof getNoFundingHome>>, TError = ApiResponseHomeNoFundingResponse>(
+ params?: GetNoFundingHomeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getNoFundingHome>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  const queryOptions = getGetNoFundingHomeQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export type getHomeFundingsResponse401 = {
-  data: ApiResponseHomeFundingListResponse;
-  status: 401;
-};
 
-export type getHomeFundingsResponseError = getHomeFundingsResponse401 & {
+
+
+
+
+export type getHomeFundingsResponse401 = {
+  data: ApiResponseHomeFundingListResponse
+  status: 401
+}
+
+;
+export type getHomeFundingsResponseError = (getHomeFundingsResponse401) & {
   headers: Headers;
 };
 
-export type getHomeFundingsResponse = getHomeFundingsResponseError;
+export type getHomeFundingsResponse = (getHomeFundingsResponseError)
 
 export const getGetHomeFundingsUrl = () => {
-  return `/api/home/fundings`;
-};
+
+
+
+
+  return `/api/home/fundings`
+}
 
 /**
  *
@@ -236,42 +221,49 @@ export const getGetHomeFundingsUrl = () => {
  *             확정 및 확인 대기 달성률과 진행 중인 펀딩 개수를 함께 반환합니다.
  * @summary 홈 펀딩 카드 조회
  */
-export const getHomeFundings = async (
-  options?: Parameters<typeof customFetch>[1],
-): Promise<getHomeFundingsResponse> => {
-  return customFetch<getHomeFundingsResponse>(getGetHomeFundingsUrl(), {
+export const getHomeFundings = async ( options?: Parameters<typeof customFetch>[1]): Promise<getHomeFundingsResponse> => {
+
+  return customFetch<getHomeFundingsResponse>(getGetHomeFundingsUrl(),
+  {
     ...options,
-    method: "GET",
-  });
-};
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
 
 export const getGetHomeFundingsQueryKey = () => {
-  return [`/api/home/fundings`] as const;
-};
+    return [
+    `/api/home/fundings`
+    ] as const;
+    }
 
-export const getGetHomeFundingsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getHomeFundings>>,
-  TError = ApiResponseHomeFundingListResponse,
->(options?: {
-  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData>>;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetHomeFundingsQueryKey();
+export const getGetHomeFundingsQueryOptions = <TData = Awaited<ReturnType<typeof getHomeFundings>>, TError = ApiResponseHomeFundingListResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getHomeFundings>>> = ({ signal }) =>
-    getHomeFundings({ signal, ...requestOptions });
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getHomeFundings>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  const queryKey =  queryOptions?.queryKey ?? getGetHomeFundingsQueryKey();
 
-export type GetHomeFundingsQueryResult = NonNullable<Awaited<ReturnType<typeof getHomeFundings>>>;
-export type GetHomeFundingsQueryError = ApiResponseHomeFundingListResponse;
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getHomeFundings>>> = ({ signal }) => getHomeFundings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetHomeFundingsQueryResult = NonNullable<Awaited<ReturnType<typeof getHomeFundings>>>
+export type GetHomeFundingsQueryError = ApiResponseHomeFundingListResponse
+
 
 /**
  *
@@ -280,24 +272,16 @@ export type GetHomeFundingsQueryError = ApiResponseHomeFundingListResponse;
  *             확정 및 확인 대기 달성률과 진행 중인 펀딩 개수를 함께 반환합니다.
  * @summary 홈 펀딩 카드 조회
  */
-export function useGetHomeFundings<
-  TData = Awaited<ReturnType<typeof getHomeFundings>>,
-  TError = ApiResponseHomeFundingListResponse,
->(
-  options: {
-    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData>> &
-      Pick<
+export function useGetHomeFundings<TData = Awaited<ReturnType<typeof getHomeFundings>>, TError = ApiResponseHomeFundingListResponse>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getHomeFundings>>,
           TError,
           Awaited<ReturnType<typeof getHomeFundings>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  *
  *             로그인한 사용자의 마감 후 팡을 열지 않은 펀딩과 진행 중인 펀딩 카드를 조회합니다.
@@ -305,24 +289,16 @@ export function useGetHomeFundings<
  *             확정 및 확인 대기 달성률과 진행 중인 펀딩 개수를 함께 반환합니다.
  * @summary 홈 펀딩 카드 조회
  */
-export function useGetHomeFundings<
-  TData = Awaited<ReturnType<typeof getHomeFundings>>,
-  TError = ApiResponseHomeFundingListResponse,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData>> &
-      Pick<
+export function useGetHomeFundings<TData = Awaited<ReturnType<typeof getHomeFundings>>, TError = ApiResponseHomeFundingListResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getHomeFundings>>,
           TError,
           Awaited<ReturnType<typeof getHomeFundings>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  *
  *             로그인한 사용자의 마감 후 팡을 열지 않은 펀딩과 진행 중인 펀딩 카드를 조회합니다.
@@ -330,16 +306,10 @@ export function useGetHomeFundings<
  *             확정 및 확인 대기 달성률과 진행 중인 펀딩 개수를 함께 반환합니다.
  * @summary 홈 펀딩 카드 조회
  */
-export function useGetHomeFundings<
-  TData = Awaited<ReturnType<typeof getHomeFundings>>,
-  TError = ApiResponseHomeFundingListResponse,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData>>;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetHomeFundings<TData = Awaited<ReturnType<typeof getHomeFundings>>, TError = ApiResponseHomeFundingListResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  *
  *             로그인한 사용자의 마감 후 팡을 열지 않은 펀딩과 진행 중인 펀딩 카드를 조회합니다.
@@ -347,21 +317,20 @@ export function useGetHomeFundings<
  *             확정 및 확인 대기 달성률과 진행 중인 펀딩 개수를 함께 반환합니다.
  * @summary 홈 펀딩 카드 조회
  */
-export function useGetHomeFundings<
-  TData = Awaited<ReturnType<typeof getHomeFundings>>,
-  TError = ApiResponseHomeFundingListResponse,
->(
-  options?: {
-    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData>>;
-    request?: SecondParameter<typeof customFetch>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getGetHomeFundingsQueryOptions(options);
+export function useGetHomeFundings<TData = Awaited<ReturnType<typeof getHomeFundings>>, TError = ApiResponseHomeFundingListResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHomeFundings>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
+  const queryOptions = getGetHomeFundingsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+

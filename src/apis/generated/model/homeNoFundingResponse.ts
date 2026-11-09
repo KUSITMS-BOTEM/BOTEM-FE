@@ -4,8 +4,8 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import type { HomeNoFundingResponseState } from "./homeNoFundingResponseState";
-import type { HomeWishPageResponse } from "./homeWishPageResponse";
+import type { HomeNoFundingResponseState } from './homeNoFundingResponseState';
+import type { HomeWishPageResponse } from './homeWishPageResponse';
 
 export interface HomeNoFundingResponse {
   state?: HomeNoFundingResponseState;

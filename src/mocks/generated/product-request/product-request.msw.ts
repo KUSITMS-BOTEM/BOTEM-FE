@@ -4,29 +4,31 @@
  * BOTEM API
  * OpenAPI spec version: v1
  */
-import { HttpResponse, http } from "msw";
-import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from "msw";
+import {
+  HttpResponse,
+  http
+} from 'msw';
+import type {
+  HttpResponseResolver,
+  PathParams,
+  RequestHandlerOptions
+} from 'msw';
 
-import type { RequestProductRequest } from "../../../apis/generated/model";
+import type {
+  RequestProductRequest
+} from '../../../apis/generated/model';
 
-export const getRequestProductMockHandler = (
-  overrideResponse?:
-    | unknown
-    | ((
-        info: Parameters<HttpResponseResolver<PathParams, RequestProductRequest>>[0],
-      ) => Promise<unknown> | unknown),
-  options?: RequestHandlerOptions,
-) => {
-  return http.post<PathParams, RequestProductRequest>(
-    "*/api/product-requests",
-    async (info: Parameters<HttpResponseResolver<PathParams, RequestProductRequest>>[0]) => {
-      if (typeof overrideResponse === "function") {
-        await overrideResponse(info);
-      }
 
-      return new HttpResponse(null, { status: 200 });
-    },
-    options,
-  );
-};
-export const getProductRequestMock = () => [getRequestProductMockHandler()];
+
+export const getRequestProductMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver<PathParams, RequestProductRequest>>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {
+  return http.post<PathParams, RequestProductRequest>('*/api/product-requests', async (info: Parameters<HttpResponseResolver<PathParams, RequestProductRequest>>[0]) => {
+  if (typeof overrideResponse === 'function') {await overrideResponse(info); }
+
+    return new HttpResponse(null,
+      { status: 200
+      })
+  }, options)
+}
+export const getProductRequestMock = () => [
+  getRequestProductMockHandler()
+]

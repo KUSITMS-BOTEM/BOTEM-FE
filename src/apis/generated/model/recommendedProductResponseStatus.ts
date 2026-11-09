@@ -5,10 +5,10 @@
  * OpenAPI spec version: v1
  */
 
-export type RecommendedProductResponseStatus =
-  (typeof RecommendedProductResponseStatus)[keyof typeof RecommendedProductResponseStatus];
+export type RecommendedProductResponseStatus = typeof RecommendedProductResponseStatus[keyof typeof RecommendedProductResponseStatus];
+
 
 export const RecommendedProductResponseStatus = {
-  ON_SALE: "ON_SALE",
-  DISCONTINUED: "DISCONTINUED",
+  ON_SALE: 'ON_SALE',
+  DISCONTINUED: 'DISCONTINUED',
 } as const;
