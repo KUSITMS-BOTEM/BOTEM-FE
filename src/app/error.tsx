@@ -11,6 +11,8 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
+    // digest가 있으면 서버에서 난 에러라 instrumentation.ts의 onRequestError가 이미 보고했다
+    if (error.digest) return;
     Sentry.captureException(error);
   }, [error]);
 
