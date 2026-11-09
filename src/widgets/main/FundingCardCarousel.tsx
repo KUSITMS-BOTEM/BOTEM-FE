@@ -59,8 +59,9 @@ export default function FundingCardCarousel({
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "ArrowLeft") paginate(-1);
-    else if (event.key === "ArrowRight") paginate(1);
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    paginate(event.key === "ArrowRight" ? 1 : -1);
   };
 
   return (

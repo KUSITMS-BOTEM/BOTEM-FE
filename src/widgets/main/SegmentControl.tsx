@@ -1,7 +1,7 @@
 "use client";
 
-import { useId, useState } from "react";
-import { motion } from "framer-motion";
+import { useId, useRef, useState, type KeyboardEvent } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/utils/cn";
 
 export type SegmentValue = "funding" | "wish";
@@ -22,30 +22,48 @@ type SegmentControlProps = {
 export default function SegmentControl({ onChange, className }: SegmentControlProps) {
   const [value, setValue] = useState<SegmentValue>("funding");
   const indicatorId = useId();
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const reduceMotion = useReducedMotion();
 
   const handleSelect = (next: SegmentValue) => {
     setValue(next);
     onChange?.(next);
   };
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const step = event.key === "ArrowRight" ? 1 : -1;
+    const nextIndex = (index + step + SEGMENTS.length) % SEGMENTS.length;
+    handleSelect(SEGMENTS[nextIndex].value);
+    tabRefs.current[nextIndex]?.focus();
+  };
+
   return (
     <div role="tablist" className={cn("flex items-center gap-1 p-2", PANEL_STYLE, className)}>
-      {SEGMENTS.map(segment => {
+      {SEGMENTS.map((segment, index) => {
         const selected = segment.value === value;
         return (
           <button
             key={segment.value}
+            ref={element => {
+              tabRefs.current[index] = element;
+            }}
             type="button"
             role="tab"
             aria-selected={selected}
+            tabIndex={selected ? 0 : -1}
             onClick={() => handleSelect(segment.value)}
+            onKeyDown={event => handleKeyDown(event, index)}
             className="relative flex cursor-pointer items-center justify-center px-4 py-1">
             {selected && (
               <motion.span
                 layoutId={indicatorId}
                 aria-hidden
                 className={cn("absolute inset-0", PANEL_STYLE)}
-                transition={{ duration: 0.3, ease: [0.2, 0, 0, 1] }}
+                transition={
+                  reduceMotion ? { duration: 0 } : { duration: 0.3, ease: [0.2, 0, 0, 1] }
+                }
               />
             )}
             <span

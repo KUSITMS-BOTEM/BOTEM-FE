@@ -48,4 +48,23 @@ describe("ProgressBar", () => {
 
     expect(screen.getByRole("progressbar")).toHaveClass("custom-progress");
   });
+
+  it("progress가 NaN이면 너비 0%이고 aria-valuenow를 생략한다", () => {
+    render(<ProgressBar progress={NaN} />);
+
+    const bar = screen.getByRole("progressbar");
+    expect(bar).not.toHaveAttribute("aria-valuenow");
+    expect(bar.querySelector<HTMLElement>("[style]")).toHaveStyle({ width: "0%" });
+  });
+
+  it("aria-labelledby로 연결한 요소가 접근 가능한 이름이 된다", () => {
+    render(
+      <>
+        <p id="funding-title">엄마 생일 선물</p>
+        <ProgressBar progress={10} aria-labelledby="funding-title" />
+      </>,
+    );
+
+    expect(screen.getByRole("progressbar", { name: "엄마 생일 선물" })).toBeInTheDocument();
+  });
 });

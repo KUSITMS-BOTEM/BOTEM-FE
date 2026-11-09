@@ -50,4 +50,10 @@ describe("ProfileBox", () => {
 
     expect(screen.queryByRole("img", { name: "새 알림" })).not.toBeInTheDocument();
   });
+
+  it("스크린 리더에 전체 참여자 수(profiles + extraCount)를 제공한다", () => {
+    render(<ProfileBox profiles={["orange", "lime"]} extraCount={3} />);
+
+    expect(screen.getByText("참여자 5명")).toBeInTheDocument();
+  });
 });

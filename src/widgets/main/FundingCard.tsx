@@ -1,3 +1,4 @@
+import { useId } from "react";
 import Image from "next/image";
 import { cn } from "@/utils/cn";
 import Badge from "@/components/Badge";
@@ -40,6 +41,7 @@ export default function FundingCard({
   className,
 }: FundingCardProps) {
   const isGiftCover = type !== "default";
+  const titleId = useId();
 
   return (
     <article className={cn("relative flex w-80 flex-col items-center", className)}>
@@ -86,7 +88,9 @@ export default function FundingCard({
         <div className="from-semantic-fill-default to-semantic-fill-default/60 relative flex w-full flex-col gap-4 bg-linear-to-b px-4 pt-2.5 pb-5">
           <div className={cn("flex w-full flex-col gap-1", isGiftCover && "opacity-50")}>
             <div className="flex w-full min-w-0 items-center gap-1">
-              <p className="text-semantic-text-strong truncate [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-title-a2-z-x-small-weak)]">
+              <p
+                id={titleId}
+                className="text-semantic-text-strong truncate [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-title-a2-z-x-small-weak)]">
                 {title}
               </p>
               {isSurprise && (
@@ -101,7 +105,7 @@ export default function FundingCard({
             </p>
           </div>
           <div className={cn("flex w-full flex-col gap-1", isGiftCover && "opacity-50")}>
-            <ProgressBar progress={progress} />
+            <ProgressBar progress={progress} aria-labelledby={titleId} />
             <div className="text-semantic-text-tertiary flex w-full items-center justify-between [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-subtext-medium)]">
               <span>마감까지 D-{dDay}</span>
               <span className="flex items-center gap-0.5">

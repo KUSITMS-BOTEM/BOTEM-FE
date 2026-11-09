@@ -53,4 +53,30 @@ describe("SegmentControl", () => {
 
     expect(screen.getByRole("tab", { name: "위시" })).toHaveAttribute("aria-selected", "true");
   });
+
+  it("선택된 탭만 Tab 순서에 포함된다", () => {
+    render(<SegmentControl />);
+
+    expect(screen.getByRole("tab", { name: "펀딩" })).toHaveAttribute("tabindex", "0");
+    expect(screen.getByRole("tab", { name: "위시" })).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("좌우 화살표 키로 탭을 이동하며 선택하고 포커스를 옮긴다", async () => {
+    const handleChange = vi.fn();
+    const user = userEvent.setup();
+    render(<SegmentControl onChange={handleChange} />);
+
+    screen.getByRole("tab", { name: "펀딩" }).focus();
+    await user.keyboard("{ArrowRight}");
+    const wishTab = screen.getByRole("tab", { name: "위시" });
+    expect(wishTab).toHaveAttribute("aria-selected", "true");
+    expect(wishTab).toHaveFocus();
+
+    await user.keyboard("{ArrowRight}");
+    const fundingTab = screen.getByRole("tab", { name: "펀딩" });
+    expect(fundingTab).toHaveAttribute("aria-selected", "true");
+    expect(fundingTab).toHaveFocus();
+    expect(handleChange).toHaveBeenNthCalledWith(1, "wish");
+    expect(handleChange).toHaveBeenNthCalledWith(2, "funding");
+  });
 });

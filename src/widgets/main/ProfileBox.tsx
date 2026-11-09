@@ -32,6 +32,7 @@ export default function ProfileBox({
         "bg-semantic-fill-default/70 relative flex min-w-14.5 items-center justify-center rounded-full p-2 shadow-[0_4px_16px_0_var(--color-semantic-shadow-weak)]",
         className,
       )}>
+      <span className="sr-only">참여자 {profiles.length + extraCount}명</span>
       <div className="-mr-1 flex items-center">
         {profiles.map((color, index) => {
           const Icon = PROFILE_ICON[color];
@@ -45,7 +46,9 @@ export default function ProfileBox({
         })}
       </div>
       {extraCount > 0 && (
-        <span className="bg-semantic-fill-default border-semantic-border-inverted text-semantic-text-secondary relative flex size-6 shrink-0 items-center justify-center rounded-full border [font-family:var(--font-family-a2-z)] text-[9px] leading-[1.252] font-bold tracking-[-0.18px] whitespace-nowrap">
+        <span
+          aria-hidden
+          className="bg-semantic-fill-default border-semantic-border-inverted text-semantic-text-secondary relative flex size-6 shrink-0 items-center justify-center rounded-full border [font-family:var(--font-family-a2-z)] text-[9px] leading-[1.252] font-bold tracking-[-0.18px] whitespace-nowrap">
           +{Math.min(extraCount, MAX_EXTRA_COUNT)}
         </span>
       )}

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import FundingCardCarousel, { type FundingCardData } from "@/widgets/main/FundingCardCarousel";
@@ -135,5 +135,15 @@ describe("FundingCardCarousel", () => {
 
     expect(screen.getByRole("img", { name: "2페이지 중 2페이지" })).toBeInTheDocument();
     expect(nextButton).toHaveFocus();
+  });
+
+  it("화살표 키로 카드를 넘길 때 페이지 기본 스크롤을 막는다", () => {
+    render(<FundingCardCarousel cards={[makeCard(1, "첫번째"), makeCard(2, "두번째")]} />);
+
+    const notCanceled = fireEvent.keyDown(screen.getByRole("region", { name: "펀딩 카드" }), {
+      key: "ArrowRight",
+    });
+
+    expect(notCanceled).toBe(false);
   });
 });
