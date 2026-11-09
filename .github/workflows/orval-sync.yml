@@ -43,6 +43,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # chore/orval-sync는 매 실행마다 dev 기준으로 새로 만들어 force-push하는 봇 전용 브랜치다 —
+          # 이 브랜치에 사람이 직접 커밋을 올리면 다음 동기화 때 경고 없이 덮어씌워진다.
           git checkout -B chore/orval-sync
           git add src/apis/generated src/mocks/generated
           if git diff --cached --quiet; then
@@ -53,9 +55,19 @@ jobs:
           # .harness를 체크아웃하지 않는 이 워크플로에서는 항상 실패한다 — 생성 파일만 다루는 이 커밋에서 끈다.
           git -c core.hooksPath=/dev/null commit -m "[CHORE] 백엔드 API 스펙 동기화 (orval 재생성)"
           git push -f origin HEAD:chore/orval-sync
-          OPEN_COUNT=$(gh pr list --base dev --head chore/orval-sync --state open --json number --jq 'length')
+
+          # push는 이미 끝난 뒤라, 아래가 실패하면 브랜치만 있고 PR은 없는 상태가 될 수 있다 —
+          # 로그에 수동 조치 방법을 명시해 다음 사람이 바로 복구할 수 있게 한다.
+          if ! OPEN_COUNT=$(gh pr list --base dev --head chore/orval-sync --state open --json number --jq 'length'); then
+            echo "::error::PR 목록 조회 실패 — chore/orval-sync는 이미 push됨. 수동으로 'gh pr create --base dev --head chore/orval-sync'를 실행해주세요."
+            exit 1
+          fi
           if [ "$OPEN_COUNT" = "0" ]; then
-            gh pr create --base dev --head chore/orval-sync \
+            PR_BODY=$'백엔드 배포로 Swagger 스펙이 갱신되어 orval이 재생성한 PR입니다. 리뷰 후 머지해주세요.\n\n⚠️ 이 브랜치(`chore/orval-sync`)는 동기화마다 `dev` 기준으로 재생성되어 강제로 덮어씌워집니다. 수정이 필요하면 이 브랜치에 직접 커밋하지 말고 PR 코멘트로 알려주세요.'
+            if ! gh pr create --base dev --head chore/orval-sync \
               --title "[CHORE] 백엔드 API 스펙 동기화" \
-              --body "백엔드 배포로 Swagger 스펙이 갱신되어 orval이 재생성한 PR입니다. 리뷰 후 머지해주세요."
+              --body "$PR_BODY"; then
+              echo "::error::PR 생성 실패 — chore/orval-sync는 이미 push됨. 수동으로 'gh pr create --base dev --head chore/orval-sync'를 실행해주세요."
+              exit 1
+            fi
           fi
