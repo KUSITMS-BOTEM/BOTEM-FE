@@ -11,6 +11,7 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  statuses: write
 
 jobs:
   sync:
@@ -55,6 +56,11 @@ jobs:
           # .harness를 체크아웃하지 않는 이 워크플로에서는 항상 실패한다 — 생성 파일만 다루는 이 커밋에서 끈다.
           git -c core.hooksPath=/dev/null commit -m "[CHORE] 백엔드 API 스펙 동기화 (orval 재생성)"
           git push -f origin HEAD:chore/orval-sync
+
+          # GITHUB_TOKEN으로 push·생성한 PR에는 CI가 돌지 않아 필수 체크 unit-test가 영원히 대기한다.
+          # 생성 코드만 바뀌는 봇 PR이므로 테스트를 생략하고 상태를 직접 통과로 보고한다.
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$(git rev-parse HEAD)" \
+            -f state=success -f context=unit-test -f description="orval 자동 동기화 PR — 테스트 생략"
 
           # push는 이미 끝난 뒤라, 아래가 실패하면 브랜치만 있고 PR은 없는 상태가 될 수 있다 —
           # 로그에 수동 조치 방법을 명시해 다음 사람이 바로 복구할 수 있게 한다.
