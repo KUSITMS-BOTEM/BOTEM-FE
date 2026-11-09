@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run --project unit",
     "e2e": "playwright test",
+    "e2e:typecheck": "tsc --noEmit",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "build:tokens": "node src/styles/build-tokens.mjs",
