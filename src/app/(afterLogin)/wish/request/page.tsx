@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -24,6 +24,8 @@ export default function WishRequestPage() {
   const [productUrl, setProductUrl] = useState("");
   const [productName, setProductName] = useState("");
   const [toastText, setToastText] = useState<string | null>(null);
+  // isPending은 비동기로 갱신돼 빠른 더블클릭을 막지 못하므로 ref로 동기 잠금
+  const isSubmitting = useRef(false);
 
   useEffect(() => {
     if (!toastText) return;
@@ -32,14 +34,21 @@ export default function WishRequestPage() {
   }, [toastText]);
 
   const handleSubmit = () => {
+    if (isSubmitting.current) return;
     if (!isCoupangProductUrl(productUrl)) {
       setToastText(INVALID_LINK_MESSAGE);
       return;
     }
+    isSubmitting.current = true;
     requestProduct(
       { productUrl: productUrl.trim(), productName: productName.trim() || null },
-      // 성공 시 이동할 전용 페이지가 있지만 디자인이 아직 나오지 않아 만들지 못했다 — 임시로 /wish/recommended로 이동한다
-      { onSuccess: () => router.push("/wish/recommended") },
+      {
+        // 성공 시 이동할 전용 페이지가 있지만 디자인이 아직 나오지 않아 만들지 못했다 — 임시로 /wish/recommended로 이동한다
+        onSuccess: () => router.push("/wish/recommended"),
+        onSettled: () => {
+          isSubmitting.current = false;
+        },
+      },
     );
   };
 
