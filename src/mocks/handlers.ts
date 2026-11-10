@@ -7,7 +7,7 @@ const MOCK_REFRESH_TOKEN_COOKIE = "refreshToken";
 const MOCK_IS_LOGGED_IN_COOKIE = "isLoggedIn";
 
 // 평범한 문자열이면 isTokenExpired가 JWT로 파싱하지 못해 항상 만료로 보고 매 요청마다 reissue를 탄다
-// (reissue는 mock이 없어 실제 백엔드로 릴레이되다 가짜 쿠키라 401) — exp가 먼 미래인 JWT 형태로 흉내 낸다.
+// — exp가 먼 미래인 JWT 형태로 흉내 낸다.
 const createMockAccessToken = () => {
   const payload = btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 60 * 60 }));
   return `mock.${payload}.signature`;
@@ -41,6 +41,15 @@ export const handlers = [
     return HttpResponse.json({
       success: true,
       data: { accessToken: createMockAccessToken(), isNewUser: code !== EXISTING_USER_KAKAO_CODE },
+      error: null,
+    });
+  }),
+  // mock 로그인 상태(가짜 refreshToken 쿠키)로도 accessToken 만료 → 재발급 → 원요청 재시도 흐름을 테스트할 수 있게 한다
+  http.post("/api/auth/reissue", async () => {
+    await delay(300);
+    return HttpResponse.json({
+      success: true,
+      data: { accessToken: createMockAccessToken() },
       error: null,
     });
   }),
@@ -91,5 +100,10 @@ export const handlers = [
       },
       error: null,
     });
+  }),
+  // 다이얼로그의 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다
+  http.delete("*/api/wishes/:wishId", async () => {
+    await delay(1000);
+    return HttpResponse.json({ success: true, data: null, error: null });
   }),
 ];

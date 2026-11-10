@@ -13,6 +13,7 @@ import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
 import List from "@/components/List";
 import ListText from "@/components/ListText";
+import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import WishDetailSkeleton from "./skeleton/WishDetailSkeleton";
 import IconDelete from "@/assets/icons/icon-delete.svg?react";
@@ -25,6 +26,7 @@ export default function WishDetail() {
   const { wishId } = useParams<{ wishId: string }>();
   const { data: wish } = useWishQuery(wishId);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { mutate: deleteWish, isPending: isDeletePending } = useDeleteWishMutation(wishId);
 
   if (!wish) return <WishDetailSkeleton />;
 
@@ -110,8 +112,8 @@ export default function WishDetail() {
         title="내 위시에서 제거할까요?"
         description="위시 추가는 다시 할 수 있어요"
         confirmColor="danger"
-        // TODO: 위시 삭제 API 연동 전까지 다이얼로그만 닫음
-        onConfirm={() => setIsDeleteDialogOpen(false)}
+        isPending={isDeletePending}
+        onConfirm={() => deleteWish()}
         onCancel={() => setIsDeleteDialogOpen(false)}
       />
     </div>
