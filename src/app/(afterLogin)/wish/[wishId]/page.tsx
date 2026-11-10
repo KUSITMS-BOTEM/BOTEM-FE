@@ -34,6 +34,7 @@ export default function WishDetail() {
     // WISH_002: 위시 없음(다른 회원의 위시 포함), AUTH_*: 인증 실패(reissue 실패 포함)
     if (error.code === "WISH_002") router.replace("/not-found");
     else if (error.code.startsWith("AUTH_")) router.replace("/");
+    else alert(error.message);
   }, [error, router]);
 
   if (!wish) return <WishDetailSkeleton />;
@@ -62,6 +63,7 @@ export default function WishDetail() {
               onClick: () => setIsDeleteDialogOpen(true),
             },
           ]}
+          background="none"
           className="fixed inset-x-0 top-0 z-10 mx-auto w-full max-w-[440px] pt-[env(safe-area-inset-top)]"
         />
       </div>
