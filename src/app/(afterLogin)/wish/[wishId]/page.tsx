@@ -63,7 +63,6 @@ export default function WishDetail() {
               onClick: () => setIsDeleteDialogOpen(true),
             },
           ]}
-          background="none"
           className="fixed inset-x-0 top-0 z-10 mx-auto w-full max-w-[440px] pt-[env(safe-area-inset-top)]"
         />
       </div>

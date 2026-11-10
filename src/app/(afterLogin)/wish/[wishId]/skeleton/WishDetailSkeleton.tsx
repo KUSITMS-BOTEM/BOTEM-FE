@@ -16,7 +16,6 @@ export default function WishDetailSkeleton() {
         <Header
           title="위시 상품"
           leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
-          background="none"
           className="fixed inset-x-0 top-0 z-10 mx-auto w-full max-w-[440px] pt-[env(safe-area-inset-top)]"
         />
       </div>
