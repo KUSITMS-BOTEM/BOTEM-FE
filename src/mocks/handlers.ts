@@ -178,4 +178,38 @@ export const handlers = [
 
     return HttpResponse.json({ success: true, data, error: null });
   }),
+  http.get("*/api/recommended-products/:productId", async ({ params }) => {
+    // 스켈레톤 UI를 눈으로 확인할 수 있게 지연을 둔다
+    await delay(1000);
+    const product = MOCK_RECOMMENDED_PRODUCTS.find(item => item.id === Number(params.productId));
+    if (!product) {
+      return HttpResponse.json({
+        success: false,
+        data: null,
+        error: { code: "PRODUCT_001", message: "추천 상품을 찾을 수 없습니다." },
+      });
+    }
+
+    return HttpResponse.json({ success: true, data: product, error: null });
+  }),
+  // 다이얼로그의 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다
+  http.post("*/api/wishes", async ({ request }) => {
+    await delay(1000);
+    const { recommendedProductId } = (await request.json()) as { recommendedProductId: number };
+    const product = MOCK_RECOMMENDED_PRODUCTS.find(item => item.id === recommendedProductId);
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        id: recommendedProductId,
+        productName: product?.name ?? "",
+        productImageUrl: product?.imageUrl ?? "",
+        price: product?.price ?? 0,
+        productUrl: "https://link.coupang.com/a/example",
+        status: "AVAILABLE",
+        fundingId: null,
+      },
+      error: null,
+    });
+  }),
 ];

@@ -10,4 +10,6 @@ export const recommendedProductService = {
       "/api/recommended-products",
       category ? { category } : undefined,
     ),
+  getRecommendedProduct: (productId: string) =>
+    clientApi.get<RecommendedProductResponse>(`/api/recommended-products/${productId}`),
 };

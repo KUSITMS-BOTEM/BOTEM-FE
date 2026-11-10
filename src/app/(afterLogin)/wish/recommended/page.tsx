@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import Asset from "@/components/Asset";
@@ -11,14 +12,20 @@ import Header from "@/components/Header";
 import List from "@/components/List";
 import Title from "@/components/Title";
 import WishCard from "@/widgets/main/WishCard";
+import RecommendedWishListSkeleton from "@/widgets/wish/skeleton/RecommendedWishListSkeleton";
 
 import { useRecommendedProductsQuery } from "@/hooks/queries/recommendedProduct/useRecommendedProductsQuery";
+import { RECOMMENDED_PRODUCT_CATEGORIES } from "@/constants/recommendedProductCategory";
 import type { RecommendedProductCategory } from "@/types/recommendedProduct/recommendedProduct";
-import { ALL_CATEGORY_VALUE, CATEGORY_CHIPS } from "./constants";
-import RecommendedWishListSkeleton from "./skeleton/RecommendedWishListSkeleton";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconRight from "@/assets/icons/icon-right.svg?react";
+
+const ALL_CATEGORY_VALUE = "ALL" as const;
+const CATEGORY_CHIPS = [
+  { value: ALL_CATEGORY_VALUE, label: "전체" },
+  ...RECOMMENDED_PRODUCT_CATEGORIES,
+];
 
 type CategoryFilter = RecommendedProductCategory | typeof ALL_CATEGORY_VALUE;
 
@@ -63,13 +70,14 @@ export default function RecommendedWishList() {
             {recommendedProducts && (
               <div className="grid grid-cols-2 gap-x-3 gap-y-4">
                 {recommendedProducts.map(product => (
-                  <WishCard
-                    key={product.id}
-                    productName={product.name}
-                    price={product.price}
-                    productImageUrl={product.imageUrl}
-                    className="w-full"
-                  />
+                  <Link key={product.id} href={`/wish/recommended/${product.id}`}>
+                    <WishCard
+                      productName={product.name}
+                      price={product.price}
+                      productImageUrl={product.imageUrl}
+                      className="w-full"
+                    />
+                  </Link>
                 ))}
               </div>
             )}

@@ -7,7 +7,7 @@ import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import ShimmerBar from "@/components/skeleton/ShimmerBar";
 
-export default function WishDetailSkeleton() {
+export default function ProductDetailViewSkeleton() {
   const router = useRouter();
 
   return (

@@ -9,3 +9,7 @@ export type WishResponse = {
   status: WishStatus;
   fundingId: number | null;
 };
+
+export type AddWishRequest = {
+  recommendedProductId: number;
+};
