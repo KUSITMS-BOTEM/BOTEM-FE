@@ -75,7 +75,9 @@ export const handlers = [
 
     return HttpResponse.json({ success: true, data: null, error: null });
   }),
-  http.get("*/api/wishes/:wishId", () => {
+  http.get("*/api/wishes/:wishId", async () => {
+    // 스켈레톤 UI를 눈으로 확인할 수 있게 지연을 둔다
+    await delay(1000);
     return HttpResponse.json({
       success: true,
       data: {

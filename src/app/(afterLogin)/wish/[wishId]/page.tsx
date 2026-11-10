@@ -14,6 +14,7 @@ import Header from "@/components/Header";
 import List from "@/components/List";
 import ListText from "@/components/ListText";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
+import WishDetailSkeleton from "./skeleton/WishDetailSkeleton";
 import IconDelete from "@/assets/icons/icon-delete.svg?react";
 import IconInfo from "@/assets/icons/icon-info.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
@@ -25,7 +26,7 @@ export default function WishDetail() {
   const { data: wish } = useWishQuery(wishId);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  if (!wish) return null;
+  if (!wish) return <WishDetailSkeleton />;
 
   return (
     <div className="flex flex-col">
