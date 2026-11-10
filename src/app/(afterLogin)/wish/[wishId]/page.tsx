@@ -4,9 +4,7 @@ import { useState } from "react";
 
 import Image from "next/image";
 
-import { useRouter } from "next/navigation";
-
-import { faker } from "@faker-js/faker";
+import { useParams, useRouter } from "next/navigation";
 
 import Asset from "@/components/Asset";
 import BottomCTA from "@/components/BottomCTA";
@@ -15,36 +13,26 @@ import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
 import List from "@/components/List";
 import ListText from "@/components/ListText";
+import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import IconDelete from "@/assets/icons/icon-delete.svg?react";
 import IconInfo from "@/assets/icons/icon-info.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconRight from "@/assets/icons/icon-right.svg?react";
 
-// TODO: 위시 상세 조회 MSW 핸들러 연동 전까지 하드코딩. faker.seed로 고정해 서버/클라이언트 렌더 값이 어긋나지 않게 함
-faker.seed(1);
-const MOCK_WISH = {
-  productName: "소니 WH-1000XM5",
-  price: 429000,
-  productImageUrl: faker.image.urlPicsumPhotos({
-    width: 720,
-    height: 720,
-    grayscale: false,
-    blur: 0,
-  }),
-  sellerName: "쿠팡 Apple 공식 브랜드관",
-  productLink: "https://www.coupang.com/vp/products/7891234567",
-};
-
 export default function WishDetail() {
   const router = useRouter();
+  const { wishId } = useParams<{ wishId: string }>();
+  const { data: wish } = useWishQuery(wishId);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  if (!wish) return null;
 
   return (
     <div className="flex flex-col">
       <div className="relative aspect-square w-full shrink-0">
         <Image
-          src={MOCK_WISH.productImageUrl}
-          alt={MOCK_WISH.productName}
+          src={wish.productImageUrl}
+          alt={wish.productName}
           fill
           unoptimized
           className="object-cover"
@@ -70,8 +58,8 @@ export default function WishDetail() {
       <div className="flex flex-col gap-3 px-5 pt-5">
         <div className="flex w-full flex-col gap-2">
           <ListText
-            title={`${MOCK_WISH.price.toLocaleString("ko-KR")}원`}
-            description={MOCK_WISH.productName}
+            title={`${wish.price.toLocaleString("ko-KR")}원`}
+            description={wish.productName}
             titleUp
             type="price"
           />
@@ -84,10 +72,10 @@ export default function WishDetail() {
         </div>
         <button
           type="button"
-          onClick={() => window.open(MOCK_WISH.productLink, "_blank", "noopener,noreferrer")}
-          className="w-full text-left">
+          onClick={() => window.open(wish.productUrl, "_blank", "noopener,noreferrer")}
+          className="w-full cursor-pointer text-left">
           <List
-            title={MOCK_WISH.sellerName}
+            title="쿠팡 Apple 공식 브랜드관"
             description="판매처"
             titleUp
             right={

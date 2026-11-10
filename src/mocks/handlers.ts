@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker";
 import { delay, http, HttpResponse } from "msw";
 
 // proxy.ts는 isLoggedIn 쿠키 존재 여부만 보는데, MSW는 응답 바디만 가로채고 실제 백엔드의 Set-Cookie를 거치지 않아
@@ -73,5 +74,20 @@ export const handlers = [
     document.cookie = `${MOCK_IS_LOGGED_IN_COOKIE}=; path=/; max-age=0`;
 
     return HttpResponse.json({ success: true, data: null, error: null });
+  }),
+  http.get("*/api/wishes/:wishId", () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        id: 1,
+        productName: "에어팟 프로 3",
+        productImageUrl: faker.image.urlPicsumPhotos({ width: 720, height: 720 }),
+        price: 350000,
+        productUrl: "https://link.coupang.com/a/example",
+        status: "AVAILABLE",
+        fundingId: null,
+      },
+      error: null,
+    });
   }),
 ];
