@@ -40,7 +40,7 @@ export default function ListText({
       className={cn(
         "flex min-w-0 flex-col gap-0.5 [letter-spacing:var(--letter-spacing-default)]",
         "[&>p]:overflow-hidden [&>p]:text-ellipsis",
-        "[&>p:first-child]:whitespace-nowrap",
+        !titleUp && "[&>p:first-child]:whitespace-nowrap",
         align === "right" && "text-right",
         className,
       )}>

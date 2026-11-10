@@ -26,7 +26,7 @@ import IconRight from "@/assets/icons/icon-right.svg?react";
 export default function WishDetail() {
   const router = useRouter();
   const { wishId } = useParams<{ wishId: string }>();
-  const { data: wish, error, isLoading } = useWishQuery(wishId);
+  const { data: wish, error, isLoading, refetch } = useWishQuery(wishId);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { mutate: deleteWish, isPending: isDeletePending } = useDeleteWishMutation(wishId);
   const errorAction = resolveWishErrorAction(error);
@@ -45,9 +45,12 @@ export default function WishDetail() {
           title="위시 상품"
           leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
         />
-        <p className="text-semantic-text-secondary flex flex-1 items-center justify-center px-5 text-center [font:var(--semantic-subtext-large)]">
-          위시 정보를 불러오지 못했어요
-        </p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-5 text-center">
+          <p className="text-semantic-text-secondary [font:var(--semantic-subtext-large)]">
+            위시 정보를 불러오지 못했어요
+          </p>
+          <Button onClick={() => refetch()}>다시 시도</Button>
+        </div>
       </div>
     );
   }

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import Asset from "@/components/Asset";
+import Button from "@/components/Button";
 import ChipGroup from "@/components/ChipGroup";
 import Header from "@/components/Header";
 import List from "@/components/List";
@@ -24,9 +25,12 @@ type CategoryFilter = RecommendedProductCategory | typeof ALL_CATEGORY_VALUE;
 export default function RecommendedWishList() {
   const router = useRouter();
   const [category, setCategory] = useState<CategoryFilter>(ALL_CATEGORY_VALUE);
-  const { data: recommendedProducts, isLoading } = useRecommendedProductsQuery(
-    category === ALL_CATEGORY_VALUE ? undefined : category,
-  );
+  const {
+    data: recommendedProducts,
+    isLoading,
+    isError,
+    refetch,
+  } = useRecommendedProductsQuery(category === ALL_CATEGORY_VALUE ? undefined : category);
 
   return (
     <div className="flex flex-col">
@@ -48,6 +52,14 @@ export default function RecommendedWishList() {
               value={category}
               onChange={value => setCategory(value as CategoryFilter)}
             />
+            {isError && !recommendedProducts && (
+              <div className="flex flex-col items-center gap-4 py-10 text-center">
+                <p className="text-semantic-text-secondary [font:var(--semantic-subtext-large)]">
+                  추천 상품을 불러오지 못했어요
+                </p>
+                <Button onClick={() => refetch()}>다시 시도</Button>
+              </div>
+            )}
             {recommendedProducts && (
               <div className="grid grid-cols-2 gap-x-3 gap-y-4">
                 {recommendedProducts.map(product => (
