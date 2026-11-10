@@ -163,7 +163,9 @@ export const handlers = [
     await delay(1000);
     return HttpResponse.json({ success: true, data: null, error: null });
   }),
-  http.get("*/api/recommended-products", ({ request }) => {
+  http.get("*/api/recommended-products", async ({ request }) => {
+    // 스켈레톤 UI를 눈으로 확인할 수 있게 지연을 둔다
+    await delay(1000);
     const category = new URL(request.url).searchParams.get("category");
     const data = category
       ? MOCK_RECOMMENDED_PRODUCTS.filter(product => product.category === category)
