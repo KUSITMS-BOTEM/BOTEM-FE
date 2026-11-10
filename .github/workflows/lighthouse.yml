@@ -34,13 +34,17 @@ jobs:
 
       # 점수 기준은 lighthouserc.json에서 warn으로만 두어 PR을 막지 않는다
       - name: Lighthouse 측정
-        run: pnpm exec lhci autorun
+        run: |
+          pnpm exec lhci autorun
+          # temporary-public-storage 업로드는 links.json만 남기므로, 점수 요약용 manifest.json을 filesystem 타깃으로 따로 만든다
+          pnpm exec lhci upload --target=filesystem --outputDir=.lighthouseci/fs
 
       - name: 결과 요약
         if: ${{ !cancelled() }}
         run: |
           LINKS=".lighthouseci/links.json"
-          if [ ! -f "$LINKS" ]; then
+          MANIFEST=".lighthouseci/fs/manifest.json"
+          if [ ! -f "$LINKS" ] || [ ! -f "$MANIFEST" ]; then
             echo "### ⚠️ Lighthouse 리포트를 만들지 못했습니다" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
@@ -54,5 +58,5 @@ jobs:
               def pct(k): (.summary[k] // 0) * 100 | round;
               .[] | select(.isRepresentativeRun)
               | "| \(.url) | \(pct("performance")) | \(pct("accessibility")) | \(pct("best-practices")) | \(pct("seo")) | [보기](\($links[0][.url])) |"
-            ' .lighthouseci/manifest.json
+            ' "$MANIFEST"
           } >> "$GITHUB_STEP_SUMMARY"
