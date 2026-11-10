@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import CoupangMoveGuide from "@/widgets/main/CoupangMoveGuide";
+import CoupangMoveGuide from "@/components/CoupangMoveGuide";
 
 const meta = {
-  title: "Widgets/Main/CoupangMoveGuide",
+  title: "Components/CoupangMoveGuide",
   component: CoupangMoveGuide,
   parameters: {
     layout: "centered",
