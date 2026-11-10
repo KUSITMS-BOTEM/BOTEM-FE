@@ -20,7 +20,7 @@ export const sentryBaseOptions = {
       response: { deny: PII_HEADER_DENY },
     },
     httpBodies: [],
-    urlQueryParams: { deny: PII_HEADER_DENY },
+    urlQueryParams: { deny: ["code", "state"] },
     genAI: { inputs: false, outputs: false },
     databaseQueryData: false,
     graphQL: { document: false, variables: false },
