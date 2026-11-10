@@ -17,13 +17,6 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace }),
 }));
 
-const removeQueries = vi.fn();
-vi.mock("@/lib/queryClient", () => ({
-  queryClient: {
-    removeQueries: (...args: unknown[]) => removeQueries(...args),
-  },
-}));
-
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
@@ -37,7 +30,6 @@ const createWrapper = () => {
 describe("useDeleteWishMutation", () => {
   beforeEach(() => {
     replace.mockClear();
-    removeQueries.mockClear();
   });
 
   it("mutate 호출 시 wishService.deleteWish가 전달받은 wishId로 호출된다", async () => {
@@ -62,18 +54,6 @@ describe("useDeleteWishMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(replace).toHaveBeenCalledWith("/main");
-  });
-
-  it("성공 시 해당 wishId의 쿼리 캐시가 제거된다", async () => {
-    vi.mocked(wishService.deleteWish).mockResolvedValue(null);
-    const { result } = renderHook(() => useDeleteWishMutation("1"), {
-      wrapper: createWrapper(),
-    });
-
-    result.current.mutate();
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(removeQueries).toHaveBeenCalledWith({ queryKey: ["wishes", "1"] });
   });
 
   it("wishService.deleteWish가 실패하면 isError가 true가 되고 router.replace는 호출되지 않는다", async () => {

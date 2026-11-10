@@ -39,6 +39,14 @@ describe("ListText", () => {
     expect(screen.getByText("타이틀")).toHaveClass(expected);
   });
 
+  it("description에 개행이 있으면 줄바꿈이 그대로 유지되고 whitespace-pre-line 클래스가 적용된다", () => {
+    const { container } = render(<ListText title="타이틀" description={"첫줄\n둘째줄"} />);
+    const descriptionEl = container.querySelectorAll("p")[1];
+
+    expect(descriptionEl).toHaveClass("whitespace-pre-line");
+    expect(descriptionEl.textContent).toBe("첫줄\n둘째줄");
+  });
+
   it("align=right면 text-right 클래스가 붙는다", () => {
     const { container } = render(<ListText title="타이틀" align="right" />);
 

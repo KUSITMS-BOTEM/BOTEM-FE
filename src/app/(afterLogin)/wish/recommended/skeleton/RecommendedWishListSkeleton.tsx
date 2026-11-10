@@ -1,5 +1,5 @@
 import { cn } from "@/utils/cn";
-import ShimmerBar from "@/app/(afterLogin)/wish/[wishId]/skeleton/ShimmerBar";
+import ShimmerBar from "@/components/skeleton/ShimmerBar";
 
 const WISH_CARD_SKELETON_COUNT = 4;
 const CHIP_SKELETON_WIDTHS = ["w-14", "w-24", "w-28", "w-24", "w-20"];

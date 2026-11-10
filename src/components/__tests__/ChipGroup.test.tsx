@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ChipGroup from "@/components/ChipGroup";
@@ -50,6 +50,32 @@ describe("ChipGroup", () => {
     render(<ChipGroup items={[]} value="" onChange={vi.fn()} />);
 
     expect(screen.queryAllByRole("button")).toHaveLength(0);
+  });
+
+  it("마우스로 임계값 이상 드래그한 뒤 손을 떼면 그 지점의 Chip 클릭이 억제된다", () => {
+    const handleChange = vi.fn();
+    render(<ChipGroup items={items} value="a" onChange={handleChange} />);
+    const chip = screen.getByRole("button", { name: "바나나" });
+
+    fireEvent.pointerDown(chip, { pointerType: "mouse", clientX: 0 });
+    fireEvent.pointerMove(chip, { pointerType: "mouse", clientX: 20 });
+    fireEvent.pointerUp(chip, { pointerType: "mouse", clientX: 20 });
+    fireEvent.click(chip);
+
+    expect(handleChange).not.toHaveBeenCalled();
+  });
+
+  it("마우스로 임계값 이하로만 움직이면 클릭이 억제되지 않는다", () => {
+    const handleChange = vi.fn();
+    render(<ChipGroup items={items} value="a" onChange={handleChange} />);
+    const chip = screen.getByRole("button", { name: "바나나" });
+
+    fireEvent.pointerDown(chip, { pointerType: "mouse", clientX: 0 });
+    fireEvent.pointerMove(chip, { pointerType: "mouse", clientX: 2 });
+    fireEvent.pointerUp(chip, { pointerType: "mouse", clientX: 2 });
+    fireEvent.click(chip);
+
+    expect(handleChange).toHaveBeenCalledWith("b");
   });
 
   it("className을 전달하면 wrapper에 병합된다", () => {

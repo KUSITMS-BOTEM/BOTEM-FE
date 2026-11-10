@@ -5,6 +5,7 @@ import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { cn } from "@/utils/cn";
 import Button from "@/components/Button";
 import BottomSheetHeader from "@/components/BottomSheetHeader";
+import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 
 type BottomSheetButtons = {
   leftLabel?: string;
@@ -24,8 +25,6 @@ type BottomSheetProps = {
   className?: string;
 };
 
-// 루트 레이아웃 wrapper(src/app/layout.tsx)의 max-w-[440px]와 맞춰, 넓은 화면에서도 본문 폭을 그대로 채운다
-const SHEET_MAX_WIDTH = "max-w-[440px]";
 // Figma Motion·바텀시트(P7) 디자인팀 노트: 진입 = 딤 450ms ease.standard, 50ms 지연 뒤 시트 spring bounce 0.25·550ms / 퇴장 = 딤·시트 동시 300ms ease.exit
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
 const EASE_EXIT = [0.3, 0, 1, 1] as const;
@@ -109,7 +108,7 @@ export default function BottomSheet({
                 key="sheet"
                 className={cn(
                   "bg-semantic-fill-default fixed inset-x-0 -bottom-6 mx-auto flex w-full flex-col overflow-clip",
-                  SHEET_MAX_WIDTH,
+                  APP_MAX_WIDTH_CLASS,
                   height === "max" ? SHEET_HEIGHT_MAX : SHEET_HEIGHT_AUTO,
                   className,
                 )}

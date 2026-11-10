@@ -30,18 +30,23 @@ export default function ChipGroup({ items, value, onChange, className }: ChipGro
     if (!scrollEl) return;
     dragStart.current = { x: event.clientX, scrollLeft: scrollEl.scrollLeft };
     hasDragged.current = false;
-    scrollEl.setPointerCapture?.(event.pointerId);
   };
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
     const scrollEl = scrollRef.current;
     if (!scrollEl || !dragStart.current) return;
     const delta = event.clientX - dragStart.current.x;
-    if (Math.abs(delta) > DRAG_THRESHOLD_PX) hasDragged.current = true;
+    // 드래그로 확정된 순간에만 포인터를 capture한다 — 처음부터 capture하면 단순 클릭의 click 이벤트 대상까지 컨테이너로 바뀌어 Chip 선택이 막힌다
+    if (!hasDragged.current && Math.abs(delta) > DRAG_THRESHOLD_PX) {
+      hasDragged.current = true;
+      scrollEl.setPointerCapture?.(event.pointerId);
+    }
     scrollEl.scrollLeft = dragStart.current.scrollLeft - delta;
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    const scrollEl = scrollRef.current;
+    if (hasDragged.current) scrollEl?.releasePointerCapture?.(event.pointerId);
     dragStart.current = null;
   };
 
@@ -60,6 +65,7 @@ export default function ChipGroup({ items, value, onChange, className }: ChipGro
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
+      onPointerCancel={handlePointerUp}
       onClickCapture={handleClickCapture}
       className={cn(
         "flex w-full cursor-grab gap-1 overflow-x-auto active:cursor-grabbing",

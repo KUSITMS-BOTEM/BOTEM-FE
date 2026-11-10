@@ -19,11 +19,13 @@ import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?rea
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconRight from "@/assets/icons/icon-right.svg?react";
 
+type CategoryFilter = RecommendedProductCategory | typeof ALL_CATEGORY_VALUE;
+
 export default function RecommendedWishList() {
   const router = useRouter();
-  const [category, setCategory] = useState<string>(ALL_CATEGORY_VALUE);
+  const [category, setCategory] = useState<CategoryFilter>(ALL_CATEGORY_VALUE);
   const { data: recommendedProducts, isLoading } = useRecommendedProductsQuery(
-    category === ALL_CATEGORY_VALUE ? undefined : (category as RecommendedProductCategory),
+    category === ALL_CATEGORY_VALUE ? undefined : category,
   );
 
   return (
@@ -41,7 +43,11 @@ export default function RecommendedWishList() {
               title="이런 선물은 어때요?"
               description="혼자 사긴 부담되는 선물을 골라봤어요."
             />
-            <ChipGroup items={CATEGORY_CHIPS} value={category} onChange={setCategory} />
+            <ChipGroup
+              items={CATEGORY_CHIPS}
+              value={category}
+              onChange={value => setCategory(value as CategoryFilter)}
+            />
             {recommendedProducts && (
               <div className="grid grid-cols-2 gap-x-3 gap-y-4">
                 {recommendedProducts.map(product => (
