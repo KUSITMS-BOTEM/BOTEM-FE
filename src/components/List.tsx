@@ -15,6 +15,7 @@ type ListProps = {
   thumbnailAlt?: string;
   title: string;
   description?: string;
+  titleUp?: boolean;
   right?: ReactNode;
   className?: string;
 };
@@ -26,6 +27,7 @@ export default function List({
   thumbnailAlt = "",
   title,
   description,
+  titleUp = false,
   right,
   className,
 }: ListProps) {
@@ -56,7 +58,7 @@ export default function List({
             </span>
           )
         )}
-        <ListText title={title} description={description} className="flex-1" />
+        <ListText title={title} description={description} titleUp={titleUp} className="flex-1" />
       </div>
       {right && <div className="flex shrink-0 items-center">{right}</div>}
     </div>

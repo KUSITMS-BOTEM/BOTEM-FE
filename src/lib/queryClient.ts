@@ -12,8 +12,9 @@ function reportUnexpectedError(error: Error) {
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
-    onError: error => {
+    onError: (error, query) => {
       reportUnexpectedError(error);
+      if (query.meta?.skipGlobalError) return;
       alert(error.message);
     },
   }),
