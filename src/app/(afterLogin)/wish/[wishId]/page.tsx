@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import Image from "next/image";
 
 import { useRouter } from "next/navigation";
@@ -9,6 +11,7 @@ import { faker } from "@faker-js/faker";
 import Asset from "@/components/Asset";
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
+import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
 import List from "@/components/List";
 import ListText from "@/components/ListText";
@@ -34,6 +37,7 @@ const MOCK_WISH = {
 
 export default function WishDetail() {
   const router = useRouter();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   return (
     <div className="flex flex-col">
@@ -53,7 +57,13 @@ export default function WishDetail() {
           title="위시 상품"
           background="none"
           leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
-          rightItems={[{ icon: <IconDelete />, ariaLabel: "삭제", onClick: () => {} }]}
+          rightItems={[
+            {
+              icon: <IconDelete />,
+              ariaLabel: "삭제",
+              onClick: () => setIsDeleteDialogOpen(true),
+            },
+          ]}
           className="absolute inset-x-0 top-0 bg-linear-to-b from-white from-[29.297%] to-white/0 to-[195.31%]"
         />
       </div>
@@ -106,6 +116,16 @@ export default function WishDetail() {
           펀딩 열기
         </Button>
       </BottomCTA>
+      <Dialog
+        open={isDeleteDialogOpen}
+        kind="confirm"
+        title="내 위시에서 제거할까요?"
+        description="위시 추가는 다시 할 수 있어요"
+        confirmColor="danger"
+        // TODO: 위시 삭제 API 연동 전까지 다이얼로그만 닫음
+        onConfirm={() => setIsDeleteDialogOpen(false)}
+        onCancel={() => setIsDeleteDialogOpen(false)}
+      />
     </div>
   );
 }
