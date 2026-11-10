@@ -20,6 +20,63 @@ export const EXISTING_USER_KAKAO_CODE = "existing-user-code";
 // page.route로 가로챌 수 있도록 kauth.kakao.com host를 유지한다.
 export const MOCK_KAKAO_LOGIN_URI = "https://kauth.kakao.com/oauth/authorize?client_id=mock";
 
+const MOCK_RECOMMENDED_PRODUCTS = [
+  {
+    id: 1,
+    name: "에어팟 프로 3",
+    imageUrl: faker.image.urlPicsumPhotos({ width: 400, height: 400, blur: 0 }),
+    price: 359000,
+    sellerName: "Apple 공식 브랜드관",
+    category: "EARPHONE_HEADPHONE",
+    status: "ON_SALE",
+  },
+  {
+    id: 2,
+    name: "다이슨 에어랩 i.d.",
+    imageUrl: faker.image.urlPicsumPhotos({ width: 400, height: 400, blur: 0 }),
+    price: 659000,
+    sellerName: "다이슨 공식 스토어",
+    category: "HAIR_BEAUTY_DEVICE",
+    status: "ON_SALE",
+  },
+  {
+    id: 3,
+    name: "닌텐도 스위치 2",
+    imageUrl: faker.image.urlPicsumPhotos({ width: 400, height: 400, blur: 0 }),
+    price: 492000,
+    sellerName: "닌텐도 공식 스토어",
+    category: "SMART_DEVICE_GAME",
+    status: "ON_SALE",
+  },
+  {
+    id: 4,
+    name: "조 말론 라임 바질 앤 만다린",
+    imageUrl: faker.image.urlPicsumPhotos({ width: 400, height: 400, blur: 0 }),
+    price: 128000,
+    sellerName: "조 말론 런던",
+    category: "PERFUME",
+    status: "ON_SALE",
+  },
+  {
+    id: 5,
+    name: "스탠리 터블러 1.18L",
+    imageUrl: faker.image.urlPicsumPhotos({ width: 400, height: 400, blur: 0 }),
+    price: 59000,
+    sellerName: "스탠리 공식 스토어",
+    category: "TUMBLER_LIVING",
+    status: "ON_SALE",
+  },
+  {
+    id: 6,
+    name: "라네즈 크림 스킨 세트",
+    imageUrl: faker.image.urlPicsumPhotos({ width: 400, height: 400, blur: 0 }),
+    price: 45000,
+    sellerName: "라네즈 공식 스토어",
+    category: "SKINCARE_MAKEUP",
+    status: "ON_SALE",
+  },
+];
+
 export const handlers = [
   // getKakaoLoginUri는 cross-origin 절대 URL로 나가 MSW 서비스워커가 자체적으로 네트워크에 흘려보내므로,
   // Playwright page.route로는 가로챌 수 없다 — 반드시 MSW 핸들러로 응답해야 한다.
@@ -105,5 +162,13 @@ export const handlers = [
   http.delete("*/api/wishes/:wishId", async () => {
     await delay(1000);
     return HttpResponse.json({ success: true, data: null, error: null });
+  }),
+  http.get("*/api/recommended-products", ({ request }) => {
+    const category = new URL(request.url).searchParams.get("category");
+    const data = category
+      ? MOCK_RECOMMENDED_PRODUCTS.filter(product => product.category === category)
+      : MOCK_RECOMMENDED_PRODUCTS;
+
+    return HttpResponse.json({ success: true, data, error: null });
   }),
 ];

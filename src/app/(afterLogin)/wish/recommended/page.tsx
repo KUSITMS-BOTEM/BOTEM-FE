@@ -11,14 +11,19 @@ import List from "@/components/List";
 import Title from "@/components/Title";
 import WishCard from "@/widgets/main/WishCard";
 
-import { CATEGORIES, RECOMMENDED_WISHES } from "./constants";
+import { useRecommendedProductsQuery } from "@/hooks/queries/recommendedProduct/useRecommendedProductsQuery";
+import type { RecommendedProductCategory } from "@/types/recommendedProduct/recommendedProduct";
+import { ALL_CATEGORY_VALUE, CATEGORY_CHIPS } from "./constants";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconRight from "@/assets/icons/icon-right.svg?react";
 
 export default function RecommendedWishList() {
   const router = useRouter();
-  const [category, setCategory] = useState(CATEGORIES[0].value);
+  const [category, setCategory] = useState<string>(ALL_CATEGORY_VALUE);
+  const { data: recommendedProducts } = useRecommendedProductsQuery(
+    category === ALL_CATEGORY_VALUE ? undefined : (category as RecommendedProductCategory),
+  );
 
   return (
     <div className="flex flex-col">
@@ -29,18 +34,20 @@ export default function RecommendedWishList() {
       <div className="flex flex-col gap-6 px-5 pb-8">
         <div className="flex flex-col gap-3">
           <Title title="이런 선물은 어때요?" description="혼자 사긴 부담되는 선물을 골라봤어요." />
-          <ChipGroup items={CATEGORIES} value={category} onChange={setCategory} />
-          <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-            {RECOMMENDED_WISHES.map(wish => (
-              <WishCard
-                key={wish.id}
-                productName={wish.productName}
-                price={wish.price}
-                productImageUrl={wish.productImageUrl}
-                className="w-full"
-              />
-            ))}
-          </div>
+          <ChipGroup items={CATEGORY_CHIPS} value={category} onChange={setCategory} />
+          {recommendedProducts && (
+            <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+              {recommendedProducts.map(product => (
+                <WishCard
+                  key={product.id}
+                  productName={product.name}
+                  price={product.price}
+                  productImageUrl={product.imageUrl}
+                  className="w-full"
+                />
+              ))}
+            </div>
+          )}
         </div>
         <List
           leading={<IconFundingOpen />}
