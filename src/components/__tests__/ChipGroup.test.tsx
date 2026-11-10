@@ -78,6 +78,21 @@ describe("ChipGroup", () => {
     expect(handleChange).toHaveBeenCalledWith("b");
   });
 
+  it("드래그로 클릭이 한 번 억제된 뒤에는 pointerdown 없는 다음 클릭(키보드·터치)이 정상 동작한다", () => {
+    const handleChange = vi.fn();
+    render(<ChipGroup items={items} value="a" onChange={handleChange} />);
+    const chip = screen.getByRole("button", { name: "바나나" });
+
+    fireEvent.pointerDown(chip, { pointerType: "mouse", clientX: 0 });
+    fireEvent.pointerMove(chip, { pointerType: "mouse", clientX: 20 });
+    fireEvent.pointerUp(chip, { pointerType: "mouse", clientX: 20 });
+    fireEvent.click(chip);
+    fireEvent.click(chip);
+
+    expect(handleChange).toHaveBeenCalledTimes(1);
+    expect(handleChange).toHaveBeenCalledWith("b");
+  });
+
   it("className을 전달하면 wrapper에 병합된다", () => {
     const { container } = render(
       <ChipGroup items={items} value="a" onChange={vi.fn()} className="custom-class" />,

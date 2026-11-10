@@ -51,10 +51,12 @@ export default function ChipGroup({ items, value, onChange, className }: ChipGro
   };
 
   // 드래그 끝에 손을 뗀 지점의 Chip에서 click이 발생해 의도치 않게 선택되는 것을 막는다
+  // 억제 직후 바로 리셋해야 한다 — 그대로 두면 키보드(Enter/Space)나 터치처럼 pointerdown을 거치지 않는 다음 클릭까지 계속 막힌다
   const handleClickCapture = (event: MouseEvent<HTMLDivElement>) => {
     if (hasDragged.current) {
       event.stopPropagation();
       event.preventDefault();
+      hasDragged.current = false;
     }
   };
 
