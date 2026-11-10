@@ -81,7 +81,7 @@ export const handlers = [
       data: {
         id: 1,
         productName: "에어팟 프로 3",
-        productImageUrl: faker.image.urlPicsumPhotos({ width: 720, height: 720 }),
+        productImageUrl: faker.image.urlPicsumPhotos({ width: 720, height: 720, blur: 0 }),
         price: 350000,
         productUrl: "https://link.coupang.com/a/example",
         status: "AVAILABLE",

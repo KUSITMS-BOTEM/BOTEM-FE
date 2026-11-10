@@ -43,7 +43,6 @@ export default function WishDetail() {
         />
         <Header
           title="위시 상품"
-          background="none"
           leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
           rightItems={[
             {
@@ -52,7 +51,7 @@ export default function WishDetail() {
               onClick: () => setIsDeleteDialogOpen(true),
             },
           ]}
-          className="absolute inset-x-0 top-0 bg-linear-to-b from-white from-[29.297%] to-white/0 to-[195.31%]"
+          className="fixed inset-x-0 top-0 z-10 mx-auto w-full max-w-[440px] pt-[env(safe-area-inset-top)]"
         />
       </div>
       <div className="flex flex-col gap-3 px-5 pt-5">
