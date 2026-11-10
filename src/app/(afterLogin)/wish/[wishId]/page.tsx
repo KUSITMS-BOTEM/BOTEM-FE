@@ -2,26 +2,18 @@
 
 import { useEffect, useState } from "react";
 
-import Image from "next/image";
-
 import { notFound, useParams, useRouter } from "next/navigation";
 
-import Asset from "@/components/Asset";
-import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
 import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
-import List from "@/components/List";
-import ListText from "@/components/ListText";
-import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
+import ProductDetailView from "@/widgets/wish/ProductDetailView";
+import ProductDetailViewSkeleton from "@/widgets/wish/ProductDetailViewSkeleton";
 import { resolveWishErrorAction } from "./helpers";
-import WishDetailSkeleton from "./skeleton/WishDetailSkeleton";
 import IconDelete from "@/assets/icons/icon-delete.svg?react";
-import IconInfo from "@/assets/icons/icon-info.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
-import IconRight from "@/assets/icons/icon-right.svg?react";
 
 export default function WishDetail() {
   const router = useRouter();
@@ -37,7 +29,7 @@ export default function WishDetail() {
   }, [errorAction, error, router]);
 
   if (errorAction === "notFound") notFound();
-  if (isLoading) return <WishDetailSkeleton />;
+  if (isLoading) return <ProductDetailViewSkeleton />;
   if (!wish) {
     return (
       <div className="flex flex-col">
@@ -57,81 +49,19 @@ export default function WishDetail() {
 
   return (
     <div className="flex flex-col">
-      <div className="relative aspect-square w-full shrink-0">
-        <Image
-          src={wish.productImageUrl}
-          alt={wish.productName}
-          fill
-          unoptimized
-          className="object-cover"
-        />
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-linear-to-b from-black/0 from-[84.444%] to-black/20 to-[160.69%]"
-        />
-        <Header
-          title="위시 상품"
-          leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
-          rightItems={[
-            {
-              icon: <IconDelete />,
-              ariaLabel: "삭제",
-              onClick: () => setIsDeleteDialogOpen(true),
-            },
-          ]}
-          className={`fixed inset-x-0 top-0 z-10 mx-auto w-full ${APP_MAX_WIDTH_CLASS} pt-[env(safe-area-inset-top)]`}
-        />
-      </div>
-      <div className="flex flex-col gap-3 px-5 pt-5">
-        <div className="flex w-full flex-col gap-2">
-          <ListText
-            title={`${wish.price.toLocaleString("ko-KR")}원`}
-            description={wish.productName}
-            titleUp
-            type="price"
-          />
-          <div className="bg-semantic-fill-neutral-weak rounded-large flex items-center gap-1 p-3">
-            <Asset icon={<IconInfo />} size="xsmall" className="text-semantic-icon-default" />
-            <p className="text-semantic-text-secondary [font:var(--semantic-subtext-medium)]">
-              실제 가격은 구매할 때 달라질 수 있어요
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => window.open(wish.productUrl, "_blank", "noopener,noreferrer")}
-          className="w-full cursor-pointer text-left">
-          <List
-            // TODO: WishResponse에 판매처 필드 추가되면 교체
-            title="쿠팡 Apple 공식 브랜드관"
-            description="판매처"
-            titleUp
-            right={
-              <Asset icon={<IconRight />} size="small" className="text-semantic-icon-default" />
-            }
-          />
-        </button>
-        <div className="flex w-full flex-col items-center pt-10">
-          <div className="to-semantic-fill-neutral-weak -mx-5 flex w-[calc(100%+40px)] flex-col gap-6 bg-linear-to-b from-transparent to-[27.355%] px-5 py-8">
-            <p className="text-semantic-text-primary [font:var(--semantic-label-x-small)]">Logo</p>
-            <p className="text-semantic-text-secondary [font:var(--semantic-subtext-small)]">
-              쿠팡 파트너스의 일환으로,
-              <br />
-              이에 따른 일정액의 수수료를 제공 받습니다.
-            </p>
-          </div>
-        </div>
-      </div>
-      {/* 하단 고정 BottomCTA(그라데이션 36px + padding-large + 버튼 56px)에 콘텐츠가 가려지지 않도록 같은 높이만큼 스크롤 여백 확보 */}
-      <div
-        aria-hidden
-        className="h-[calc(36px+var(--padding-large)+56px+env(safe-area-inset-bottom))]"
+      <ProductDetailView
+        productImageUrl={wish.productImageUrl}
+        productName={wish.productName}
+        price={wish.price}
+        // TODO: WishResponse에 판매처 필드 추가되면 교체
+        sellerName="쿠팡 Apple 공식 브랜드관"
+        onSellerClick={() => window.open(wish.productUrl, "_blank", "noopener,noreferrer")}
+        rightItems={[
+          { icon: <IconDelete />, ariaLabel: "삭제", onClick: () => setIsDeleteDialogOpen(true) },
+        ]}
+        onBack={() => router.back()}
+        ctaLabel="펀딩 열기"
       />
-      <BottomCTA>
-        <Button color="brand" size="xlarge">
-          펀딩 열기
-        </Button>
-      </BottomCTA>
       <Dialog
         open={isDeleteDialogOpen}
         kind="confirm"

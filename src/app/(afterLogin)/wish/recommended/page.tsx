@@ -63,13 +63,18 @@ export default function RecommendedWishList() {
             {recommendedProducts && (
               <div className="grid grid-cols-2 gap-x-3 gap-y-4">
                 {recommendedProducts.map(product => (
-                  <WishCard
+                  <button
                     key={product.id}
-                    productName={product.name}
-                    price={product.price}
-                    productImageUrl={product.imageUrl}
-                    className="w-full"
-                  />
+                    type="button"
+                    onClick={() => router.push(`/wish/recommended/${product.id}`)}
+                    className="cursor-pointer text-left">
+                    <WishCard
+                      productName={product.name}
+                      price={product.price}
+                      productImageUrl={product.imageUrl}
+                      className="w-full"
+                    />
+                  </button>
                 ))}
               </div>
             )}
