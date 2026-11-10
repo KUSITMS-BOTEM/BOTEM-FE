@@ -18,6 +18,7 @@ type DialogConfirmProps = {
   cancelLabel?: string;
   confirmColor?: "neutral" | "danger";
   direction?: "horizontal" | "vertical";
+  isPending?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -45,12 +46,16 @@ export default function Dialog({ open, title, description, className, ...props }
   }, [open]);
 
   // ESC로 브라우저가 직접 닫으면 open prop과 어긋나므로 막고, 취소(alert는 확인) 동작으로 넘긴다
+  // isPending 중에는 응답이 올 때까지 닫히면 안 되므로 취소 동작 자체를 무시한다
   const handleCancel = (event: SyntheticEvent<HTMLDialogElement>) => {
     event.preventDefault();
-    if (props.kind === "confirm") props.onCancel();
-    else props.onConfirm();
+    if (props.kind === "confirm") {
+      if (props.isPending) return;
+      props.onCancel();
+    } else props.onConfirm();
   };
 
+  const isPending = props.kind === "confirm" && props.isPending;
   const isVertical = props.kind === "confirm" && props.direction === "vertical";
   const buttonClassName = isVertical ? "w-full" : "min-w-20 flex-1";
   const confirmButton = (
@@ -58,6 +63,7 @@ export default function Dialog({ open, title, description, className, ...props }
       size="large"
       variant="fill"
       color={props.kind === "confirm" ? props.confirmColor : undefined}
+      states={isPending ? "loading" : "default"}
       className={buttonClassName}
       onClick={props.onConfirm}>
       {props.confirmLabel ?? "예"}
@@ -106,7 +112,12 @@ export default function Dialog({ open, title, description, className, ...props }
           )}>
           {/* 세로 배치는 '예'가 위라서, Tab 순서도 화면 순서와 같도록 DOM 순서 자체를 바꾼다 */}
           {isVertical && confirmButton}
-          <Button size="large" variant="ghost" className={buttonClassName} onClick={props.onCancel}>
+          <Button
+            size="large"
+            variant="ghost"
+            disabled={isPending}
+            className={buttonClassName}
+            onClick={props.onCancel}>
             {props.cancelLabel ?? "아니오"}
           </Button>
           {!isVertical && confirmButton}

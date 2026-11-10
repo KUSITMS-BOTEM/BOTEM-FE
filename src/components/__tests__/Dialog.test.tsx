@@ -138,6 +138,67 @@ describe("Dialog", () => {
     );
   });
 
+  it("isPending이 true면 '예' 버튼이 비활성화돼 클릭해도 onConfirm이 호출되지 않는다", async () => {
+    const handleConfirm = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Dialog
+        open
+        kind="confirm"
+        title="타이틀"
+        isPending
+        onConfirm={handleConfirm}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    const confirmButton = screen.getByRole("button", { name: "예" });
+    expect(confirmButton).toBeDisabled();
+    await user.click(confirmButton);
+
+    expect(handleConfirm).not.toHaveBeenCalled();
+  });
+
+  it("isPending이 true면 '아니오' 버튼이 비활성화돼 클릭해도 onCancel이 호출되지 않는다", async () => {
+    const handleCancel = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Dialog
+        open
+        kind="confirm"
+        title="타이틀"
+        isPending
+        onConfirm={vi.fn()}
+        onCancel={handleCancel}
+      />,
+    );
+
+    const cancelButton = screen.getByRole("button", { name: "아니오" });
+    expect(cancelButton).toBeDisabled();
+    await user.click(cancelButton);
+
+    expect(handleCancel).not.toHaveBeenCalled();
+  });
+
+  it("isPending이 true면 ESC(cancel 이벤트) 시 onCancel이 호출되지 않고 다이얼로그가 열린 채 유지된다", () => {
+    const handleCancel = vi.fn();
+    render(
+      <Dialog
+        open
+        kind="confirm"
+        title="타이틀"
+        isPending
+        onConfirm={vi.fn()}
+        onCancel={handleCancel}
+      />,
+    );
+
+    fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true }));
+
+    expect(handleCancel).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toHaveAttribute("open");
+  });
+
   it("ESC(cancel 이벤트) 시 confirm은 onCancel을 호출하고 브라우저 기본 닫힘을 막는다", () => {
     const handleConfirm = vi.fn();
     const handleCancel = vi.fn();
