@@ -37,7 +37,7 @@ export default function WishRequestPage() {
       return;
     }
     requestProduct(
-      { productUrl: productUrl.trim(), productName: productName.trim() },
+      { productUrl: productUrl.trim(), productName: productName.trim() || null },
       // 성공 시 이동할 전용 페이지가 있지만 디자인이 아직 나오지 않아 만들지 못했다 — 임시로 /wish/recommended로 이동한다
       { onSuccess: () => router.push("/wish/recommended") },
     );
@@ -85,7 +85,7 @@ export default function WishRequestPage() {
         <Button
           color="brand"
           size="xlarge"
-          disabled={!canSubmitWishRequest({ productUrl, productName }) || isPending}
+          disabled={!canSubmitWishRequest({ productUrl }) || isPending}
           onClick={handleSubmit}>
           요청 보내기
         </Button>
