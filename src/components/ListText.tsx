@@ -27,7 +27,7 @@ export default function ListText({
 }: ListTextProps) {
   const titleNode = <p className={cn("text-semantic-text-primary", TITLE_FONT[type])}>{title}</p>;
   const descriptionNode = description && (
-    <p className="text-semantic-text-secondary [font:var(--semantic-subtext-large)]">
+    <p className="text-semantic-text-secondary whitespace-pre-line [font:var(--semantic-subtext-large)]">
       {description}
     </p>
   );
@@ -40,7 +40,7 @@ export default function ListText({
       className={cn(
         "flex min-w-0 flex-col gap-0.5 [letter-spacing:var(--letter-spacing-default)]",
         "[&>p]:overflow-hidden [&>p]:text-ellipsis",
-        "[&>p:first-child]:whitespace-nowrap",
+        !titleUp && "[&>p:first-child]:whitespace-nowrap",
         align === "right" && "text-right",
         className,
       )}>

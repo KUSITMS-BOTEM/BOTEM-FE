@@ -67,6 +67,13 @@ describe("List", () => {
     expect(screen.getByRole("img", { name: "상품 이미지" })).toBeInTheDocument();
   });
 
+  it("titleUp을 전달하면 description이 title보다 먼저 렌더된다", () => {
+    const { container } = render(<List title="타이틀" description="설명" titleUp />);
+    const texts = Array.from(container.querySelectorAll("p")).map(p => p.textContent);
+
+    expect(texts).toEqual(["설명", "타이틀"]);
+  });
+
   it("type=default면 thumbnailSrc를 넘겨도 썸네일을 렌더하지 않는다", () => {
     const { container } = render(<List title="타이틀" thumbnailSrc="/thumbnail.png" />);
 

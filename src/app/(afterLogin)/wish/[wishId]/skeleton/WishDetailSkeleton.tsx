@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 
 import Header from "@/components/Header";
+import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
-import ShimmerBar from "./ShimmerBar";
+import ShimmerBar from "@/components/skeleton/ShimmerBar";
 
 export default function WishDetailSkeleton() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function WishDetailSkeleton() {
         <Header
           title="위시 상품"
           leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
-          className="fixed inset-x-0 top-0 z-10 mx-auto w-full max-w-[440px] pt-[env(safe-area-inset-top)]"
+          className={`fixed inset-x-0 top-0 z-10 mx-auto w-full ${APP_MAX_WIDTH_CLASS} pt-[env(safe-area-inset-top)]`}
         />
       </div>
       <div className="flex flex-col gap-3 px-5 pt-5">

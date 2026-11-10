@@ -8,33 +8,18 @@ type HeaderIconItem = {
   onClick: () => void;
 };
 
-type HeaderBackground = "solid" | "none";
-
 type HeaderProps = {
   title: string;
   leftItem?: HeaderIconItem;
   rightItems?: HeaderIconItem[];
-  background?: HeaderBackground;
   className?: string;
 };
 
-const BACKGROUND_STYLE: Record<HeaderBackground, string> = {
-  solid: "bg-semantic-background-default",
-  none: "",
-};
-
-export default function Header({
-  title,
-  leftItem,
-  rightItems,
-  background = "solid",
-  className,
-}: HeaderProps) {
+export default function Header({ title, leftItem, rightItems, className }: HeaderProps) {
   return (
     <header
       className={cn(
-        "relative flex h-16 w-full items-center px-2.5",
-        BACKGROUND_STYLE[background],
+        "bg-semantic-background-default relative flex h-16 w-full items-center px-2.5",
         className,
       )}>
       {/* 좌/우 아이콘 개수와 무관하게 타이틀이 항상 정중앙에 오도록 절대 중앙 정렬하고,

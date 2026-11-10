@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import { cn } from "@/utils/cn";
 import Satets from "@/components/Satets";
+import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 import LogoKakao from "@/assets/icons/multicolor/logo-kakao.svg?react";
 
 type DefaultButtonAreaProps = {
@@ -29,8 +30,8 @@ export default function BottomCTA({ upper, lower, className, ...props }: BottomC
   return (
     <div
       className={cn(
-        // 루트 레이아웃 wrapper(src/app/layout.tsx)의 max-w-[440px]와 맞춰, 넓은 화면에서도 본문 폭을 그대로 채운다
-        "pointer-events-none fixed inset-x-0 bottom-0 z-10 mx-auto flex w-full max-w-[440px] flex-col",
+        "pointer-events-none fixed inset-x-0 bottom-0 z-10 mx-auto flex w-full flex-col",
+        APP_MAX_WIDTH_CLASS,
         className,
       )}>
       <div

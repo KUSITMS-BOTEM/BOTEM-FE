@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import Image from "next/image";
 
-import { useParams, useRouter } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 
 import Asset from "@/components/Asset";
 import BottomCTA from "@/components/BottomCTA";
@@ -13,9 +13,10 @@ import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
 import List from "@/components/List";
 import ListText from "@/components/ListText";
+import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
-import { ApiError } from "@/types/api";
+import { resolveWishErrorAction } from "./helpers";
 import WishDetailSkeleton from "./skeleton/WishDetailSkeleton";
 import IconDelete from "@/assets/icons/icon-delete.svg?react";
 import IconInfo from "@/assets/icons/icon-info.svg?react";
@@ -25,19 +26,34 @@ import IconRight from "@/assets/icons/icon-right.svg?react";
 export default function WishDetail() {
   const router = useRouter();
   const { wishId } = useParams<{ wishId: string }>();
-  const { data: wish, error } = useWishQuery(wishId);
+  const { data: wish, error, isLoading, refetch } = useWishQuery(wishId);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { mutate: deleteWish, isPending: isDeletePending } = useDeleteWishMutation(wishId);
+  const errorAction = resolveWishErrorAction(error);
 
   useEffect(() => {
-    if (!(error instanceof ApiError)) return;
-    // WISH_002: 위시 없음(다른 회원의 위시 포함), AUTH_*: 인증 실패(reissue 실패 포함)
-    if (error.code === "WISH_002") router.replace("/not-found");
-    else if (error.code.startsWith("AUTH_")) router.replace("/");
-    else alert(error.message);
-  }, [error, router]);
+    if (errorAction === "unauthorized") router.replace("/");
+    else if (errorAction === "alert") alert(error?.message);
+  }, [errorAction, error, router]);
 
-  if (!wish) return <WishDetailSkeleton />;
+  if (errorAction === "notFound") notFound();
+  if (isLoading) return <WishDetailSkeleton />;
+  if (!wish) {
+    return (
+      <div className="flex flex-col">
+        <Header
+          title="위시 상품"
+          leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
+        />
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-5 text-center">
+          <p className="text-semantic-text-secondary [font:var(--semantic-subtext-large)]">
+            위시 정보를 불러오지 못했어요
+          </p>
+          <Button onClick={() => refetch()}>다시 시도</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col">
@@ -63,7 +79,7 @@ export default function WishDetail() {
               onClick: () => setIsDeleteDialogOpen(true),
             },
           ]}
-          className="fixed inset-x-0 top-0 z-10 mx-auto w-full max-w-[440px] pt-[env(safe-area-inset-top)]"
+          className={`fixed inset-x-0 top-0 z-10 mx-auto w-full ${APP_MAX_WIDTH_CLASS} pt-[env(safe-area-inset-top)]`}
         />
       </div>
       <div className="flex flex-col gap-3 px-5 pt-5">

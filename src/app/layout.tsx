@@ -2,8 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+import { cn } from "@/utils/cn";
 import MswProvider from "@/providers/MswProvider";
 import QueryProvider from "@/providers/QueryProvider";
+import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,8 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ko" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col pt-[env(safe-area-inset-top)]">
-        {/* 현재 디자인이 모바일 비율만 나와 있어 임시로 폭을 고정함(아이폰 중 가장 넓은 CSS 뷰포트인 Pro Max 계열 430px에 여유를 둔 440px 기준). 태블릿·PC 비율 디자인이 나오면 이 wrapper를 제거할 것 */}
-        <div className="mx-auto flex w-full max-w-[440px] flex-1 flex-col">
+        <div className={cn("mx-auto flex w-full flex-1 flex-col", APP_MAX_WIDTH_CLASS)}>
           <MswProvider>
             <QueryProvider>{children}</QueryProvider>
           </MswProvider>

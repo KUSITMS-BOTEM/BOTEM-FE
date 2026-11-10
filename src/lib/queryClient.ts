@@ -3,6 +3,14 @@ import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "@/types/api";
 
+// meta 키를 타입으로 등록해, skipGlobalError 같은 키 오타를 컴파일 타임에 잡는다
+declare module "@tanstack/react-query" {
+  interface Register {
+    queryMeta: { skipGlobalError?: boolean };
+    mutationMeta: { skipGlobalError?: boolean };
+  }
+}
+
 // 서버가 돌려준 비즈니스 에러(ApiError)까지 보내면 알림이 잡음이 되므로 예상치 못한 에러만 보고한다.
 // INVALID_RESPONSE(502 등 게이트웨이가 HTML을 돌려준 경우)와 NETWORK_ERROR(서버에 닿지 못한 경우)는 장애 신호로 본다.
 const REPORTED_API_ERROR_CODES = ["INVALID_RESPONSE", "NETWORK_ERROR"];
