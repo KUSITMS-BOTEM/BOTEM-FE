@@ -27,7 +27,7 @@ export default function ListText({
 }: ListTextProps) {
   const titleNode = <p className={cn("text-semantic-text-primary", TITLE_FONT[type])}>{title}</p>;
   const descriptionNode = description && (
-    <p className="text-semantic-text-secondary [font:var(--semantic-subtext-large)]">
+    <p className="text-semantic-text-secondary whitespace-pre-line [font:var(--semantic-subtext-large)]">
       {description}
     </p>
   );
