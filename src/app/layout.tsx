@@ -31,8 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="ko" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col pt-[env(safe-area-inset-top)]">
         {/* 현재 디자인이 모바일 비율만 나와 있어 임시로 폭을 고정함(아이폰 중 가장 넓은 CSS 뷰포트인 Pro Max 계열 430px에 여유를 둔 440px 기준). 태블릿·PC 비율 디자인이 나오면 이 wrapper를 제거할 것 */}
-        {/* transform-gpu: BottomCTA/BottomSheet의 fixed 자식이 뷰포트가 아닌 이 wrapper 기준으로 붙도록 containing block을 만듦 */}
-        <div className="mx-auto flex w-full max-w-[440px] flex-1 transform-gpu flex-col">
+        <div className="mx-auto flex w-full max-w-[440px] flex-1 flex-col">
           <MswProvider>
             <QueryProvider>{children}</QueryProvider>
           </MswProvider>
