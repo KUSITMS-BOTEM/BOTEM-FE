@@ -17,6 +17,7 @@ type ListProps = {
   description?: string;
   titleUp?: boolean;
   right?: ReactNode;
+  onClick?: () => void;
   className?: string;
 };
 
@@ -29,14 +30,16 @@ export default function List({
   description,
   titleUp = false,
   right,
+  onClick,
   className,
 }: ListProps) {
   const isProduct = type === "product";
   const [failedSrc, setFailedSrc] = useState<string | StaticImageData>();
   const showThumbnail = thumbnailSrc && thumbnailSrc !== failedSrc;
+  const rootClassName = cn("flex w-full items-center gap-3 py-3", className);
 
-  return (
-    <div className={cn("flex w-full items-center gap-3 py-3", className)}>
+  const content = (
+    <>
       <div className={cn("flex min-w-0 flex-1 items-center", isProduct ? "gap-3" : "gap-2")}>
         {isProduct ? (
           <div className="border-semantic-border-weak bg-semantic-fill-neutral-weak rounded-large relative size-14 shrink-0 overflow-hidden border">
@@ -61,6 +64,20 @@ export default function List({
         <ListText title={title} description={description} titleUp={titleUp} className="flex-1" />
       </div>
       {right && <div className="flex shrink-0 items-center">{right}</div>}
-    </div>
+    </>
   );
+
+  // onClick이 있으면 행 전체가 버튼이 되므로 right에 또 다른 버튼을 넣으면 중첩 interactive가 된다
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(rootClassName, "cursor-pointer text-left")}>
+        {content}
+      </button>
+    );
+  }
+
+  return <div className={rootClassName}>{content}</div>;
 }
