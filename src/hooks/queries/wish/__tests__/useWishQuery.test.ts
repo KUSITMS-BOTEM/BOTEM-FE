@@ -25,7 +25,9 @@ const mockWish: WishResponse = {
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
+    // useWishQuery가 오류 코드별 retry 함수를 자체 지정해 QueryClient의 retry:false를 덮어쓰므로,
+    // 재시도 지연(retryDelay)만 0으로 둬 일반 오류의 재시도 대기 때문에 테스트가 타임아웃되지 않게 한다
+    defaultOptions: { queries: { retry: false, retryDelay: 0 } },
   });
 
   return function Wrapper({ children }: { children: ReactNode }) {
