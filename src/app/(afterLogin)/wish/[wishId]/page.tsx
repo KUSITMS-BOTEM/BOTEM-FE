@@ -10,7 +10,7 @@ import Header from "@/components/Header";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import ProductDetailView from "@/widgets/wish/ProductDetailView";
-import ProductDetailViewSkeleton from "@/widgets/wish/ProductDetailViewSkeleton";
+import ProductDetailViewSkeleton from "@/widgets/wish/skeleton/ProductDetailViewSkeleton";
 import { resolveWishErrorAction } from "./helpers";
 import IconDelete from "@/assets/icons/icon-delete.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";

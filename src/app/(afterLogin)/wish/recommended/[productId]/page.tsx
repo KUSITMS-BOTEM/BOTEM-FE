@@ -9,7 +9,7 @@ import Header from "@/components/Header";
 import { useAddWishMutation } from "@/hooks/mutations/wish/useAddWishMutation";
 import { useRecommendedProductQuery } from "@/hooks/queries/recommendedProduct/useRecommendedProductQuery";
 import ProductDetailView from "@/widgets/wish/ProductDetailView";
-import ProductDetailViewSkeleton from "@/widgets/wish/ProductDetailViewSkeleton";
+import ProductDetailViewSkeleton from "@/widgets/wish/skeleton/ProductDetailViewSkeleton";
 import { resolveRecommendedProductErrorAction } from "./helpers";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 

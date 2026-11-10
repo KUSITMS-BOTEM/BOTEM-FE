@@ -11,11 +11,11 @@ import Header from "@/components/Header";
 import List from "@/components/List";
 import Title from "@/components/Title";
 import WishCard from "@/widgets/main/WishCard";
+import RecommendedWishListSkeleton from "@/widgets/wish/skeleton/RecommendedWishListSkeleton";
 
 import { useRecommendedProductsQuery } from "@/hooks/queries/recommendedProduct/useRecommendedProductsQuery";
 import type { RecommendedProductCategory } from "@/types/recommendedProduct/recommendedProduct";
 import { ALL_CATEGORY_VALUE, CATEGORY_CHIPS } from "./constants";
-import RecommendedWishListSkeleton from "./skeleton/RecommendedWishListSkeleton";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconRight from "@/assets/icons/icon-right.svg?react";
