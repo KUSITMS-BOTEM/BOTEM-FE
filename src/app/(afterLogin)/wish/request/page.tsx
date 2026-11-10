@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -10,13 +10,38 @@ import CoupangMoveGuide from "@/components/CoupangMoveGuide";
 import Header from "@/components/Header";
 import TextField from "@/components/TextField";
 import Title from "@/components/Title";
+import ToastMessage from "@/components/ToastMessage";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
-import { canSubmitWishRequest } from "./helpers";
+import { useRequestProductMutation } from "@/hooks/mutations/productRequest/useRequestProductMutation";
+import { canSubmitWishRequest, isCoupangProductUrl } from "./helpers";
+
+const TOAST_DURATION_MS = 2500;
+const INVALID_LINK_MESSAGE = "링크 형식이 잘못됐어요";
 
 export default function WishRequestPage() {
   const router = useRouter();
+  const { mutate: requestProduct, isPending } = useRequestProductMutation();
   const [productUrl, setProductUrl] = useState("");
   const [productName, setProductName] = useState("");
+  const [toastText, setToastText] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toastText) return;
+    const timer = setTimeout(() => setToastText(null), TOAST_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [toastText]);
+
+  const handleSubmit = () => {
+    if (!isCoupangProductUrl(productUrl)) {
+      setToastText(INVALID_LINK_MESSAGE);
+      return;
+    }
+    requestProduct(
+      { productUrl: productUrl.trim(), productName: productName.trim() },
+      // 성공 시 이동할 전용 페이지가 있지만 디자인이 아직 나오지 않아 만들지 못했다 — 임시로 /wish/recommended로 이동한다
+      { onSuccess: () => router.push("/wish/recommended") },
+    );
+  };
 
   return (
     <div className="flex flex-col">
@@ -47,6 +72,7 @@ export default function WishRequestPage() {
             value={productName}
             onChange={event => setProductName(event.target.value)}
           />
+          <ToastMessage show={toastText !== null} text={toastText ?? ""} state={false} />
         </div>
         <CoupangMoveGuide className="mt-[15px]" />
       </div>
@@ -59,7 +85,8 @@ export default function WishRequestPage() {
         <Button
           color="brand"
           size="xlarge"
-          disabled={!canSubmitWishRequest({ productUrl, productName })}>
+          disabled={!canSubmitWishRequest({ productUrl, productName }) || isPending}
+          onClick={handleSubmit}>
           요청 보내기
         </Button>
       </BottomCTA>
