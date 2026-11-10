@@ -6,4 +6,5 @@ export const useWishQuery = (wishId: string) =>
   useQuery({
     queryKey: ["wishes", wishId],
     queryFn: () => wishService.getWish(wishId),
+    meta: { skipGlobalError: true },
   });

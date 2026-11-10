@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import Image from "next/image";
 
@@ -15,6 +15,7 @@ import List from "@/components/List";
 import ListText from "@/components/ListText";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
+import { ApiError } from "@/types/api";
 import WishDetailSkeleton from "./skeleton/WishDetailSkeleton";
 import IconDelete from "@/assets/icons/icon-delete.svg?react";
 import IconInfo from "@/assets/icons/icon-info.svg?react";
@@ -24,9 +25,16 @@ import IconRight from "@/assets/icons/icon-right.svg?react";
 export default function WishDetail() {
   const router = useRouter();
   const { wishId } = useParams<{ wishId: string }>();
-  const { data: wish } = useWishQuery(wishId);
+  const { data: wish, error } = useWishQuery(wishId);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { mutate: deleteWish, isPending: isDeletePending } = useDeleteWishMutation(wishId);
+
+  useEffect(() => {
+    if (!(error instanceof ApiError)) return;
+    // WISH_002: 위시 없음(다른 회원의 위시 포함), AUTH_*: 인증 실패(reissue 실패 포함)
+    if (error.code === "WISH_002") router.replace("/not-found");
+    else if (error.code.startsWith("AUTH_")) router.replace("/");
+  }, [error, router]);
 
   if (!wish) return <WishDetailSkeleton />;
 
