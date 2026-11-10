@@ -4,16 +4,14 @@ import { useEffect, useState } from "react";
 
 import { notFound, useParams, useRouter } from "next/navigation";
 
-import Button from "@/components/Button";
 import Dialog from "@/components/Dialog";
-import Header from "@/components/Header";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
+import ProductDetailFallback from "@/widgets/wish/ProductDetailFallback";
 import ProductDetailView from "@/widgets/wish/ProductDetailView";
 import ProductDetailViewSkeleton from "@/widgets/wish/skeleton/ProductDetailViewSkeleton";
 import { resolveWishErrorAction } from "./helpers";
 import IconDelete from "@/assets/icons/icon-delete.svg?react";
-import IconLeft from "@/assets/icons/icon-left.svg?react";
 
 export default function WishDetail() {
   const router = useRouter();
@@ -32,21 +30,15 @@ export default function WishDetail() {
   if (isLoading) return <ProductDetailViewSkeleton />;
   if (!wish) {
     return (
-      <div className="flex flex-col">
-        <Header
-          title="위시 상품"
-          leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
-        />
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-5 text-center">
-          <p className="text-semantic-text-secondary [font:var(--semantic-subtext-large)]">
-            위시 정보를 불러오지 못했어요
-          </p>
-          <Button onClick={() => refetch()}>다시 시도</Button>
-        </div>
-      </div>
+      <ProductDetailFallback
+        message="위시 정보를 불러오지 못했어요"
+        onBack={() => router.back()}
+        onRetry={() => refetch()}
+      />
     );
   }
 
+  // TODO: wish.status === "DISCONTINUED"일 때 다른 디자인을 보여줄 예정 — 디자인 미정이라 분기는 보류
   return (
     <div className="flex flex-col">
       <ProductDetailView

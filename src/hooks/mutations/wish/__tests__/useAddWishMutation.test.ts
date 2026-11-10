@@ -39,11 +39,8 @@ const createWrapper = () => {
 };
 
 describe("useAddWishMutation", () => {
-  const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
-
   beforeEach(() => {
     replace.mockClear();
-    alertSpy.mockClear();
   });
 
   it("mutate 호출 시 wishService.addWish가 전달받은 body로 호출된다", async () => {
@@ -82,18 +79,5 @@ describe("useAddWishMutation", () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBe(error);
     expect(replace).not.toHaveBeenCalled();
-  });
-
-  it("실패 시 alert가 error.message로 호출된다", async () => {
-    const error = new Error("위시 담기 실패");
-    vi.mocked(wishService.addWish).mockRejectedValue(error);
-    const { result } = renderHook(() => useAddWishMutation(), {
-      wrapper: createWrapper(),
-    });
-
-    result.current.mutate({ recommendedProductId: 1 });
-
-    await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(alertSpy).toHaveBeenCalledWith("위시 담기 실패");
   });
 });

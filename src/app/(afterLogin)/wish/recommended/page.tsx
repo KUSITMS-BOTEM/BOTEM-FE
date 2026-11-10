@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import Asset from "@/components/Asset";
@@ -69,18 +70,14 @@ export default function RecommendedWishList() {
             {recommendedProducts && (
               <div className="grid grid-cols-2 gap-x-3 gap-y-4">
                 {recommendedProducts.map(product => (
-                  <button
-                    key={product.id}
-                    type="button"
-                    onClick={() => router.push(`/wish/recommended/${product.id}`)}
-                    className="cursor-pointer text-left">
+                  <Link key={product.id} href={`/wish/recommended/${product.id}`}>
                     <WishCard
                       productName={product.name}
                       price={product.price}
                       productImageUrl={product.imageUrl}
                       className="w-full"
                     />
-                  </button>
+                  </Link>
                 ))}
               </div>
             )}
