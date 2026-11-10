@@ -86,6 +86,7 @@ export default function WishDetail() {
           onClick={() => window.open(wish.productUrl, "_blank", "noopener,noreferrer")}
           className="w-full cursor-pointer text-left">
           <List
+            // TODO: WishResponse에 판매처 필드 추가되면 교체
             title="쿠팡 Apple 공식 브랜드관"
             description="판매처"
             titleUp
