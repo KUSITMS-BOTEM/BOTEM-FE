@@ -163,6 +163,11 @@ export const handlers = [
     await delay(1000);
     return HttpResponse.json({ success: true, data: null, error: null });
   }),
+  // 버튼의 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다
+  http.post("*/api/product-requests", async () => {
+    await delay(800);
+    return HttpResponse.json({ success: true, data: null, error: null }, { status: 201 });
+  }),
   http.get("*/api/recommended-products", async ({ request }) => {
     // 스켈레톤 UI를 눈으로 확인할 수 있게 지연을 둔다
     await delay(1000);

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import CoupangMoveGuide from "@/widgets/main/CoupangMoveGuide";
+import CoupangMoveGuide from "@/components/CoupangMoveGuide";
 
 // vitest(jsdom) 환경은 정적 png import를 {src,width,height} 객체가 아닌 문자열로 반환해
 // next/image가 "width 누락" 에러를 던진다. CoupangLogo 실제 이미지를 그대로 쓰기 위해

@@ -5,12 +5,12 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import BottomSheet from "@/components/BottomSheet";
+import CoupangMoveGuide from "@/components/CoupangMoveGuide";
 import TextField from "@/components/TextField";
 import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
 import { isValidUrl } from "@/utils/isValidUrl";
 import AddImage from "@/widgets/main/AddImage";
-import CoupangMoveGuide from "@/widgets/main/CoupangMoveGuide";
 import { resolveWishStageFlags, resolveWishStageTitle } from "@/widgets/main/helpers";
 
 // 시트가 다 올라온 뒤(스프링 delay 0.05 + duration 0.55 ≈ 0.6s) 내부 콘텐츠가 나타나도록 지연시킨다

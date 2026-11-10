@@ -83,6 +83,7 @@ export default function RecommendedWishList() {
             right={
               <Asset icon={<IconRight />} size="small" className="text-semantic-icon-default" />
             }
+            onClick={() => router.push("/wish/request")}
           />
         )}
       </div>

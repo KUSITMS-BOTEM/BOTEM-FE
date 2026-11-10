@@ -86,6 +86,22 @@ describe("List", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
+  it("onClick이 없으면 버튼으로 렌더되지 않는다", () => {
+    render(<List title="타이틀" />);
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("onClick을 전달하면 행을 클릭할 때 호출된다", async () => {
+    const handleClick = vi.fn();
+    const user = userEvent.setup();
+    render(<List title="타이틀" onClick={handleClick} />);
+
+    await user.click(screen.getByRole("button", { name: "타이틀" }));
+
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
   it("right로 넘긴 버튼을 클릭하면 onClick이 호출된다", async () => {
     const handleClick = vi.fn();
     const user = userEvent.setup();
