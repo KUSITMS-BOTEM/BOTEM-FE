@@ -3,10 +3,16 @@ import { delay, http, HttpResponse } from "msw";
 import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
 
 type MockHomeScenario =
-  "FUNDING" | "IN_PROGRESS" | "SINGLE_FUNDING" | "CLOSED_PENDING" | "WISH_ONLY" | "EMPTY";
+  | "FUNDING"
+  | "IN_PROGRESS"
+  | "SINGLE_FUNDING"
+  | "CLOSED_PENDING"
+  | "CLOSED_OPEN"
+  | "WISH_ONLY"
+  | "EMPTY";
 
-// 홈 분기(마감·진행 중 펀딩 / 진행 중 펀딩만 / 펀딩 1개 / 마감+확인대기+참여자 1명 이상 / 위시만 있음 / 둘 다 없음)를 눈으로 확인할 때 이 값만 바꾼다
-const MOCK_HOME_SCENARIO = "CLOSED_PENDING" as MockHomeScenario;
+// 홈 분기(마감·진행 중 / 진행 중만 / 1개 / 마감+확인대기 / 마감+확인대기 없음 / 위시만 / 빈 홈)를 눈으로 확인할 때 이 값만 바꾼다
+const MOCK_HOME_SCENARIO = "CLOSED_OPEN" as MockHomeScenario;
 
 const [product1, product2, product3, product4] = MOCK_RECOMMENDED_PRODUCTS;
 
@@ -87,6 +93,12 @@ export const homeHandlers = [
         card =>
           card.cardType === "CLOSED_UNOPENED" &&
           card.pendingContributionCount > 0 &&
+          card.participantCount >= 1,
+      ),
+      CLOSED_OPEN: MOCK_FUNDING_CARDS.filter(
+        card =>
+          card.cardType === "CLOSED_UNOPENED" &&
+          card.pendingContributionCount === 0 &&
           card.participantCount >= 1,
       ),
       WISH_ONLY: [],
