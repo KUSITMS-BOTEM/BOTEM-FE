@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ComponentProps, type ReactNode, useState } from "react";
 import Image, { type StaticImageData } from "next/image";
 import { cn } from "@/utils/cn";
 import Asset from "@/components/Asset";
@@ -16,6 +16,7 @@ type ListProps = {
   title: string;
   description?: string;
   titleUp?: boolean;
+  textType?: ComponentProps<typeof ListText>["type"];
   right?: ReactNode;
   onClick?: () => void;
   className?: string;
@@ -29,6 +30,7 @@ export default function List({
   title,
   description,
   titleUp = false,
+  textType,
   right,
   onClick,
   className,
@@ -49,6 +51,7 @@ export default function List({
                 alt={thumbnailAlt}
                 fill
                 sizes="56px"
+                unoptimized
                 className="object-cover"
                 onError={() => setFailedSrc(thumbnailSrc)}
               />
@@ -61,7 +64,13 @@ export default function List({
             </span>
           )
         )}
-        <ListText title={title} description={description} titleUp={titleUp} className="flex-1" />
+        <ListText
+          title={title}
+          description={description}
+          titleUp={titleUp}
+          type={textType}
+          className="flex-1"
+        />
       </div>
       {right && <div className="flex shrink-0 items-center">{right}</div>}
     </>

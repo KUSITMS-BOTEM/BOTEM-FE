@@ -10,6 +10,14 @@ export type WishResponse = {
   fundingId: number | null;
 };
 
+export type WishPageResponse = {
+  content: WishResponse[];
+  page: number;
+  size: number;
+  totalElements: number;
+  hasNext: boolean;
+};
+
 export type AddWishRequest = {
   recommendedProductId: number;
 };

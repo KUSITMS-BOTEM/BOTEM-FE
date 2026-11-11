@@ -18,6 +18,16 @@ const mockWish: WishResponse = {
   fundingId: null,
 };
 
+describe("wishService.getWishes", () => {
+  it("clientApi.get을 /api/wishes 경로로 호출한다", async () => {
+    vi.mocked(clientApi.get).mockResolvedValue({ content: [mockWish] });
+
+    await wishService.getWishes();
+
+    expect(clientApi.get).toHaveBeenCalledWith("/api/wishes");
+  });
+});
+
 describe("wishService.getWish", () => {
   it("clientApi.get을 /api/wishes/{wishId} 경로로 호출한다", async () => {
     vi.mocked(clientApi.get).mockResolvedValue(mockWish);

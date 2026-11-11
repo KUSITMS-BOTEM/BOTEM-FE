@@ -3,7 +3,28 @@ import { faker } from "@faker-js/faker";
 
 import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
 
+const MOCK_WISH_STATUSES = ["AVAILABLE", "FUNDING", "AVAILABLE", "DISCONTINUED", "AVAILABLE"];
+
 export const wishHandlers = [
+  http.get("*/api/wishes", async () => {
+    await delay(1000);
+    const content = MOCK_RECOMMENDED_PRODUCTS.slice(0, MOCK_WISH_STATUSES.length).map(
+      (product, index) => ({
+        id: product.id,
+        productName: product.name,
+        productImageUrl: product.imageUrl,
+        price: product.price,
+        productUrl: "https://link.coupang.com/a/example",
+        status: MOCK_WISH_STATUSES[index],
+        fundingId: MOCK_WISH_STATUSES[index] === "FUNDING" ? 1 : null,
+      }),
+    );
+    return HttpResponse.json({
+      success: true,
+      data: { content, page: 0, size: 10, totalElements: content.length, hasNext: false },
+      error: null,
+    });
+  }),
   http.get("*/api/wishes/:wishId", async () => {
     // 스켈레톤 UI를 눈으로 확인할 수 있게 지연을 둔다
     await delay(1000);
