@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
+import { useHomeWishesQuery } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { consumeWishPromptPending } from "@/utils/wish/wishPromptStorage";
 import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
@@ -29,7 +29,7 @@ const TEMP_FRIEND_COUNT = 8;
 const TEMP_CLOSED_FUNDING_COUNT = 0;
 
 export default function HomeContainer() {
-  useWishesQuery();
+  useHomeWishesQuery();
   const { data: homeFundings } = useHomeFundingsQuery();
   const [segment, setSegment] = useState<SegmentValue>("funding");
   const [wishSheetOpen, setWishSheetOpen] = useState(() => consumeWishPromptPending());

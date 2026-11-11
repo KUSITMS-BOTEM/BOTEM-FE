@@ -2,11 +2,11 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
-import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
+import { useHomeWishesQuery } from "@/hooks/queries/wish/useHomeWishesQuery";
 import type { WishResponse, WishStatus } from "@/types/wish/wish";
 import HomeWishTab from "@/widgets/home/HomeWishTab";
 
-vi.mock("@/hooks/queries/wish/useWishesQuery");
+vi.mock("@/hooks/queries/wish/useHomeWishesQuery");
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
 
 const makeWish = (id: number, status: WishStatus): WishResponse => ({
@@ -21,29 +21,49 @@ const makeWish = (id: number, status: WishStatus): WishResponse => ({
 });
 
 const refetch = vi.fn();
+const fetchNextPage = vi.fn();
 
 const mockWishes = ({
   content,
+  nextContent,
   totalElements,
   isError = false,
+  hasNextPage = false,
+  isFetchNextPageError = false,
 }: {
   content?: WishResponse[];
+  nextContent?: WishResponse[];
   totalElements?: number;
   isError?: boolean;
+  hasNextPage?: boolean;
+  isFetchNextPageError?: boolean;
 }) => {
-  vi.mocked(useWishesQuery).mockReturnValue({
+  const firstPage = content && {
+    content,
+    page: 0,
+    size: 4,
+    totalElements: totalElements ?? content.length,
+    hasNext: hasNextPage,
+  };
+  vi.mocked(useHomeWishesQuery).mockReturnValue({
     data: content
       ? {
-          content,
-          page: 0,
-          size: 10,
-          totalElements: totalElements ?? content.length,
-          hasNext: false,
+          pages: [
+            firstPage,
+            ...(nextContent
+              ? [{ ...firstPage, content: nextContent, page: 1, hasNext: false }]
+              : []),
+          ],
+          pageParams: [0, ...(nextContent ? [1] : [])],
         }
       : undefined,
     isError,
     refetch,
-  } as unknown as ReturnType<typeof useWishesQuery>);
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage: false,
+    isFetchNextPageError,
+  } as unknown as ReturnType<typeof useHomeWishesQuery>);
 };
 
 beforeEach(() => {
@@ -70,6 +90,30 @@ describe("HomeWishTab", () => {
     render(<HomeWishTab onAddWish={vi.fn()} />);
 
     expect(screen.getAllByText("펀딩 중")).toHaveLength(1);
+  });
+
+  it("다음 페이지가 있으면 더 보기로 요청하고 받은 위시를 이어서 보여준다", async () => {
+    mockWishes({ content: [makeWish(1, "AVAILABLE")], hasNextPage: true });
+    const { rerender } = render(<HomeWishTab onAddWish={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "더 보기" }));
+    expect(fetchNextPage).toHaveBeenCalledTimes(1);
+
+    mockWishes({ content: [makeWish(1, "AVAILABLE")], nextContent: [makeWish(2, "AVAILABLE")] });
+    rerender(<HomeWishTab onAddWish={vi.fn()} />);
+
+    expect(screen.getByText("상품1")).toBeInTheDocument();
+    expect(screen.getByText("상품2")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "더 보기" })).not.toBeInTheDocument();
+  });
+
+  it("다음 페이지 조회에 실패하면 기존 목록을 유지하고 다시 시도할 수 있다", async () => {
+    mockWishes({ content: [makeWish(1, "AVAILABLE")], isError: true, isFetchNextPageError: true });
+    render(<HomeWishTab onAddWish={vi.fn()} />);
+
+    expect(screen.getByText("상품1")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    expect(fetchNextPage).toHaveBeenCalledTimes(1);
   });
 
   it("위시가 없으면 빈 화면을 보여주고 '위시 추가하기'를 누르면 onAddWish를 호출한다", async () => {

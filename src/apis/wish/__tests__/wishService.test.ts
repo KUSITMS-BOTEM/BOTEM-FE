@@ -29,6 +29,16 @@ describe("wishService.getWishes", () => {
   });
 });
 
+describe("wishService.getWishesPage", () => {
+  it("page와 size를 조회 파라미터로 전달한다", async () => {
+    vi.mocked(clientApi.get).mockResolvedValue({ content: [mockWish] });
+
+    await wishService.getWishesPage(1, 4);
+
+    expect(clientApi.get).toHaveBeenCalledWith("/api/wishes", { page: 1, size: 4 });
+  });
+});
+
 describe("wishService.getWish", () => {
   it("clientApi.get을 /api/wishes/{wishId} 경로로 호출한다", async () => {
     vi.mocked(clientApi.get).mockResolvedValue(mockWish);

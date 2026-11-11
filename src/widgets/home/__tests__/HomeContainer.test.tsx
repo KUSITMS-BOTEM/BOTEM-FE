@@ -5,7 +5,7 @@ import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery"
 import HomeContainer from "@/widgets/home/HomeContainer";
 
 vi.mock("@/hooks/queries/home/useHomeFundingsQuery");
-vi.mock("@/hooks/queries/wish/useWishesQuery", () => ({ useWishesQuery: vi.fn() }));
+vi.mock("@/hooks/queries/wish/useHomeWishesQuery", () => ({ useHomeWishesQuery: vi.fn() }));
 vi.mock("@/utils/wish/wishPromptStorage", () => ({ consumeWishPromptPending: () => false }));
 vi.mock("@/widgets/wish/AddWishBottomSheet", () => ({
   default: ({ open }: { open: boolean }) => (open ? <div>위시 추가 시트</div> : null),

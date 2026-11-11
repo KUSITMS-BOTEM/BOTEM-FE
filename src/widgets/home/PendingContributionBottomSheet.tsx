@@ -19,7 +19,9 @@ import IconRight from "@/assets/icons/icon-right.svg?react";
 
 const TOAST_DURATION_MS = 2500;
 
-type ReceivedToast = Pick<PendingContributionResponse, "contributionId" | "senderName">;
+type ContributionToast = Pick<PendingContributionResponse, "contributionId" | "senderName"> & {
+  status: Extract<ContributionStatus, "CONFIRMED" | "REJECTED">;
+};
 
 type PendingContributionBottomSheetProps = {
   open: boolean;
@@ -39,7 +41,7 @@ export default function PendingContributionBottomSheet({
   const query = usePendingContributionsQuery({ fundingId, enabled: open });
   const { mutate } = useUpdateContributionStatusMutation(fundingId);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [toasts, setToasts] = useState<ReceivedToast[]>([]);
+  const [toasts, setToasts] = useState<ContributionToast[]>([]);
   const toastTimersRef = useRef(new Map<number, ReturnType<typeof setTimeout>>());
   const lockRef = useRef(false);
   const contributions = query.data?.contributions;
@@ -57,10 +59,10 @@ export default function PendingContributionBottomSheet({
     setToasts(prev => prev.filter(toast => toast.contributionId !== contributionId));
   };
 
-  // 받은 보탬마다 토스트를 하나씩 아래에 덧붙이고, 각자 시간이 지나면 사라진다
-  const showReceivedToasts = (received: ReceivedToast[]) => {
-    const ids = received.map(toast => toast.contributionId);
-    setToasts(prev => [...prev.filter(toast => !ids.includes(toast.contributionId)), ...received]);
+  // 처리한 보탬마다 토스트를 하나씩 아래에 덧붙이고, 각자 시간이 지나면 사라진다
+  const showToasts = (updated: ContributionToast[]) => {
+    const ids = updated.map(toast => toast.contributionId);
+    setToasts(prev => [...prev.filter(toast => !ids.includes(toast.contributionId)), ...updated]);
     ids.forEach(id => {
       clearTimeout(toastTimersRef.current.get(id));
       toastTimersRef.current.set(
@@ -91,11 +93,17 @@ export default function PendingContributionBottomSheet({
     const received = (contributions ?? []).filter(c => selectedIds.includes(c.contributionId));
     updateStatus(selectedIds, "CONFIRMED", () => {
       setSelectedIds([]);
-      showReceivedToasts(received);
+      showToasts(received.map(contribution => ({ ...contribution, status: "CONFIRMED" })));
     });
   };
 
-  const handleNotReceived = () => updateStatus(selectedIds, "REJECTED", () => setSelectedIds([]));
+  const handleNotReceived = () => {
+    const rejected = (contributions ?? []).filter(c => selectedIds.includes(c.contributionId));
+    updateStatus(selectedIds, "REJECTED", () => {
+      setSelectedIds([]);
+      showToasts(rejected.map(contribution => ({ ...contribution, status: "REJECTED" })));
+    });
+  };
 
   const handleUndo = (contributionId: number) =>
     updateStatus([contributionId], "PENDING", () => dismissToast(contributionId));
@@ -118,7 +126,7 @@ export default function PendingContributionBottomSheet({
       toast={
         <div className="flex w-full flex-col items-center gap-2">
           <AnimatePresence initial={false}>
-            {toasts.map(({ contributionId, senderName }) => (
+            {toasts.map(({ contributionId, senderName, status }) => (
               <motion.div
                 key={contributionId}
                 layout
@@ -126,7 +134,11 @@ export default function PendingContributionBottomSheet({
                 className="w-full max-w-80">
                 <ToastMessage
                   show
-                  text={`${senderName}의 보탬을 받았어요`}
+                  text={
+                    status === "CONFIRMED"
+                      ? `${senderName}의 보탬을 받았어요`
+                      : `${senderName}의 보탬을 못 받은 걸로 표시했어요`
+                  }
                   showButton
                   buttonText="취소하기"
                   onButtonClick={() => handleUndo(contributionId)}

@@ -252,7 +252,7 @@ describe("PendingContributionBottomSheet", () => {
     expect(screen.getByText("도윤이의 보탬을 받았어요")).toBeInTheDocument();
   });
 
-  it("못받았어요를 누르면 REJECTED로 mutate하고 성공하면 선택이 초기화된다", async () => {
+  it("못받았어요가 성공하면 선택을 초기화하고 취소 가능한 토스트를 보여준다", async () => {
     renderSheet();
     await userEvent.click(screen.getByText("도윤이의 보탬"));
 
@@ -264,7 +264,40 @@ describe("PendingContributionBottomSheet", () => {
     );
     act(() => lastOptions().onSuccess?.());
     expect(screen.getByRole("button", { name: "못받았어요" })).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("도윤이의 보탬을 못 받은 걸로 표시했어요");
+    expect(screen.getByRole("button", { name: "취소하기" })).toBeInTheDocument();
+  });
+
+  it("못받았어요 토스트의 취소하기는 해당 보탬을 PENDING으로 되돌린다", async () => {
+    renderSheet();
+    await userEvent.click(screen.getByText("도윤이의 보탬"));
+    await userEvent.click(screen.getByRole("button", { name: "못받았어요" }));
+    act(() => {
+      lastOptions().onSuccess?.();
+      lastOptions().onSettled?.();
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "취소하기" }));
+
+    expect(mutate).toHaveBeenLastCalledWith(
+      { contributionIds: [2], status: "PENDING" },
+      expect.any(Object),
+    );
+    act(() => lastOptions().onSuccess?.());
+    await waitFor(() =>
+      expect(screen.queryByText("도윤이의 보탬을 못 받은 걸로 표시했어요")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("못받았어요가 실패하면 토스트를 보여주지 않고 선택을 유지한다", async () => {
+    renderSheet();
+    await userEvent.click(screen.getByText("도윤이의 보탬"));
+    await userEvent.click(screen.getByRole("button", { name: "못받았어요" }));
+
+    act(() => lastOptions().onSettled?.());
+
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "못받았어요" })).toBeEnabled();
   });
 
   it("요청이 진행 중일 때 버튼을 연달아 눌러도 mutate는 한 번만 호출된다", async () => {

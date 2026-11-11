@@ -1,6 +1,7 @@
 import { delay, http, HttpResponse } from "msw";
 
 import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
+import { getMockContributionProgress } from "@/mocks/mockContributions";
 
 type MockHomeScenario =
   | "FUNDING"
@@ -71,10 +72,10 @@ const MOCK_HOME_WISHES = MOCK_RECOMMENDED_PRODUCTS.slice(0, 3).map(product => ({
   productUrl: "https://link.coupang.com/a/example",
 }));
 
-export const homeHandlers = [
+export const createHomeHandlers = (scenario: MockHomeScenario) => [
   http.get("*/api/home/fundings", async () => {
     await delay(800);
-    const fundingCards = {
+    const scenarioCards = {
       FUNDING: MOCK_FUNDING_CARDS,
       IN_PROGRESS: MOCK_FUNDING_CARDS.filter(card => card.cardType === "IN_PROGRESS"),
       SINGLE_FUNDING: MOCK_FUNDING_CARDS.filter(card => card.cardType === "IN_PROGRESS").slice(
@@ -89,7 +90,16 @@ export const homeHandlers = [
       ),
       WISH_ONLY: [],
       EMPTY: [],
-    }[MOCK_HOME_SCENARIO];
+    }[scenario];
+    const fundingCards = scenarioCards.map(card => {
+      const progress = getMockContributionProgress(card.fundingId);
+      return {
+        ...card,
+        confirmedPercentage: card.confirmedPercentage + progress.confirmedAddedPercentage,
+        pendingPercentage: progress.pendingPercentage,
+        pendingContributionCount: progress.pendingContributionCount,
+      };
+    });
     const activeFundingCount = fundingCards.filter(card => card.cardType === "IN_PROGRESS").length;
 
     return HttpResponse.json({
@@ -100,7 +110,7 @@ export const homeHandlers = [
   }),
   http.get("*/api/home/no-funding", async () => {
     await delay(800);
-    if (MOCK_HOME_SCENARIO !== "WISH_ONLY" && MOCK_HOME_SCENARIO !== "EMPTY") {
+    if (scenario !== "WISH_ONLY" && scenario !== "EMPTY") {
       return HttpResponse.json(
         {
           success: false,
@@ -111,7 +121,7 @@ export const homeHandlers = [
       );
     }
 
-    const content = MOCK_HOME_SCENARIO === "WISH_ONLY" ? MOCK_HOME_WISHES : [];
+    const content = scenario === "WISH_ONLY" ? MOCK_HOME_WISHES : [];
     return HttpResponse.json({
       success: true,
       data: {
@@ -124,3 +134,5 @@ export const homeHandlers = [
     });
   }),
 ];
+
+export const homeHandlers = createHomeHandlers(MOCK_HOME_SCENARIO);
