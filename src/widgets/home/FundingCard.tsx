@@ -15,13 +15,14 @@ export type FundingCardProps = {
   productName: string;
   productImageUrl: string;
   progress: number;
-  dDay: number;
-  targetAmount: number;
+  dDay: number | null;
+  targetAmount?: number;
   participants?: ProfileColor[];
   extraParticipantCount?: number;
   pendingCount?: number;
   isSurprise?: boolean;
   animateGift?: boolean;
+  onClick?: () => void;
   className?: string;
 };
 
@@ -38,6 +39,7 @@ export default function FundingCard({
   pendingCount = 0,
   isSurprise = false,
   animateGift = true,
+  onClick,
   className,
 }: FundingCardProps) {
   const isGiftCover = type !== "default";
@@ -57,6 +59,10 @@ export default function FundingCard({
               fill
               unoptimized
               className="object-cover"
+            />
+            <div
+              aria-hidden
+              className="to-semantic-fill-default absolute inset-0 bg-linear-to-b from-transparent from-64% to-88%"
             />
           </div>
           {isGiftCover ? (
@@ -107,15 +113,25 @@ export default function FundingCard({
           <div className={cn("flex w-full flex-col gap-1", isGiftCover && "opacity-50")}>
             <ProgressBar progress={progress} aria-labelledby={titleId} />
             <div className="text-semantic-text-tertiary flex w-full items-center justify-between [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-subtext-medium)]">
-              <span>마감까지 D-{dDay}</span>
-              <span className="flex items-center gap-0.5">
-                <span>목표</span>
-                <span>{targetAmount.toLocaleString("ko-KR")}원</span>
-              </span>
+              <span>{dDay === null ? "마감" : `마감까지 D-${dDay}`}</span>
+              {targetAmount !== undefined && (
+                <span className="flex items-center gap-0.5">
+                  <span>목표</span>
+                  <span>{targetAmount.toLocaleString("ko-KR")}원</span>
+                </span>
+              )}
             </div>
           </div>
         </div>
       </div>
+      {onClick && (
+        <button
+          type="button"
+          aria-labelledby={titleId}
+          onClick={onClick}
+          className="focus-visible:ring-semantic-border-strong absolute inset-0 cursor-pointer rounded-3xl focus-visible:ring-2 focus-visible:outline-none"
+        />
+      )}
     </article>
   );
 }

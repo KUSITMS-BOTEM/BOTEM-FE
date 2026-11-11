@@ -4,9 +4,6 @@ import { motion, useReducedMotion, type Easing, type Transition } from "framer-m
 import { cn } from "@/utils/cn";
 import GiftBow from "@/assets/icons/multicolor/gift-bow.svg?react";
 
-const MOTION_TRANSFORM =
-  "origin-center [transform:translate(calc(var(--tx,0)*1px),calc(var(--ty,0)*1px))_rotate(calc(var(--r,0)*1rad))_scale(var(--sx,1),var(--sy,1))]";
-
 const SINE: Easing = [0.37, 0, 0.63, 1];
 const POP: Easing = [0.2, 0.6, 0.35, 1];
 const DROP: Easing = [0.55, 0, 0.8, 0.45];
@@ -16,6 +13,7 @@ const cycle = (times: number[], ease: Easing | Easing[]): Transition => ({
   duration: 2,
   times,
   ease,
+  repeat: Infinity,
 });
 
 type MotionPreset = {
@@ -31,10 +29,10 @@ const SWAY_EASE: Easing[] = ["linear", SINE, SINE, SINE, SINE, "linear"];
 const BOW_EASE: Easing[] = ["linear", SINE, SINE, SINE, SINE, "linear"];
 
 const WIGGLE_SHADOW: MotionPreset = {
-  initial: { "--sx": 1, opacity: 1 },
-  animate: { "--sx": [1, 1, 1.06, 0.8, 0.82, 1.08, 0.99, 1, 1], opacity: [1, 1, 0.55, 0.6, 1, 1] },
+  initial: { scaleX: 1, opacity: 1 },
+  animate: { scaleX: [1, 1, 1.06, 0.8, 0.82, 1.08, 0.99, 1, 1], opacity: [1, 1, 0.55, 0.6, 1, 1] },
   transition: {
-    "--sx": cycle(
+    scaleX: cycle(
       [0, 0.025, 0.125, 0.21, 0.26, 0.33, 0.425, 0.55, 1],
       ["linear", SINE, POP, SINE, DROP, SINE, SINE, "linear"],
     ),
@@ -43,34 +41,34 @@ const WIGGLE_SHADOW: MotionPreset = {
 };
 
 const WIGGLE_GIFT: MotionPreset = {
-  initial: { "--r": 0, "--sx": 1, "--sy": 1, "--tx": 0, "--ty": 0 },
+  initial: { rotate: 0, scaleX: 1, scaleY: 1, x: 0, y: 0 },
   animate: {
-    "--r": [0, 0, 0.05236, -0.041888, 0.019199, 0, 0],
-    "--sx": [1, 1, 1.0315, 0.979, 0.986, 1.021, 0.9916, 1.0028, 1, 1],
-    "--sy": [1, 1, 0.955, 1.03, 1.02, 0.97, 1.012, 0.996, 1, 1],
-    "--tx": [0, 0, 3.244829, -2.596291, 1.190241, 0, 0],
-    "--ty": [0, 0, 2.3715, -7.781, -6.634, 1.581, -0.6324, 0.2108, 0, 0],
+    rotate: [0, 0, 3, -2.4, 1.1, 0, 0],
+    scaleX: [1, 1, 1.0315, 0.979, 0.986, 1.021, 0.9916, 1.0028, 1, 1],
+    scaleY: [1, 1, 0.955, 1.03, 1.02, 0.97, 1.012, 0.996, 1, 1],
+    x: [0, 0, 3.244829, -2.596291, 1.190241, 0, 0],
+    y: [0, 0, 2.3715, -7.781, -6.634, 1.581, -0.6324, 0.2108, 0, 0],
   },
   transition: {
-    "--r": cycle(SWAY_TIMES, SWAY_EASE),
-    "--sx": cycle(SQUASH_TIMES, SQUASH_EASE),
-    "--sy": cycle(SQUASH_TIMES, SQUASH_EASE),
-    "--tx": cycle(SWAY_TIMES, SWAY_EASE),
-    "--ty": cycle(SQUASH_TIMES, SQUASH_EASE),
+    rotate: cycle(SWAY_TIMES, SWAY_EASE),
+    scaleX: cycle(SQUASH_TIMES, SQUASH_EASE),
+    scaleY: cycle(SQUASH_TIMES, SQUASH_EASE),
+    x: cycle(SWAY_TIMES, SWAY_EASE),
+    y: cycle(SQUASH_TIMES, SQUASH_EASE),
   },
 };
 
 const WIGGLE_BOW: MotionPreset = {
-  initial: { "--sx": 1, "--sy": 1, "--ty": 0 },
+  initial: { scaleX: 1, scaleY: 1, y: 0 },
   animate: {
-    "--sx": [1, 1, 0.97, 1.05, 0.98, 1, 1],
-    "--sy": [1, 1, 0.97, 1.05, 0.98, 1, 1],
-    "--ty": [0, 0, 1, -1.666667, 0.5, 0, 0],
+    scaleX: [1, 1, 0.97, 1.05, 0.98, 1, 1],
+    scaleY: [1, 1, 0.97, 1.05, 0.98, 1, 1],
+    y: [0, 0, 1, -1.666667, 0.5, 0, 0],
   },
   transition: {
-    "--sx": cycle([0, 0.125, 0.21, 0.29, 0.39, 0.5, 1], BOW_EASE),
-    "--sy": cycle([0, 0.125, 0.21, 0.29, 0.39, 0.5, 1], BOW_EASE),
-    "--ty": cycle([0, 0.125, 0.2, 0.275, 0.375, 0.5, 1], BOW_EASE),
+    scaleX: cycle([0, 0.125, 0.21, 0.29, 0.39, 0.5, 1], BOW_EASE),
+    scaleY: cycle([0, 0.125, 0.21, 0.29, 0.39, 0.5, 1], BOW_EASE),
+    y: cycle([0, 0.125, 0.2, 0.275, 0.375, 0.5, 1], BOW_EASE),
   },
 };
 
@@ -90,29 +88,29 @@ const OPEN_BOX_EASE: Easing[] = [
 ];
 
 const OPEN_BOX: MotionPreset = {
-  initial: { "--sx": 1, "--sy": 1 },
+  initial: { scaleX: 1, scaleY: 1 },
   animate: {
-    "--sx": [1, 1, 1.05, 1, 1, 1.06, 1, 1, 1.07, 0.98, 1, 1],
-    "--sy": [1, 1, 0.92, 1, 1, 0.9, 1, 1, 0.88, 1.03, 1, 1],
+    scaleX: [1, 1, 1.05, 1, 1, 1.06, 1, 1, 1.07, 0.98, 1, 1],
+    scaleY: [1, 1, 0.92, 1, 1, 0.9, 1, 1, 0.88, 1.03, 1, 1],
   },
   transition: {
-    "--sx": cycle(OPEN_BOX_TIMES, OPEN_BOX_EASE),
-    "--sy": cycle(OPEN_BOX_TIMES, OPEN_BOX_EASE),
+    scaleX: cycle(OPEN_BOX_TIMES, OPEN_BOX_EASE),
+    scaleY: cycle(OPEN_BOX_TIMES, OPEN_BOX_EASE),
   },
 };
 
 const OPEN_LID: MotionPreset = {
-  initial: { "--r": 0, "--ty": 0 },
+  initial: { rotate: 0, y: 0 },
   animate: {
-    "--r": [0, 0, 0.122173, 0, -0.15708, 0, 0.20944, -0.034907, 0, 0],
-    "--ty": [0, 0, -10.333333, 0, -15.5, 0, -23.25, 0, -3.875, 0, 0],
+    rotate: [0, 0, 7, 0, -9, 0, 12, -2, 0, 0],
+    y: [0, 0, -10.333333, 0, -15.5, 0, -23.25, 0, -3.875, 0, 0],
   },
   transition: {
-    "--r": cycle(
+    rotate: cycle(
       [0, 0.05, 0.1, 0.15, 0.21, 0.26, 0.33, 0.4, 0.46, 1],
       ["linear", HALF, HALF, HALF, HALF, HALF, HALF, HALF, "linear"],
     ),
-    "--ty": cycle(
+    y: cycle(
       [0, 0.05, 0.1, 0.15, 0.21, 0.26, 0.33, 0.4, 0.43, 0.46, 1],
       [
         "linear",
@@ -286,28 +284,27 @@ const confettiPreset = ({
     ["linear", "easeOut", HALF, "linear"],
   );
   const moveTimes = [0, start, peak, end, 1];
-  const rotateFrom = rotate?.[0] ?? 0;
+  const rotateFrom = (rotate?.[0] ?? 0) * (180 / Math.PI);
+  const rotateTo = (rotate?.[1] ?? 0) * (180 / Math.PI);
 
   return {
-    initial: { "--sx": 0.3, "--sy": 0.3, "--tx": 0, "--ty": 0, "--r": rotateFrom, opacity: 0 },
+    initial: { scale: 0.3, x: 0, y: 0, rotate: rotateFrom, opacity: 0 },
     animate: {
-      "--sx": scale,
-      "--sy": scale,
-      "--tx": [0, 0, peakX, peakX * 1.2, peakX * 1.2],
-      "--ty": [0, 0, peakY, peakY + 23.25, peakY + 23.25],
+      scale,
+      x: [0, 0, peakX, peakX * 1.2, peakX * 1.2],
+      y: [0, 0, peakY, peakY + 23.25, peakY + 23.25],
       opacity: [0, 0, 1, 1, 0, 0],
-      ...(rotate && { "--r": [rotateFrom, rotateFrom, rotate[1], rotate[1]] }),
+      ...(rotate && { rotate: [rotateFrom, rotateFrom, rotateTo, rotateTo] }),
     },
     transition: {
-      "--sx": scaleTransition,
-      "--sy": scaleTransition,
-      "--tx": cycle(moveTimes, ["linear", "easeOut", "easeInOut", "linear"]),
-      "--ty": cycle(moveTimes, ["linear", "easeOut", "easeIn", "linear"]),
+      scale: scaleTransition,
+      x: cycle(moveTimes, ["linear", "easeOut", "easeInOut", "linear"]),
+      y: cycle(moveTimes, ["linear", "easeOut", "easeIn", "linear"]),
       opacity: cycle(
         [0, start, start + 0.015, end - 0.075, end, 1],
         [HALF, "easeOut", HALF, HALF, "linear"],
       ),
-      ...(rotate && { "--r": cycle([0, start, end, 1], "linear") }),
+      ...(rotate && { rotate: cycle([0, start, end, 1], "linear") }),
     },
   };
 };
@@ -341,31 +338,25 @@ export default function GiftAnimation({ variant, playing = true, className }: Gi
       {isWiggle && (
         <motion.div
           {...play(WIGGLE_SHADOW)}
-          className={cn(
-            "bg-base-gray-100 absolute top-[111.69px] left-[19.22px] h-[5.13px] w-[85.56px] rounded-full",
-            MOTION_TRANSFORM,
-          )}
+          className="bg-base-gray-100 absolute top-[111.69px] left-[19.22px] h-[5.13px] w-[85.56px] origin-center rounded-full"
         />
       )}
       <motion.div
         {...play(isWiggle ? WIGGLE_GIFT : null)}
-        className={cn("absolute inset-0", isWiggle && MOTION_TRANSFORM)}>
+        className="absolute inset-0 origin-center">
         <motion.div
           {...play(isWiggle ? null : OPEN_BOX)}
-          className={cn(
-            "absolute top-14.25 left-[15.5px] h-14.25 w-23.25",
-            !isWiggle && MOTION_TRANSFORM,
-          )}>
+          className="absolute top-14.25 left-[15.5px] h-14.25 w-23.25 origin-center">
           <div className="bg-base-orange-500 absolute inset-0 rounded-t-[6px] rounded-b-[18px]" />
           <div className="bg-base-blue-500 absolute inset-y-0 left-9.25 w-4.75" />
           <div className="from-base-orange-900/35 absolute top-0 left-1/2 h-3.5 w-23 -translate-x-1/2 rounded-t-[6px] bg-linear-to-b to-transparent opacity-50" />
         </motion.div>
         <motion.div
           {...play(isWiggle ? null : OPEN_LID)}
-          className={cn("absolute top-1 left-1.5 h-13.5 w-28", !isWiggle && MOTION_TRANSFORM)}>
+          className="absolute top-1 left-1.5 h-13.5 w-28 origin-center">
           <motion.div
             {...play(isWiggle ? WIGGLE_BOW : null)}
-            className={cn("absolute top-0 left-0 h-12.5 w-28", isWiggle && MOTION_TRANSFORM)}>
+            className="absolute top-0 left-0 h-12.5 w-28 origin-center">
             <GiftBow className="size-full" />
           </motion.div>
           <div className="bg-base-orange-500 absolute top-6.25 left-0 h-[28.5px] w-28 rounded-[9px]" />
@@ -382,7 +373,7 @@ export default function GiftAnimation({ variant, playing = true, className }: Gi
               particle.position,
               particle.color,
               particle.shape === "circle" ? "rounded-full" : "rounded-[1.033px]",
-              MOTION_TRANSFORM,
+              "origin-center",
             )}
           />
         ))}

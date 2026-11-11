@@ -6,9 +6,12 @@ import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
 const MOCK_WISH_STATUSES = ["AVAILABLE", "FUNDING", "AVAILABLE", "DISCONTINUED", "AVAILABLE"];
 
 export const wishHandlers = [
-  http.get("*/api/wishes", async () => {
+  http.get("*/api/wishes", async ({ request }) => {
     await delay(1000);
-    const content = MOCK_RECOMMENDED_PRODUCTS.slice(0, MOCK_WISH_STATUSES.length).map(
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(0, Number(searchParams.get("page")) || 0);
+    const size = Math.max(1, Number(searchParams.get("size")) || 10);
+    const wishes = MOCK_RECOMMENDED_PRODUCTS.slice(0, MOCK_WISH_STATUSES.length).map(
       (product, index) => ({
         id: product.id,
         productName: product.name,
@@ -20,9 +23,16 @@ export const wishHandlers = [
         fundingId: MOCK_WISH_STATUSES[index] === "FUNDING" ? 1 : null,
       }),
     );
+    const content = wishes.slice(page * size, (page + 1) * size);
     return HttpResponse.json({
       success: true,
-      data: { content, page: 0, size: 10, totalElements: content.length, hasNext: false },
+      data: {
+        content,
+        page,
+        size,
+        totalElements: wishes.length,
+        hasNext: (page + 1) * size < wishes.length,
+      },
       error: null,
     });
   }),

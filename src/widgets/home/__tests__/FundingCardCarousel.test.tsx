@@ -147,3 +147,32 @@ describe("FundingCardCarousel", () => {
     expect(notCanceled).toBe(false);
   });
 });
+
+describe("FundingCardCarousel onClick", () => {
+  it("드래그 없이 현재 카드를 클릭하면 그 카드의 onClick을 호출한다", async () => {
+    const onClick = vi.fn();
+    render(
+      <FundingCardCarousel
+        cards={[{ ...makeCard(1, "첫번째"), onClick }, makeCard(2, "두번째")]}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "첫번째" }));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("이전·다음 미리보기 카드에는 onClick이 있어도 버튼을 렌더하지 않는다", () => {
+    render(
+      <FundingCardCarousel
+        cards={[
+          { ...makeCard(1, "첫번째"), onClick: vi.fn() },
+          { ...makeCard(2, "두번째"), onClick: vi.fn() },
+        ]}
+      />,
+    );
+
+    expect(screen.getAllByRole("button", { name: /번째/ })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "두번째" })).not.toBeInTheDocument();
+  });
+});

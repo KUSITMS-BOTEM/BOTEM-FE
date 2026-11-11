@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import { cn } from "@/utils/cn";
 import FundingCard, { type FundingCardProps } from "@/widgets/home/FundingCard";
@@ -37,8 +37,8 @@ export default function FundingCardCarousel({
   animateOnMount = false,
   className,
 }: FundingCardCarouselProps) {
-  // 첫 진입도 다음 카드로 넘어갈 때처럼 오른쪽에서 슬라이드되도록 방향을 1로 둔다
   const [[pageIndex, direction], setPage] = useState<[number, number]>([0, animateOnMount ? 1 : 0]);
+  const draggedRef = useRef(false);
   const index = Math.min(pageIndex, cards.length - 1);
   const current = cards[index];
   const prev = cards[index - 1];
@@ -58,6 +58,12 @@ export default function FundingCardCarousel({
     else if (offset.x > SWIPE_OFFSET_PX || velocity.x > SWIPE_VELOCITY) paginate(-1);
   };
 
+  const handleClickCapture = (event: MouseEvent) => {
+    if (!draggedRef.current) return;
+    event.stopPropagation();
+    event.preventDefault();
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
@@ -75,12 +81,12 @@ export default function FundingCardCarousel({
       <div className="relative flex w-full">
         {prev && (
           <div aria-hidden className={cn(PEEK_STYLE, "left-[-96.86px] origin-left")}>
-            <FundingCard {...prev} animateGift={false} />
+            <FundingCard {...prev} onClick={undefined} animateGift={false} />
           </div>
         )}
         {next && (
           <div aria-hidden className={cn(PEEK_STYLE, "right-[-96.86px] origin-right")}>
-            <FundingCard {...next} animateGift={false} />
+            <FundingCard {...next} onClick={undefined} animateGift={false} />
           </div>
         )}
         <AnimatePresence initial={animateOnMount} custom={direction} mode="popLayout">
@@ -98,7 +104,10 @@ export default function FundingCardCarousel({
             drag={isCarousel ? "x" : false}
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.5}
+            onPointerDownCapture={() => (draggedRef.current = false)}
+            onDragStart={() => (draggedRef.current = true)}
             onDragEnd={handleDragEnd}
+            onClickCapture={handleClickCapture}
             className="w-full touch-pan-y">
             <FundingCard {...current} />
           </motion.div>

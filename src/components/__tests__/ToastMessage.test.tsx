@@ -24,11 +24,11 @@ describe("ToastMessage", () => {
     expect(svg?.closest("span")).toHaveClass("text-semantic-icon-success");
   });
 
-  it("state가 false면 danger 아이콘(20x20)과 danger 색상 클래스가 적용된다", () => {
+  it("state가 false면 danger 아이콘(24x24)과 danger 색상 클래스가 적용된다", () => {
     const { container } = render(<ToastMessage show text="문구" state={false} />);
 
     const svg = container.querySelector("svg");
-    expect(svg).toHaveAttribute("viewBox", "0 0 20 20");
+    expect(svg).toHaveAttribute("viewBox", "0 0 24 24");
     expect(svg?.closest("span")).toHaveClass("text-semantic-icon-danger");
   });
 

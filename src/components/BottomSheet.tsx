@@ -11,9 +11,12 @@ type BottomSheetButtons = {
   leftLabel?: string;
   leftColor?: "neutral" | "brand";
   rightLabel: string;
+  rightColor?: "brand" | "neutral";
   onLeftClick?: () => void;
   onRightClick?: () => void;
+  leftDisabled?: boolean;
   rightDisabled?: boolean;
+  upper?: ReactNode;
 };
 
 type BottomSheetProps = {
@@ -21,6 +24,7 @@ type BottomSheetProps = {
   title: string;
   height: "auto" | "max";
   buttons?: BottomSheetButtons;
+  toast?: ReactNode;
   onClose: () => void;
   children: ReactNode;
   className?: string;
@@ -43,6 +47,7 @@ export default function BottomSheet({
   title,
   height,
   buttons,
+  toast,
   onClose,
   children,
   className,
@@ -128,32 +133,47 @@ export default function BottomSheet({
                 <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pt-1 pb-4">
                   {children}
                 </div>
-                {buttons && (
-                  <div className="flex w-full shrink-0 flex-col items-start">
-                    <div className="from-semantic-background-default/0 to-semantic-background-default h-9 w-full bg-gradient-to-b" />
-                    <div className="bg-semantic-background-default flex w-full items-start justify-center gap-2 px-5 pb-5">
-                      {buttons.leftLabel && (
-                        <Button
-                          color={buttons.leftColor ?? "neutral"}
-                          variant="weak"
-                          size="xlarge"
-                          className="flex-1"
-                          onClick={buttons.onLeftClick}>
-                          {buttons.leftLabel}
-                        </Button>
-                      )}
-                      <Button
-                        color="brand"
-                        variant="fill"
-                        size="xlarge"
-                        className="flex-1"
-                        disabled={buttons.rightDisabled}
-                        onClick={buttons.onRightClick}>
-                        {buttons.rightLabel}
-                      </Button>
+                <div className="relative flex w-full shrink-0 flex-col items-start">
+                  {toast && (
+                    <div className="absolute inset-x-0 bottom-full flex justify-center px-5 pb-3">
+                      {toast}
                     </div>
-                  </div>
-                )}
+                  )}
+                  {buttons && (
+                    <>
+                      <div className="from-semantic-background-default/0 to-semantic-background-default h-9 w-full bg-gradient-to-b" />
+                      <div className="bg-semantic-background-default flex w-full flex-col pb-5">
+                        {buttons.upper && (
+                          <div className="flex w-full justify-center px-6 pb-6">
+                            {buttons.upper}
+                          </div>
+                        )}
+                        <div className="flex w-full items-start justify-center gap-2 px-5">
+                          {buttons.leftLabel && (
+                            <Button
+                              color={buttons.leftColor ?? "neutral"}
+                              variant="weak"
+                              size="xlarge"
+                              className="flex-1"
+                              disabled={buttons.leftDisabled}
+                              onClick={buttons.onLeftClick}>
+                              {buttons.leftLabel}
+                            </Button>
+                          )}
+                          <Button
+                            color={buttons.rightColor ?? "brand"}
+                            variant={buttons.rightColor === "neutral" ? "weak" : "fill"}
+                            size="xlarge"
+                            className="flex-1"
+                            disabled={buttons.rightDisabled}
+                            onClick={buttons.onRightClick}>
+                            {buttons.rightLabel}
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
                 {/* -bottom-6 오프셋은 height와 무관하게 시트 하단을 뷰포트보다 24px 아래에 고정하므로, 버튼 영역이 가려지지 않도록 두 모드 모두에서 여백을 채워준다 */}
                 <div aria-hidden className="bg-semantic-fill-default h-6 w-full shrink-0" />
               </motion.div>

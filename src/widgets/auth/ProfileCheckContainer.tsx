@@ -20,6 +20,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/store/authStore";
 import type { MyProfile } from "@/types/user/profile";
 import { getSignupFlow, setSignupFlow } from "@/utils/auth/signupFlowStorage";
+import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 
 // Figma "01 모션 토큰" 기준: ease.standard / duration.enter·move / delay.start·stagger / distance.title·field
@@ -30,12 +31,6 @@ const FIELD_TRANSITION = { delay: 0.8, duration: 0.4, ease: EASE_STANDARD };
 // 백엔드 업로드 URL 발급 API(/profile-image/upload-url) 제약과 동일
 const ALLOWED_PROFILE_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_PROFILE_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
-
-// SelectBox의 onDateChange가 쓰는 표시 형식과 동일하게 맞춘다 ("MM-DD" → "M월 D일")
-const formatBirthdayDisplay = (birthday: string) => {
-  const [month, day] = birthday.split("-").map(Number);
-  return `${month}월 ${day}일`;
-};
 
 export default function ProfileCheckContainer() {
   const router = useRouter();

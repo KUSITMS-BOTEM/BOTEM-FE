@@ -1,24 +1,33 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { cn } from "@/utils/cn";
 import SheetHeader from "@/components/SheetHeader";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 
-type OpenSheetProps = {
+export type OpenSheetProps = {
   open: boolean;
   title: string;
   onClose: () => void;
+  slideOutOnClose?: boolean;
+  closeType?: ComponentProps<typeof SheetHeader>["closeType"];
   children: ReactNode;
   className?: string;
 };
 
-// Figma 프로토타입(홈 추가 메뉴 → 목표 금액 진입) 전환: 오른쪽에서 왼쪽으로 Ease out 300ms. spring이 아니라 오버슈트가 없어 가장자리 보정이 필요 없다. 닫을 때는 모션 없이 즉시 사라진다(디자인 요청).
 const SLIDE_TRANSITION = { duration: 0.3, ease: "easeOut" } as const;
 const NO_TRANSITION = { duration: 0 } as const;
 
-export default function OpenSheet({ open, title, onClose, children, className }: OpenSheetProps) {
+export default function OpenSheet({
+  open,
+  title,
+  onClose,
+  slideOutOnClose = false,
+  closeType,
+  children,
+  className,
+}: OpenSheetProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [visible, setVisible] = useState(false);
   const titleId = useId();
@@ -79,12 +88,16 @@ export default function OpenSheet({ open, title, onClose, children, className }:
                   )}
                   initial={{ x: "100%" }}
                   animate={{ x: 0, transition: SLIDE_TRANSITION }}
-                  exit={{ x: "100%", transition: NO_TRANSITION }}>
+                  exit={{
+                    x: "100%",
+                    transition: slideOutOnClose ? SLIDE_TRANSITION : NO_TRANSITION,
+                  }}>
                   <SheetHeader
                     title={title}
                     titleId={titleId}
                     onClose={onClose}
                     showHandle={false}
+                    closeType={closeType}
                   />
                   <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pt-1 pb-4">
                     {children}
