@@ -1,0 +1,205 @@
+import { createElement, type ReactNode } from "react";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+import { authService } from "@/apis/auth/authService";
+import { userService } from "@/apis/user/userService";
+import { useAuthStore } from "@/store/authStore";
+import type { MyProfile } from "@/types/user/profile";
+import { setSignupFlow } from "@/utils/auth/signupFlowStorage";
+import ProfileCheckContainer from "@/widgets/auth/ProfileCheckContainer";
+
+vi.mock("@/apis/user/userService", () => ({
+  userService: {
+    getMyProfile: vi.fn(),
+  },
+}));
+
+vi.mock("@/apis/auth/authService", () => ({
+  authService: {
+    postLogout: vi.fn(),
+  },
+}));
+
+const pushMock = vi.fn();
+const replaceMock = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: pushMock, replace: replaceMock }),
+}));
+
+const uploadProfileImageMock = vi.fn();
+const uploadMutationState = { isPending: false };
+vi.mock("@/hooks/mutations/user/useUploadProfileImageMutation", () => ({
+  useUploadProfileImageMutation: () => ({
+    mutate: uploadProfileImageMock,
+    isPending: uploadMutationState.isPending,
+  }),
+}));
+
+const mockProfile: MyProfile = {
+  nickname: "지유",
+  profileImageUrl: null,
+  birthday: "10-13",
+  wishProfileUrl: "https://example.com/wish",
+  kakaoConnected: true,
+  email: "jiyu@kakao.com",
+  joinedAt: "2026-01-01",
+};
+
+// profile 조회가 끝나기 전 상태(초기 state)를 그대로 검증하고 싶은 테스트에서 사용 — 영원히 pending
+const pendingProfilePromise = () => new Promise<MyProfile>(() => {});
+
+const renderContainer = () => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const Wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+
+  return render(createElement(ProfileCheckContainer), { wrapper: Wrapper });
+};
+
+// jsdom에는 URL.createObjectURL/revokeObjectURL·createImageBitmap이 구현되어 있지 않아 Profile 내부 동작이 항상 성공하도록 스텁한다
+beforeAll(() => {
+  URL.createObjectURL = vi.fn(() => "blob:mock-url");
+  URL.revokeObjectURL = vi.fn();
+  global.createImageBitmap = vi.fn(() =>
+    Promise.resolve({ close: vi.fn() }),
+  ) as unknown as typeof createImageBitmap;
+});
+
+beforeEach(() => {
+  sessionStorage.clear();
+  vi.clearAllMocks();
+  uploadMutationState.isPending = false;
+  vi.spyOn(window, "alert").mockImplementation(() => {});
+});
+
+afterEach(() => {
+  useAuthStore.setState({ accessToken: null });
+});
+
+describe("ProfileCheckContainer", () => {
+  it("signupFlow가 없으면 '/'로 리다이렉트된다", () => {
+    vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());
+
+    renderContainer();
+
+    expect(replaceMock).toHaveBeenCalledWith("/");
+  });
+
+  it("signupFlow에 저장된 수정값이 profile 조회 결과보다 우선 표시된다", async () => {
+    setSignupFlow({ step: "profile", nickname: "수정이름", birthday: "03-05" });
+    vi.mocked(userService.getMyProfile).mockResolvedValue(mockProfile);
+
+    renderContainer();
+
+    await waitFor(() => expect(screen.getByDisplayValue("수정이름")).toBeInTheDocument());
+    expect(screen.getByText("3월 5일")).toBeInTheDocument();
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it("이름·생일이 비어 있으면 '다음으로' 버튼이 비활성화된다", () => {
+    setSignupFlow({ step: "profile" });
+    vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());
+
+    renderContainer();
+
+    expect(screen.getByRole("button", { name: "다음으로" })).toBeDisabled();
+  });
+
+  it("이름과 생일을 모두 입력하면 버튼이 활성화되고, 클릭 시 입력값을 저장한 뒤 계좌 입력 페이지로 이동한다", async () => {
+    setSignupFlow({ step: "profile" });
+    vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());
+    const user = userEvent.setup();
+
+    const { container } = renderContainer();
+
+    await user.type(screen.getByRole("textbox", { name: "이름" }), "테스트이름");
+    const dateInput = container.querySelector('input[type="date"]') as HTMLInputElement;
+    fireEvent.change(dateInput, { target: { value: "2024-03-05" } });
+
+    const nextButton = screen.getByRole("button", { name: "다음으로" });
+    expect(nextButton).not.toBeDisabled();
+    await user.click(nextButton);
+
+    expect(pushMock).toHaveBeenCalledWith("/auth/payout-account");
+    expect(sessionStorage.getItem("signupFlow")).toContain('"nickname":"테스트이름"');
+    expect(sessionStorage.getItem("signupFlow")).toContain('"birthday":"03-05"');
+  });
+
+  it("뒤로가기 클릭 시 로그아웃에 성공하면 accessToken을 지우고 '/'로 이동한다", async () => {
+    setSignupFlow({ step: "profile", nickname: "지유", birthday: "10-13" });
+    vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());
+    vi.mocked(authService.postLogout).mockResolvedValue(null);
+    useAuthStore.getState().setAccessToken("access-token");
+    const user = userEvent.setup();
+
+    renderContainer();
+
+    await user.click(screen.getByRole("button", { name: "뒤로 가기" }));
+
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/"));
+    expect(useAuthStore.getState().accessToken).toBeNull();
+  });
+
+  it("지원하지 않는 파일 형식을 선택하면 업로드를 호출하지 않고 안내 alert를 띄운다", async () => {
+    setSignupFlow({ step: "profile" });
+    vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());
+    const file = new File(["dummy"], "photo.gif", { type: "image/gif" });
+
+    const { container } = renderContainer();
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    await userEvent.upload(input, file);
+
+    expect(window.alert).toHaveBeenCalledWith("jpg, png, webp 파일만 올릴 수 있어요");
+    expect(uploadProfileImageMock).not.toHaveBeenCalled();
+  });
+
+  it("5MB를 초과하는 파일을 선택하면 업로드를 호출하지 않고 안내 alert를 띄운다", async () => {
+    setSignupFlow({ step: "profile" });
+    vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());
+    const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "big.png", {
+      type: "image/png",
+    });
+
+    const { container } = renderContainer();
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    await userEvent.upload(input, file);
+
+    expect(window.alert).toHaveBeenCalledWith("5MB 이하의 파일만 올릴 수 있어요");
+    expect(uploadProfileImageMock).not.toHaveBeenCalled();
+  });
+
+  it("유효한 파일을 선택하면 업로드가 호출되고, 성공 시 반환된 이미지 URL이 다음 단계로 저장된다", async () => {
+    setSignupFlow({ step: "profile", nickname: "지유", birthday: "10-13" });
+    vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());
+    const file = new File(["dummy"], "photo.png", { type: "image/png" });
+    uploadProfileImageMock.mockImplementation(
+      (_file: File, options: { onSuccess: (imageUrl: string) => void }) =>
+        options.onSuccess("https://example.com/uploaded.png"),
+    );
+    const user = userEvent.setup();
+
+    const { container } = renderContainer();
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    await userEvent.upload(input, file);
+
+    expect(uploadProfileImageMock).toHaveBeenCalledWith(file, expect.anything());
+    await user.click(screen.getByRole("button", { name: "다음으로" }));
+
+    expect(sessionStorage.getItem("signupFlow")).toContain(
+      '"profileImageUrl":"https://example.com/uploaded.png"',
+    );
+  });
+
+  it("이미지 업로드가 진행 중이면 '다음으로' 버튼이 비활성화된다", () => {
+    setSignupFlow({ step: "profile", nickname: "지유", birthday: "10-13" });
+    vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());
+    uploadMutationState.isPending = true;
+
+    renderContainer();
+
+    expect(screen.getByRole("button", { name: "다음으로" })).toBeDisabled();
+  });
+});

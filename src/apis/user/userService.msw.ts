@@ -13,6 +13,8 @@ export const userHandlers = [
         birthday: "10-13",
         wishProfileUrl: "https://botem.site/@8f0c6d779fae47f3a979302f2782d20f",
         kakaoConnected: true,
+        email: "jiyu@kakao.com",
+        joinedAt: "2026-11-10",
       },
       error: null,
     });
@@ -21,6 +23,20 @@ export const userHandlers = [
   http.post("*/api/users/me/onboarding", async () => {
     await delay(800);
     return HttpResponse.json({ success: true, data: null, error: null });
+  }),
+  http.post("*/api/users/me/profile-image/upload-url", () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        uploadUrl: "https://mock-s3.botem.local/profile-image/mock-upload-token",
+        imageUrl: "https://mock-s3.botem.local/profile-image/mock-upload-token",
+      },
+      error: null,
+    });
+  }),
+  // 발급받은 uploadUrl로의 실제 S3 PUT을 모킹
+  http.put("https://mock-s3.botem.local/*", () => {
+    return new HttpResponse(null, { status: 200 });
   }),
   http.delete("/api/users/me", () => {
     clearMockAuthCookies();

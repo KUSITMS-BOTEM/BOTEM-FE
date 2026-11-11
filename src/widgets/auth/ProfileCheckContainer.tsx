@@ -9,10 +9,12 @@ import { motion, MotionConfig } from "framer-motion";
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
+import Profile from "@/components/Profile";
 import SelectBox from "@/components/SelectBox";
 import TextField from "@/components/TextField";
 import Title from "@/components/Title";
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
+import { useUploadProfileImageMutation } from "@/hooks/mutations/user/useUploadProfileImageMutation";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/store/authStore";
@@ -25,6 +27,10 @@ const EASE_STANDARD = [0.2, 0, 0, 1] as const;
 const TITLE_TRANSITION = { delay: 0.3, duration: 0.45, ease: EASE_STANDARD };
 const FIELD_TRANSITION = { delay: 0.8, duration: 0.4, ease: EASE_STANDARD };
 
+// 백엔드 업로드 URL 발급 API(/profile-image/upload-url) 제약과 동일
+const ALLOWED_PROFILE_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_PROFILE_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+
 // SelectBox의 onDateChange가 쓰는 표시 형식과 동일하게 맞춘다 ("MM-DD" → "M월 D일")
 const formatBirthdayDisplay = (birthday: string) => {
   const [month, day] = birthday.split("-").map(Number);
@@ -34,9 +40,12 @@ const formatBirthdayDisplay = (birthday: string) => {
 export default function ProfileCheckContainer() {
   const router = useRouter();
   const { mutate: logout } = useLogoutMutation();
+  const { mutate: uploadProfileImage, isPending: isUploadingImage } =
+    useUploadProfileImageMutation();
   const { data: profile } = useMyProfileQuery();
   const [nickname, setNickname] = useState(() => getSignupFlow()?.nickname ?? "");
   const [birthday, setBirthday] = useState(() => getSignupFlow()?.birthday ?? "");
+  const [profileImageUrl, setProfileImageUrl] = useState(() => getSignupFlow()?.profileImageUrl);
   const [syncedProfile, setSyncedProfile] = useState<MyProfile>();
 
   useEffect(() => {
@@ -49,12 +58,25 @@ export default function ProfileCheckContainer() {
     setSyncedProfile(profile);
     const flow = getSignupFlow();
     setNickname(flow?.nickname ?? profile.nickname);
-    setBirthday(flow?.birthday ?? profile.birthday);
+    setBirthday(flow?.birthday ?? profile.birthday ?? "");
+    setProfileImageUrl(flow?.profileImageUrl ?? profile.profileImageUrl);
   }
 
   const handleNext = () => {
-    setSignupFlow({ step: "accountEntry", nickname, birthday });
+    setSignupFlow({ step: "accountEntry", nickname, birthday, profileImageUrl });
     router.push("/auth/payout-account");
+  };
+
+  const handleProfileImageChange = (file: File) => {
+    if (!ALLOWED_PROFILE_IMAGE_TYPES.includes(file.type)) {
+      alert("jpg, png, webp 파일만 올릴 수 있어요");
+      return;
+    }
+    if (file.size > MAX_PROFILE_IMAGE_SIZE_BYTES) {
+      alert("5MB 이하의 파일만 올릴 수 있어요");
+      return;
+    }
+    uploadProfileImage(file, { onSuccess: imageUrl => setProfileImageUrl(imageUrl) });
   };
 
   const handleBack = () => {
@@ -84,32 +106,47 @@ export default function ProfileCheckContainer() {
             description="등록된 정보와 다르다면 수정해주세요."
           />
         </motion.div>
-        <motion.div
-          className="flex flex-col gap-4"
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={FIELD_TRANSITION}>
-          <TextField
-            label="이름"
-            value={nickname}
-            onChange={event => setNickname(event.target.value)}
-          />
-          <SelectBox
-            variant="birth"
-            label="생일"
-            value={birthday ? formatBirthdayDisplay(birthday) : ""}
-            onDateChange={(month, day) =>
-              setBirthday(
-                month && day
-                  ? `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-                  : "",
-              )
-            }
-          />
-        </motion.div>
+        <div className="flex flex-col gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={FIELD_TRANSITION}>
+            <Profile
+              imageUrl={profileImageUrl ?? undefined}
+              onImageChange={handleProfileImageChange}
+            />
+          </motion.div>
+          <motion.div
+            className="flex flex-col gap-4"
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={FIELD_TRANSITION}>
+            <TextField
+              label="이름"
+              value={nickname}
+              onChange={event => setNickname(event.target.value)}
+            />
+            <SelectBox
+              variant="birth"
+              label="생일"
+              value={birthday ? formatBirthdayDisplay(birthday) : ""}
+              onDateChange={(month, day) =>
+                setBirthday(
+                  month && day
+                    ? `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+                    : "",
+                )
+              }
+            />
+          </motion.div>
+        </div>
       </main>
       <BottomCTA>
-        <Button color="brand" size="xlarge" disabled={!nickname || !birthday} onClick={handleNext}>
+        <Button
+          color="brand"
+          size="xlarge"
+          disabled={!nickname || !birthday || isUploadingImage}
+          onClick={handleNext}>
           다음으로
         </Button>
       </BottomCTA>

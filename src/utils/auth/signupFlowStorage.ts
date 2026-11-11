@@ -1,4 +1,9 @@
-type SignupFlowState = { step: "profile" | "accountEntry"; nickname?: string; birthday?: string };
+type SignupFlowState = {
+  step: "profile" | "accountEntry";
+  nickname?: string;
+  birthday?: string;
+  profileImageUrl?: string | null;
+};
 
 const SIGNUP_FLOW_KEY = "signupFlow";
 

@@ -30,6 +30,13 @@ export default function Profile({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [syncedImageUrl, setSyncedImageUrl] = useState(imageUrl);
+
+  // 업로드 성공으로 서버의 imageUrl이 갱신되면 로컬 미리보기를 내려 서버 URL이 보이게 한다 — effect가 아닌 렌더 중 동기화
+  if (imageUrl !== syncedImageUrl) {
+    setSyncedImageUrl(imageUrl);
+    setSelectedFile(null);
+  }
 
   useEffect(() => {
     if (!selectedFile) return;
