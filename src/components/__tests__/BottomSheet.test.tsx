@@ -290,3 +290,70 @@ describe("BottomSheet", () => {
     expect(screen.getByText("본문 내용")).toBeInTheDocument();
   });
 });
+
+describe("BottomSheet leftDisabled·upper·toast", () => {
+  it("leftDisabled가 true면 왼쪽 버튼만 비활성이다", () => {
+    render(
+      <BottomSheet
+        {...baseProps}
+        buttons={{ ...baseProps.buttons, leftDisabled: true }}
+        open
+        height="auto">
+        본문 내용
+      </BottomSheet>,
+    );
+
+    expect(screen.getByRole("button", { name: "취소" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "확인" })).toBeEnabled();
+  });
+
+  it("leftDisabled가 없으면 왼쪽 버튼이 활성이다", () => {
+    render(
+      <BottomSheet {...baseProps} open height="auto">
+        본문 내용
+      </BottomSheet>,
+    );
+
+    expect(screen.getByRole("button", { name: "취소" })).toBeEnabled();
+  });
+
+  it("buttons.upper를 렌더한다", () => {
+    render(
+      <BottomSheet
+        {...baseProps}
+        buttons={{ ...baseProps.buttons, upper: <span>전체 선택</span> }}
+        open
+        height="auto">
+        본문 내용
+      </BottomSheet>,
+    );
+
+    expect(screen.getByText("전체 선택")).toBeInTheDocument();
+  });
+
+  it("toast를 렌더한다", () => {
+    render(
+      <BottomSheet {...baseProps} toast={<span>토스트 메시지</span>} open height="auto">
+        본문 내용
+      </BottomSheet>,
+    );
+
+    expect(screen.getByText("토스트 메시지")).toBeInTheDocument();
+  });
+
+  it("buttons 없이 toast만 넘겨도 toast를 렌더한다", () => {
+    render(
+      <BottomSheet
+        title="타이틀"
+        onClose={vi.fn()}
+        toast={<span>토스트 메시지</span>}
+        open
+        height="auto">
+        본문 내용
+      </BottomSheet>,
+    );
+
+    expect(screen.getByText("토스트 메시지")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "확인" })).not.toBeInTheDocument();
+  });
+});

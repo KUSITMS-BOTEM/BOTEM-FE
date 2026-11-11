@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import FundingCard from "@/widgets/home/FundingCard";
 
@@ -26,6 +27,13 @@ describe("FundingCard", () => {
     expect(screen.getByText("마감까지 D-7")).toBeInTheDocument();
     expect(screen.getByText("목표")).toBeInTheDocument();
     expect(screen.getByText("1,500,000원")).toBeInTheDocument();
+  });
+
+  it("dDay가 null이면 남은 일수 대신 '마감'을 표시한다", () => {
+    render(<FundingCard {...baseProps} dDay={null} />);
+
+    expect(screen.getByText("마감")).toBeInTheDocument();
+    expect(screen.queryByText(/마감까지/)).not.toBeInTheDocument();
   });
 
   it("targetAmount가 0이면 '0원'을 표시한다", () => {
@@ -131,5 +139,28 @@ describe("FundingCard", () => {
     render(<FundingCard {...baseProps} />);
 
     expect(screen.queryByLabelText("서프라이즈 펀딩")).not.toBeInTheDocument();
+  });
+});
+
+describe("FundingCard onClick", () => {
+  it("onClick이 있으면 제목을 이름으로 가진 카드 전체 버튼을 렌더한다", () => {
+    render(<FundingCard {...baseProps} onClick={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: "민지 생일 펀딩" })).toBeInTheDocument();
+  });
+
+  it("카드 버튼을 누르면 onClick을 호출한다", async () => {
+    const onClick = vi.fn();
+    render(<FundingCard {...baseProps} onClick={onClick} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "민지 생일 펀딩" }));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("onClick이 없으면 카드 전체 버튼을 렌더하지 않는다", () => {
+    render(<FundingCard {...baseProps} />);
+
+    expect(screen.queryByRole("button", { name: "민지 생일 펀딩" })).not.toBeInTheDocument();
   });
 });
