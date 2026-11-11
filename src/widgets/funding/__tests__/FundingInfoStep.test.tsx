@@ -195,6 +195,116 @@ describe("FundingInfoStep", () => {
     });
   });
 
+  describe("사연 이후 공약 단계", () => {
+    const reachStory = async (container: HTMLElement) => {
+      await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
+      await userEvent.tab();
+      const dateInput = container.querySelector<HTMLInputElement>('input[type="date"]')!;
+      fireEvent.change(dateInput, { target: { value: "2099-12-25" } });
+      fireEvent.blur(dateInput);
+      return screen.getByLabelText("사연");
+    };
+
+    it("사연을 입력하고 포커스가 빠지면 공약·다음 버튼이 나타나고 제목이 바뀐다", async () => {
+      const { container } = renderStep();
+      const story = await reachStory(container);
+
+      await userEvent.type(story, "생일 선물");
+      expect(screen.queryByLabelText("공약")).not.toBeInTheDocument();
+      fireEvent.blur(story);
+
+      expect(screen.getByLabelText("공약")).toBeInTheDocument();
+      expect(screen.getByText("공약도 걸어볼까요?")).toBeInTheDocument();
+      expect(screen.getByText("선택이에요. 없으면 건너뛰어도 돼요")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "다음" })).toBeInTheDocument();
+    });
+
+    it("사연이 비었거나 공백뿐이면 포커스가 빠져도 공약이 나타나지 않는다", async () => {
+      const { container } = renderStep();
+      const story = await reachStory(container);
+
+      await userEvent.type(story, "   ");
+      fireEvent.blur(story);
+
+      expect(screen.queryByLabelText("공약")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "다음" })).not.toBeInTheDocument();
+    });
+
+    it("목표 금액·마감일·사연이 모두 채워져 있으면 공약이 비어 있어도 다음 버튼이 활성화된다", async () => {
+      const { container } = renderStep();
+      const story = await reachStory(container);
+      await userEvent.type(story, "생일 선물");
+      fireEvent.blur(story);
+
+      expect(screen.getByLabelText("공약")).toHaveValue("");
+      expect(screen.getByRole("button", { name: "다음" })).toBeEnabled();
+    });
+
+    it("목표 금액·마감일·사연 중 하나라도 비우면 다음 버튼이 비활성화된다", async () => {
+      const { container } = renderStep();
+      const story = await reachStory(container);
+      await userEvent.type(story, "생일 선물");
+      fireEvent.blur(story);
+      const nextButton = screen.getByRole("button", { name: "다음" });
+
+      await userEvent.clear(story);
+      expect(nextButton).toBeDisabled();
+      await userEvent.type(story, "생일 선물");
+      expect(nextButton).toBeEnabled();
+
+      fireEvent.change(container.querySelector('input[type="date"]')!, { target: { value: "" } });
+      expect(nextButton).toBeDisabled();
+      fireEvent.change(container.querySelector('input[type="date"]')!, {
+        target: { value: "2099-12-25" },
+      });
+      expect(nextButton).toBeEnabled();
+
+      await userEvent.clear(screen.getByLabelText("목표 금액"));
+      expect(nextButton).toBeDisabled();
+    });
+
+    it("텍스트 필드에 포커스가 있는 동안 터치 기기에서 CTA를 숨기고, 포커스가 빠지면 다시 보인다", async () => {
+      const { container } = renderStep();
+      const story = await reachStory(container);
+      await userEvent.type(story, "생일 선물");
+      fireEvent.blur(story);
+      const cta = screen.getByRole("button", { name: "다음" }).closest(".fixed")!;
+      const HIDE_CLASS = "pointer-coarse:hidden";
+
+      expect(cta).not.toHaveClass(HIDE_CLASS);
+      await userEvent.click(screen.getByLabelText("공약"));
+      expect(cta).toHaveClass(HIDE_CLASS);
+      await userEvent.click(screen.getByLabelText("사연"));
+      expect(cta).toHaveClass(HIDE_CLASS);
+      await userEvent.tab();
+      await userEvent.tab();
+      await userEvent.click(document.body);
+      expect(cta).not.toHaveClass(HIDE_CLASS);
+    });
+
+    it("날짜 input에 포커스가 있어도 CTA를 숨기지 않는다", async () => {
+      const { container } = renderStep();
+      const story = await reachStory(container);
+      await userEvent.type(story, "생일 선물");
+      fireEvent.blur(story);
+      const cta = screen.getByRole("button", { name: "다음" }).closest(".fixed")!;
+
+      container.querySelector<HTMLInputElement>('input[type="date"]')!.focus();
+
+      expect(cta).not.toHaveClass("pointer-coarse:hidden");
+    });
+
+    it("사연을 지워도 공약 단계는 유지된다", async () => {
+      const { container } = renderStep();
+      const story = await reachStory(container);
+      await userEvent.type(story, "생일 선물");
+      fireEvent.blur(story);
+      await userEvent.clear(story);
+
+      expect(screen.getByLabelText("공약")).toBeInTheDocument();
+    });
+  });
+
   it("입력 영역 모션이 끝나면 목표 금액에 포커스한다", async () => {
     renderStep();
 
