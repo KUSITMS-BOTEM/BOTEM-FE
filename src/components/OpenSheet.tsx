@@ -65,15 +65,6 @@ export default function OpenSheet({ open, title, onClose, children, className }:
         <AnimatePresence onExitComplete={() => dialogRef.current?.close()}>
           {visible && (
             <>
-              <motion.div
-                key="dim"
-                aria-hidden
-                className="bg-semantic-background-dim fixed inset-0"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, transition: SLIDE_TRANSITION }}
-                exit={{ opacity: 0, transition: NO_TRANSITION }}
-                onClick={onClose}
-              />
               {/* 앱 폭 컬럼 안에서만 슬라이드하도록 overflow를 잘라, 넓은 화면에서 시트가 컬럼 밖에 보이지 않게 한다 */}
               <motion.div
                 key="clip"
