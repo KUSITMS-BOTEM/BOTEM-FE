@@ -1,4 +1,4 @@
-import { type ButtonHTMLAttributes } from "react";
+import { type ButtonHTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/utils/cn";
 import Asset, { type AssetSize } from "@/components/Asset";
 import Satets from "@/components/Satets";
@@ -12,6 +12,8 @@ type TextButtonOwnProps = {
   size?: TextButtonSize;
   disabled?: boolean;
   rightIcon?: boolean;
+  // rightIcon이 true일 때 기본 chevron 대신 보여줄 아이콘 (예: 다시 불러오기)
+  icon?: ReactNode;
   label: string;
 };
 
@@ -41,6 +43,7 @@ export default function TextButton({
   size = "small",
   disabled = false,
   rightIcon = true,
+  icon = <IconRight />,
   className,
   label,
   ...props
@@ -65,7 +68,7 @@ export default function TextButton({
       <Satets color="black" className="rounded-x-small" />
       <span className="relative z-10">{label}</span>
       {rightIcon && (
-        <Asset icon={<IconRight />} size={sizeStyle.iconSize} className="relative z-10 shrink-0" />
+        <Asset icon={icon} size={sizeStyle.iconSize} className="relative z-10 shrink-0" />
       )}
     </button>
   );

@@ -15,7 +15,7 @@ const wish: WishResponse = {
   fundingId: null,
 };
 
-const renderStep = () => render(<FundingInfoStep wish={wish} />);
+const renderStep = (onNext = vi.fn()) => render(<FundingInfoStep wish={wish} onNext={onNext} />);
 
 describe("FundingInfoStep", () => {
   it("목표 금액은 비어 있고 안내 문구에 위시 가격을 보여준다", () => {
@@ -292,6 +292,18 @@ describe("FundingInfoStep", () => {
       container.querySelector<HTMLInputElement>('input[type="date"]')!.focus();
 
       expect(cta).not.toHaveClass("pointer-coarse:hidden");
+    });
+
+    it("다음 버튼을 누르면 onNext를 호출한다", async () => {
+      const onNext = vi.fn();
+      const { container } = renderStep(onNext);
+      const story = await reachStory(container);
+      await userEvent.type(story, "생일 선물");
+      fireEvent.blur(story);
+
+      await userEvent.click(screen.getByRole("button", { name: "다음" }));
+
+      expect(onNext).toHaveBeenCalledTimes(1);
     });
 
     it("사연을 지워도 공약 단계는 유지된다", async () => {

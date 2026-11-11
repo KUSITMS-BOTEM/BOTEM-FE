@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import OpenSheet from "@/components/OpenSheet";
 import type { WishResponse } from "@/types/wish/wish";
+import { cn } from "@/utils/cn";
+import FundingAccountStep from "@/widgets/funding/FundingAccountStep";
 import FundingInfoStep from "@/widgets/funding/FundingInfoStep";
 import FundingWishSelectStep from "@/widgets/funding/FundingWishSelectStep";
 
@@ -13,23 +15,47 @@ type FundingOpenSheetProps = {
   className?: string;
 };
 
+type Step = "info" | "account";
+
+const STEP_TITLE: Record<Step, string> = { info: "펀딩 정보", account: "계좌 정보" };
+
 export default function FundingOpenSheet({ open, onClose, className }: FundingOpenSheetProps) {
   const [selectedWish, setSelectedWish] = useState<WishResponse | null>(null);
+  const [step, setStep] = useState<Step>("info");
+  // 계좌 단계는 처음 진입할 때 마운트해 대표 계좌 조회와 등장 모션이 그때 시작되게 한다
+  const [accountVisited, setAccountVisited] = useState(false);
 
   // 시트를 닫으면 다음에 열 때 위시 선택부터 다시 시작한다
   const handleClose = () => {
     setSelectedWish(null);
+    setStep("info");
+    setAccountVisited(false);
     onClose();
+  };
+
+  const goToAccount = () => {
+    setAccountVisited(true);
+    setStep("account");
   };
 
   return (
     <OpenSheet
       open={open}
-      title={selectedWish ? "펀딩 정보" : "펀딩 열기"}
+      title={selectedWish ? STEP_TITLE[step] : "펀딩 열기"}
       onClose={handleClose}
       className={className}>
       {selectedWish ? (
-        <FundingInfoStep wish={selectedWish} />
+        // 이전으로 돌아왔을 때 입력값·단계가 남도록 언마운트하지 않고 숨기기만 한다
+        <>
+          <div className={cn("w-full", step !== "info" && "hidden")}>
+            <FundingInfoStep wish={selectedWish} onNext={goToAccount} />
+          </div>
+          {accountVisited && (
+            <div className={cn("w-full", step !== "account" && "hidden")}>
+              <FundingAccountStep onPrev={() => setStep("info")} />
+            </div>
+          )}
+        </>
       ) : (
         <FundingWishSelectStep onSelect={setSelectedWish} />
       )}

@@ -43,9 +43,10 @@ const BASE_PRICE_CHIP = { label: "기본 상품 가격", value: "base-price" };
 
 type FundingInfoStepProps = {
   wish: WishResponse;
+  onNext: () => void;
 };
 
-export default function FundingInfoStep({ wish }: FundingInfoStepProps) {
+export default function FundingInfoStep({ wish, onNext }: FundingInfoStepProps) {
   const [targetAmount, setTargetAmount] = useState("");
   const [deadline, setDeadline] = useState("");
   // 한 번 나타난 마감일은 목표 금액을 지워도 유지한다
@@ -198,7 +199,12 @@ export default function FundingInfoStep({ wish }: FundingInfoStepProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={PLEDGE_FIELD_TRANSITION}
             className="flex">
-            <Button color="brand" size="xlarge" disabled={!canSubmit} className="flex-1">
+            <Button
+              color="brand"
+              size="xlarge"
+              disabled={!canSubmit}
+              onClick={onNext}
+              className="flex-1">
               다음
             </Button>
           </motion.div>
