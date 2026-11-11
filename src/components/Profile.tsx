@@ -71,7 +71,7 @@ export default function Profile({
 
     if (allowedTypes && !allowedTypes.includes(file.type)) {
       setErrorText(
-        `${allowedTypes.map(type => type.split("/")[1]).join(", ")} 파일만 올릴 수 있어요`,
+        `${allowedTypes.map(type => type.split("/")[1].replace("jpeg", "jpg")).join(", ")} 파일만 올릴 수 있어요`,
       );
       return;
     }

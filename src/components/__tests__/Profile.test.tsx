@@ -120,12 +120,12 @@ describe("Profile", () => {
   });
 
   it("이전 선택의 디코딩이 늦게 끝나도 나중에 고른 파일만 onImageChange에 반영된다", async () => {
-    let resolveFirstDecode: (bitmap: { close: () => void }) => void = () => {};
+    let resolveFirstDecode: () => void = () => {};
     mockCreateImageBitmap
       .mockImplementationOnce(
         () =>
           new Promise(resolve => {
-            resolveFirstDecode = resolve;
+            resolveFirstDecode = () => resolve({ close: vi.fn() });
           }),
       )
       .mockImplementationOnce(() => Promise.resolve({ close: vi.fn() }));
@@ -140,7 +140,7 @@ describe("Profile", () => {
     await userEvent.upload(input, fileB);
     await waitFor(() => expect(handleChange).toHaveBeenCalledWith(fileB));
 
-    resolveFirstDecode({ close: vi.fn() });
+    resolveFirstDecode();
     await Promise.resolve();
 
     expect(handleChange).toHaveBeenCalledTimes(1);
