@@ -1,5 +1,5 @@
 import type { BankCode } from "@/constants/bank";
-import type { ClipboardAccountParseResult } from "@/utils/parseClipboardAccount";
+import type { ClipboardAccountParseResult } from "@/utils/payout-account/parseClipboardAccount";
 
 type ClipboardPasteAction = {
   accountNumber?: string;

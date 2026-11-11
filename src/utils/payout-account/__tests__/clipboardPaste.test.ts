@@ -1,4 +1,4 @@
-import { readClipboardText, resolveClipboardPasteAction } from "../helpers";
+import { readClipboardText, resolveClipboardPasteAction } from "../clipboardPaste";
 
 describe("resolveClipboardPasteAction", () => {
   it("accountOnly 결과면 accountNumber만 담아 반환한다", () => {
