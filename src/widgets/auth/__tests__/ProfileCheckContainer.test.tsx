@@ -143,7 +143,7 @@ describe("ProfileCheckContainer", () => {
     expect(useAuthStore.getState().accessToken).toBeNull();
   });
 
-  it("지원하지 않는 파일 형식을 선택하면 업로드를 호출하지 않고 안내 alert를 띄운다", async () => {
+  it("지원하지 않는 파일 형식을 선택하면 업로드를 호출하지 않고 안내 토스트를 보여준다", async () => {
     setSignupFlow({ step: "profile" });
     vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());
     const file = new File(["dummy"], "photo.gif", { type: "image/gif" });
@@ -152,11 +152,11 @@ describe("ProfileCheckContainer", () => {
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     await userEvent.upload(input, file);
 
-    expect(window.alert).toHaveBeenCalledWith("jpg, png, webp 파일만 올릴 수 있어요");
+    expect(await screen.findByText("jpg, png, webp 파일만 올릴 수 있어요")).toBeInTheDocument();
     expect(uploadProfileImageMock).not.toHaveBeenCalled();
   });
 
-  it("5MB를 초과하는 파일을 선택하면 업로드를 호출하지 않고 안내 alert를 띄운다", async () => {
+  it("5MB를 초과하는 파일을 선택하면 업로드를 호출하지 않고 안내 토스트를 보여준다", async () => {
     setSignupFlow({ step: "profile" });
     vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());
     const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "big.png", {
@@ -167,7 +167,7 @@ describe("ProfileCheckContainer", () => {
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     await userEvent.upload(input, file);
 
-    expect(window.alert).toHaveBeenCalledWith("5MB 이하의 파일만 올릴 수 있어요");
+    expect(await screen.findByText("5MB 이하의 파일만 올릴 수 있어요")).toBeInTheDocument();
     expect(uploadProfileImageMock).not.toHaveBeenCalled();
   });
 
@@ -186,6 +186,36 @@ describe("ProfileCheckContainer", () => {
     await userEvent.upload(input, file);
 
     expect(uploadProfileImageMock).toHaveBeenCalledWith(file, expect.anything());
+    await user.click(screen.getByRole("button", { name: "다음으로" }));
+
+    expect(sessionStorage.getItem("signupFlow")).toContain(
+      '"profileImageUrl":"https://example.com/uploaded.png"',
+    );
+  });
+
+  it("프로필 조회가 업로드 성공보다 늦게 끝나도 업로드한 이미지 URL이 유지된다", async () => {
+    setSignupFlow({ step: "profile", nickname: "지유", birthday: "10-13" });
+    let resolveProfile: (profile: MyProfile) => void = () => {};
+    vi.mocked(userService.getMyProfile).mockReturnValue(
+      new Promise(resolve => {
+        resolveProfile = resolve;
+      }),
+    );
+    const file = new File(["dummy"], "photo.png", { type: "image/png" });
+    uploadProfileImageMock.mockImplementation(
+      (_file: File, options: { onSuccess: (imageUrl: string) => void }) =>
+        options.onSuccess("https://example.com/uploaded.png"),
+    );
+    const user = userEvent.setup();
+
+    const { container } = renderContainer();
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    await userEvent.upload(input, file);
+    expect(uploadProfileImageMock).toHaveBeenCalledWith(file, expect.anything());
+
+    resolveProfile(mockProfile);
+    await waitFor(() => expect(screen.getByDisplayValue("지유")).toBeInTheDocument());
+
     await user.click(screen.getByRole("button", { name: "다음으로" }));
 
     expect(sessionStorage.getItem("signupFlow")).toContain(

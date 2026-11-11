@@ -13,6 +13,8 @@ import IconPlus from "@/assets/icons/icon-plus.svg?react";
 type ProfileProps = {
   imageUrl?: string;
   onImageChange?: (file: File) => void;
+  allowedTypes?: string[];
+  maxSizeBytes?: number;
   showIconButton?: boolean;
   className?: string;
 };
@@ -23,10 +25,13 @@ const DECODE_ERROR_MESSAGE = "이미지를 불러올 수 없어요. 다른 파�
 export default function Profile({
   imageUrl,
   onImageChange,
+  allowedTypes,
+  maxSizeBytes,
   showIconButton = true,
   className,
 }: ProfileProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const latestRequestIdRef = useRef(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -64,14 +69,29 @@ export default function Profile({
     event.target.value = "";
     if (!file) return;
 
+    if (allowedTypes && !allowedTypes.includes(file.type)) {
+      setErrorText(
+        `${allowedTypes.map(type => type.split("/")[1]).join(", ")} 파일만 올릴 수 있어요`,
+      );
+      return;
+    }
+    if (maxSizeBytes && file.size > maxSizeBytes) {
+      setErrorText(`${Math.floor(maxSizeBytes / (1024 * 1024))}MB 이하의 파일만 올릴 수 있어요`);
+      return;
+    }
+
+    // 파일 선택 사이 디코딩이 끝나는 순서가 뒤바뀌어도 가장 마지막 선택만 반영되도록 요청 id로 추적한다
+    const requestId = ++latestRequestIdRef.current;
     // 확장자만 이미지인 손상된 파일·텍스트 파일도 accept 필터를 통과할 수 있어 디코딩으로 직접 검증한다
     try {
       const bitmap = await createImageBitmap(file);
       bitmap.close();
+      if (requestId !== latestRequestIdRef.current) return;
       setErrorText(null);
       setSelectedFile(file);
       onImageChange?.(file);
     } catch {
+      if (requestId !== latestRequestIdRef.current) return;
       setErrorText(DECODE_ERROR_MESSAGE);
     }
   };

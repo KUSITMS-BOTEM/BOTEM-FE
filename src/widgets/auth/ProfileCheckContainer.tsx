@@ -62,7 +62,6 @@ export default function ProfileCheckContainer() {
     const flow = getSignupFlow();
     setNickname(flow?.nickname ?? profile.nickname);
     setBirthday(flow?.birthday ?? profile.birthday ?? "");
-    setUploadedImageUrl(flow?.profileImageUrl ?? undefined);
   }
 
   const handleNext = () => {
@@ -71,14 +70,6 @@ export default function ProfileCheckContainer() {
   };
 
   const handleProfileImageChange = (file: File) => {
-    if (!ALLOWED_PROFILE_IMAGE_TYPES.includes(file.type)) {
-      alert("jpg, png, webp 파일만 올릴 수 있어요");
-      return;
-    }
-    if (file.size > MAX_PROFILE_IMAGE_SIZE_BYTES) {
-      alert("5MB 이하의 파일만 올릴 수 있어요");
-      return;
-    }
     uploadProfileImage(file, {
       onSuccess: imageUrl => setUploadedImageUrl(imageUrl),
       onError: () => alert("이미지 업로드에 실패했어요. 다시 시도해주세요"),
@@ -120,6 +111,8 @@ export default function ProfileCheckContainer() {
             <Profile
               imageUrl={uploadedImageUrl ?? profile?.profileImageUrl ?? undefined}
               onImageChange={handleProfileImageChange}
+              allowedTypes={ALLOWED_PROFILE_IMAGE_TYPES}
+              maxSizeBytes={MAX_PROFILE_IMAGE_SIZE_BYTES}
             />
           </motion.div>
           <motion.div

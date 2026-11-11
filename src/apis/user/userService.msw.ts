@@ -10,7 +10,7 @@ export const userHandlers = [
       success: true,
       data: {
         nickname: "지유",
-        profileImageUrl: faker.image.urlPicsumPhotos({ width: 68, height: 68, blur: 0 }),
+        profileImageUrl: "",
         birthday: "10-13",
         wishProfileUrl: "https://botem.site/@8f0c6d779fae47f3a979302f2782d20f",
         kakaoConnected: true,

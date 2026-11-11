@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import Profile from "@/components/Profile";
@@ -87,6 +87,63 @@ describe("Profile", () => {
     await userEvent.upload(input, file);
 
     expect(handleChange).toHaveBeenCalledWith(file);
+  });
+
+  it("allowedTypes에 없는 파일 형식을 선택하면 onImageChange 대신 에러 토스트가 표시된다", async () => {
+    const handleChange = vi.fn();
+    const file = new File(["dummy"], "photo.gif", { type: "image/gif" });
+    const { container } = render(
+      <Profile onImageChange={handleChange} allowedTypes={["image/png", "image/webp"]} />,
+    );
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+    await userEvent.upload(input, file);
+
+    expect(handleChange).not.toHaveBeenCalled();
+    expect(await screen.findByText("png, webp 파일만 올릴 수 있어요")).toBeInTheDocument();
+  });
+
+  it("maxSizeBytes를 초과하는 파일을 선택하면 onImageChange 대신 에러 토스트가 표시된다", async () => {
+    const handleChange = vi.fn();
+    const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "big.png", {
+      type: "image/png",
+    });
+    const { container } = render(
+      <Profile onImageChange={handleChange} maxSizeBytes={5 * 1024 * 1024} />,
+    );
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+    await userEvent.upload(input, file);
+
+    expect(handleChange).not.toHaveBeenCalled();
+    expect(await screen.findByText("5MB 이하의 파일만 올릴 수 있어요")).toBeInTheDocument();
+  });
+
+  it("이전 선택의 디코딩이 늦게 끝나도 나중에 고른 파일만 onImageChange에 반영된다", async () => {
+    let resolveFirstDecode: (bitmap: { close: () => void }) => void = () => {};
+    mockCreateImageBitmap
+      .mockImplementationOnce(
+        () =>
+          new Promise(resolve => {
+            resolveFirstDecode = resolve;
+          }),
+      )
+      .mockImplementationOnce(() => Promise.resolve({ close: vi.fn() }));
+
+    const handleChange = vi.fn();
+    const fileA = new File(["a"], "a.png", { type: "image/png" });
+    const fileB = new File(["b"], "b.png", { type: "image/png" });
+    const { container } = render(<Profile onImageChange={handleChange} />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+    await userEvent.upload(input, fileA);
+    await userEvent.upload(input, fileB);
+    await waitFor(() => expect(handleChange).toHaveBeenCalledWith(fileB));
+
+    resolveFirstDecode({ close: vi.fn() });
+    await Promise.resolve();
+
+    expect(handleChange).toHaveBeenCalledTimes(1);
   });
 
   it("선택한 파일이 이미지로 디코딩되지 않으면 onImageChange 대신 에러 토스트가 표시된다", async () => {
