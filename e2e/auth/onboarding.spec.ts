@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { EXISTING_USER_KAKAO_CODE } from "@/mocks/handlers";
+import { EXISTING_USER_KAKAO_CODE } from "@/apis/auth/authService.msw";
 
 import { mockKakaoConsentRedirect } from "./helpers";
 
