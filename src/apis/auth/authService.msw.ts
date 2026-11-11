@@ -12,17 +12,18 @@ const createMockAccessToken = () => {
 // 카카오 신규/기존 유저 온보딩 분기 테스트용 — 계정 탈퇴 API가 없어 실제 카카오 계정으로는 isNewUser 값을
 // 임의로 재현할 수 없어 로그인 교환 응답만 가로채 code 값으로 분기한다.
 export const EXISTING_USER_KAKAO_CODE = "existing-user-code";
-// 클라이언트(src/app/helpers.ts)가 이 host인지만 검사해 그대로 리다이렉트하므로, e2e에서 실제 카카오 동의 화면 대신
-// page.route로 가로챌 수 있도록 kauth.kakao.com host를 유지한다.
-export const MOCK_KAKAO_LOGIN_URI = "https://kauth.kakao.com/oauth/authorize?client_id=mock";
+export const NEW_USER_KAKAO_CODE = "new-user-code";
 
 export const authHandlers = [
   // getKakaoLoginUri는 cross-origin 절대 URL로 나가 MSW 서비스워커가 자체적으로 네트워크에 흘려보내므로,
   // Playwright page.route로는 가로챌 수 없다 — 반드시 MSW 핸들러로 응답해야 한다.
-  http.get("*/api/auth/kakao/login-uri", () => {
+  // 가짜 client_id로 진짜 카카오(kauth.kakao.com)에 가면 KOE101로 막히므로, 동의가 끝난 것처럼 redirectUri(콜백)로 바로 보낸다.
+  http.get("*/api/auth/kakao/login-uri", ({ request }) => {
+    const redirectUri = new URL(request.url).searchParams.get("redirectUri");
+
     return HttpResponse.json({
       success: true,
-      data: { loginUri: MOCK_KAKAO_LOGIN_URI },
+      data: { loginUri: `${redirectUri}?code=${NEW_USER_KAKAO_CODE}` },
       error: null,
     });
   }),

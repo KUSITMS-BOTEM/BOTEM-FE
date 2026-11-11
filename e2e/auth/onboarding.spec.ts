@@ -2,15 +2,12 @@ import { expect, test } from "@playwright/test";
 
 import { EXISTING_USER_KAKAO_CODE } from "@/apis/auth/authService.msw";
 
-import { mockKakaoConsentRedirect } from "./helpers";
+import { gotoKakaoCallback } from "./helpers";
 
 test.describe("카카오 로그인 온보딩", () => {
   test("신규 유저는 카카오 로그인 후 온보딩을 마치면 메인에서 위시 추가 시트가 열린다", async ({
     page,
-    baseURL,
   }) => {
-    await mockKakaoConsentRedirect(page, baseURL!, "new-user-code");
-
     await page.goto("/");
     await page.getByRole("button", { name: "카카오로 이용하기" }).click();
 
@@ -29,14 +26,8 @@ test.describe("카카오 로그인 온보딩", () => {
     await expect(page.getByText("위시 추가", { exact: true })).toBeVisible();
   });
 
-  test("기존 유저는 카카오 로그인 후 온보딩 없이 바로 메인으로 이동한다", async ({
-    page,
-    baseURL,
-  }) => {
-    await mockKakaoConsentRedirect(page, baseURL!, EXISTING_USER_KAKAO_CODE);
-
-    await page.goto("/");
-    await page.getByRole("button", { name: "카카오로 이용하기" }).click();
+  test("기존 유저는 카카오 로그인 후 온보딩 없이 바로 메인으로 이동한다", async ({ page }) => {
+    await gotoKakaoCallback(page, EXISTING_USER_KAKAO_CODE);
 
     await expect(page).toHaveURL("/home");
     await expect(page.getByText("위시 추가", { exact: true })).not.toBeVisible();
