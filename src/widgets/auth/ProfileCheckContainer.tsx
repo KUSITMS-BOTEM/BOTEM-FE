@@ -45,7 +45,10 @@ export default function ProfileCheckContainer() {
   const { data: profile } = useMyProfileQuery();
   const [nickname, setNickname] = useState(() => getSignupFlow()?.nickname ?? "");
   const [birthday, setBirthday] = useState(() => getSignupFlow()?.birthday ?? "");
-  const [profileImageUrl, setProfileImageUrl] = useState(() => getSignupFlow()?.profileImageUrl);
+  // 새로 업로드한 이미지만 담는다 — 온보딩 완료 API는 업로드 URL 발급으로 받은 imageUrl만 허용하고, 그 외 값(카카오 이미지 등)은 거부한다. 생략해야 카카오 이미지가 유지된다
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(
+    () => getSignupFlow()?.profileImageUrl ?? undefined,
+  );
   const [syncedProfile, setSyncedProfile] = useState<MyProfile>();
 
   useEffect(() => {
@@ -59,11 +62,11 @@ export default function ProfileCheckContainer() {
     const flow = getSignupFlow();
     setNickname(flow?.nickname ?? profile.nickname);
     setBirthday(flow?.birthday ?? profile.birthday ?? "");
-    setProfileImageUrl(flow?.profileImageUrl ?? profile.profileImageUrl);
+    setUploadedImageUrl(flow?.profileImageUrl ?? undefined);
   }
 
   const handleNext = () => {
-    setSignupFlow({ step: "accountEntry", nickname, birthday, profileImageUrl });
+    setSignupFlow({ step: "accountEntry", nickname, birthday, profileImageUrl: uploadedImageUrl });
     router.push("/auth/payout-account");
   };
 
@@ -76,7 +79,10 @@ export default function ProfileCheckContainer() {
       alert("5MB 이하의 파일만 올릴 수 있어요");
       return;
     }
-    uploadProfileImage(file, { onSuccess: imageUrl => setProfileImageUrl(imageUrl) });
+    uploadProfileImage(file, {
+      onSuccess: imageUrl => setUploadedImageUrl(imageUrl),
+      onError: () => alert("이미지 업로드에 실패했어요. 다시 시도해주세요"),
+    });
   };
 
   const handleBack = () => {
@@ -112,7 +118,7 @@ export default function ProfileCheckContainer() {
             animate={{ opacity: 1, y: 0 }}
             transition={FIELD_TRANSITION}>
             <Profile
-              imageUrl={profileImageUrl ?? undefined}
+              imageUrl={uploadedImageUrl ?? profile?.profileImageUrl ?? undefined}
               onImageChange={handleProfileImageChange}
             />
           </motion.div>

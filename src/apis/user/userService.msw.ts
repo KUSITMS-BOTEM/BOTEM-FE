@@ -2,7 +2,6 @@ import { faker } from "@faker-js/faker";
 import { delay, http, HttpResponse } from "msw";
 
 import { clearMockAuthCookies } from "@/mocks/mockAuthCookies";
-import type { RegisterOnboardingRequest } from "@/types/user/onboarding";
 
 export const userHandlers = [
   // NEXT_PUBLIC_API_BASE_URL(절대 cross-origin URL)로 나가는 요청이라 origin 무관 매칭(`*/`)이 필요하다
@@ -22,10 +21,9 @@ export const userHandlers = [
     });
   }),
   // "시작하기" 버튼의 loading 상태를 눈으로 확인할 수 있게 지연을 둔다
-  http.post("*/api/users/me/onboarding", async ({ request }) => {
-    const body = (await request.json()) as RegisterOnboardingRequest;
+  http.post("*/api/users/me/onboarding", async () => {
     await delay(800);
-    return HttpResponse.json({ success: true, data: body, error: null });
+    return HttpResponse.json({ success: true, data: null, error: null });
   }),
   http.post("*/api/users/me/profile-image/upload-url", () => {
     return HttpResponse.json({

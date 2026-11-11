@@ -193,6 +193,26 @@ describe("ProfileCheckContainer", () => {
     );
   });
 
+  it("이미지 업로드가 실패하면 실패 안내 alert를 띄우고 다음 단계로는 저장하지 않는다", async () => {
+    setSignupFlow({ step: "profile", nickname: "지유", birthday: "10-13" });
+    vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());
+    const file = new File(["dummy"], "photo.png", { type: "image/png" });
+    uploadProfileImageMock.mockImplementation((_file: File, options: { onError: () => void }) =>
+      options.onError(),
+    );
+    const user = userEvent.setup();
+
+    const { container } = renderContainer();
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    await userEvent.upload(input, file);
+
+    expect(window.alert).toHaveBeenCalledWith("이미지 업로드에 실패했어요. 다시 시도해주세요");
+
+    await user.click(screen.getByRole("button", { name: "다음으로" }));
+
+    expect(sessionStorage.getItem("signupFlow")).not.toContain("profileImageUrl");
+  });
+
   it("이미지 업로드가 진행 중이면 '다음으로' 버튼이 비활성화된다", () => {
     setSignupFlow({ step: "profile", nickname: "지유", birthday: "10-13" });
     vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());

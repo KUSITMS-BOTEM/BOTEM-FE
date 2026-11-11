@@ -115,6 +115,34 @@ describe("Profile", () => {
     expect(handleChange).not.toHaveBeenCalled();
   });
 
+  it("로컬 미리보기를 선택한 뒤 부모가 새 imageUrl을 내려주면 미리보기가 리셋되고 새 URL이 보인다", async () => {
+    const file = new File(["dummy"], "photo.png", { type: "image/png" });
+    const { container, rerender } = render(<Profile />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+    await userEvent.upload(input, file);
+    expect(await screen.findByAltText("프로필 이미지")).toHaveAttribute("src", "blob:mock-url");
+
+    rerender(<Profile imageUrl="https://example.com/server.png" />);
+
+    expect(await screen.findByAltText("프로필 이미지")).toHaveAttribute(
+      "src",
+      "https://example.com/server.png",
+    );
+  });
+
+  it("이미지 로드가 실패하면 기본 아바타로 대체된다", async () => {
+    const { container } = render(
+      <Profile imageUrl="https://example.com/broken.png" showIconButton={false} />,
+    );
+    const img = await screen.findByAltText("프로필 이미지");
+
+    fireEvent.error(img);
+
+    expect(container.querySelector("svg")).toBeInTheDocument();
+    expect(container.querySelector("img")).not.toBeInTheDocument();
+  });
+
   it("컴포넌트가 unmount되면 생성된 미리보기 URL이 revokeObjectURL로 해제된다", async () => {
     const file = new File(["dummy"], "photo.png", { type: "image/png" });
     const { container, unmount } = render(<Profile />);
