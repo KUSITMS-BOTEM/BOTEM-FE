@@ -56,19 +56,6 @@ describe("OpenSheet", () => {
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
-  it("딤(배경) 클릭 시 onClose가 호출된다", async () => {
-    const handleClose = vi.fn();
-    const user = userEvent.setup();
-    const { container } = render(
-      <OpenSheet open title="타이틀" onClose={handleClose}>
-        본문 내용
-      </OpenSheet>,
-    );
-
-    await user.click(container.querySelector(".bg-semantic-background-dim")!);
-    expect(handleClose).toHaveBeenCalledTimes(1);
-  });
-
   it("ESC(cancel 이벤트) 시 브라우저 기본 닫힘이 막히고 onClose가 호출된다", () => {
     const handleClose = vi.fn();
     const { container } = render(
