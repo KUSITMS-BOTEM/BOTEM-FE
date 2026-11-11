@@ -15,6 +15,7 @@ const makeWish = (id: number, status: WishStatus): WishResponse => ({
   productImageUrl: `/wish-${id}.png`,
   price: id * 1000,
   productUrl: "https://example.com",
+  sellerName: "쿠팡",
   status,
   fundingId: status === "FUNDING" ? 1 : null,
 });

@@ -8,7 +8,7 @@ vi.mock("@/utils/wish/wishPromptStorage", () => ({ consumeWishPromptPending: () 
 vi.mock("@/widgets/wish/AddWishBottomSheet", () => ({
   default: ({ open }: { open: boolean }) => (open ? <div>위시 추가 시트</div> : null),
 }));
-vi.mock("@/widgets/funding/FundingOpenBottomSheet", () => ({
+vi.mock("@/widgets/funding/FundingOpenSheet", () => ({
   default: ({ open }: { open: boolean }) => (open ? <div>펀딩 열기 시트</div> : null),
 }));
 vi.mock("@/widgets/home/HomeFundingTab", () => ({

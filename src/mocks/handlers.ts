@@ -1,6 +1,7 @@
 import { authHandlers } from "@/apis/auth/authService.msw";
 import { contributionHandlers } from "@/apis/contribution/contributionService.msw";
 import { homeHandlers } from "@/apis/home/homeService.msw";
+import { payoutAccountHandlers } from "@/apis/payout-account/payoutAccountService.msw";
 import { productRequestHandlers } from "@/apis/product-request/productRequestService.msw";
 import { recommendedProductHandlers } from "@/apis/recommended-product/recommendedProductService.msw";
 import { userHandlers } from "@/apis/user/userService.msw";
@@ -12,6 +13,7 @@ export const handlers = [
   ...homeHandlers,
   ...contributionHandlers,
   ...wishHandlers,
+  ...payoutAccountHandlers,
   ...productRequestHandlers,
   ...recommendedProductHandlers,
 ];

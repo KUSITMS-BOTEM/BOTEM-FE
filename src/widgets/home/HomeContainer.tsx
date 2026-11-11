@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
 import { consumeWishPromptPending } from "@/utils/wish/wishPromptStorage";
-import FundingOpenBottomSheet from "@/widgets/funding/FundingOpenBottomSheet";
+import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
 import FloatingButton from "@/widgets/home/FloatingButton";
 import HomeFundingTab from "@/widgets/home/HomeFundingTab";
 import HomeHeader from "@/widgets/home/HomeHeader";
@@ -47,7 +47,7 @@ export default function HomeContainer() {
         )}
       </main>
       <FloatingButton items={FLOATING_MENU_ITEMS} onSelect={handleFloatingMenuSelect} />
-      <FundingOpenBottomSheet open={fundingSheetOpen} onClose={() => setFundingSheetOpen(false)} />
+      <FundingOpenSheet open={fundingSheetOpen} onClose={() => setFundingSheetOpen(false)} />
       <AddWishBottomSheet
         open={wishSheetOpen}
         onClose={() => setWishSheetOpen(false)}
