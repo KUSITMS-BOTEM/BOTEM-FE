@@ -1,4 +1,4 @@
-import { resolveWishErrorAction } from "../helpers";
+import { resolveWishErrorAction } from "@/utils/wish/resolveWishErrorAction";
 import { ApiError } from "@/types/api";
 
 describe("resolveWishErrorAction", () => {
