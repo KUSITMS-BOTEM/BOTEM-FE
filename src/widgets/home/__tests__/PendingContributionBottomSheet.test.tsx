@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useUpdateContributionStatusMutation } from "@/hooks/mutations/contribution/useUpdateContributionStatusMutation";
@@ -8,7 +8,6 @@ import PendingContributionBottomSheet from "@/widgets/home/PendingContributionBo
 
 vi.mock("@/hooks/queries/contribution/usePendingContributionsQuery");
 vi.mock("@/hooks/mutations/contribution/useUpdateContributionStatusMutation");
-// 토스트의 exit 애니메이션과 무관하게 show 값만 검증하도록 대체한다
 vi.mock("@/components/ToastMessage", () => ({
   default: ({
     show,
@@ -183,14 +182,37 @@ describe("PendingContributionBottomSheet", () => {
     expect(screen.getByRole("button", { name: "받았어요" })).toBeDisabled();
   });
 
-  it("여러 건을 받았어요 처리하면 '보탬 N건을 받았어요' 토스트가 나온다", async () => {
+  it("여러 건을 받았어요 처리하면 보탬마다 토스트가 하나씩 순서대로 쌓인다", async () => {
     renderSheet();
     await userEvent.click(screen.getByRole("checkbox", { name: "전체 선택" }));
     await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
 
     act(() => lastOptions().onSuccess?.());
 
-    expect(screen.getByRole("status")).toHaveTextContent("보탬 3건을 받았어요");
+    expect(screen.getAllByRole("status").map(toast => toast.textContent)).toEqual([
+      "하린이의 보탬을 받았어요취소하기",
+      "도윤이의 보탬을 받았어요취소하기",
+      "서준이의 보탬을 받았어요취소하기",
+    ]);
+  });
+
+  it("받았어요를 이어서 누르면 이전 토스트를 대체하지 않고 아래에 새 토스트를 덧붙인다", async () => {
+    renderSheet();
+    await userEvent.click(screen.getByText("하린이의 보탬"));
+    await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
+    act(() => {
+      lastOptions().onSuccess?.();
+      lastOptions().onSettled?.();
+    });
+
+    await userEvent.click(screen.getByText("도윤이의 보탬"));
+    await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
+    act(() => lastOptions().onSuccess?.());
+
+    const toasts = screen.getAllByRole("status");
+    expect(toasts).toHaveLength(2);
+    expect(toasts[0]).toHaveTextContent("하린이의 보탬을 받았어요");
+    expect(toasts[1]).toHaveTextContent("도윤이의 보탬을 받았어요");
   });
 
   it("받았어요가 실패하면 토스트를 보여주지 않고 선택을 유지한다", async () => {
@@ -204,7 +226,7 @@ describe("PendingContributionBottomSheet", () => {
     expect(screen.getByRole("button", { name: "받았어요" })).toBeEnabled();
   });
 
-  it("취소하기를 누르면 같은 id로 PENDING을 mutate하고 성공하면 토스트가 사라진다", async () => {
+  it("토스트의 취소하기를 누르면 그 보탬만 PENDING으로 되돌리고 그 토스트만 사라진다", async () => {
     renderSheet();
     await userEvent.click(screen.getByText("하린이의 보탬"));
     await userEvent.click(screen.getByText("도윤이의 보탬"));
@@ -214,14 +236,20 @@ describe("PendingContributionBottomSheet", () => {
       lastOptions().onSettled?.();
     });
 
-    await userEvent.click(screen.getByRole("button", { name: "취소하기" }));
+    const harinToast = screen.getByText("하린이의 보탬을 받았어요").closest("[role=status]")!;
+    await userEvent.click(
+      within(harinToast as HTMLElement).getByRole("button", { name: "취소하기" }),
+    );
 
     expect(mutate).toHaveBeenLastCalledWith(
-      { contributionIds: [1, 2], status: "PENDING" },
+      { contributionIds: [1], status: "PENDING" },
       expect.any(Object),
     );
     act(() => lastOptions().onSuccess?.());
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText("하린이의 보탬을 받았어요")).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText("도윤이의 보탬을 받았어요")).toBeInTheDocument();
   });
 
   it("못받았어요를 누르면 REJECTED로 mutate하고 성공하면 선택이 초기화된다", async () => {
@@ -300,7 +328,7 @@ describe("PendingContributionBottomSheet 토스트 타이머", () => {
     vi.useRealTimers();
   });
 
-  it("토스트는 2500ms 후 사라진다", () => {
+  it("토스트는 2500ms 후 사라진다", async () => {
     renderSheet();
     fireEvent.click(screen.getByText("하린이의 보탬"));
     fireEvent.click(screen.getByRole("button", { name: "받았어요" }));
@@ -315,6 +343,8 @@ describe("PendingContributionBottomSheet 토스트 타이머", () => {
     act(() => {
       vi.advanceTimersByTime(1);
     });
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    // 목록에서 빠진 뒤 framer exit 애니메이션은 fake timer로 진행되지 않아 실제 시간으로 기다린다
+    vi.useRealTimers();
+    await waitFor(() => expect(screen.queryByRole("status")).not.toBeInTheDocument());
   });
 });

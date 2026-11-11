@@ -57,7 +57,7 @@ export default function ToastMessage({
             exit={{ opacity: 0, scale: 0.5, y: 8 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             className={cn(
-              "bg-semantic-fill-default/70 flex w-fit max-w-80 items-center gap-4 rounded-2xl px-5 py-4 shadow-[0px_4px_16px_0px_var(--color-semantic-shadow-default)]",
+              "bg-semantic-fill-default/70 flex w-fit max-w-80 items-center gap-4 rounded-2xl px-5 py-4 shadow-[0px_4px_16px_0px_var(--color-semantic-shadow-default)] backdrop-blur-[10px]",
               className,
             )}>
             <div className={cn("flex min-w-0 flex-1 items-start", icon && "gap-2")}>
@@ -71,7 +71,7 @@ export default function ToastMessage({
               </p>
             </div>
             {showButton && (
-              <Button color="neutral" variant="weak" size="small" onClick={onButtonClick}>
+              <Button color="neutral" variant="stroke" size="small" onClick={onButtonClick}>
                 {buttonText}
               </Button>
             )}

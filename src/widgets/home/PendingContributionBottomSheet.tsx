@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 import BottomSheet from "@/components/BottomSheet";
 import Button from "@/components/Button";
@@ -18,7 +19,7 @@ import IconRight from "@/assets/icons/icon-right.svg?react";
 
 const TOAST_DURATION_MS = 2500;
 
-type ReceivedToast = { text: string; contributionIds: number[] };
+type ReceivedToast = Pick<PendingContributionResponse, "contributionId" | "senderName">;
 
 type PendingContributionBottomSheetProps = {
   open: boolean;
@@ -27,11 +28,6 @@ type PendingContributionBottomSheetProps = {
   onCheckToss?: () => void;
   onOpenFunding?: () => void;
 };
-
-function getReceivedToastText(received: PendingContributionResponse[]) {
-  if (received.length === 1) return `${received[0]!.senderName}의 보탬을 받았어요`;
-  return `보탬 ${received.length}건을 받았어요`;
-}
 
 export default function PendingContributionBottomSheet({
   open,
@@ -43,17 +39,42 @@ export default function PendingContributionBottomSheet({
   const query = usePendingContributionsQuery({ fundingId, enabled: open });
   const { mutate } = useUpdateContributionStatusMutation(fundingId);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [toast, setToast] = useState<ReceivedToast | null>(null);
+  const [toasts, setToasts] = useState<ReceivedToast[]>([]);
+  const toastTimersRef = useRef(new Map<number, ReturnType<typeof setTimeout>>());
   const lockRef = useRef(false);
   const contributions = query.data?.contributions;
   const count = contributions?.length ?? 0;
   const hasSelection = selectedIds.length > 0;
 
   useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => setToast(null), TOAST_DURATION_MS);
-    return () => clearTimeout(timer);
-  }, [toast]);
+    const timers = toastTimersRef.current;
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  const dismissToast = (contributionId: number) => {
+    clearTimeout(toastTimersRef.current.get(contributionId));
+    toastTimersRef.current.delete(contributionId);
+    setToasts(prev => prev.filter(toast => toast.contributionId !== contributionId));
+  };
+
+  // 받은 보탬마다 토스트를 하나씩 아래에 덧붙이고, 각자 시간이 지나면 사라진다
+  const showReceivedToasts = (received: ReceivedToast[]) => {
+    const ids = received.map(toast => toast.contributionId);
+    setToasts(prev => [...prev.filter(toast => !ids.includes(toast.contributionId)), ...received]);
+    ids.forEach(id => {
+      clearTimeout(toastTimersRef.current.get(id));
+      toastTimersRef.current.set(
+        id,
+        setTimeout(() => dismissToast(id), TOAST_DURATION_MS),
+      );
+    });
+  };
+
+  const clearToasts = () => {
+    toastTimersRef.current.forEach(clearTimeout);
+    toastTimersRef.current.clear();
+    setToasts([]);
+  };
 
   // 받았어요 직후 취소하기를 연타하거나 두 버튼을 연달아 눌러도 요청이 한 번만 나가게 잠근다
   const updateStatus = (
@@ -70,20 +91,18 @@ export default function PendingContributionBottomSheet({
     const received = (contributions ?? []).filter(c => selectedIds.includes(c.contributionId));
     updateStatus(selectedIds, "CONFIRMED", () => {
       setSelectedIds([]);
-      setToast({ text: getReceivedToastText(received), contributionIds: selectedIds });
+      showReceivedToasts(received);
     });
   };
 
   const handleNotReceived = () => updateStatus(selectedIds, "REJECTED", () => setSelectedIds([]));
 
-  const handleUndo = () => {
-    if (!toast) return;
-    updateStatus(toast.contributionIds, "PENDING", () => setToast(null));
-  };
+  const handleUndo = (contributionId: number) =>
+    updateStatus([contributionId], "PENDING", () => dismissToast(contributionId));
 
   const handleClose = () => {
     setSelectedIds([]);
-    setToast(null);
+    clearToasts();
     onClose();
   };
 
@@ -97,13 +116,26 @@ export default function PendingContributionBottomSheet({
       height="auto"
       onClose={handleClose}
       toast={
-        <ToastMessage
-          show={toast !== null}
-          text={toast?.text ?? ""}
-          showButton
-          buttonText="취소하기"
-          onButtonClick={handleUndo}
-        />
+        <div className="flex w-full flex-col items-center gap-2">
+          <AnimatePresence initial={false}>
+            {toasts.map(({ contributionId, senderName }) => (
+              <motion.div
+                key={contributionId}
+                layout
+                exit={{ opacity: 0, y: 8, transition: { duration: 0.2, ease: "easeOut" } }}
+                className="w-full max-w-80">
+                <ToastMessage
+                  show
+                  text={`${senderName}의 보탬을 받았어요`}
+                  showButton
+                  buttonText="취소하기"
+                  onButtonClick={() => handleUndo(contributionId)}
+                  className="w-full"
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       }
       buttons={{
         leftLabel: "못받았어요",
@@ -138,6 +170,7 @@ export default function PendingContributionBottomSheet({
             variant="weak"
             size="small"
             rightIcon={<IconRight />}
+            className="pl-3"
             onClick={onCheckToss}>
             토스 확인하기
           </Button>
