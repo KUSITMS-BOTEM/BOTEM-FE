@@ -81,16 +81,67 @@ describe("FundingOpenSheet", () => {
     expect(screen.getByLabelText("목표 금액")).toHaveValue("");
   });
 
-  it("시트를 닫았다 다시 열면 위시 선택부터 다시 시작한다", async () => {
+  it("시트를 그만두고 다시 열면 위시 선택부터 다시 시작한다", async () => {
     render(<Harness />);
     await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
     await screen.findByText("펀딩 정보");
 
     await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+    await userEvent.click(screen.getByRole("button", { name: "그만두기" }));
     await userEvent.click(screen.getByRole("button", { name: "열기", hidden: true }));
 
     expect(await screen.findByText("펀딩 열기")).toBeInTheDocument();
     expect(screen.getByText("내 위시에서 고르기")).toBeInTheDocument();
+  });
+
+  describe("X 버튼 이탈 확인", () => {
+    it("위시를 고르기 전에는 확인 없이 바로 닫는다", async () => {
+      const onClose = vi.fn();
+      render(<FundingOpenSheet open onClose={onClose} />);
+
+      await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(screen.getByText("펀딩 만들기를 그만둘까요?")).not.toBeVisible();
+    });
+
+    it("위시를 고른 뒤 X를 누르면 Dialog가 뜨고 시트는 닫히지 않는다", async () => {
+      const onClose = vi.fn();
+      render(<FundingOpenSheet open onClose={onClose} />);
+      await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
+      await screen.findByText("펀딩 정보");
+
+      await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+      expect(screen.getByText("펀딩 만들기를 그만둘까요?")).toBeVisible();
+      expect(screen.getByText("지금까지 입력한 내용은 저장되지 않아요.")).toBeVisible();
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it("계속 만들기를 누르면 Dialog만 닫히고 입력값이 남는다", async () => {
+      const onClose = vi.fn();
+      render(<FundingOpenSheet open onClose={onClose} />);
+      await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
+      await userEvent.type(await screen.findByLabelText("목표 금액"), "1000");
+
+      await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+      await userEvent.click(screen.getByRole("button", { name: "계속 만들기" }));
+
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByLabelText("목표 금액")).toHaveValue("1,000");
+    });
+
+    it("그만두기를 누르면 시트를 닫는다", async () => {
+      const onClose = vi.fn();
+      render(<FundingOpenSheet open onClose={onClose} />);
+      await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
+      await screen.findByText("펀딩 정보");
+
+      await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+      await userEvent.click(screen.getByRole("button", { name: "그만두기" }));
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("펀딩 정보 → 계좌 정보 단계", () => {
