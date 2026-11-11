@@ -25,8 +25,6 @@ const fundingCard: HomeFundingCardResponse = {
   confirmedPercentage: 50,
   pendingPercentage: 0,
   pendingContributionCount: 0,
-  targetAmount: 300000,
-  participantCount: 0,
 };
 
 const makeNoFunding = (state: HomeNoFundingResponse["state"]): HomeNoFundingResponse => {

@@ -11,8 +11,6 @@ const makeCard = (overrides: Partial<HomeFundingCardResponse> = {}): HomeFunding
   confirmedPercentage: 55,
   pendingPercentage: 15,
   pendingContributionCount: 0,
-  targetAmount: 300000,
-  participantCount: 0,
   ...overrides,
 });
 
@@ -58,33 +56,12 @@ describe("toFundingCardData", () => {
     expect(result.isSurprise).toBe(true);
   });
 
-  it("참여자가 0명이면 프로필과 추가 인원이 없다", () => {
-    const result = toFundingCardData(makeCard({ participantCount: 0 }), "지유");
-
-    expect(result.participants).toEqual([]);
-    expect(result.extraParticipantCount).toBe(0);
-  });
-
-  it("참여자가 3명 이하면 인원 수만큼 프로필을 보여주고 추가 인원은 0이다", () => {
-    const result = toFundingCardData(makeCard({ participantCount: 2 }), "지유");
-
-    expect(result.participants).toEqual(["orange", "lime"]);
-    expect(result.extraParticipantCount).toBe(0);
-  });
-
-  it("참여자가 3명을 넘으면 프로필 3개와 나머지 인원 수를 돌려준다", () => {
-    const result = toFundingCardData(makeCard({ participantCount: 17 }), "지유");
-
-    expect(result.participants).toEqual(["orange", "lime", "pink"]);
-    expect(result.extraParticipantCount).toBe(14);
-  });
-
-  it("진행률은 확인대기를 빼고 확정 달성률만 쓴다", () => {
+  it("진행률은 확인 대기 금액 비율을 쓴다", () => {
     const result = toFundingCardData(
       makeCard({ confirmedPercentage: 40, pendingPercentage: 30 }),
       "지유",
     );
 
-    expect(result.progress).toBe(40);
+    expect(result.progress).toBe(30);
   });
 });

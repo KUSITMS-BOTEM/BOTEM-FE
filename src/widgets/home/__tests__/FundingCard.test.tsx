@@ -42,6 +42,12 @@ describe("FundingCard", () => {
     expect(screen.getByText("0원")).toBeInTheDocument();
   });
 
+  it("targetAmount가 없으면 목표 금액을 표시하지 않는다", () => {
+    render(<FundingCard {...baseProps} targetAmount={undefined} />);
+
+    expect(screen.queryByText("목표")).not.toBeInTheDocument();
+  });
+
   it("progress가 progressbar에 전달된다", () => {
     render(<FundingCard {...baseProps} progress={60} />);
 

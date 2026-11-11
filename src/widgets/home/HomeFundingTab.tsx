@@ -12,9 +12,10 @@ import PendingContributionBottomSheet from "@/widgets/home/PendingContributionBo
 
 type HomeFundingTabProps = {
   onAddWish: () => void;
+  onOpenFunding?: () => void;
 };
 
-export default function HomeFundingTab({ onAddWish }: HomeFundingTabProps) {
+export default function HomeFundingTab({ onAddWish, onOpenFunding }: HomeFundingTabProps) {
   const { data: profile } = useMyProfileQuery();
   const fundingsQuery = useHomeFundingsQuery();
   const fundingCards = fundingsQuery.data?.fundingCards;
@@ -56,5 +57,11 @@ export default function HomeFundingTab({ onAddWish }: HomeFundingTabProps) {
   const noFunding = noFundingQuery.data;
   if (!noFunding) return null;
   if (noFunding.state === "EMPTY") return <HomeEmptyView onAddWish={onAddWish} />;
-  return <HomeWishRecommendation nickname={noFunding.nickname} wishes={noFunding.wishes.content} />;
+  return (
+    <HomeWishRecommendation
+      nickname={noFunding.nickname}
+      wishes={noFunding.wishes.content}
+      onOpenFunding={onOpenFunding}
+    />
+  );
 }

@@ -27,8 +27,6 @@ const MOCK_FUNDING_CARDS = [
     confirmedPercentage: 80,
     pendingPercentage: 20,
     pendingContributionCount: 2,
-    targetAmount: product1.price,
-    participantCount: 6,
   },
   {
     fundingId: 13,
@@ -40,8 +38,6 @@ const MOCK_FUNDING_CARDS = [
     confirmedPercentage: 100,
     pendingPercentage: 0,
     pendingContributionCount: 0,
-    targetAmount: product2.price,
-    participantCount: 3,
   },
   {
     fundingId: 15,
@@ -53,8 +49,6 @@ const MOCK_FUNDING_CARDS = [
     confirmedPercentage: 35,
     pendingPercentage: 15,
     pendingContributionCount: 2,
-    targetAmount: product3.price,
-    participantCount: 17,
   },
   {
     fundingId: 16,
@@ -66,8 +60,6 @@ const MOCK_FUNDING_CARDS = [
     confirmedPercentage: 10,
     pendingPercentage: 0,
     pendingContributionCount: 0,
-    targetAmount: product4.price,
-    participantCount: 1,
   },
 ];
 
@@ -90,16 +82,10 @@ export const homeHandlers = [
         1,
       ),
       CLOSED_PENDING: MOCK_FUNDING_CARDS.filter(
-        card =>
-          card.cardType === "CLOSED_UNOPENED" &&
-          card.pendingContributionCount > 0 &&
-          card.participantCount >= 1,
+        card => card.cardType === "CLOSED_UNOPENED" && card.pendingContributionCount > 0,
       ),
       CLOSED_OPEN: MOCK_FUNDING_CARDS.filter(
-        card =>
-          card.cardType === "CLOSED_UNOPENED" &&
-          card.pendingContributionCount === 0 &&
-          card.participantCount >= 1,
+        card => card.cardType === "CLOSED_UNOPENED" && card.pendingContributionCount === 0,
       ),
       WISH_ONLY: [],
       EMPTY: [],

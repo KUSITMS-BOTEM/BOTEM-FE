@@ -1,8 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import HomeContainer from "@/widgets/home/HomeContainer";
 
+vi.mock("@/hooks/queries/home/useHomeFundingsQuery");
 vi.mock("@/hooks/queries/wish/useWishesQuery", () => ({ useWishesQuery: vi.fn() }));
 vi.mock("@/utils/wish/wishPromptStorage", () => ({ consumeWishPromptPending: () => false }));
 vi.mock("@/widgets/wish/AddWishBottomSheet", () => ({
@@ -24,6 +26,12 @@ vi.mock("@/widgets/user/MyMenuSheet", () => ({
 }));
 
 describe("HomeContainer", () => {
+  beforeEach(() => {
+    vi.mocked(useHomeFundingsQuery).mockReturnValue({
+      data: { fundingCards: [], activeFundingCount: 0, canOpenFunding: true },
+    } as unknown as ReturnType<typeof useHomeFundingsQuery>);
+  });
+
   it("처음에는 펀딩 탭을 보여주고 '위시' 탭을 누르면 위시 탭으로 바뀐다", async () => {
     render(<HomeContainer />);
 
@@ -53,6 +61,17 @@ describe("HomeContainer", () => {
 
     expect(screen.getByText("펀딩 열기 시트")).toBeInTheDocument();
     expect(screen.queryByText("위시 추가 시트")).not.toBeInTheDocument();
+  });
+
+  it("개설이 불가능하면 펀딩 추가 메뉴를 표시하지 않는다", async () => {
+    vi.mocked(useHomeFundingsQuery).mockReturnValue({
+      data: { fundingCards: [], activeFundingCount: 3, canOpenFunding: false },
+    } as unknown as ReturnType<typeof useHomeFundingsQuery>);
+    render(<HomeContainer />);
+
+    await userEvent.click(screen.getByRole("button", { name: "추가 메뉴 열기" }));
+    expect(screen.queryByRole("button", { name: "펀딩 추가" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "위시 추가" })).toBeInTheDocument();
   });
 
   it("탭의 위시 추가 동작은 위시 추가 시트를 연다", async () => {

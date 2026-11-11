@@ -16,7 +16,7 @@ export type FundingCardProps = {
   productImageUrl: string;
   progress: number;
   dDay: number | null;
-  targetAmount: number;
+  targetAmount?: number;
   participants?: ProfileColor[];
   extraParticipantCount?: number;
   pendingCount?: number;
@@ -114,10 +114,12 @@ export default function FundingCard({
             <ProgressBar progress={progress} aria-labelledby={titleId} />
             <div className="text-semantic-text-tertiary flex w-full items-center justify-between [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-subtext-medium)]">
               <span>{dDay === null ? "마감" : `마감까지 D-${dDay}`}</span>
-              <span className="flex items-center gap-0.5">
-                <span>목표</span>
-                <span>{targetAmount.toLocaleString("ko-KR")}원</span>
-              </span>
+              {targetAmount !== undefined && (
+                <span className="flex items-center gap-0.5">
+                  <span>목표</span>
+                  <span>{targetAmount.toLocaleString("ko-KR")}원</span>
+                </span>
+              )}
             </div>
           </div>
         </div>

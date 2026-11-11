@@ -56,3 +56,17 @@ describe("homeService.getNoFunding", () => {
     await expect(homeService.getNoFunding()).rejects.toBe(error);
   });
 });
+
+describe("추가 홈 조회 API", () => {
+  it.each([
+    ["getGiftVerificationBanner", "/api/home/gift-verifications/banner"],
+    ["getGiftVerificationTargets", "/api/home/gift-verifications"],
+    ["getSurpriseReveals", "/api/home/surprise-reveals"],
+  ] as const)("%s는 %s를 조회한다", async (method, path) => {
+    vi.mocked(clientApi.get).mockResolvedValue({});
+
+    await homeService[method]();
+
+    expect(clientApi.get).toHaveBeenCalledWith(path);
+  });
+});

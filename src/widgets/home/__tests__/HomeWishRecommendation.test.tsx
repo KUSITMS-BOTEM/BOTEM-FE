@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import type { HomeWishCardResponse } from "@/types/home/home";
 import HomeWishRecommendation from "@/widgets/home/HomeWishRecommendation";
@@ -32,5 +33,20 @@ describe("HomeWishRecommendation", () => {
     render(<HomeWishRecommendation nickname="지유" wishes={[]} />);
 
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+  });
+
+  it("펀딩 열기를 누르면 개설 동작을 호출한다", async () => {
+    const onOpenFunding = vi.fn();
+    render(
+      <HomeWishRecommendation
+        nickname="지유"
+        wishes={[makeWish(1)]}
+        onOpenFunding={onOpenFunding}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
+
+    expect(onOpenFunding).toHaveBeenCalledTimes(1);
   });
 });

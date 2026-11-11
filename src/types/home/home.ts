@@ -12,14 +12,45 @@ export type HomeFundingCardResponse = {
   confirmedPercentage: number;
   pendingPercentage: number;
   pendingContributionCount: number;
-  targetAmount: number;
-  participantCount: number;
 };
 
 export type HomeFundingListResponse = {
   fundingCards: HomeFundingCardResponse[];
   activeFundingCount: number;
   canOpenFunding: boolean;
+};
+
+export type GiftVerificationBannerResponse = {
+  visible: boolean;
+  pendingCount: number;
+};
+
+export type GiftVerificationTargetResponse = {
+  giftVerificationId: number;
+  fundingId: number;
+  productName: string;
+  productImageUrl: string;
+  fundingDeadline: string;
+  participantCount: number;
+  replacementProductName: string | null;
+};
+
+export type GiftVerificationTargetListResponse = {
+  pendingCount: number;
+  targets: GiftVerificationTargetResponse[];
+};
+
+export type SurpriseRevealCardResponse = {
+  fundingId: number;
+  productImageUrl: string;
+  productName: string;
+  organizerName: string;
+  participantCount: number;
+  revealAt: string;
+};
+
+export type SurpriseRevealCardListResponse = {
+  cards: SurpriseRevealCardResponse[];
 };
 
 export type HomeNoFundingState = "WISH_RECOMMENDATION" | "EMPTY";
