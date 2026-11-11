@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { recommendedProductService } from "@/apis/recommendedProduct/recommendedProductService";
-import type { RecommendedProductCategory } from "@/types/recommendedProduct/recommendedProduct";
+import { recommendedProductService } from "@/apis/recommended-product/recommendedProductService";
+import type { RecommendedProductCategory } from "@/types/recommended-product/recommendedProduct";
 
 export const useRecommendedProductsQuery = (category?: RecommendedProductCategory) =>
   useQuery({

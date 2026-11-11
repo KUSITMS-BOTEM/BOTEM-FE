@@ -14,9 +14,9 @@ import Title from "@/components/Title";
 import WishCard from "@/widgets/wish/WishCard";
 import RecommendedWishListSkeleton from "@/widgets/recommended-product/skeleton/RecommendedWishListSkeleton";
 
-import { useRecommendedProductsQuery } from "@/hooks/queries/recommendedProduct/useRecommendedProductsQuery";
+import { useRecommendedProductsQuery } from "@/hooks/queries/recommended-product/useRecommendedProductsQuery";
 import { RECOMMENDED_PRODUCT_CATEGORIES } from "@/constants/recommendedProductCategory";
-import type { RecommendedProductCategory } from "@/types/recommendedProduct/recommendedProduct";
+import type { RecommendedProductCategory } from "@/types/recommended-product/recommendedProduct";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconRight from "@/assets/icons/icon-right.svg?react";

@@ -3,12 +3,12 @@ import { createElement, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 
-import { recommendedProductService } from "@/apis/recommendedProduct/recommendedProductService";
-import { useRecommendedProductQuery } from "@/hooks/queries/recommendedProduct/useRecommendedProductQuery";
+import { recommendedProductService } from "@/apis/recommended-product/recommendedProductService";
+import { useRecommendedProductQuery } from "@/hooks/queries/recommended-product/useRecommendedProductQuery";
 import { ApiError } from "@/types/api";
-import type { RecommendedProductResponse } from "@/types/recommendedProduct/recommendedProduct";
+import type { RecommendedProductResponse } from "@/types/recommended-product/recommendedProduct";
 
-vi.mock("@/apis/recommendedProduct/recommendedProductService", () => ({
+vi.mock("@/apis/recommended-product/recommendedProductService", () => ({
   recommendedProductService: {
     getRecommendedProduct: vi.fn(),
   },

@@ -1,5 +1,5 @@
 import { clientApi } from "@/apis/client";
-import { productRequestService } from "@/apis/productRequest/productRequestService";
+import { productRequestService } from "@/apis/product-request/productRequestService";
 
 vi.mock("@/apis/client", () => ({
   clientApi: {

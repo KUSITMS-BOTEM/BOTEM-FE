@@ -3,10 +3,10 @@ import { createElement, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 
-import { productRequestService } from "@/apis/productRequest/productRequestService";
-import { useRequestProductMutation } from "@/hooks/mutations/productRequest/useRequestProductMutation";
+import { productRequestService } from "@/apis/product-request/productRequestService";
+import { useRequestProductMutation } from "@/hooks/mutations/product-request/useRequestProductMutation";
 
-vi.mock("@/apis/productRequest/productRequestService", () => ({
+vi.mock("@/apis/product-request/productRequestService", () => ({
   productRequestService: {
     requestProduct: vi.fn(),
   },

@@ -1,6 +1,6 @@
 import { clientApi } from "@/apis/client";
-import { recommendedProductService } from "@/apis/recommendedProduct/recommendedProductService";
-import type { RecommendedProductResponse } from "@/types/recommendedProduct/recommendedProduct";
+import { recommendedProductService } from "@/apis/recommended-product/recommendedProductService";
+import type { RecommendedProductResponse } from "@/types/recommended-product/recommendedProduct";
 
 vi.mock("@/apis/client", () => ({
   clientApi: {

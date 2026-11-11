@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { recommendedProductService } from "@/apis/recommendedProduct/recommendedProductService";
+import { recommendedProductService } from "@/apis/recommended-product/recommendedProductService";
 import { ApiError } from "@/types/api";
 
 export const useRecommendedProductQuery = (productId: string) =>

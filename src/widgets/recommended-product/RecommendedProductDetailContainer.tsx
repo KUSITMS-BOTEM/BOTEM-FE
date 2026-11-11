@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { notFound, useParams, useRouter } from "next/navigation";
 
 import { useAddWishMutation } from "@/hooks/mutations/wish/useAddWishMutation";
-import { useRecommendedProductQuery } from "@/hooks/queries/recommendedProduct/useRecommendedProductQuery";
+import { useRecommendedProductQuery } from "@/hooks/queries/recommended-product/useRecommendedProductQuery";
 import ProductDetailFallback from "@/components/ProductDetailFallback";
 import ProductDetailView from "@/components/ProductDetailView";
 import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";

@@ -12,7 +12,7 @@ import TextField from "@/components/TextField";
 import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
-import { useRequestProductMutation } from "@/hooks/mutations/productRequest/useRequestProductMutation";
+import { useRequestProductMutation } from "@/hooks/mutations/product-request/useRequestProductMutation";
 import { canSubmitWishRequest } from "@/utils/product-request/canSubmitWishRequest";
 import { isCoupangProductUrl } from "@/utils/product-request/isCoupangProductUrl";
 

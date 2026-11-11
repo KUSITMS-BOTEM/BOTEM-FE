@@ -1,5 +1,5 @@
 import { clientApi } from "@/apis/client";
-import type { RequestProductRequest } from "@/types/productRequest/productRequest";
+import type { RequestProductRequest } from "@/types/product-request/productRequest";
 
 export const productRequestService = {
   requestProduct: (body: RequestProductRequest) =>

@@ -2,7 +2,7 @@ import { clientApi } from "@/apis/client";
 import type {
   RecommendedProductCategory,
   RecommendedProductResponse,
-} from "@/types/recommendedProduct/recommendedProduct";
+} from "@/types/recommended-product/recommendedProduct";
 
 export const recommendedProductService = {
   getRecommendedProducts: (category?: RecommendedProductCategory) =>
