@@ -6,12 +6,13 @@ import { useRouter } from "next/navigation";
 
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
-import Header from "@/components/Header";
+import CloseSheet from "@/components/CloseSheet";
 import TextField from "@/components/TextField";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
-import IconLeft from "@/assets/icons/icon-left.svg?react";
 
-export default function NameEditContainer() {
+type NameEditContainerProps = { open?: boolean; onClose?: () => void };
+
+export default function NameEditContainer({ open = true, onClose }: NameEditContainerProps) {
   const router = useRouter();
   const { data: profile } = useMyProfileQuery();
   const [nickname, setNickname] = useState("");
@@ -23,24 +24,22 @@ export default function NameEditContainer() {
   }
 
   return (
-    <>
-      <Header
-        title="이름 수정"
-        leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
+    <CloseSheet
+      open={open}
+      title="이름 수정"
+      closeType="back"
+      onClose={onClose ?? (() => router.back())}>
+      <TextField
+        label="이름"
+        value={nickname}
+        onChange={event => setNickname(event.target.value)}
       />
-      <main className="px-5">
-        <TextField
-          label="이름"
-          value={nickname}
-          onChange={event => setNickname(event.target.value)}
-        />
-      </main>
       {/* 이름 수정 API 명세가 나오기 전이라 저장 동작은 아직 연결하지 않았다 */}
       <BottomCTA>
         <Button color="brand" size="xlarge" disabled={!nickname.trim()}>
           수정 완료
         </Button>
       </BottomCTA>
-    </>
+    </CloseSheet>
   );
 }

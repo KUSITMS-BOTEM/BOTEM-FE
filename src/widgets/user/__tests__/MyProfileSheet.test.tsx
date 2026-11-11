@@ -6,11 +6,10 @@ import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import type { MyProfile } from "@/types/user/profile";
 import MyProfileSheet from "@/widgets/user/MyProfileSheet";
 
-const push = vi.fn();
 const replace = vi.fn();
 const withdraw = vi.fn();
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn(), replace }) }));
 vi.mock("@/hooks/mutations/user/useWithdrawMutation");
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
 vi.mock("@/widgets/user/ConnectedAccountBottomSheet", () => ({
@@ -72,14 +71,15 @@ describe("MyProfileSheet", () => {
     expect(screen.getByRole("button", { name: "링크 복사" })).toBeDisabled();
   });
 
-  it("이름·생일 행은 각 수정 페이지로 이동한다", async () => {
+  it("이름·생일 행은 각 수정 시트를 연다", async () => {
     render(<MyProfileSheet open onClose={onClose} />);
 
     await userEvent.click(screen.getByRole("button", { name: "이름" }));
-    expect(push).toHaveBeenCalledWith("/my/profile/name");
+    expect(screen.getByRole("dialog", { name: "이름 수정" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "뒤로 가기" }));
 
     await userEvent.click(screen.getByRole("button", { name: "생일" }));
-    expect(push).toHaveBeenCalledWith("/my/profile/birthday");
+    expect(screen.getByRole("dialog", { name: "생일 수정" })).toBeInTheDocument();
   });
 
   it("연결된 계정을 누르면 연결된 계정 시트가 열린다", async () => {

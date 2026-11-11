@@ -6,13 +6,17 @@ import { useRouter } from "next/navigation";
 
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
-import Header from "@/components/Header";
+import CloseSheet from "@/components/CloseSheet";
 import SelectBox from "@/components/SelectBox";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
-import IconLeft from "@/assets/icons/icon-left.svg?react";
 
-export default function BirthdayEditContainer() {
+type BirthdayEditContainerProps = { open?: boolean; onClose?: () => void };
+
+export default function BirthdayEditContainer({
+  open = true,
+  onClose,
+}: BirthdayEditContainerProps) {
   const router = useRouter();
   const { data: profile } = useMyProfileQuery();
   const [birthday, setBirthday] = useState("");
@@ -24,30 +28,26 @@ export default function BirthdayEditContainer() {
   }
 
   return (
-    <>
-      <Header
-        title="생일 수정"
-        leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
+    <CloseSheet
+      open={open}
+      title="생일 수정"
+      closeType="back"
+      onClose={onClose ?? (() => router.back())}>
+      <SelectBox
+        variant="birth"
+        label="생일"
+        value={birthday ? formatBirthdayDisplay(birthday) : ""}
+        onDateChange={(month, day) =>
+          setBirthday(
+            month && day ? `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "",
+          )
+        }
       />
-      <main className="px-5">
-        <SelectBox
-          variant="birth"
-          label="생일"
-          value={birthday ? formatBirthdayDisplay(birthday) : ""}
-          onDateChange={(month, day) =>
-            setBirthday(
-              month && day
-                ? `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-                : "",
-            )
-          }
-        />
-      </main>
       <BottomCTA>
         <Button color="brand" size="xlarge" disabled={!birthday}>
           수정 완료
         </Button>
       </BottomCTA>
-    </>
+    </CloseSheet>
   );
 }

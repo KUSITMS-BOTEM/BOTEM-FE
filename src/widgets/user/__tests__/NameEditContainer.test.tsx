@@ -9,6 +9,15 @@ const back = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back }) }));
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
 
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
+    this.setAttribute("open", "");
+  });
+  HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
+    this.removeAttribute("open");
+  });
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(useMyProfileQuery).mockReturnValue({

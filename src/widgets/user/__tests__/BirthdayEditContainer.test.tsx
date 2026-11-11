@@ -6,6 +6,15 @@ import BirthdayEditContainer from "@/widgets/user/BirthdayEditContainer";
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
 
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
+    this.setAttribute("open", "");
+  });
+  HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
+    this.removeAttribute("open");
+  });
+});
+
 const mockBirthday = (birthday: string | null) =>
   vi.mocked(useMyProfileQuery).mockReturnValue({
     data: { birthday },
