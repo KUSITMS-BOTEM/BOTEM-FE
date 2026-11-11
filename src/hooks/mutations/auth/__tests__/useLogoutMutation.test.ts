@@ -7,7 +7,7 @@ import { authService } from "@/apis/auth/authService";
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/store/authStore";
-import { consumeWishPromptPending, markWishPromptPending } from "@/utils/wishPromptStorage";
+import { consumeWishPromptPending, markWishPromptPending } from "@/utils/wish/wishPromptStorage";
 
 vi.mock("@/apis/auth/authService", () => ({
   authService: {

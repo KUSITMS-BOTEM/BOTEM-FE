@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import FloatingButton from "@/widgets/main/FloatingButton";
+import FloatingButton from "@/widgets/home/FloatingButton";
 import IconWishAdd from "@/assets/icons/multicolor/icon-wish-add.svg?react";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 

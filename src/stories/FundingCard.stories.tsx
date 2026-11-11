@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import FundingCard from "@/widgets/main/FundingCard";
+import FundingCard from "@/widgets/home/FundingCard";
 import SampleProduct from "@/assets/images/samples/sample-product.png";
 
 const meta = {

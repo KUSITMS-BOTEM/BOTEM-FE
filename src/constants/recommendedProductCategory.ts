@@ -1,4 +1,4 @@
-import type { RecommendedProductCategory } from "@/types/recommendedProduct/recommendedProduct";
+import type { RecommendedProductCategory } from "@/types/recommended-product/recommendedProduct";
 
 export const RECOMMENDED_PRODUCT_CATEGORIES: {
   value: RecommendedProductCategory;

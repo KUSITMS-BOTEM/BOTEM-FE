@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import ProfileBox from "@/widgets/main/ProfileBox";
+import ProfileBox from "@/widgets/home/ProfileBox";
 
 const meta = {
   title: "Widgets/Main/ProfileBox",

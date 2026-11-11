@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
-import SegmentControl from "@/widgets/main/SegmentControl";
+import SegmentControl from "@/widgets/home/SegmentControl";
 
 const meta = {
   title: "Widgets/Main/SegmentControl",

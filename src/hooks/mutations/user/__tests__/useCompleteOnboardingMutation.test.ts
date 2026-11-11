@@ -5,8 +5,8 @@ import { renderHook, waitFor } from "@testing-library/react";
 
 import { userService } from "@/apis/user/userService";
 import { useCompleteOnboardingMutation } from "@/hooks/mutations/user/useCompleteOnboardingMutation";
-import { setSignupFlow } from "@/utils/signupFlowStorage";
-import { consumeWishPromptPending } from "@/utils/wishPromptStorage";
+import { setSignupFlow } from "@/utils/auth/signupFlowStorage";
+import { consumeWishPromptPending } from "@/utils/wish/wishPromptStorage";
 import type { RegisterOnboardingRequest } from "@/types/user/onboarding";
 
 vi.mock("@/apis/user/userService", () => ({
@@ -42,7 +42,7 @@ describe("useCompleteOnboardingMutation", () => {
     replace.mockClear();
   });
 
-  it("성공 시 signupFlow를 비우고 위시 프롬프트 플래그를 세운 뒤 /main으로 이동한다 (호출 화면이 언마운트돼도 실행돼야 함)", async () => {
+  it("성공 시 signupFlow를 비우고 위시 프롬프트 플래그를 세운 뒤 /home으로 이동한다 (호출 화면이 언마운트돼도 실행돼야 함)", async () => {
     vi.mocked(userService.completeOnboarding).mockResolvedValue(null);
     setSignupFlow({ step: "accountEntry" });
     const { result } = renderHook(() => useCompleteOnboardingMutation(), {
@@ -55,7 +55,7 @@ describe("useCompleteOnboardingMutation", () => {
     expect(userService.completeOnboarding).toHaveBeenCalledWith(body, expect.anything());
     expect(sessionStorage.getItem("signupFlow")).toBeNull();
     expect(consumeWishPromptPending()).toBe(true);
-    expect(replace).toHaveBeenCalledWith("/main");
+    expect(replace).toHaveBeenCalledWith("/home");
   });
 
   it("userService.completeOnboarding이 실패하면 mutation이 error 상태가 되고 /로 이동한다", async () => {

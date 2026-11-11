@@ -4,8 +4,8 @@ import { useMutation } from "@tanstack/react-query";
 
 import { userService } from "@/apis/user/userService";
 import { queryClient } from "@/lib/queryClient";
-import { clearSignupFlow } from "@/utils/signupFlowStorage";
-import { markWishPromptPending } from "@/utils/wishPromptStorage";
+import { clearSignupFlow } from "@/utils/auth/signupFlowStorage";
+import { markWishPromptPending } from "@/utils/wish/wishPromptStorage";
 
 export const useCompleteOnboardingMutation = () => {
   const router = useRouter();
@@ -18,7 +18,7 @@ export const useCompleteOnboardingMutation = () => {
     onSuccess: () => {
       clearSignupFlow();
       markWishPromptPending();
-      router.replace("/main");
+      router.replace("/home");
     },
     onError: () => {
       alert("에러가 발생했습니다");

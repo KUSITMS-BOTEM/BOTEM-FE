@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
-import WishCard from "@/widgets/main/WishCard";
+import WishCard from "@/widgets/wish/WishCard";
 import SampleProduct from "@/assets/images/samples/sample-product.png";
 
 const meta = {

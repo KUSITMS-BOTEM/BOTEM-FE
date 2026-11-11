@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import FundingCardCarousel, { type FundingCardData } from "@/widgets/main/FundingCardCarousel";
+import FundingCardCarousel, { type FundingCardData } from "@/widgets/home/FundingCardCarousel";
 import SampleProduct from "@/assets/images/samples/sample-product.png";
 
 const baseCard: Omit<FundingCardData, "id"> = {
