@@ -67,6 +67,7 @@ export default function PayoutAccountContainer() {
       birthday: flow.birthday,
       bank: selectedBank,
       accountNumber,
+      profileImageUrl: flow.profileImageUrl,
     });
   };
 
