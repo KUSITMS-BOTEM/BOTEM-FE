@@ -7,9 +7,9 @@ import { notFound, useParams, useRouter } from "next/navigation";
 import Dialog from "@/components/Dialog";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
-import ProductDetailFallback from "@/widgets/wish/ProductDetailFallback";
-import ProductDetailView from "@/widgets/wish/ProductDetailView";
-import ProductDetailViewSkeleton from "@/widgets/wish/skeleton/ProductDetailViewSkeleton";
+import ProductDetailFallback from "@/components/ProductDetailFallback";
+import ProductDetailView from "@/components/ProductDetailView";
+import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
 import { resolveWishErrorAction } from "./helpers";
 import IconDelete from "@/assets/icons/icon-delete.svg?react";
 

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 
-import ProgressBar from "@/widgets/main/ProgressBar";
+import ProgressBar from "@/widgets/home/ProgressBar";
 
 describe("ProgressBar", () => {
   it("progress 값이 aria-valuenow와 채움 너비에 반영된다", () => {

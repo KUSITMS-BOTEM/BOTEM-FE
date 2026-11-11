@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import AddWishBottomSheet from "@/widgets/main/AddWishBottomSheet";
+import AddWishBottomSheet from "@/widgets/wish/AddWishBottomSheet";
 
 // vitest(jsdom) 환경은 정적 png import를 {src,width,height} 객체가 아닌 문자열로 반환해
 // next/image가 "width 누락" 에러를 던진다. 내부에서 쓰이는 CoupangMoveGuide의 이미지를

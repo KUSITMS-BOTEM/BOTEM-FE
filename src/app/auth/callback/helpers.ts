@@ -41,7 +41,7 @@ export const handleKakaoCallback = (
           router.replace("/auth/profile-check");
           return;
         }
-        router.replace("/main");
+        router.replace("/home");
       },
       onError: () => redirectToLandingAfterFailure(router),
     },

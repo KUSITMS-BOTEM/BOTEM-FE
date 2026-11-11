@@ -2,9 +2,9 @@ import { useId } from "react";
 import Image from "next/image";
 import { cn } from "@/utils/cn";
 import Badge from "@/components/Badge";
-import FundingCardGiftCover from "@/widgets/main/FundingCardGiftCover";
-import ProfileBox, { type ProfileColor } from "@/widgets/main/ProfileBox";
-import ProgressBar from "@/widgets/main/ProgressBar";
+import FundingCardGiftCover from "@/widgets/home/FundingCardGiftCover";
+import ProfileBox, { type ProfileColor } from "@/widgets/home/ProfileBox";
+import ProgressBar from "@/widgets/home/ProgressBar";
 import IconLock from "@/assets/icons/icon-lock.svg?react";
 
 export type FundingCardType = "default" | "notification" | "open";

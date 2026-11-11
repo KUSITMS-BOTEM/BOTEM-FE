@@ -1,4 +1,4 @@
-import { resolveWishStageFlags, resolveWishStageTitle } from "@/widgets/main/helpers";
+import { resolveWishStageFlags, resolveWishStageTitle } from "@/widgets/wish/helpers";
 
 describe("resolveWishStageFlags", () => {
   const baseParams = {

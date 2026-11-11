@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 
-import FundingCard from "@/widgets/main/FundingCard";
+import FundingCard from "@/widgets/home/FundingCard";
 
 const baseProps = {
   title: "민지 생일 펀딩",

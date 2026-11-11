@@ -5,7 +5,7 @@ export function proxy(request: NextRequest) {
   const isLandingPage = request.nextUrl.pathname === "/";
 
   if (isLoggedIn && isLandingPage) {
-    return NextResponse.redirect(new URL("/main", request.url));
+    return NextResponse.redirect(new URL("/home", request.url));
   }
   if (!isLoggedIn && !isLandingPage) {
     return NextResponse.redirect(new URL("/", request.url));
@@ -14,5 +14,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/main/:path*"],
+  matcher: ["/", "/home/:path*"],
 };

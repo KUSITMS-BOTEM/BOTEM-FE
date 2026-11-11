@@ -44,7 +44,7 @@ describe("useDeleteWishMutation", () => {
     expect(wishService.deleteWish).toHaveBeenCalledWith("1");
   });
 
-  it("성공 시 router.replace가 /main으로 호출된다", async () => {
+  it("성공 시 router.replace가 /home으로 호출된다", async () => {
     vi.mocked(wishService.deleteWish).mockResolvedValue(null);
     const { result } = renderHook(() => useDeleteWishMutation("1"), {
       wrapper: createWrapper(),
@@ -53,7 +53,7 @@ describe("useDeleteWishMutation", () => {
     result.current.mutate();
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(replace).toHaveBeenCalledWith("/main");
+    expect(replace).toHaveBeenCalledWith("/home");
   });
 
   it("wishService.deleteWish가 실패하면 isError가 true가 되고 router.replace는 호출되지 않는다", async () => {

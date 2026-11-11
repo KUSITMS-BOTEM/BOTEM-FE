@@ -1,6 +1,6 @@
 import Image from "next/image";
 import GiftAnimation from "@/components/effects/GiftAnimation";
-import type { FundingCardType } from "@/widgets/main/FundingCard";
+import type { FundingCardType } from "@/widgets/home/FundingCard";
 
 type FundingCardGiftCoverProps = {
   type: Exclude<FundingCardType, "default">;

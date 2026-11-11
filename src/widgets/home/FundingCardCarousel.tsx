@@ -3,8 +3,8 @@
 import { useState, type KeyboardEvent } from "react";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import { cn } from "@/utils/cn";
-import FundingCard, { type FundingCardProps } from "@/widgets/main/FundingCard";
-import PageIndicator from "@/widgets/main/PageIndicator";
+import FundingCard, { type FundingCardProps } from "@/widgets/home/FundingCard";
+import PageIndicator from "@/widgets/home/PageIndicator";
 
 export type FundingCardData = Omit<FundingCardProps, "className" | "animateGift"> & {
   id: string | number;

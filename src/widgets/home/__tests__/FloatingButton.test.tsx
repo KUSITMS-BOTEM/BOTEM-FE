@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import FloatingButton from "@/widgets/main/FloatingButton";
-import { type MenuDropdownItem } from "@/widgets/main/MenuDropdown";
+import FloatingButton from "@/widgets/home/FloatingButton";
+import { type MenuDropdownItem } from "@/widgets/home/MenuDropdown";
 
 describe("FloatingButton", () => {
   const items: MenuDropdownItem[] = [

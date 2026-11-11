@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import ProductDetailViewSkeleton from "@/widgets/wish/skeleton/ProductDetailViewSkeleton";
+import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
 
 const back = vi.fn();
 vi.mock("next/navigation", () => ({

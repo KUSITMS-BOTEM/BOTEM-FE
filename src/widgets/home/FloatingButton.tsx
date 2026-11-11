@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/utils/cn";
 import Asset from "@/components/Asset";
 import Satets from "@/components/Satets";
-import MenuDropdown, { type MenuDropdownItem } from "@/widgets/main/MenuDropdown";
+import MenuDropdown, { type MenuDropdownItem } from "@/widgets/home/MenuDropdown";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 import IconPlus from "@/assets/icons/icon-plus.svg?react";
 

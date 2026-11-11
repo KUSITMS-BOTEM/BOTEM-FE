@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import MenuDropdown, { type MenuDropdownItem } from "@/widgets/main/MenuDropdown";
+import MenuDropdown, { type MenuDropdownItem } from "@/widgets/home/MenuDropdown";
 
 describe("MenuDropdown", () => {
   const items: MenuDropdownItem[] = [

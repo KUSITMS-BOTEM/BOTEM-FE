@@ -11,8 +11,8 @@ import ChipGroup from "@/components/ChipGroup";
 import Header from "@/components/Header";
 import List from "@/components/List";
 import Title from "@/components/Title";
-import WishCard from "@/widgets/main/WishCard";
-import RecommendedWishListSkeleton from "@/widgets/wish/skeleton/RecommendedWishListSkeleton";
+import WishCard from "@/widgets/wish/WishCard";
+import RecommendedWishListSkeleton from "@/widgets/recommended-product/skeleton/RecommendedWishListSkeleton";
 
 import { useRecommendedProductsQuery } from "@/hooks/queries/recommendedProduct/useRecommendedProductsQuery";
 import { RECOMMENDED_PRODUCT_CATEGORIES } from "@/constants/recommendedProductCategory";

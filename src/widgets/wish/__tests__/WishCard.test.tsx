@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import WishCard from "@/widgets/main/WishCard";
+import WishCard from "@/widgets/wish/WishCard";
 
 const baseProps = {
   productName: "머그컵 세트",

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 
-import FundingCardGiftCover from "@/widgets/main/FundingCardGiftCover";
+import FundingCardGiftCover from "@/widgets/home/FundingCardGiftCover";
 
 const findText = (text: string) =>
   screen.getByText((_, el) => el?.tagName === "P" && el.textContent === text);

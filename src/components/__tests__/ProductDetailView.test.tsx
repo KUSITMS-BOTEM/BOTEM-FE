@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import ProductDetailView from "@/widgets/wish/ProductDetailView";
+import ProductDetailView from "@/components/ProductDetailView";
 
 const baseProps = {
   productImageUrl: "https://example.com/airpods.png",

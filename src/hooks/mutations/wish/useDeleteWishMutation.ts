@@ -10,6 +10,6 @@ export const useDeleteWishMutation = (wishId: string) => {
   return useMutation({
     mutationFn: () => wishService.deleteWish(wishId),
     // 캐시를 즉시 지우면 아직 마운트된 상세 페이지가 삭제된 위시를 재조회할 수 있다 — 페이지를 떠나면 gcTime에 따라 자동 정리된다
-    onSuccess: () => router.replace("/main"),
+    onSuccess: () => router.replace("/home"),
   });
 };

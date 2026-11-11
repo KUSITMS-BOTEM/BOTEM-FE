@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import SegmentControl from "@/widgets/main/SegmentControl";
+import SegmentControl from "@/widgets/home/SegmentControl";
 
 describe("SegmentControl", () => {
   it("펀딩/위시 탭 2개가 tablist 안에 렌더된다", () => {

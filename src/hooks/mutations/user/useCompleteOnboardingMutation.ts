@@ -18,7 +18,7 @@ export const useCompleteOnboardingMutation = () => {
     onSuccess: () => {
       clearSignupFlow();
       markWishPromptPending();
-      router.replace("/main");
+      router.replace("/home");
     },
     onError: () => {
       alert("에러가 발생했습니다");

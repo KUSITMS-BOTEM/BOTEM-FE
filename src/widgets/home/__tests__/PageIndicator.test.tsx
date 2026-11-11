@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 
-import PageIndicator from "@/widgets/main/PageIndicator";
+import PageIndicator from "@/widgets/home/PageIndicator";
 
 describe("PageIndicator", () => {
   it("aria-label이 '{total}페이지 중 {current}페이지'다", () => {

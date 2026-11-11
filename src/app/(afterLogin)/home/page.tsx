@@ -8,7 +8,7 @@ import Button from "@/components/Button";
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
 import { useWithdrawMutation } from "@/hooks/mutations/user/useWithdrawMutation";
 import { consumeWishPromptPending } from "@/utils/wishPromptStorage";
-import AddWishBottomSheet from "@/widgets/main/AddWishBottomSheet";
+import AddWishBottomSheet from "@/widgets/wish/AddWishBottomSheet";
 
 import { handleLogoutClick, handleWithdrawClick } from "./helpers";
 

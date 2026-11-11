@@ -6,9 +6,9 @@ import { notFound, useParams, useRouter } from "next/navigation";
 
 import { useAddWishMutation } from "@/hooks/mutations/wish/useAddWishMutation";
 import { useRecommendedProductQuery } from "@/hooks/queries/recommendedProduct/useRecommendedProductQuery";
-import ProductDetailFallback from "@/widgets/wish/ProductDetailFallback";
-import ProductDetailView from "@/widgets/wish/ProductDetailView";
-import ProductDetailViewSkeleton from "@/widgets/wish/skeleton/ProductDetailViewSkeleton";
+import ProductDetailFallback from "@/components/ProductDetailFallback";
+import ProductDetailView from "@/components/ProductDetailView";
+import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
 import { resolveRecommendedProductErrorAction } from "./helpers";
 
 export default function RecommendedProductDetail() {

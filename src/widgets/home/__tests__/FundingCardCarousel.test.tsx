@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import FundingCardCarousel, { type FundingCardData } from "@/widgets/main/FundingCardCarousel";
+import FundingCardCarousel, { type FundingCardData } from "@/widgets/home/FundingCardCarousel";
 
 const makeCard = (id: number, title: string): FundingCardData => ({
   id,

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import ProductDetailFallback from "@/widgets/wish/ProductDetailFallback";
+import ProductDetailFallback from "@/components/ProductDetailFallback";
 
 const baseProps = {
   message: "상품 정보를 불러오지 못했습니다.",
