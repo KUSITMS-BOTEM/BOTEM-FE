@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import ProgressBar from "@/widgets/main/ProgressBar";
+import ProgressBar from "@/widgets/home/ProgressBar";
 
 const meta = {
   title: "Widgets/Main/ProgressBar",

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import PageIndicator from "@/widgets/main/PageIndicator";
+import PageIndicator from "@/widgets/home/PageIndicator";
 
 const meta = {
   title: "Widgets/Main/PageIndicator",

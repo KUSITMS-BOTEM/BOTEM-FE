@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import MenuDropdown from "@/widgets/main/MenuDropdown";
+import MenuDropdown from "@/widgets/home/MenuDropdown";
 import IconWishAdd from "@/assets/icons/multicolor/icon-wish-add.svg?react";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 
