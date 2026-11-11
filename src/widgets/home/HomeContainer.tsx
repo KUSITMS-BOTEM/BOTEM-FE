@@ -11,6 +11,7 @@ import HomeHeader from "@/widgets/home/HomeHeader";
 import HomeWishTab from "@/widgets/home/HomeWishTab";
 import type { MenuDropdownItem } from "@/widgets/home/MenuDropdown";
 import type { SegmentValue } from "@/widgets/home/SegmentControl";
+import MyMenuSheet from "@/widgets/user/MyMenuSheet";
 import AddWishBottomSheet from "@/widgets/wish/AddWishBottomSheet";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 import IconWishAdd from "@/assets/icons/multicolor/icon-wish-add.svg?react";
@@ -22,13 +23,16 @@ const FLOATING_MENU_ITEMS: MenuDropdownItem[] = [
   { icon: <IconFundingOpen />, label: "펀딩 추가" },
 ];
 
+// 친구 수·마감된 펀딩 수 API 명세가 나오기 전까지 쓰는 임시값
+const TEMP_FRIEND_COUNT = 8;
+const TEMP_CLOSED_FUNDING_COUNT = 0;
+
 export default function HomeContainer() {
-  // 위시 탭을 누르기 전에 미리 받아 두어, 탭 전환 시 캐시에서 바로 보여준다
   useWishesQuery();
   const [segment, setSegment] = useState<SegmentValue>("funding");
-  // 온보딩을 막 완료한 유저만 진입 시 1회 자동으로 뜨도록, 기존 유저는 등장하지 않는다
   const [wishSheetOpen, setWishSheetOpen] = useState(() => consumeWishPromptPending());
   const [fundingSheetOpen, setFundingSheetOpen] = useState(false);
+  const [menuSheetOpen, setMenuSheetOpen] = useState(false);
 
   const openWishSheet = () => setWishSheetOpen(true);
   const handleFloatingMenuSelect = (item: MenuDropdownItem) => {
@@ -38,7 +42,7 @@ export default function HomeContainer() {
 
   return (
     <div className="bg-semantic-background-lower flex min-h-dvh w-full flex-col overflow-x-hidden pb-17">
-      <HomeHeader onSegmentChange={setSegment} />
+      <HomeHeader onSegmentChange={setSegment} onMenuClick={() => setMenuSheetOpen(true)} />
       <main className="flex w-full flex-col px-5">
         {segment === "funding" ? (
           <HomeFundingTab onAddWish={openWishSheet} />
@@ -52,6 +56,12 @@ export default function HomeContainer() {
         open={wishSheetOpen}
         onClose={() => setWishSheetOpen(false)}
         onSubmit={() => setWishSheetOpen(false)}
+      />
+      <MyMenuSheet
+        open={menuSheetOpen}
+        onClose={() => setMenuSheetOpen(false)}
+        friendCount={TEMP_FRIEND_COUNT}
+        closedFundingCount={TEMP_CLOSED_FUNDING_COUNT}
       />
     </div>
   );

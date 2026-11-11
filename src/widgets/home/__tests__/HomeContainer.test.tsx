@@ -19,6 +19,9 @@ vi.mock("@/widgets/home/HomeFundingTab", () => ({
   ),
 }));
 vi.mock("@/widgets/home/HomeWishTab", () => ({ default: () => <div>위시 탭 내용</div> }));
+vi.mock("@/widgets/user/MyMenuSheet", () => ({
+  default: ({ open }: { open: boolean }) => (open ? <div>메뉴 시트</div> : null),
+}));
 
 describe("HomeContainer", () => {
   it("처음에는 펀딩 탭을 보여주고 '위시' 탭을 누르면 위시 탭으로 바뀐다", async () => {
