@@ -24,6 +24,7 @@ const makeWish = (id: number, status: WishStatus): WishResponse => ({
   productImageUrl: `https://example.com/${id}.png`,
   price: id * 1000,
   productUrl: "https://example.com",
+  sellerName: "쿠팡 Apple 공식 브랜드관",
   status,
   fundingId: null,
 });

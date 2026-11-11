@@ -45,8 +45,7 @@ export default function WishDetailContainer() {
         productImageUrl={wish.productImageUrl}
         productName={wish.productName}
         price={wish.price}
-        // TODO: WishResponse에 판매처 필드 추가되면 교체
-        sellerName="쿠팡 Apple 공식 브랜드관"
+        sellerName={wish.sellerName}
         onSellerClick={() => window.open(wish.productUrl, "_blank", "noopener,noreferrer")}
         rightItems={[
           { icon: <IconDelete />, ariaLabel: "삭제", onClick: () => setIsDeleteDialogOpen(true) },

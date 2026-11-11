@@ -19,6 +19,8 @@ const mockProfile: MyProfile = {
   birthday: "01-01",
   wishProfileUrl: "https://example.com/wish",
   kakaoConnected: true,
+  email: "test@kakao.com",
+  joinedAt: "2026-01-01",
 };
 
 const createWrapper = () => {
