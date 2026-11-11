@@ -2,8 +2,8 @@ import type { useRouter } from "next/navigation";
 
 import type { useKakaoLoginMutation } from "@/hooks/mutations/auth/useKakaoLoginMutation";
 import { useAuthStore } from "@/store/authStore";
-import { consumeKakaoOauthState } from "@/utils/kakaoOauthState";
-import { setSignupFlow } from "@/utils/signupFlowStorage";
+import { consumeKakaoOauthState } from "@/utils/auth/kakaoOauthState";
+import { setSignupFlow } from "@/utils/auth/signupFlowStorage";
 
 type KakaoLoginMutate = ReturnType<typeof useKakaoLoginMutation>["mutate"];
 type Router = ReturnType<typeof useRouter>;

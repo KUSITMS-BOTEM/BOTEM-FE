@@ -15,7 +15,7 @@ import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
 import { BANKS, type BankCode } from "@/constants/bank";
 import { useCompleteOnboardingMutation } from "@/hooks/mutations/user/useCompleteOnboardingMutation";
-import { getSignupFlow } from "@/utils/signupFlowStorage";
+import { getSignupFlow } from "@/utils/auth/signupFlowStorage";
 import {
   ACCOUNT_NUMBER_REGEX,
   parseClipboardAccount,

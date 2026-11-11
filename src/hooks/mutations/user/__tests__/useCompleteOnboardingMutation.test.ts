@@ -5,7 +5,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 
 import { userService } from "@/apis/user/userService";
 import { useCompleteOnboardingMutation } from "@/hooks/mutations/user/useCompleteOnboardingMutation";
-import { setSignupFlow } from "@/utils/signupFlowStorage";
+import { setSignupFlow } from "@/utils/auth/signupFlowStorage";
 import { consumeWishPromptPending } from "@/utils/wishPromptStorage";
 import type { RegisterOnboardingRequest } from "@/types/user/onboarding";
 

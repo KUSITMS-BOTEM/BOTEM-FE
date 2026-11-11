@@ -1,6 +1,6 @@
 import type { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
-import { setKakaoOauthState } from "@/utils/kakaoOauthState";
-import { clearSignupFlow } from "@/utils/signupFlowStorage";
+import { setKakaoOauthState } from "@/utils/auth/kakaoOauthState";
+import { clearSignupFlow } from "@/utils/auth/signupFlowStorage";
 
 type LoginUriMutate = ReturnType<typeof useKakaoLoginUriMutation>["mutate"];
 
