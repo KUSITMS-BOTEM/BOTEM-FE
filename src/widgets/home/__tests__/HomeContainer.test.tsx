@@ -12,7 +12,7 @@ vi.mock("@/hooks/mutations/user/useWithdrawMutation", () => ({
 }));
 vi.mock("@/utils/wish/wishPromptStorage", () => ({ consumeWishPromptPending: () => false }));
 vi.mock("@/widgets/wish/AddWishBottomSheet", () => ({ default: () => null }));
-vi.mock("@/widgets/funding/FundingOpenBottomSheet", () => ({
+vi.mock("@/widgets/funding/FundingOpenSheet", () => ({
   default: ({ open }: { open: boolean }) => (open ? <div>펀딩 열기 시트</div> : null),
 }));
 

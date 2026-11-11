@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
-import BottomSheet from "@/components/BottomSheet";
+import OpenSheet from "@/components/OpenSheet";
 import Button from "@/components/Button";
 import List from "@/components/List";
 import ListHeader from "@/components/ListHeader";
@@ -13,17 +13,13 @@ import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
 // 임시 처리: 위시를 최대 3개만 보여준다. 디자인·기획팀과 상의가 필요한 부분(4개 이상일 때의 노출 방식 등)이다.
 const MAX_SELECTABLE_WISH_COUNT = 3;
 
-type FundingOpenBottomSheetProps = {
+type FundingOpenSheetProps = {
   open: boolean;
   onClose: () => void;
   className?: string;
 };
 
-export default function FundingOpenBottomSheet({
-  open,
-  onClose,
-  className,
-}: FundingOpenBottomSheetProps) {
+export default function FundingOpenSheet({ open, onClose, className }: FundingOpenSheetProps) {
   const router = useRouter();
   const { data, isLoading, isError, refetch } = useWishesQuery({ enabled: open });
 
@@ -35,7 +31,7 @@ export default function FundingOpenBottomSheet({
     .slice(0, MAX_SELECTABLE_WISH_COUNT);
 
   return (
-    <BottomSheet open={open} title="펀딩 열기" height="max" onClose={onClose} className={className}>
+    <OpenSheet open={open} title="펀딩 열기" onClose={onClose} className={className}>
       <div className="flex w-full flex-col gap-4">
         <Title type="a2z" title="어떤 선물을 받고 싶나요?" />
         <div className="flex flex-col gap-0.5">
@@ -78,6 +74,6 @@ export default function FundingOpenBottomSheet({
           rightItem={{ label: "상품 보기", onClick: () => router.push("/wish/recommended") }}
         />
       </div>
-    </BottomSheet>
+    </OpenSheet>
   );
 }

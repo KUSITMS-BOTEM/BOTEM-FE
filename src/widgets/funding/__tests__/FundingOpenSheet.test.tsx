@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 
 import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
 import type { WishResponse, WishStatus } from "@/types/wish/wish";
-import FundingOpenBottomSheet from "@/widgets/funding/FundingOpenBottomSheet";
+import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
 
 vi.mock("@/hooks/queries/wish/useWishesQuery");
 
@@ -47,9 +47,9 @@ const mockQuery = (overrides: Partial<ReturnType<typeof useWishesQuery>>) =>
     ...overrides,
   } as unknown as ReturnType<typeof useWishesQuery>);
 
-const renderSheet = () => render(<FundingOpenBottomSheet open onClose={vi.fn()} />);
+const renderSheet = () => render(<FundingOpenSheet open onClose={vi.fn()} />);
 
-describe("FundingOpenBottomSheet", () => {
+describe("FundingOpenSheet", () => {
   it("AVAILABLE 위시만 최신 순서 그대로 최대 3개까지 보여준다", () => {
     const content = [
       makeWish(1, "AVAILABLE"),
@@ -118,7 +118,7 @@ describe("FundingOpenBottomSheet", () => {
   it("open이 false면 useWishesQuery를 비활성화한다", () => {
     mockQuery({});
 
-    render(<FundingOpenBottomSheet open={false} onClose={vi.fn()} />);
+    render(<FundingOpenSheet open={false} onClose={vi.fn()} />);
 
     expect(useWishesQuery).toHaveBeenCalledWith({ enabled: false });
   });
