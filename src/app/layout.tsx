@@ -3,8 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { cn } from "@/utils/cn";
-import MswProvider from "@/providers/MswProvider";
-import QueryProvider from "@/providers/QueryProvider";
+import MswProvider from "@/lib/MswProvider";
+import QueryProvider from "@/lib/QueryProvider";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 
 const geistSans = Geist({
