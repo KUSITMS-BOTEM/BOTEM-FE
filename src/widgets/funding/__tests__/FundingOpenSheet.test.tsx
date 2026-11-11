@@ -1,14 +1,14 @@
+import { useState } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
-import type { WishResponse, WishStatus } from "@/types/wish/wish";
+import type { WishResponse } from "@/types/wish/wish";
 import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
 
 vi.mock("@/hooks/queries/wish/useWishesQuery");
 
-const mockPush = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mockPush }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 // jsdom 정적 이미지 처리와 dialog 미구현 API를 단순 대체한다
 vi.mock("next/image", () => ({
@@ -28,98 +28,72 @@ beforeAll(() => {
   });
 });
 
-const makeWish = (id: number, status: WishStatus): WishResponse => ({
-  id,
-  productName: `상품${id}`,
-  productImageUrl: `https://example.com/${id}.png`,
-  price: id * 1000,
+const wish: WishResponse = {
+  id: 468,
+  productName: "상품468",
+  productImageUrl: "https://example.com/468.png",
+  price: 468000,
   productUrl: "https://example.com",
-  status,
+  status: "AVAILABLE",
   fundingId: null,
-});
+};
 
-const mockQuery = (overrides: Partial<ReturnType<typeof useWishesQuery>>) =>
+const mockWishes = () =>
   vi.mocked(useWishesQuery).mockReturnValue({
-    data: undefined,
+    data: { content: [wish], page: 0, size: 10, totalElements: 1, hasNext: false },
     isLoading: false,
     isError: false,
     refetch: vi.fn(),
-    ...overrides,
   } as unknown as ReturnType<typeof useWishesQuery>);
 
-const renderSheet = () => render(<FundingOpenSheet open onClose={vi.fn()} />);
+function Harness() {
+  const [open, setOpen] = useState(true);
+  return (
+    <>
+      <button onClick={() => setOpen(true)}>열기</button>
+      <FundingOpenSheet open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
 
 describe("FundingOpenSheet", () => {
-  it("AVAILABLE 위시만 최신 순서 그대로 최대 3개까지 보여준다", () => {
-    const content = [
-      makeWish(1, "AVAILABLE"),
-      makeWish(2, "FUNDING"),
-      makeWish(3, "AVAILABLE"),
-      makeWish(4, "DISCONTINUED"),
-      makeWish(5, "AVAILABLE"),
-      makeWish(6, "AVAILABLE"),
-    ];
-    mockQuery({
-      data: { content, page: 0, size: 10, totalElements: 6, hasNext: false },
-    });
+  beforeEach(mockWishes);
 
-    renderSheet();
+  it("처음에는 펀딩 열기 제목과 위시 선택 화면을 보여준다", () => {
+    render(<Harness />);
 
-    ["상품1", "상품3", "상품5"].forEach(name => expect(screen.getByText(name)).toBeInTheDocument());
-    ["상품2", "상품4", "상품6"].forEach(name =>
-      expect(screen.queryByText(name)).not.toBeInTheDocument(),
-    );
-    expect(screen.getByText("1,000원")).toBeInTheDocument();
+    expect(screen.getByText("펀딩 열기")).toBeInTheDocument();
+    expect(screen.getByText("내 위시에서 고르기")).toBeInTheDocument();
   });
 
-  it("AVAILABLE 위시가 없으면 빈 상태 문구를 보여준다", () => {
-    mockQuery({
-      data: {
-        content: [makeWish(1, "FUNDING")],
-        page: 0,
-        size: 10,
-        totalElements: 1,
-        hasNext: false,
-      },
-    });
+  it("위시를 선택하면 제목이 펀딩 정보로 바뀌고 목표 금액 입력 화면으로 교체된다", async () => {
+    render(<Harness />);
 
-    renderSheet();
+    await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
 
-    expect(screen.getByText("펀딩으로 열 수 있는 위시가 없어요")).toBeInTheDocument();
+    expect(await screen.findByText("펀딩 정보")).toBeInTheDocument();
+    expect(screen.queryByText("펀딩 열기")).not.toBeInTheDocument();
+    expect(screen.queryByText("내 위시에서 고르기")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("목표 금액")).toHaveValue("");
   });
 
-  it("조회에 실패하면 에러 문구와 다시 시도 버튼을 보여준다", () => {
-    mockQuery({ isError: true });
+  it("시트를 닫았다 다시 열면 위시 선택부터 다시 시작한다", async () => {
+    render(<Harness />);
+    await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
+    await screen.findByText("펀딩 정보");
 
-    renderSheet();
+    await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+    await userEvent.click(screen.getByRole("button", { name: "열기", hidden: true }));
 
-    expect(screen.getByText("위시를 불러오지 못했어요")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
+    expect(await screen.findByText("펀딩 열기")).toBeInTheDocument();
+    expect(screen.getByText("내 위시에서 고르기")).toBeInTheDocument();
   });
 
-  it("로딩 중에는 목록 대신 스켈레톤을 보여준다", () => {
-    mockQuery({ isLoading: true });
-
-    const { container } = renderSheet();
-
-    expect(container.querySelector("[aria-busy]")).toBeInTheDocument();
-    expect(screen.queryByText("펀딩으로 열 수 있는 위시가 없어요")).not.toBeInTheDocument();
-  });
-
-  it("상품 보기를 클릭하면 /wish/recommended로 이동한다", async () => {
-    mockQuery({});
-
-    renderSheet();
-    await userEvent.click(screen.getByRole("button", { name: /상품 보기/ }));
-
-    expect(mockPush).toHaveBeenCalledWith("/wish/recommended");
-  });
-
-  it("open이 false면 useWishesQuery를 비활성화한다", () => {
-    mockQuery({});
+  it("open이 false면 위시를 조회하지 않는다", () => {
+    vi.mocked(useWishesQuery).mockClear();
 
     render(<FundingOpenSheet open={false} onClose={vi.fn()} />);
 
-    expect(useWishesQuery).toHaveBeenCalledWith({ enabled: false });
+    expect(useWishesQuery).not.toHaveBeenCalled();
   });
 });
