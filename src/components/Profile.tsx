@@ -31,11 +31,13 @@ export default function Profile({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [syncedImageUrl, setSyncedImageUrl] = useState(imageUrl);
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   // 업로드 성공으로 서버의 imageUrl이 갱신되면 로컬 미리보기를 내려 서버 URL이 보이게 한다 — effect가 아닌 렌더 중 동기화
   if (imageUrl !== syncedImageUrl) {
     setSyncedImageUrl(imageUrl);
     setSelectedFile(null);
+    setImageLoadError(false);
   }
 
   useEffect(() => {
@@ -44,6 +46,7 @@ export default function Profile({
     // objectURL 생성이 브라우저 리소스를 할당하는 부수효과라 렌더/useMemo가 아닌 이펙트에서 생성·해제를 같이 묶어야 함
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPreviewUrl(url);
+    setImageLoadError(false);
     return () => {
       URL.revokeObjectURL(url);
       setPreviewUrl(null);
@@ -77,9 +80,16 @@ export default function Profile({
 
   return (
     <div className={cn("relative size-[68px]", className)}>
-      <div className="size-full overflow-hidden rounded-full">
-        {displayUrl ? (
-          <Image src={displayUrl} alt="프로필 이미지" fill unoptimized className="object-cover" />
+      <div className="relative size-full overflow-hidden rounded-full">
+        {displayUrl && !imageLoadError ? (
+          <Image
+            src={displayUrl}
+            alt="프로필 이미지"
+            fill
+            unoptimized
+            className="object-cover"
+            onError={() => setImageLoadError(true)}
+          />
         ) : (
           <ProfileOrange className="size-full" />
         )}

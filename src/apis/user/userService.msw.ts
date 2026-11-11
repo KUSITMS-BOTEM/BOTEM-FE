@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker";
 import { delay, http, HttpResponse } from "msw";
 
 import { clearMockAuthCookies } from "@/mocks/mockAuthCookies";
@@ -9,7 +10,7 @@ export const userHandlers = [
       success: true,
       data: {
         nickname: "지유",
-        profileImageUrl: "https://example.com/profile.jpg",
+        profileImageUrl: faker.image.urlPicsumPhotos({ width: 68, height: 68, blur: 0 }),
         birthday: "10-13",
         wishProfileUrl: "https://botem.site/@8f0c6d779fae47f3a979302f2782d20f",
         kakaoConnected: true,
