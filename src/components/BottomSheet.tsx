@@ -4,11 +4,12 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { cn } from "@/utils/cn";
 import Button from "@/components/Button";
-import BottomSheetHeader from "@/components/BottomSheetHeader";
+import SheetHeader from "@/components/SheetHeader";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 
 type BottomSheetButtons = {
   leftLabel?: string;
+  leftColor?: "neutral" | "brand";
   rightLabel: string;
   onLeftClick?: () => void;
   onRightClick?: () => void;
@@ -118,7 +119,7 @@ export default function BottomSheet({
                   transition: { delay: 0.05, type: "spring", bounce: 0.25, duration: 0.55 },
                 }}
                 exit={{ y: "100%", transition: { duration: 0.3, ease: EASE_EXIT } }}>
-                <BottomSheetHeader
+                <SheetHeader
                   title={title}
                   titleId={titleId}
                   onClose={onClose}
@@ -133,7 +134,7 @@ export default function BottomSheet({
                     <div className="bg-semantic-background-default flex w-full items-start justify-center gap-2 px-5 pb-5">
                       {buttons.leftLabel && (
                         <Button
-                          color="neutral"
+                          color={buttons.leftColor ?? "neutral"}
                           variant="weak"
                           size="xlarge"
                           className="flex-1"

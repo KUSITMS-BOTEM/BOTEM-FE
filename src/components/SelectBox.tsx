@@ -12,11 +12,12 @@ import FieldMessage from "@/components/FieldMessage";
 import IconDown from "@/assets/icons/icon-down.svg?react";
 import IconCalendar from "@/assets/icons/icon-calendar.svg?react";
 
-type SelectBoxVariant = "select" | "birth";
+type SelectBoxVariant = "select" | "birth" | "deadline";
 
 const VARIANT_ICON: Record<SelectBoxVariant, typeof IconDown> = {
   select: IconDown,
   birth: IconCalendar,
+  deadline: IconCalendar,
 };
 
 type SelectBoxOwnProps = {
@@ -27,6 +28,12 @@ type SelectBoxOwnProps = {
   helperText?: ReactNode;
   // variant="birth"에서만 쓰인다. 기기 기본 캘린더로 고른 날짜의 연도를 뺀 월·일만 전달한다. 날짜를 지우면 둘 다 null로 전달된다.
   onDateChange?: (month: number | null, day: number | null) => void;
+  // variant="deadline"에서만 쓰인다. 연도를 포함한 날짜를 "YYYY-MM-DD"로 전달하고, 날짜를 지우면 빈 문자열이다.
+  onDeadlineChange?: (date: string) => void;
+  // 날짜 선택 variant에서 고를 수 있는 가장 이른 날짜("YYYY-MM-DD"). 이전 날짜는 캘린더에서 선택할 수 없다.
+  minDate?: string;
+  // 날짜 선택 variant에서 캘린더에 처음 선택돼 있을 날짜("YYYY-MM-DD"). 이미 정해진 값을 수정할 때 넘긴다.
+  dateValue?: string;
 };
 
 type SelectBoxProps = SelectBoxOwnProps &
@@ -40,6 +47,9 @@ export default function SelectBox({
   placeholder = "선택해주세요",
   helperText,
   onDateChange,
+  onDeadlineChange,
+  minDate,
+  dateValue = "",
   id,
   disabled,
   className,
@@ -52,11 +62,16 @@ export default function SelectBox({
   const helperTextId = `${controlId}-help`;
   const isFilled = value !== undefined && value !== "";
   const Icon = VARIANT_ICON[variant];
+  const hasDatePicker = variant !== "select";
   // 화면엔 월·일만 보여주지만, 같은 세션에서 다시 열었을 때 이전에 고른 연도까지 캘린더에 남아있도록 내부적으로만 기억한다
-  const [pickedDate, setPickedDate] = useState("");
+  const [pickedDate, setPickedDate] = useState(dateValue);
 
   const handleDateChange = (event: ChangeEvent<HTMLInputElement>) => {
     setPickedDate(event.target.value);
+    if (variant === "deadline") {
+      onDeadlineChange?.(event.target.value);
+      return;
+    }
     const [, month, day] = event.target.value.split("-").map(Number);
     onDateChange?.(month || null, day || null);
   };
@@ -77,7 +92,7 @@ export default function SelectBox({
           )}>
           {isFilled ? value : placeholder}
         </span>
-        {variant === "birth" ? (
+        {hasDatePicker ? (
           // 아이콘 영역만 클릭 가능해야 해서, 네이티브 캘린더를 여는 input을 박스 전체가 아니라 아이콘 크기에만 포갠다
           // (브라우저 기본 캘린더 팝업은 이 input 바로 아래에 열린다)
           <span className="relative size-6 shrink-0">
@@ -90,6 +105,7 @@ export default function SelectBox({
               type="date"
               id={controlId}
               value={pickedDate}
+              min={minDate}
               disabled={disabled}
               onChange={handleDateChange}
               aria-labelledby={`${labelId} ${valueId}`}
@@ -110,7 +126,7 @@ export default function SelectBox({
 
   return (
     <div className={cn("flex w-full flex-col gap-2", disabled && "opacity-60", className)}>
-      {variant === "birth" ? (
+      {hasDatePicker ? (
         <div
           className="bg-semantic-fill-neutral-weak flex w-full flex-col items-start justify-center overflow-clip rounded-3xl border-2 border-transparent px-5 py-3"
           // button 전용 attrs(type 등)를 제외하면 div와 호환되는 공통 DOM attrs만 남는다

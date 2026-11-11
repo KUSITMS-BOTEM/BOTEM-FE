@@ -10,7 +10,7 @@ import { useWithdrawMutation } from "@/hooks/mutations/user/useWithdrawMutation"
 import { handleLogoutClick } from "@/utils/auth/handleLogoutClick";
 import { handleWithdrawClick } from "@/utils/auth/handleWithdrawClick";
 import { consumeWishPromptPending } from "@/utils/wish/wishPromptStorage";
-import FundingOpenBottomSheet from "@/widgets/funding/FundingOpenBottomSheet";
+import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
 import AddWishBottomSheet from "@/widgets/wish/AddWishBottomSheet";
 
 export default function HomeContainer() {
@@ -27,7 +27,7 @@ export default function HomeContainer() {
       <Button onClick={() => handleLogoutClick(logout, router)}>로그아웃</Button>
       <Button onClick={() => handleWithdrawClick(withdraw, router)}>회원탈퇴</Button>
       <Button onClick={() => setFundingSheetOpen(true)}>펀딩 열기</Button>
-      <FundingOpenBottomSheet open={fundingSheetOpen} onClose={() => setFundingSheetOpen(false)} />
+      <FundingOpenSheet open={fundingSheetOpen} onClose={() => setFundingSheetOpen(false)} />
       <AddWishBottomSheet
         open={wishSheetOpen}
         onClose={() => setWishSheetOpen(false)}

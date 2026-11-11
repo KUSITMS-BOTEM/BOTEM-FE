@@ -17,7 +17,7 @@ const meta = {
     ),
   ],
   argTypes: {
-    variant: { control: "inline-radio", options: ["select", "birth"] },
+    variant: { control: "inline-radio", options: ["select", "birth", "deadline"] },
     helperText: { control: "text" },
   },
   args: {
@@ -47,6 +47,23 @@ export const BirthFilled: Story = {
   args: {
     variant: "birth",
     value: "1990.01.01",
+  },
+};
+
+export const Deadline: Story = {
+  args: {
+    variant: "deadline",
+    label: "마감일",
+    helperText: undefined,
+  },
+};
+
+export const DeadlineFilled: Story = {
+  args: {
+    variant: "deadline",
+    label: "마감일",
+    value: "2026.12.25 (금)",
+    helperText: undefined,
   },
 };
 

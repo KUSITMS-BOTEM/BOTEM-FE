@@ -116,6 +116,49 @@ describe("SelectBox", () => {
     expect(wrapper).toHaveClass("mt-4", "w-full");
   });
 
+  describe("variant=deadline", () => {
+    it("날짜를 선택하면 onDeadlineChange가 연도를 포함한 날짜로 호출되고 onDateChange는 호출되지 않는다", () => {
+      const handleDeadlineChange = vi.fn();
+      const handleDateChange = vi.fn();
+      const { container } = render(
+        <SelectBox
+          variant="deadline"
+          label="마감일"
+          onDeadlineChange={handleDeadlineChange}
+          onDateChange={handleDateChange}
+        />,
+      );
+
+      fireEvent.change(container.querySelector('input[type="date"]')!, {
+        target: { value: "2026-12-25" },
+      });
+
+      expect(handleDeadlineChange).toHaveBeenCalledWith("2026-12-25");
+      expect(handleDateChange).not.toHaveBeenCalled();
+    });
+
+    it("minDate를 넘기면 날짜 input의 min으로 전달된다", () => {
+      const { container } = render(
+        <SelectBox variant="deadline" label="마감일" minDate="2026-11-11" />,
+      );
+
+      expect(container.querySelector('input[type="date"]')).toHaveAttribute("min", "2026-11-11");
+    });
+
+    it("날짜를 지우면 onDeadlineChange가 빈 문자열로 호출된다", () => {
+      const handleDeadlineChange = vi.fn();
+      const { container } = render(
+        <SelectBox variant="deadline" label="마감일" onDeadlineChange={handleDeadlineChange} />,
+      );
+      const dateInput = container.querySelector('input[type="date"]')!;
+
+      fireEvent.change(dateInput, { target: { value: "2026-12-25" } });
+      fireEvent.change(dateInput, { target: { value: "" } });
+
+      expect(handleDeadlineChange).toHaveBeenLastCalledWith("");
+    });
+  });
+
   describe("variant=birth", () => {
     it("날짜를 선택하면 onDateChange가 월·일로 호출된다", () => {
       const handleDateChange = vi.fn();
@@ -140,6 +183,19 @@ describe("SelectBox", () => {
       fireEvent.change(dateInput, { target: { value: "" } });
 
       expect(handleDateChange).toHaveBeenLastCalledWith(null, null);
+    });
+
+    it("onDeadlineChange는 호출되지 않는다", () => {
+      const handleDeadlineChange = vi.fn();
+      const { container } = render(
+        <SelectBox variant="birth" label="생일" onDeadlineChange={handleDeadlineChange} />,
+      );
+
+      fireEvent.change(container.querySelector('input[type="date"]')!, {
+        target: { value: "2000-03-15" },
+      });
+
+      expect(handleDeadlineChange).not.toHaveBeenCalled();
     });
 
     it("나머지 props는 감싸는 영역에 그대로 전달된다", () => {
