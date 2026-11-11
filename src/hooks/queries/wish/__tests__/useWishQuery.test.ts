@@ -19,6 +19,7 @@ const mockWish: WishResponse = {
   productImageUrl: "https://example.com/airpods.png",
   price: 359000,
   productUrl: "https://example.com/product/1",
+  sellerName: "쿠팡 Apple 공식 브랜드관",
   status: "AVAILABLE",
   fundingId: null,
 };
