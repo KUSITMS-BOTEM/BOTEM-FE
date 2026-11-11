@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import Combobox from "@/components/Combobox";
 import InfoBox from "@/components/InfoBox";
 import SelectBox from "@/components/SelectBox";
+import TextArea from "@/components/TextArea";
 import Title from "@/components/Title";
 import type { WishResponse } from "@/types/wish/wish";
 import { formatDeadline, getTodayDate } from "@/utils/funding/formatDeadline";
@@ -17,6 +18,9 @@ const FIELD_TRANSITION = { delay: 0.4, duration: 0.4, ease: EASE_STANDARD };
 // 마감일은 이미 화면에 있는 목표 금액 입력 뒤에 나타나므로 delay를 짧게 잡는다
 const DEADLINE_TITLE_TRANSITION = { ...TITLE_TRANSITION, delay: 0 };
 const DEADLINE_FIELD_TRANSITION = { ...FIELD_TRANSITION, delay: 0.15 };
+const STORY_FIELD_TRANSITION = { ...FIELD_TRANSITION, delay: 0.15 };
+// 위에 새 필드가 생겨 아래 필드가 밀려 내려갈 때는 등장 delay 없이 바로 따라 내려간다
+const PUSH_DOWN_TRANSITION = { duration: 0.4, ease: EASE_STANDARD };
 const BASE_PRICE_CHIP = { label: "기본 상품 가격", value: "base-price" };
 
 type FundingInfoStepProps = {
@@ -28,7 +32,10 @@ export default function FundingInfoStep({ wish }: FundingInfoStepProps) {
   const [deadline, setDeadline] = useState("");
   // 한 번 나타난 마감일은 목표 금액을 지워도 유지한다
   const [showDeadline, setShowDeadline] = useState(false);
+  // 한 번 나타난 사연도 마감일을 지워도 유지한다
+  const [showStory, setShowStory] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const storyRef = useRef<HTMLTextAreaElement>(null);
   const basePriceText = wish.price.toLocaleString("ko-KR");
   const today = getTodayDate();
 
@@ -37,21 +44,47 @@ export default function FundingInfoStep({ wish }: FundingInfoStepProps) {
     if (Number(targetAmount) > 0) setShowDeadline(true);
   };
 
+  // 날짜 input의 blur가 버블링되어 마감일 영역에서 잡힌다
+  const revealStory = () => {
+    if (deadline) setShowStory(true);
+  };
+
   return (
     <div className="flex w-full flex-col gap-4">
       <motion.div
-        key={showDeadline ? "deadline" : "amount"}
+        key={showStory ? "story" : showDeadline ? "deadline" : "amount"}
         initial={{ opacity: 0, y: 32 }}
         animate={{ opacity: 1, y: 0 }}
         transition={showDeadline ? DEADLINE_TITLE_TRANSITION : TITLE_TRANSITION}
         className="w-full">
-        <Title type="a2z" title={showDeadline ? "언제까지 모을까요?" : "목표 금액은 얼마인가요?"} />
+        <Title
+          type="a2z"
+          title={
+            showStory
+              ? "어떤 사연인지 들려주세요"
+              : showDeadline
+                ? "언제까지 모을까요?"
+                : "목표 금액은 얼마인가요?"
+          }
+        />
       </motion.div>
-      {showDeadline && (
+      {showStory && (
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={DEADLINE_FIELD_TRANSITION}
+          transition={STORY_FIELD_TRANSITION}
+          onAnimationComplete={() => storyRef.current?.focus({ preventScroll: true })}
+          className="w-full">
+          <TextArea ref={storyRef} label="사연" placeholder="입력해주세요" />
+        </motion.div>
+      )}
+      {showDeadline && (
+        <motion.div
+          layout="position"
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...DEADLINE_FIELD_TRANSITION, layout: PUSH_DOWN_TRANSITION }}
+          onBlur={revealStory}
           className="w-full">
           <SelectBox
             variant="deadline"
@@ -64,9 +97,10 @@ export default function FundingInfoStep({ wish }: FundingInfoStepProps) {
         </motion.div>
       )}
       <motion.div
+        layout="position"
         initial={{ opacity: 0, y: 28 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={FIELD_TRANSITION}
+        transition={{ ...FIELD_TRANSITION, layout: PUSH_DOWN_TRANSITION }}
         // 입력 영역이 다 나타난 뒤에 포커스해야 모션 중 키보드가 올라와 레이아웃이 흔들리지 않는다
         onAnimationComplete={() => inputRef.current?.focus({ preventScroll: true })}
         className="flex w-full flex-col gap-2">

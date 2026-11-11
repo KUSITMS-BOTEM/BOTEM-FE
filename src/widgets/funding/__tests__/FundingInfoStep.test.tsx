@@ -140,6 +140,61 @@ describe("FundingInfoStep", () => {
     expect(screen.getByText("선택해주세요")).toBeInTheDocument();
   });
 
+  describe("마감일 이후 사연 단계", () => {
+    const revealDeadline = async (container: HTMLElement) => {
+      await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
+      await userEvent.tab();
+      const dateInput = container.querySelector<HTMLInputElement>('input[type="date"]')!;
+      return dateInput;
+    };
+
+    it("날짜를 고르고 포커스가 빠지면 사연이 나타나고 제목이 바뀐다", async () => {
+      const { container } = renderStep();
+      const dateInput = await revealDeadline(container);
+
+      fireEvent.change(dateInput, { target: { value: "2099-12-25" } });
+      expect(screen.queryByLabelText("사연")).not.toBeInTheDocument();
+      fireEvent.blur(dateInput);
+
+      expect(screen.getByLabelText("사연")).toBeInTheDocument();
+      expect(screen.getByText("어떤 사연인지 들려주세요")).toBeInTheDocument();
+      expect(screen.queryByText("언제까지 모을까요?")).not.toBeInTheDocument();
+    });
+
+    it("날짜를 고르지 않고 포커스가 빠지면 사연이 나타나지 않는다", async () => {
+      const { container } = renderStep();
+      const dateInput = await revealDeadline(container);
+
+      fireEvent.blur(dateInput);
+
+      expect(screen.queryByLabelText("사연")).not.toBeInTheDocument();
+      expect(screen.getByText("언제까지 모을까요?")).toBeInTheDocument();
+    });
+
+    it("사연이 나타난 뒤 날짜를 지워도 사연은 유지된다", async () => {
+      const { container } = renderStep();
+      const dateInput = await revealDeadline(container);
+
+      fireEvent.change(dateInput, { target: { value: "2099-12-25" } });
+      fireEvent.blur(dateInput);
+      fireEvent.change(dateInput, { target: { value: "" } });
+
+      expect(screen.getByLabelText("사연")).toBeInTheDocument();
+    });
+
+    it("사연 모션이 끝나면 사연에 포커스한다", async () => {
+      const { container } = renderStep();
+      const dateInput = await revealDeadline(container);
+
+      fireEvent.change(dateInput, { target: { value: "2099-12-25" } });
+      fireEvent.blur(dateInput);
+
+      await waitFor(() => expect(screen.getByLabelText("사연")).toHaveFocus(), {
+        timeout: 3000,
+      });
+    });
+  });
+
   it("입력 영역 모션이 끝나면 목표 금액에 포커스한다", async () => {
     renderStep();
 
