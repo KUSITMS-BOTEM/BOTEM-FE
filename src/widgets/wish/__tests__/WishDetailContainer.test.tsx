@@ -36,6 +36,7 @@ const mockWish: WishResponse = {
   productImageUrl: "https://example.com/airpods.png",
   price: 359000,
   productUrl: "https://example.com/airpods",
+  sellerName: "쿠팡 Apple 공식 브랜드관",
   status: "AVAILABLE",
   fundingId: null,
 };
@@ -69,6 +70,7 @@ describe("WishDetailContainer", () => {
 
     expect(screen.getByText("에어팟 프로 3")).toBeInTheDocument();
     expect(screen.getByText("359,000원")).toBeInTheDocument();
+    expect(screen.getByText("쿠팡 Apple 공식 브랜드관")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "이 상품으로 펀딩 열기" })).toBeInTheDocument();
   });
 
