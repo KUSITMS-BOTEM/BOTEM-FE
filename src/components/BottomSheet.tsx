@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { cn } from "@/utils/cn";
 import Button from "@/components/Button";
-import BottomSheetHeader from "@/components/BottomSheetHeader";
+import SheetHeader from "@/components/SheetHeader";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 
 type BottomSheetButtons = {
@@ -118,7 +118,7 @@ export default function BottomSheet({
                   transition: { delay: 0.05, type: "spring", bounce: 0.25, duration: 0.55 },
                 }}
                 exit={{ y: "100%", transition: { duration: 0.3, ease: EASE_EXIT } }}>
-                <BottomSheetHeader
+                <SheetHeader
                   title={title}
                   titleId={titleId}
                   onClose={onClose}

@@ -2,7 +2,7 @@ import { cn } from "@/utils/cn";
 import IconButton from "@/components/IconButton";
 import IconClose from "@/assets/icons/icon-close.svg?react";
 
-type BottomSheetHeaderProps = {
+type SheetHeaderProps = {
   title: string;
   titleId?: string;
   onClose: () => void;
@@ -10,13 +10,13 @@ type BottomSheetHeaderProps = {
   className?: string;
 };
 
-export default function BottomSheetHeader({
+export default function SheetHeader({
   title,
   titleId,
   onClose,
   showHandle = true,
   className,
-}: BottomSheetHeaderProps) {
+}: SheetHeaderProps) {
   return (
     <div
       className={cn(
