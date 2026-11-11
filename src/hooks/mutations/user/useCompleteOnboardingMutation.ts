@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { userService } from "@/apis/user/userService";
 import { queryClient } from "@/lib/queryClient";
 import { clearSignupFlow } from "@/utils/auth/signupFlowStorage";
-import { markWishPromptPending } from "@/utils/wishPromptStorage";
+import { markWishPromptPending } from "@/utils/wish/wishPromptStorage";
 
 export const useCompleteOnboardingMutation = () => {
   const router = useRouter();

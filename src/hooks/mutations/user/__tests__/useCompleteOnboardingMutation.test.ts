@@ -6,7 +6,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { userService } from "@/apis/user/userService";
 import { useCompleteOnboardingMutation } from "@/hooks/mutations/user/useCompleteOnboardingMutation";
 import { setSignupFlow } from "@/utils/auth/signupFlowStorage";
-import { consumeWishPromptPending } from "@/utils/wishPromptStorage";
+import { consumeWishPromptPending } from "@/utils/wish/wishPromptStorage";
 import type { RegisterOnboardingRequest } from "@/types/user/onboarding";
 
 vi.mock("@/apis/user/userService", () => ({
