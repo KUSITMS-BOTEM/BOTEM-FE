@@ -32,6 +32,8 @@ type SelectBoxOwnProps = {
   onDeadlineChange?: (date: string) => void;
   // 날짜 선택 variant에서 고를 수 있는 가장 이른 날짜("YYYY-MM-DD"). 이전 날짜는 캘린더에서 선택할 수 없다.
   minDate?: string;
+  // 날짜 선택 variant에서 캘린더에 처음 선택돼 있을 날짜("YYYY-MM-DD"). 이미 정해진 값을 수정할 때 넘긴다.
+  dateValue?: string;
 };
 
 type SelectBoxProps = SelectBoxOwnProps &
@@ -47,6 +49,7 @@ export default function SelectBox({
   onDateChange,
   onDeadlineChange,
   minDate,
+  dateValue = "",
   id,
   disabled,
   className,
@@ -61,7 +64,7 @@ export default function SelectBox({
   const Icon = VARIANT_ICON[variant];
   const hasDatePicker = variant !== "select";
   // 화면엔 월·일만 보여주지만, 같은 세션에서 다시 열었을 때 이전에 고른 연도까지 캘린더에 남아있도록 내부적으로만 기억한다
-  const [pickedDate, setPickedDate] = useState("");
+  const [pickedDate, setPickedDate] = useState(dateValue);
 
   const handleDateChange = (event: ChangeEvent<HTMLInputElement>) => {
     setPickedDate(event.target.value);

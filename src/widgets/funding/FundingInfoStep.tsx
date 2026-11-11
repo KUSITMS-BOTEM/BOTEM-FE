@@ -53,6 +53,8 @@ type FundingInfoStepProps = {
   onNext: (values: FundingInfoValues) => void;
   // 있으면 수정 모드: 모든 필드를 채워 보여주고, 값이 바뀌어야 CTA가 활성화된다
   initialValues?: FundingInfoValues;
+  // 수정 모드 없이 값만 미리 채운다. 수정 시트에서 바꾼 값을 숨겨 둔 입력 단계에 반영할 때 쓴다
+  defaultValues?: FundingInfoValues;
   submitLabel?: string;
 };
 
@@ -60,19 +62,22 @@ export default function FundingInfoStep({
   wish,
   onNext,
   initialValues,
+  defaultValues,
   submitLabel = "다음",
 }: FundingInfoStepProps) {
-  const isEdit = initialValues !== undefined;
-  const [targetAmount, setTargetAmount] = useState(initialValues?.targetAmount ?? "");
-  const [deadline, setDeadline] = useState(initialValues?.deadline ?? "");
+  const seed = initialValues ?? defaultValues;
+  // 값이 미리 채워진 채로 시작하면 모든 필드를 모션·자동 포커스 없이 바로 보여준다
+  const isEdit = seed !== undefined;
+  const [targetAmount, setTargetAmount] = useState(seed?.targetAmount ?? "");
+  const [deadline, setDeadline] = useState(seed?.deadline ?? "");
   // 한 번 나타난 마감일은 목표 금액을 지워도 유지한다
   const [showDeadline, setShowDeadline] = useState(isEdit);
   // 한 번 나타난 사연도 마감일을 지워도 유지한다
   const [showStory, setShowStory] = useState(isEdit);
-  const [story, setStory] = useState(initialValues?.story ?? "");
+  const [story, setStory] = useState(seed?.story ?? "");
   // 한 번 나타난 공약도 사연을 지워도 유지한다
   const [showPledge, setShowPledge] = useState(isEdit);
-  const [pledge, setPledge] = useState(initialValues?.pledge ?? "");
+  const [pledge, setPledge] = useState(seed?.pledge ?? "");
   const stage: Stage = showPledge
     ? "pledge"
     : showStory
@@ -186,6 +191,7 @@ export default function FundingInfoStep({
             variant="deadline"
             label="마감일"
             value={formatDeadline(deadline)}
+            dateValue={deadline}
             minDate={today}
             // 데스크탑에서 날짜를 직접 입력하면 min을 우회할 수 있어 한 번 더 거른다
             onDeadlineChange={date => setDeadline(date >= today ? date : "")}
@@ -208,7 +214,11 @@ export default function FundingInfoStep({
           enterKeyHint="done"
           autoComplete="off"
           chips={showDeadline ? undefined : [BASE_PRICE_CHIP]}
-          onChipSelect={() => setTargetAmount(String(wish.price))}
+          onChipSelect={() => {
+            setTargetAmount(String(wish.price));
+            // 칩 클릭은 input blur를 일으키지 않으므로 마감일 단계를 직접 연다
+            if (wish.price > 0) setShowDeadline(true);
+          }}
           value={targetAmount ? Number(targetAmount).toLocaleString("ko-KR") : ""}
           onChange={event => setTargetAmount(event.target.value.replace(/\D/g, ""))}
           onBlur={revealDeadline}

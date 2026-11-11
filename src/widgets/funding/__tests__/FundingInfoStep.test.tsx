@@ -92,14 +92,12 @@ describe("FundingInfoStep", () => {
     expect(screen.queryByText("마감일")).not.toBeInTheDocument();
   });
 
-  it("금액을 입력한 뒤 칩을 눌러도 칩 클릭이 유실되지 않고 이후에 마감일이 나타난다", async () => {
+  it("금액을 입력한 뒤 칩을 누르면 칩 클릭이 유실되지 않고 바로 마감일이 나타난다", async () => {
     renderStep();
 
     const input = screen.getByLabelText("목표 금액");
     await userEvent.type(input, "1000");
     await userEvent.click(screen.getByRole("button", { name: "기본 상품 가격" }));
-    expect(screen.queryByText("마감일")).not.toBeInTheDocument();
-    await userEvent.tab();
 
     expect(input).toHaveValue("468,000");
     expect(screen.getByText("마감일")).toBeInTheDocument();

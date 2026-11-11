@@ -20,6 +20,8 @@ type FundingAccountStepProps = {
   onSubmit: (values: FundingAccountValues) => void;
   // 있으면 수정 모드: 값을 채워 보여주고 이전 버튼 없이 값이 바뀌어야 CTA가 활성화된다
   initialValues?: FundingAccountValues;
+  // 수정 모드 없이 값만 미리 채운다. 수정 시트에서 바꾼 값을 숨겨 둔 입력 단계에 반영할 때 쓴다
+  defaultValues?: FundingAccountValues;
   onPrev?: () => void;
   submitLabel?: string;
 };
@@ -27,11 +29,13 @@ type FundingAccountStepProps = {
 export default function FundingAccountStep({
   onSubmit,
   initialValues,
+  defaultValues,
   onPrev,
   submitLabel = "펀딩 열기",
 }: FundingAccountStepProps) {
-  const [accountNumber, setAccountNumber] = useState(initialValues?.accountNumber ?? "");
-  const [bank, setBank] = useState<BankCode | null>(initialValues?.bank ?? null);
+  const seed = initialValues ?? defaultValues;
+  const [accountNumber, setAccountNumber] = useState(seed?.accountNumber ?? "");
+  const [bank, setBank] = useState<BankCode | null>(seed?.bank ?? null);
   const { data: payoutAccounts } = usePayoutAccountsQuery();
   const defaultAccount = payoutAccounts?.find(account => account.isDefault);
 
@@ -48,7 +52,7 @@ export default function FundingAccountStep({
         bank={bank}
         onAccountNumberChange={setAccountNumber}
         onBankChange={setBank}
-        animated={!initialValues}
+        animated={!seed}
       />
       <BottomCTA
         upper={

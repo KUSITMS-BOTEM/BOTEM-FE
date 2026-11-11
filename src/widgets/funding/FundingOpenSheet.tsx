@@ -35,6 +35,8 @@ export default function FundingOpenSheet({ open, onClose, className }: FundingOp
   // 확인 시트를 연 채로 그 위에 띄우는 수정 시트
   const [editing, setEditing] = useState<Step | null>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  // 수정 완료 때마다 올려, 숨겨 둔 입력 단계를 수정값으로 다시 채워 마운트한다
+  const [syncVersion, setSyncVersion] = useState(0);
 
   // 시트를 닫으면 다음에 열 때 위시 선택부터 다시 시작한다
   const handleClose = () => {
@@ -45,6 +47,7 @@ export default function FundingOpenSheet({ open, onClose, className }: FundingOp
     setAccount(null);
     setConfirmOpen(false);
     setEditing(null);
+    setSyncVersion(0);
     onClose();
   };
 
@@ -78,11 +81,21 @@ export default function FundingOpenSheet({ open, onClose, className }: FundingOp
           // 이전으로 돌아왔을 때 입력값·단계가 남도록 언마운트하지 않고 숨기기만 한다
           <>
             <div className={cn("w-full", step !== "info" && "hidden")}>
-              <FundingInfoStep wish={selectedWish} onNext={handleInfoNext} />
+              <FundingInfoStep
+                key={syncVersion}
+                wish={selectedWish}
+                defaultValues={info ?? undefined}
+                onNext={handleInfoNext}
+              />
             </div>
             {accountVisited && (
               <div className={cn("w-full", step !== "account" && "hidden")}>
-                <FundingAccountStep onSubmit={handleAccountSubmit} onPrev={() => setStep("info")} />
+                <FundingAccountStep
+                  key={syncVersion}
+                  defaultValues={account ?? undefined}
+                  onSubmit={handleAccountSubmit}
+                  onPrev={() => setStep("info")}
+                />
               </div>
             )}
           </>
@@ -124,6 +137,7 @@ export default function FundingOpenSheet({ open, onClose, className }: FundingOp
                 submitLabel="수정 완료"
                 onNext={values => {
                   setInfo(values);
+                  setSyncVersion(version => version + 1);
                   setEditing(null);
                 }}
               />
@@ -134,6 +148,7 @@ export default function FundingOpenSheet({ open, onClose, className }: FundingOp
                 submitLabel="수정 완료"
                 onSubmit={values => {
                   setAccount(values);
+                  setSyncVersion(version => version + 1);
                   setEditing(null);
                 }}
               />
