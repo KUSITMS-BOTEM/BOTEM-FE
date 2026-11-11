@@ -27,6 +27,7 @@ const wish: WishResponse = {
   productImageUrl: "https://example.com/1.png",
   price: 468000,
   productUrl: "https://example.com",
+  sellerName: "쿠팡 Apple 공식 브랜드관",
   status: "AVAILABLE",
   fundingId: null,
 };
