@@ -11,6 +11,7 @@ type BottomSheetButtons = {
   leftLabel?: string;
   leftColor?: "neutral" | "brand";
   rightLabel: string;
+  rightColor?: "brand" | "neutral";
   onLeftClick?: () => void;
   onRightClick?: () => void;
   leftDisabled?: boolean;
@@ -160,8 +161,8 @@ export default function BottomSheet({
                             </Button>
                           )}
                           <Button
-                            color="brand"
-                            variant="fill"
+                            color={buttons.rightColor ?? "brand"}
+                            variant={buttons.rightColor === "neutral" ? "weak" : "fill"}
                             size="xlarge"
                             className="flex-1"
                             disabled={buttons.rightDisabled}

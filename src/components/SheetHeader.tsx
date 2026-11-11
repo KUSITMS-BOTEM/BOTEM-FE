@@ -1,12 +1,14 @@
 import { cn } from "@/utils/cn";
 import IconButton from "@/components/IconButton";
 import IconClose from "@/assets/icons/icon-close.svg?react";
+import IconLeft from "@/assets/icons/icon-left.svg?react";
 
 type SheetHeaderProps = {
   title: string;
   titleId?: string;
   onClose: () => void;
   showHandle?: boolean;
+  closeType?: "close" | "back";
   className?: string;
 };
 
@@ -15,6 +17,7 @@ export default function SheetHeader({
   titleId,
   onClose,
   showHandle = true,
+  closeType = "close",
   className,
 }: SheetHeaderProps) {
   return (
@@ -34,13 +37,23 @@ export default function SheetHeader({
           {title}
         </p>
       </div>
-      <IconButton
-        size="large"
-        icon={<IconClose />}
-        aria-label="닫기"
-        onClick={onClose}
-        className="absolute top-2 right-[11px]"
-      />
+      {closeType === "back" ? (
+        <IconButton
+          size="xlarge"
+          icon={<IconLeft />}
+          aria-label="뒤로 가기"
+          onClick={onClose}
+          className="absolute top-3 left-2.5"
+        />
+      ) : (
+        <IconButton
+          size="large"
+          icon={<IconClose />}
+          aria-label="닫기"
+          onClick={onClose}
+          className="absolute top-2 right-[11px]"
+        />
+      )}
     </div>
   );
 }

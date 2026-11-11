@@ -357,3 +357,37 @@ describe("BottomSheet leftDisabled·upper·toast", () => {
     expect(screen.queryByRole("button", { name: "확인" })).not.toBeInTheDocument();
   });
 });
+
+describe("BottomSheet rightColor", () => {
+  it("rightColor가 없으면 오른쪽 버튼이 brand fill이다", () => {
+    render(
+      <BottomSheet
+        open
+        height="auto"
+        title="타이틀"
+        onClose={vi.fn()}
+        buttons={{ rightLabel: "확인" }}>
+        본문
+      </BottomSheet>,
+    );
+
+    expect(screen.getByRole("button", { name: "확인" })).toHaveClass("bg-semantic-fill-brand");
+  });
+
+  it('rightColor="neutral"이면 오른쪽 버튼이 neutral weak이다', () => {
+    render(
+      <BottomSheet
+        open
+        height="auto"
+        title="타이틀"
+        onClose={vi.fn()}
+        buttons={{ rightLabel: "확인", rightColor: "neutral" }}>
+        본문
+      </BottomSheet>,
+    );
+
+    expect(screen.getByRole("button", { name: "확인" })).toHaveClass(
+      "bg-semantic-fill-neutral-weak",
+    );
+  });
+});
