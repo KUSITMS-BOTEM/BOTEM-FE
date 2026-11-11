@@ -28,19 +28,19 @@ const mockWish: WishResponse = {
   fundingId: null,
 };
 
-const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: { mutations: { retry: false } },
-  });
+const queryClient = new QueryClient({
+  defaultOptions: { mutations: { retry: false } },
+});
 
-  return function Wrapper({ children }: { children: ReactNode }) {
+const createWrapper = () =>
+  function Wrapper({ children }: { children: ReactNode }) {
     return createElement(QueryClientProvider, { client: queryClient }, children);
   };
-};
 
 describe("useAddWishMutation", () => {
   beforeEach(() => {
     replace.mockClear();
+    queryClient.clear();
   });
 
   it("mutate 호출 시 wishService.addWish가 전달받은 body로 호출된다", async () => {
@@ -55,8 +55,32 @@ describe("useAddWishMutation", () => {
     expect(wishService.addWish).toHaveBeenCalledWith({ recommendedProductId: 1 });
   });
 
-  it("성공 시 router.replace가 /wish/recommended로 호출된다", async () => {
-    vi.mocked(wishService.addWish).mockResolvedValue(mockWish);
+  it("성공 시 router.replace가 응답 id의 위시 상세(/wish/{id})로 호출된다", async () => {
+    vi.mocked(wishService.addWish).mockResolvedValue({ ...mockWish, id: 7 });
+    const { result } = renderHook(() => useAddWishMutation(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate({ recommendedProductId: 1 });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(replace).toHaveBeenCalledWith("/wish/7");
+  });
+
+  it("성공 시 위시 상세 쿼리 캐시(['wishes', String(id)])가 응답으로 미리 채워진다", async () => {
+    vi.mocked(wishService.addWish).mockResolvedValue({ ...mockWish, id: 7 });
+    const { result } = renderHook(() => useAddWishMutation(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate({ recommendedProductId: 1 });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(queryClient.getQueryData(["wishes", "7"])).toEqual({ ...mockWish, id: 7 });
+  });
+
+  it("성공 응답의 data가 null이면 추천 목록(/wish/recommended)으로 되돌아간다", async () => {
+    vi.mocked(wishService.addWish).mockResolvedValue(null);
     const { result } = renderHook(() => useAddWishMutation(), {
       wrapper: createWrapper(),
     });
@@ -79,5 +103,6 @@ describe("useAddWishMutation", () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBe(error);
     expect(replace).not.toHaveBeenCalled();
+    expect(queryClient.getQueryData(["wishes", "1"])).toBeUndefined();
   });
 });
