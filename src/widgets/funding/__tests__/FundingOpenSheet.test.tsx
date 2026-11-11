@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
@@ -175,6 +175,60 @@ describe("FundingOpenSheet", () => {
       expect(screen.getByText("펀딩 정보")).toBeInTheDocument();
       expect(screen.getByLabelText("사연")).toHaveValue("생일 선물");
       expect(screen.getByLabelText("목표 금액")).toHaveValue("1,000");
+    });
+
+    describe("펀딩 열기 확인 시트", () => {
+      const openConfirm = async () => {
+        vi.mocked(usePayoutAccountsQuery).mockReturnValue({
+          data: [{ accountNumber: "100159014821", bank: "TOSS_BANK", isDefault: true }],
+        } as unknown as ReturnType<typeof usePayoutAccountsQuery>);
+        await goToAccountStep();
+        await userEvent.click(await screen.findByRole("button", { name: /대표 계좌 사용하기/ }));
+        await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
+        await screen.findByText("이대로 펀딩을 열까요?");
+      };
+
+      // 숨겨진 정보 단계의 입력값과 구분하기 위해 확인 시트 안에서만 찾는다
+      const confirmSheet = () =>
+        within(screen.getByText("이대로 펀딩을 열까요?").closest("dialog") as HTMLElement);
+
+      afterEach(() => {
+        vi.mocked(usePayoutAccountsQuery).mockReturnValue({
+          data: [],
+        } as unknown as ReturnType<typeof usePayoutAccountsQuery>);
+      });
+
+      it("펀딩 열기를 누르면 입력한 값이 채워진 확인 시트가 열린다", async () => {
+        await openConfirm();
+
+        expect(confirmSheet().getByText("상품468")).toBeInTheDocument();
+        expect(confirmSheet().getByText("목표 1,000원 · 마감 12월 25일")).toBeInTheDocument();
+        expect(confirmSheet().getByText("생일 선물")).toBeInTheDocument();
+        expect(confirmSheet().getByText("100159014821")).toBeInTheDocument();
+      });
+
+      it("펀딩 정보를 변경하면 확인 시트에 수정된 값이 반영된다", async () => {
+        await openConfirm();
+        await userEvent.click(screen.getAllByRole("button", { name: /변경하기/ })[0]);
+
+        const editButton = await screen.findByRole("button", { name: "수정 완료" });
+        expect(editButton).toBeDisabled();
+        await userEvent.type(screen.getAllByLabelText("사연").at(-1)!, "!");
+        await userEvent.click(editButton);
+
+        await waitFor(() => expect(confirmSheet().getByText("생일 선물!")).toBeInTheDocument());
+        expect(screen.queryByRole("button", { name: "수정 완료" })).not.toBeInTheDocument();
+      });
+
+      it("계좌를 변경하면 확인 시트에 수정된 계좌번호가 반영된다", async () => {
+        await openConfirm();
+        await userEvent.click(screen.getAllByRole("button", { name: /변경하기/ })[1]);
+
+        await userEvent.type(screen.getAllByLabelText("계좌번호").at(-1)!, "9");
+        await userEvent.click(await screen.findByRole("button", { name: "수정 완료" }));
+
+        await waitFor(() => expect(confirmSheet().getByText("1001590148219")).toBeInTheDocument());
+      });
     });
 
     it("계좌 단계에 들어가기 전에는 대표 계좌를 조회하지 않는다", async () => {

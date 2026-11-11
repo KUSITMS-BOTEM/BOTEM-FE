@@ -27,6 +27,8 @@ type PayoutAccountFormProps = {
   bank: BankCode | null;
   onAccountNumberChange: (accountNumber: string) => void;
   onBankChange: (bank: BankCode) => void;
+  // false면 등장 모션 없이 바로 보여준다
+  animated?: boolean;
 };
 
 // CTA가 폼 밖(BottomCTA)에 있어 값은 부모가 들고, 폼은 입력 UI와 붙여넣기 처리만 맡는다
@@ -35,6 +37,7 @@ export default function PayoutAccountForm({
   bank,
   onAccountNumberChange,
   onBankChange,
+  animated = true,
 }: PayoutAccountFormProps) {
   const [bankSheetOpen, setBankSheetOpen] = useState(false);
   const [toastText, setToastText] = useState<string | null>(null);
@@ -69,7 +72,7 @@ export default function PayoutAccountForm({
     <MotionConfig reducedMotion="user">
       <div className="flex w-full flex-col gap-1">
         <motion.div
-          initial={{ opacity: 0, y: 32 }}
+          initial={animated ? { opacity: 0, y: 32 } : false}
           animate={{ opacity: 1, y: 0 }}
           transition={TITLE_TRANSITION}>
           <Title
@@ -83,7 +86,7 @@ export default function PayoutAccountForm({
         </motion.div>
         <motion.div
           className="flex flex-col gap-4"
-          initial={{ opacity: 0, y: 28 }}
+          initial={animated ? { opacity: 0, y: 28 } : false}
           animate={{ opacity: 1, y: 0 }}
           transition={FIELD_TRANSITION}>
           <TextField

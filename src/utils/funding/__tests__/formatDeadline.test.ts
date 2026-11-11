@@ -1,4 +1,4 @@
-import { formatDeadline, getTodayDate } from "@/utils/funding/formatDeadline";
+import { formatDeadline, formatDeadlineShort, getTodayDate } from "@/utils/funding/formatDeadline";
 
 describe("formatDeadline", () => {
   it("날짜를 연.월.일과 요일로 보여준다", () => {
@@ -18,5 +18,12 @@ describe("getTodayDate", () => {
     vi.setSystemTime(new Date(2026, 10, 11, 23, 30));
 
     expect(getTodayDate()).toBe("2026-11-11");
+  });
+});
+
+describe("formatDeadlineShort", () => {
+  it("날짜를 'M월 D일' 형식으로 바꾼다", () => {
+    expect(formatDeadlineShort("2026-11-13")).toBe("11월 13일");
+    expect(formatDeadlineShort("2026-01-05")).toBe("1월 5일");
   });
 });

@@ -11,13 +11,27 @@ import { ACCOUNT_NUMBER_REGEX } from "@/utils/payout-account/parseClipboardAccou
 import PayoutAccountForm from "@/widgets/payout-account/PayoutAccountForm";
 import IconReset from "@/assets/icons/icon-reset.svg?react";
 
-type FundingAccountStepProps = {
-  onPrev: () => void;
+export type FundingAccountValues = {
+  accountNumber: string;
+  bank: BankCode;
 };
 
-export default function FundingAccountStep({ onPrev }: FundingAccountStepProps) {
-  const [accountNumber, setAccountNumber] = useState("");
-  const [bank, setBank] = useState<BankCode | null>(null);
+type FundingAccountStepProps = {
+  onSubmit: (values: FundingAccountValues) => void;
+  // 있으면 수정 모드: 값을 채워 보여주고 이전 버튼 없이 값이 바뀌어야 CTA가 활성화된다
+  initialValues?: FundingAccountValues;
+  onPrev?: () => void;
+  submitLabel?: string;
+};
+
+export default function FundingAccountStep({
+  onSubmit,
+  initialValues,
+  onPrev,
+  submitLabel = "펀딩 열기",
+}: FundingAccountStepProps) {
+  const [accountNumber, setAccountNumber] = useState(initialValues?.accountNumber ?? "");
+  const [bank, setBank] = useState<BankCode | null>(initialValues?.bank ?? null);
   const { data: payoutAccounts } = usePayoutAccountsQuery();
   const defaultAccount = payoutAccounts?.find(account => account.isDefault);
 
@@ -34,6 +48,7 @@ export default function FundingAccountStep({ onPrev }: FundingAccountStepProps) 
         bank={bank}
         onAccountNumberChange={setAccountNumber}
         onBankChange={setBank}
+        animated={!initialValues}
       />
       <BottomCTA
         upper={
@@ -46,14 +61,21 @@ export default function FundingAccountStep({ onPrev }: FundingAccountStepProps) 
             onClick={fillDefaultAccount}
           />
         }>
-        <Button color="neutral" variant="weak" size="xlarge" onClick={onPrev}>
-          이전
-        </Button>
+        {onPrev && (
+          <Button color="neutral" variant="weak" size="xlarge" onClick={onPrev}>
+            이전
+          </Button>
+        )}
         <Button
           color="brand"
           size="xlarge"
-          disabled={!ACCOUNT_NUMBER_REGEX.test(accountNumber) || !bank}>
-          펀딩 열기
+          disabled={
+            !ACCOUNT_NUMBER_REGEX.test(accountNumber) ||
+            !bank ||
+            (accountNumber === initialValues?.accountNumber && bank === initialValues?.bank)
+          }
+          onClick={() => bank && onSubmit({ accountNumber, bank })}>
+          {submitLabel}
         </Button>
       </BottomCTA>
     </>

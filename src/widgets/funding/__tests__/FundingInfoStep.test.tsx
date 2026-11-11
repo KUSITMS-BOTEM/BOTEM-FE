@@ -326,3 +326,49 @@ describe("FundingInfoStep", () => {
     });
   });
 });
+
+describe("FundingInfoStep 수정 모드", () => {
+  const initialValues = {
+    targetAmount: "429000",
+    deadline: "2099-11-13",
+    story: "사연",
+    pledge: "공약",
+  };
+  const renderEdit = (onNext = vi.fn()) =>
+    render(
+      <FundingInfoStep
+        wish={wish}
+        onNext={onNext}
+        initialValues={initialValues}
+        submitLabel="수정 완료"
+      />,
+    );
+
+  it("입력했던 값이 모두 채워져 있고 수정 완료가 비활성화돼 있다", () => {
+    renderEdit();
+
+    expect(screen.getByLabelText("목표 금액")).toHaveValue("429,000");
+    expect(screen.getByLabelText("사연")).toHaveValue("사연");
+    expect(screen.getByLabelText("공약")).toHaveValue("공약");
+    expect(screen.getByRole("button", { name: "수정 완료" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "다음" })).not.toBeInTheDocument();
+  });
+
+  it("값을 바꾸면 수정 완료가 활성화되고 누르면 바뀐 값으로 onNext를 호출한다", async () => {
+    const onNext = vi.fn();
+    renderEdit(onNext);
+
+    await userEvent.type(screen.getByLabelText("공약"), "!");
+    await userEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+
+    expect(onNext).toHaveBeenCalledWith({ ...initialValues, pledge: "공약!" });
+  });
+
+  it("필수값(사연)을 비우면 값이 바뀌어도 수정 완료가 비활성화된다", async () => {
+    renderEdit();
+
+    await userEvent.clear(screen.getByLabelText("사연"));
+
+    expect(screen.getByRole("button", { name: "수정 완료" })).toBeDisabled();
+  });
+});

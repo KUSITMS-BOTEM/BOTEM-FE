@@ -44,7 +44,7 @@ const mockAccounts = (data: PayoutAccountResponse[] | undefined) =>
 describe("FundingAccountStep", () => {
   it("계좌 정보가 비어 있으면 펀딩 열기가 비활성화된다", () => {
     mockAccounts([account({})]);
-    render(<FundingAccountStep onPrev={vi.fn()} />);
+    render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
 
     expect(screen.getByRole("button", { name: "펀딩 열기" })).toBeDisabled();
   });
@@ -54,7 +54,7 @@ describe("FundingAccountStep", () => {
       account({ id: 2, bank: "KAKAO_BANK", accountNumber: "3333", isDefault: false }),
       account({}),
     ]);
-    render(<FundingAccountStep onPrev={vi.fn()} />);
+    render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
 
     await userEvent.click(screen.getByRole("button", { name: /대표 계좌 사용하기/ }));
 
@@ -65,21 +65,68 @@ describe("FundingAccountStep", () => {
 
   it("대표 계좌가 없거나 아직 불러오지 못했으면 대표 계좌 사용하기가 비활성화된다", () => {
     mockAccounts([account({ isDefault: false })]);
-    const { rerender } = render(<FundingAccountStep onPrev={vi.fn()} />);
+    const { rerender } = render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
     expect(screen.getByRole("button", { name: /대표 계좌 사용하기/ })).toBeDisabled();
 
     mockAccounts(undefined);
-    rerender(<FundingAccountStep onPrev={vi.fn()} />);
+    rerender(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
     expect(screen.getByRole("button", { name: /대표 계좌 사용하기/ })).toBeDisabled();
   });
 
   it("이전을 누르면 onPrev를 호출한다", async () => {
     mockAccounts([]);
     const onPrev = vi.fn();
-    render(<FundingAccountStep onPrev={onPrev} />);
+    render(<FundingAccountStep onSubmit={vi.fn()} onPrev={onPrev} />);
 
     await userEvent.click(screen.getByRole("button", { name: "이전" }));
 
     expect(onPrev).toHaveBeenCalledTimes(1);
+  });
+
+  it("펀딩 열기를 누르면 입력한 값으로 onSubmit을 호출한다", async () => {
+    mockAccounts([account({})]);
+    const onSubmit = vi.fn();
+    render(<FundingAccountStep onSubmit={onSubmit} onPrev={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: /대표 계좌 사용하기/ }));
+
+    await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
+
+    expect(onSubmit).toHaveBeenCalledWith({ accountNumber: "100159014821", bank: "TOSS_BANK" });
+  });
+
+  describe("수정 모드", () => {
+    const initialValues = { accountNumber: "100159014821", bank: "TOSS_BANK" } as const;
+
+    it("값이 채워져 있고 이전 버튼 없이 수정 완료가 비활성화돼 있다", () => {
+      mockAccounts([]);
+      render(
+        <FundingAccountStep
+          onSubmit={vi.fn()}
+          initialValues={initialValues}
+          submitLabel="수정 완료"
+        />,
+      );
+
+      expect(screen.getByLabelText("계좌번호")).toHaveValue("100159014821");
+      expect(screen.queryByRole("button", { name: "이전" })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "수정 완료" })).toBeDisabled();
+    });
+
+    it("계좌번호를 바꾸면 수정 완료가 활성화되고 누르면 바뀐 값으로 onSubmit을 호출한다", async () => {
+      mockAccounts([]);
+      const onSubmit = vi.fn();
+      render(
+        <FundingAccountStep
+          onSubmit={onSubmit}
+          initialValues={initialValues}
+          submitLabel="수정 완료"
+        />,
+      );
+
+      await userEvent.type(screen.getByLabelText("계좌번호"), "9");
+      await userEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+
+      expect(onSubmit).toHaveBeenCalledWith({ accountNumber: "1001590148219", bank: "TOSS_BANK" });
+    });
   });
 });

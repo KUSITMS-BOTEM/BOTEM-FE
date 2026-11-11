@@ -9,6 +9,7 @@ import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 
 type BottomSheetButtons = {
   leftLabel?: string;
+  leftColor?: "neutral" | "brand";
   rightLabel: string;
   onLeftClick?: () => void;
   onRightClick?: () => void;
@@ -133,7 +134,7 @@ export default function BottomSheet({
                     <div className="bg-semantic-background-default flex w-full items-start justify-center gap-2 px-5 pb-5">
                       {buttons.leftLabel && (
                         <Button
-                          color="neutral"
+                          color={buttons.leftColor ?? "neutral"}
                           variant="weak"
                           size="xlarge"
                           className="flex-1"

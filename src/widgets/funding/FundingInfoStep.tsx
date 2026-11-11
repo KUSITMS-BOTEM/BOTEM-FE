@@ -41,22 +41,38 @@ const STAGE_TITLE: Record<Stage, { title: string; description?: string }> = {
 const PUSH_DOWN_TRANSITION = { duration: 0.4, ease: EASE_STANDARD };
 const BASE_PRICE_CHIP = { label: "기본 상품 가격", value: "base-price" };
 
-type FundingInfoStepProps = {
-  wish: WishResponse;
-  onNext: () => void;
+export type FundingInfoValues = {
+  targetAmount: string;
+  deadline: string;
+  story: string;
+  pledge: string;
 };
 
-export default function FundingInfoStep({ wish, onNext }: FundingInfoStepProps) {
-  const [targetAmount, setTargetAmount] = useState("");
-  const [deadline, setDeadline] = useState("");
+type FundingInfoStepProps = {
+  wish: WishResponse;
+  onNext: (values: FundingInfoValues) => void;
+  // 있으면 수정 모드: 모든 필드를 채워 보여주고, 값이 바뀌어야 CTA가 활성화된다
+  initialValues?: FundingInfoValues;
+  submitLabel?: string;
+};
+
+export default function FundingInfoStep({
+  wish,
+  onNext,
+  initialValues,
+  submitLabel = "다음",
+}: FundingInfoStepProps) {
+  const isEdit = initialValues !== undefined;
+  const [targetAmount, setTargetAmount] = useState(initialValues?.targetAmount ?? "");
+  const [deadline, setDeadline] = useState(initialValues?.deadline ?? "");
   // 한 번 나타난 마감일은 목표 금액을 지워도 유지한다
-  const [showDeadline, setShowDeadline] = useState(false);
+  const [showDeadline, setShowDeadline] = useState(isEdit);
   // 한 번 나타난 사연도 마감일을 지워도 유지한다
-  const [showStory, setShowStory] = useState(false);
-  const [story, setStory] = useState("");
+  const [showStory, setShowStory] = useState(isEdit);
+  const [story, setStory] = useState(initialValues?.story ?? "");
   // 한 번 나타난 공약도 사연을 지워도 유지한다
-  const [showPledge, setShowPledge] = useState(false);
-  const [pledge, setPledge] = useState("");
+  const [showPledge, setShowPledge] = useState(isEdit);
+  const [pledge, setPledge] = useState(initialValues?.pledge ?? "");
   const stage: Stage = showPledge
     ? "pledge"
     : showStory
@@ -87,7 +103,18 @@ export default function FundingInfoStep({ wish, onNext }: FundingInfoStepProps) 
   };
 
   // 공약은 선택 필드라 조건에서 제외한다
-  const canSubmit = Number(targetAmount) > 0 && deadline !== "" && story.trim() !== "";
+  const isChanged =
+    !initialValues ||
+    targetAmount !== initialValues.targetAmount ||
+    deadline !== initialValues.deadline ||
+    story !== initialValues.story ||
+    pledge !== initialValues.pledge;
+  const canSubmit = Number(targetAmount) > 0 && deadline !== "" && story.trim() !== "" && isChanged;
+
+  // 수정 모드에서는 시트가 열리자마자 키보드가 올라오지 않게 자동 포커스를 하지 않는다
+  const focusIfCreating = (element: HTMLElement | null) => {
+    if (!isEdit) element?.focus({ preventScroll: true });
+  };
 
   // 날짜 input은 키보드 대신 캘린더를 열기 때문에 텍스트 입력 필드만 입력 중으로 본다
   const handleFocus = (event: FocusEvent<HTMLDivElement>) => {
@@ -101,7 +128,7 @@ export default function FundingInfoStep({ wish, onNext }: FundingInfoStepProps) 
       className={cn("flex w-full flex-col gap-4", showPledge && CTA_CLEARANCE_CLASS)}>
       <motion.div
         key={stage}
-        initial={{ opacity: 0, y: 32 }}
+        initial={isEdit ? false : { opacity: 0, y: 32 }}
         animate={{ opacity: 1, y: 0 }}
         transition={showDeadline ? DEADLINE_TITLE_TRANSITION : TITLE_TRANSITION}
         className="w-full">
@@ -113,7 +140,7 @@ export default function FundingInfoStep({ wish, onNext }: FundingInfoStepProps) 
       </motion.div>
       {showPledge && (
         <motion.div
-          initial={{ opacity: 0, y: 28 }}
+          initial={isEdit ? false : { opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={PLEDGE_FIELD_TRANSITION}
           className="w-full">
@@ -130,10 +157,10 @@ export default function FundingInfoStep({ wish, onNext }: FundingInfoStepProps) 
       {showStory && (
         <motion.div
           layout="position"
-          initial={{ opacity: 0, y: 28 }}
+          initial={isEdit ? false : { opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...STORY_FIELD_TRANSITION, layout: PUSH_DOWN_TRANSITION }}
-          onAnimationComplete={() => storyRef.current?.focus({ preventScroll: true })}
+          onAnimationComplete={() => focusIfCreating(storyRef.current)}
           onBlur={revealPledge}
           className="w-full">
           <TextArea
@@ -150,7 +177,7 @@ export default function FundingInfoStep({ wish, onNext }: FundingInfoStepProps) 
       {showDeadline && (
         <motion.div
           layout="position"
-          initial={{ opacity: 0, y: 28 }}
+          initial={isEdit ? false : { opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...DEADLINE_FIELD_TRANSITION, layout: PUSH_DOWN_TRANSITION }}
           onBlur={revealStory}
@@ -167,11 +194,11 @@ export default function FundingInfoStep({ wish, onNext }: FundingInfoStepProps) 
       )}
       <motion.div
         layout="position"
-        initial={{ opacity: 0, y: 28 }}
+        initial={isEdit ? false : { opacity: 0, y: 28 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ ...FIELD_TRANSITION, layout: PUSH_DOWN_TRANSITION }}
         // 입력 영역이 다 나타난 뒤에 포커스해야 모션 중 키보드가 올라와 레이아웃이 흔들리지 않는다
-        onAnimationComplete={() => inputRef.current?.focus({ preventScroll: true })}
+        onAnimationComplete={() => focusIfCreating(inputRef.current)}
         className="flex w-full flex-col gap-2">
         <Combobox
           ref={inputRef}
@@ -195,7 +222,7 @@ export default function FundingInfoStep({ wish, onNext }: FundingInfoStepProps) 
         // 키보드가 올라온 터치 기기에서는 CTA가 키보드 위에 떠 입력을 가리므로 모션 없이 숨긴다
         <BottomCTA className={cn(isTyping && "pointer-coarse:hidden")}>
           <motion.div
-            initial={{ opacity: 0, y: 28 }}
+            initial={isEdit ? false : { opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             transition={PLEDGE_FIELD_TRANSITION}
             className="flex">
@@ -203,9 +230,9 @@ export default function FundingInfoStep({ wish, onNext }: FundingInfoStepProps) 
               color="brand"
               size="xlarge"
               disabled={!canSubmit}
-              onClick={onNext}
+              onClick={() => onNext({ targetAmount, deadline, story, pledge })}
               className="flex-1">
-              다음
+              {submitLabel}
             </Button>
           </motion.div>
         </BottomCTA>
