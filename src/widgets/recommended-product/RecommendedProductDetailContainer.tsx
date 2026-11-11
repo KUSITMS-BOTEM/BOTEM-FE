@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { notFound, useParams, useRouter } from "next/navigation";
 
@@ -15,8 +15,20 @@ export default function RecommendedProductDetailContainer() {
   const router = useRouter();
   const { productId } = useParams<{ productId: string }>();
   const { data: product, error, isLoading, refetch } = useRecommendedProductQuery(productId);
-  const { mutate: addWish, isPending: isAddWishPending } = useAddWishMutation();
+  const {
+    mutate: addWish,
+    isPending: isAddWishPending,
+    isSuccess: isAddWishSuccess,
+  } = useAddWishMutation();
   const errorAction = resolveRecommendedProductErrorAction(error);
+  // isPending은 렌더 이후에야 true가 되고 성공 직후엔 이동 전에 false로 풀려, 그 틈의 재클릭이 중복 요청이 된다 — 동기 잠금으로 막는다
+  const isAddWishLockedRef = useRef(false);
+
+  const handleAddWish = (recommendedProductId: number) => {
+    if (isAddWishLockedRef.current) return;
+    isAddWishLockedRef.current = true;
+    addWish({ recommendedProductId }, { onError: () => (isAddWishLockedRef.current = false) });
+  };
 
   useEffect(() => {
     if (errorAction === "unauthorized") router.replace("/");
@@ -54,8 +66,8 @@ export default function RecommendedProductDetailContainer() {
       sellerName={product.sellerName}
       onBack={() => router.back()}
       ctaLabel="위시에 담기"
-      ctaPending={isAddWishPending}
-      onCtaClick={() => addWish({ recommendedProductId: product.id })}
+      ctaPending={isAddWishPending || isAddWishSuccess}
+      onCtaClick={() => handleAddWish(product.id)}
     />
   );
 }

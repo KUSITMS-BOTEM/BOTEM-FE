@@ -52,7 +52,7 @@ export default function WishDetailContainer() {
           { icon: <IconDelete />, ariaLabel: "삭제", onClick: () => setIsDeleteDialogOpen(true) },
         ]}
         onBack={() => router.back()}
-        ctaLabel="펀딩 열기"
+        ctaLabel="이 상품으로 펀딩 열기"
       />
       <Dialog
         open={isDeleteDialogOpen}
