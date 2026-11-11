@@ -44,12 +44,13 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
+// 마감 카드는 남은 일수가 없어(dDay null) '마감'으로 표시된다
 export const Notification: Story = {
-  args: { type: "notification", progress: 100 },
+  args: { type: "notification", progress: 100, dDay: null },
 };
 
 export const Open: Story = {
-  args: { type: "open", progress: 100 },
+  args: { type: "open", progress: 100, dDay: null },
 };
 
 export const WithoutParticipantsAndBadge: Story = {
