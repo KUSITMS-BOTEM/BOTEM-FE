@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import type { WishResponse } from "@/types/wish/wish";
+import { getTodayDate } from "@/utils/funding/formatDeadline";
 import FundingInfoStep from "@/widgets/funding/FundingInfoStep";
 
 const wish: WishResponse = {
@@ -50,6 +51,93 @@ describe("FundingInfoStep", () => {
     await userEvent.click(screen.getByRole("button", { name: "기본 상품 가격" }));
 
     expect(input).toHaveValue("468,000");
+  });
+
+  it("목표 금액을 입력하는 동안에는 마감일이 나타나지 않는다", async () => {
+    renderStep();
+
+    await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
+
+    expect(screen.queryByText("마감일")).not.toBeInTheDocument();
+  });
+
+  it("금액을 입력하고 포커스가 빠지면 마감일이 나타나고 제목·칩·안내 문구가 바뀐다", async () => {
+    renderStep();
+
+    await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
+    await userEvent.tab();
+
+    expect(screen.getByText("마감일")).toBeInTheDocument();
+    expect(screen.getByText("언제까지 모을까요?")).toBeInTheDocument();
+    expect(screen.queryByText("목표 금액은 얼마인가요?")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "기본 상품 가격" })).not.toBeInTheDocument();
+    expect(screen.queryByText("기본 상품 가격은 468,000원이에요")).not.toBeInTheDocument();
+  });
+
+  it("금액을 입력하고 Enter를 누르면 마감일이 나타난다", async () => {
+    renderStep();
+
+    await userEvent.type(screen.getByLabelText("목표 금액"), "1000{Enter}");
+
+    expect(screen.getByText("마감일")).toBeInTheDocument();
+  });
+
+  it("금액이 비어 있으면 포커스가 빠져도 마감일이 나타나지 않는다", async () => {
+    renderStep();
+
+    await userEvent.click(screen.getByLabelText("목표 금액"));
+    await userEvent.tab();
+
+    expect(screen.queryByText("마감일")).not.toBeInTheDocument();
+  });
+
+  it("금액을 입력한 뒤 칩을 눌러도 칩 클릭이 유실되지 않고 이후에 마감일이 나타난다", async () => {
+    renderStep();
+
+    const input = screen.getByLabelText("목표 금액");
+    await userEvent.type(input, "1000");
+    await userEvent.click(screen.getByRole("button", { name: "기본 상품 가격" }));
+    expect(screen.queryByText("마감일")).not.toBeInTheDocument();
+    await userEvent.tab();
+
+    expect(input).toHaveValue("468,000");
+    expect(screen.getByText("마감일")).toBeInTheDocument();
+  });
+
+  it("마감일이 나타난 뒤 금액을 지워도 마감일은 유지된다", async () => {
+    renderStep();
+
+    const input = screen.getByLabelText("목표 금액");
+    await userEvent.type(input, "1000");
+    await userEvent.tab();
+    await userEvent.clear(input);
+    await userEvent.tab();
+
+    expect(screen.getByText("마감일")).toBeInTheDocument();
+  });
+
+  it("마감일에서 날짜를 고르면 연도와 요일을 포함해 보여준다", async () => {
+    const { container } = renderStep();
+
+    await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
+    await userEvent.tab();
+    fireEvent.change(container.querySelector('input[type="date"]')!, {
+      target: { value: "2099-12-25" },
+    });
+
+    expect(screen.getByText(/^2099\.12\.25 \(.\)$/)).toBeInTheDocument();
+  });
+
+  it("마감일 캘린더는 오늘 이전 날짜를 선택할 수 없고, 직접 입력한 과거 날짜는 무시한다", async () => {
+    const { container } = renderStep();
+
+    await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
+    await userEvent.tab();
+    const dateInput = container.querySelector('input[type="date"]')!;
+    fireEvent.change(dateInput, { target: { value: "2000-01-01" } });
+
+    expect(dateInput).toHaveAttribute("min", getTodayDate());
+    expect(screen.getByText("선택해주세요")).toBeInTheDocument();
   });
 
   it("입력 영역 모션이 끝나면 목표 금액에 포커스한다", async () => {

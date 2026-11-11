@@ -88,6 +88,8 @@ export default function Combobox({
     <div
       role="group"
       aria-label={`${label} 선택`}
+      // 칩을 눌러도 input 포커스가 빠지지 않게 한다. blur로 화면이 바뀌는 사용처에서 칩 클릭이 유실되지 않는다
+      onMouseDown={event => event.preventDefault()}
       className={cn("flex w-full gap-1", chipWrap && "flex-wrap")}>
       {chips.map(chip => (
         <Chip
