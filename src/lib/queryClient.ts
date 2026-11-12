@@ -23,7 +23,7 @@ function reportUnexpectedError(error: Error) {
 }
 
 // action이 dialog인 코드만 전역 Dialog로 띄운다. inline·redirect·none은 호출부가 직접 처리한다
-function showGlobalErrorDialog(error: Error) {
+export function showGlobalErrorDialog(error: Error) {
   const entry =
     (error instanceof ApiError ? ERROR_MESSAGES[error.code] : undefined) ?? DEFAULT_ERROR_MESSAGE;
   if (entry.action === "dialog") useErrorDialogStore.getState().openErrorDialog(entry.message);

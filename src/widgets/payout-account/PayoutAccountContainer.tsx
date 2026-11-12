@@ -8,7 +8,9 @@ import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
 import type { BankCode } from "@/constants/bank";
+import { DEFAULT_ERROR_MESSAGE } from "@/constants/errorMessages";
 import { useCompleteOnboardingMutation } from "@/hooks/mutations/user/useCompleteOnboardingMutation";
+import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { getSignupFlow } from "@/utils/auth/signupFlowStorage";
 import { ACCOUNT_NUMBER_REGEX } from "@/utils/payout-account/parseClipboardAccount";
 import PayoutAccountForm from "@/widgets/payout-account/PayoutAccountForm";
@@ -27,7 +29,7 @@ export default function PayoutAccountContainer() {
   const handleStart = () => {
     const flow = getSignupFlow();
     if (!flow?.nickname) {
-      alert("에러가 발생했습니다");
+      useErrorDialogStore.getState().openErrorDialog(DEFAULT_ERROR_MESSAGE.message);
       router.replace("/");
       return;
     }

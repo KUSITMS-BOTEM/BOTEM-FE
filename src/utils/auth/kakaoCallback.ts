@@ -1,7 +1,9 @@
 import type { useRouter } from "next/navigation";
 
 import type { useKakaoLoginMutation } from "@/hooks/mutations/auth/useKakaoLoginMutation";
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { useAuthStore } from "@/store/authStore";
+import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { consumeKakaoOauthState } from "@/utils/auth/kakaoOauthState";
 import { setSignupFlow } from "@/utils/auth/signupFlowStorage";
 
@@ -10,10 +12,10 @@ type Router = ReturnType<typeof useRouter>;
 
 const FAILURE_REDIRECT_DELAY_MS = 3000;
 
-// 콜백 실패 시 화면에 머물지 않도록, 안내 후 랜딩으로 되돌린다.
+// 콜백 실패 시 화면에 머물지 않도록, 안내 Dialog를 띄우고 랜딩으로 되돌린다.
 export const redirectToLandingAfterFailure = (router: Router) => {
   setTimeout(() => {
-    alert("로그인에 실패했습니다. 다시 시도해주세요.");
+    useErrorDialogStore.getState().openErrorDialog(ERROR_MESSAGES.AUTH_004.message);
     router.replace("/");
   }, FAILURE_REDIRECT_DELAY_MS);
 };

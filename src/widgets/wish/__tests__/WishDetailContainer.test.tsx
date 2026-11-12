@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import { ApiError } from "@/types/api";
@@ -128,14 +130,13 @@ describe("WishDetailContainer", () => {
     expect(replace).toHaveBeenCalledWith("/");
   });
 
-  it("그 외 API 에러면 에러 메시지로 alert를 띄운다", () => {
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
+  it("그 외 API 에러면 매핑 테이블 메시지로 전역 Dialog를 띄운다", () => {
     mockWishQuery({ error: new ApiError("WISH_001", "위시 조회 실패") as never });
 
     render(<WishDetailContainer />);
 
-    expect(alertSpy).toHaveBeenCalledWith("위시 조회 실패");
+    expect(useErrorDialogStore.getState().message).toBe(ERROR_MESSAGES.WISH_001.message);
     expect(replace).not.toHaveBeenCalled();
-    alertSpy.mockRestore();
+    useErrorDialogStore.getState().closeErrorDialog();
   });
 });

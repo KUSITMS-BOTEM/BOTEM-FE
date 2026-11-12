@@ -5,6 +5,8 @@ import { renderHook, waitFor } from "@testing-library/react";
 
 import { userService } from "@/apis/user/userService";
 import { useCompleteOnboardingMutation } from "@/hooks/mutations/user/useCompleteOnboardingMutation";
+import { DEFAULT_ERROR_MESSAGE } from "@/constants/errorMessages";
+import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { setSignupFlow } from "@/utils/auth/signupFlowStorage";
 import { consumeWishPromptPending } from "@/utils/wish/wishPromptStorage";
 import type { RegisterOnboardingRequest } from "@/types/user/onboarding";
@@ -58,7 +60,7 @@ describe("useCompleteOnboardingMutation", () => {
     expect(replace).toHaveBeenCalledWith("/home");
   });
 
-  it("userService.completeOnboarding이 실패하면 mutation이 error 상태가 되고 /로 이동한다", async () => {
+  it("userService.completeOnboarding이 실패하면 mutation이 error 상태가 되고 에러 Dialog를 띄운 뒤 /로 이동한다", async () => {
     const error = new Error("온보딩 완료 실패");
     vi.mocked(userService.completeOnboarding).mockRejectedValue(error);
     const { result } = renderHook(() => useCompleteOnboardingMutation(), {
@@ -69,6 +71,8 @@ describe("useCompleteOnboardingMutation", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBe(error);
+    expect(useErrorDialogStore.getState().message).toBe(DEFAULT_ERROR_MESSAGE.message);
     expect(replace).toHaveBeenCalledWith("/");
+    useErrorDialogStore.getState().closeErrorDialog();
   });
 });

@@ -1,7 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { DEFAULT_ERROR_MESSAGE } from "@/constants/errorMessages";
 import { useCompleteOnboardingMutation } from "@/hooks/mutations/user/useCompleteOnboardingMutation";
+import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { getSignupFlow } from "@/utils/auth/signupFlowStorage";
 import PayoutAccountContainer from "@/widgets/payout-account/PayoutAccountContainer";
 
@@ -83,14 +85,14 @@ describe("PayoutAccountContainer", () => {
   });
 
   it("가입 흐름에 닉네임이 없으면 에러를 알리고 처음으로 돌려보낸다", async () => {
-    vi.spyOn(window, "alert").mockImplementation(() => {});
     render(<PayoutAccountContainer />);
     await fillAccount();
     vi.mocked(getSignupFlow).mockReturnValue({ step: "accountEntry" });
 
     await userEvent.click(screen.getByRole("button", { name: "시작하기" }));
 
-    expect(window.alert).toHaveBeenCalledWith("에러가 발생했습니다");
+    expect(useErrorDialogStore.getState().message).toBe(DEFAULT_ERROR_MESSAGE.message);
+    useErrorDialogStore.getState().closeErrorDialog();
     expect(replace).toHaveBeenCalledWith("/");
     expect(completeOnboarding).not.toHaveBeenCalled();
   });
