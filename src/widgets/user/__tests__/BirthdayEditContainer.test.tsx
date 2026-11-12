@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 
+import { mockPointer } from "@/__tests__/mockPointer";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import BirthdayEditContainer from "@/widgets/user/BirthdayEditContainer";
 
@@ -21,6 +22,7 @@ const mockBirthday = (birthday: string | null) =>
   } as unknown as ReturnType<typeof useMyProfileQuery>);
 
 beforeEach(() => {
+  mockPointer("coarse");
   vi.clearAllMocks();
 });
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { fireEvent, render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { mockPointer } from "@/__tests__/mockPointer";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
 import type { WishResponse } from "@/types/wish/wish";
@@ -63,6 +64,7 @@ function Harness() {
 
 describe("FundingOpenSheet", () => {
   beforeEach(mockWishes);
+  beforeEach(() => mockPointer("coarse"));
 
   it("처음에는 펀딩 열기 제목과 위시 선택 화면을 보여준다", () => {
     render(<Harness />);

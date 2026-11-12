@@ -7,10 +7,17 @@ import {
   useState,
 } from "react";
 import { cn } from "@/utils/cn";
+import { BIRTH_YEAR } from "@/utils/date/dateString";
+import { useIsCoarsePointer } from "@/hooks/useIsCoarsePointer";
 import Asset from "@/components/Asset";
+import DatePickerPopover from "@/components/DatePickerPopover";
 import FieldMessage from "@/components/FieldMessage";
 import IconDown from "@/assets/icons/icon-down.svg?react";
 import IconCalendar from "@/assets/icons/icon-calendar.svg?react";
+
+// birth의 "MM-DD"를 달력이 쓰는 "YYYY-MM-DD"로 맞춘다
+const toPickerDate = (variant: SelectBoxVariant, date: string) =>
+  variant === "birth" && /^\d{2}-\d{2}$/.test(date) ? `${BIRTH_YEAR}-${date}` : date;
 
 type SelectBoxVariant = "select" | "birth" | "deadline";
 
@@ -32,7 +39,8 @@ type SelectBoxOwnProps = {
   onDeadlineChange?: (date: string) => void;
   // 날짜 선택 variant에서 고를 수 있는 가장 이른 날짜("YYYY-MM-DD"). 이전 날짜는 캘린더에서 선택할 수 없다.
   minDate?: string;
-  // 날짜 선택 variant에서 캘린더에 처음 선택돼 있을 날짜("YYYY-MM-DD"). 이미 정해진 값을 수정할 때 넘긴다.
+  // 날짜 선택 variant에서 캘린더에 선택돼 있을 날짜. deadline은 "YYYY-MM-DD", birth는 "MM-DD". 이미 정해진 값이 있을 때 넘긴다.
+  // 사용자가 아직 날짜를 고르지 않았다면 이 값을 따라가므로 프로필처럼 비동기로 도착하는 값도 반영된다.
   dateValue?: string;
 };
 
@@ -63,18 +71,32 @@ export default function SelectBox({
   const isFilled = value !== undefined && value !== "";
   const Icon = VARIANT_ICON[variant];
   const hasDatePicker = variant !== "select";
-  // 화면엔 월·일만 보여주지만, 같은 세션에서 다시 열었을 때 이전에 고른 연도까지 캘린더에 남아있도록 내부적으로만 기억한다
-  const [pickedDate, setPickedDate] = useState(dateValue);
+  // 화면엔 월·일만 보여주지만, 같은 세션에서 다시 열었을 때 이전에 고른 연도까지 캘린더에 남아있도록 내부적으로만 기억한다. null이면 아직 고르지 않은 상태
+  const [pickedDate, setPickedDate] = useState<string | null>(null);
+  const currentDate = pickedDate ?? toPickerDate(variant, dateValue);
 
-  const handleDateChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setPickedDate(event.target.value);
+  const isCoarsePointer = useIsCoarsePointer();
+
+  const applyDate = (date: string) => {
+    setPickedDate(date);
     if (variant === "deadline") {
-      onDeadlineChange?.(event.target.value);
+      onDeadlineChange?.(date);
       return;
     }
-    const [, month, day] = event.target.value.split("-").map(Number);
+    const [, month, day] = date.split("-").map(Number);
     onDateChange?.(month || null, day || null);
   };
+
+  const handleDateChange = (event: ChangeEvent<HTMLInputElement>) => applyDate(event.target.value);
+
+  const dateAria = {
+    id: controlId,
+    "aria-labelledby": `${labelId} ${valueId}`,
+    "aria-describedby": helperText !== undefined ? helperTextId : undefined,
+  };
+  const dateIcon = (
+    <Asset icon={<Icon aria-hidden />} size="medium" className="text-semantic-icon-secondary" />
+  );
 
   const triggerContent = (
     <>
@@ -92,25 +114,29 @@ export default function SelectBox({
           )}>
           {isFilled ? value : placeholder}
         </span>
-        {hasDatePicker ? (
-          // 아이콘 영역만 클릭 가능해야 해서, 네이티브 캘린더를 여는 input을 박스 전체가 아니라 아이콘 크기에만 포갠다
+        {variant !== "select" && !isCoarsePointer ? (
+          <DatePickerPopover
+            variant={variant}
+            value={currentDate}
+            minDate={minDate}
+            onSelect={applyDate}
+            disabled={disabled}
+            triggerProps={dateAria}>
+            {dateIcon}
+          </DatePickerPopover>
+        ) : hasDatePicker ? (
+          // 터치 기기는 기기 기본 캘린더를 쓴다. 아이콘 영역만 클릭 가능해야 해서, 네이티브 캘린더를 여는 input을 박스 전체가 아니라 아이콘 크기에만 포갠다
           // (브라우저 기본 캘린더 팝업은 이 input 바로 아래에 열린다)
           <span className="relative size-6 shrink-0">
-            <Asset
-              icon={<Icon aria-hidden />}
-              size="medium"
-              className="text-semantic-icon-secondary"
-            />
+            {dateIcon}
             <input
               type="date"
-              id={controlId}
-              value={pickedDate}
+              value={currentDate}
               min={minDate}
               disabled={disabled}
               onChange={handleDateChange}
-              aria-labelledby={`${labelId} ${valueId}`}
-              aria-describedby={helperText !== undefined ? helperTextId : undefined}
               className="absolute inset-0 size-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+              {...dateAria}
             />
           </span>
         ) : (
@@ -128,7 +154,7 @@ export default function SelectBox({
     <div className={cn("flex w-full flex-col gap-2", disabled && "opacity-60", className)}>
       {hasDatePicker ? (
         <div
-          className="bg-semantic-fill-neutral-weak flex w-full flex-col items-start justify-center overflow-clip rounded-3xl border-2 border-transparent px-5 py-3"
+          className="bg-semantic-fill-neutral-weak flex w-full flex-col items-start justify-center rounded-3xl border-2 border-transparent px-5 py-3"
           // button 전용 attrs(type 등)를 제외하면 div와 호환되는 공통 DOM attrs만 남는다
           {...(props as HTMLAttributes<HTMLDivElement>)}>
           {triggerContent}

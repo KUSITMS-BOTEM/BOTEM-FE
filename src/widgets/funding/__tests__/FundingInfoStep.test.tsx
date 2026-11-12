@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { mockPointer } from "@/__tests__/mockPointer";
 import type { WishResponse } from "@/types/wish/wish";
 import { getTodayDate } from "@/utils/funding/formatDeadline";
 import FundingInfoStep from "@/widgets/funding/FundingInfoStep";
@@ -17,6 +18,8 @@ const wish: WishResponse = {
 };
 
 const renderStep = (onNext = vi.fn()) => render(<FundingInfoStep wish={wish} onNext={onNext} />);
+
+beforeEach(() => mockPointer("coarse"));
 
 describe("FundingInfoStep", () => {
   it("목표 금액은 비어 있고 안내 문구에 위시 가격을 보여준다", () => {
@@ -158,6 +161,23 @@ describe("FundingInfoStep", () => {
       expect(screen.getByLabelText("사연")).toBeInTheDocument();
       expect(screen.getByText("어떤 사연인지 들려주세요")).toBeInTheDocument();
       expect(screen.queryByText("언제까지 모을까요?")).not.toBeInTheDocument();
+    });
+
+    it("마우스 환경에서는 달력에서 날짜를 고르면 포커스 이동 없이 사연이 나타나고 제목이 바뀐다", async () => {
+      mockPointer("fine");
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(2026, 10, 13));
+      renderStep();
+      await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
+      await userEvent.tab();
+
+      await userEvent.click(screen.getByRole("button", { name: "마감일 선택해주세요" }));
+      expect(screen.queryByLabelText("사연")).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: /11월 20일/ }));
+
+      expect(screen.getByLabelText("사연")).toBeInTheDocument();
+      expect(screen.getByText("어떤 사연인지 들려주세요")).toBeInTheDocument();
+      vi.useRealTimers();
     });
 
     it("날짜를 고르지 않고 포커스가 빠지면 사연이 나타나지 않는다", async () => {
