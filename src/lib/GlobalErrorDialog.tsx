@@ -12,6 +12,7 @@ export default function GlobalErrorDialog() {
       kind="alert"
       open={message !== null}
       title={message ?? ""}
+      confirmLabel="확인"
       onConfirm={closeErrorDialog}
     />
   );

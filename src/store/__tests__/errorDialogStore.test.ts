@@ -21,4 +21,15 @@ describe("useErrorDialogStore", () => {
 
     expect(useErrorDialogStore.getState().message).toBeNull();
   });
+
+  it("onClose를 넘기면 closeErrorDialog 시점에 한 번만 실행한다", () => {
+    const onClose = vi.fn();
+    useErrorDialogStore.getState().openErrorDialog("오류가 발생했어요.", onClose);
+    expect(onClose).not.toHaveBeenCalled();
+
+    useErrorDialogStore.getState().closeErrorDialog();
+    useErrorDialogStore.getState().closeErrorDialog();
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });

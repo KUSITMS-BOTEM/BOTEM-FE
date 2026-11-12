@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 
 import { userService } from "@/apis/user/userService";
-import { queryClient, showGlobalErrorDialog } from "@/lib/queryClient";
+import { queryClient, showErrorDialogThen } from "@/lib/queryClient";
 import { clearSignupFlow } from "@/utils/auth/signupFlowStorage";
 import { markWishPromptPending } from "@/utils/wish/wishPromptStorage";
 
@@ -22,9 +22,9 @@ export const useCompleteOnboardingMutation = () => {
       router.replace("/home");
     },
     onError: error => {
-      showGlobalErrorDialog(error);
       queryClient.removeQueries({ queryKey: ["users", "me"] });
-      router.replace("/");
+      // 사용자가 Dialog 확인을 눌러야 랜딩으로 이동한다. action(inline·redirect 포함)과 무관하게 항상 안내한다
+      showErrorDialogThen(error, () => router.replace("/"));
     },
   });
 };

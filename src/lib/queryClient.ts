@@ -29,11 +29,21 @@ function reportUnexpectedError(error: Error) {
   Sentry.captureException(error);
 }
 
+function getErrorEntry(error: Error) {
+  return (
+    (error instanceof ApiError ? ERROR_MESSAGES[error.code] : undefined) ?? DEFAULT_ERROR_MESSAGE
+  );
+}
+
 // action이 dialog인 코드만 전역 Dialog로 띄운다. inline·redirect·none은 호출부가 직접 처리한다
 export function showGlobalErrorDialog(error: Error) {
-  const entry =
-    (error instanceof ApiError ? ERROR_MESSAGES[error.code] : undefined) ?? DEFAULT_ERROR_MESSAGE;
+  const entry = getErrorEntry(error);
   if (entry.action === "dialog") useErrorDialogStore.getState().openErrorDialog(entry.message);
+}
+
+// action과 무관하게 항상 띄운다. Dialog 확인 뒤 이어 할 동작(화면 이동 등)이 있을 때 사용한다
+export function showErrorDialogThen(error: Error, onClose: () => void) {
+  useErrorDialogStore.getState().openErrorDialog(getErrorEntry(error).message, onClose);
 }
 
 export const queryClient = new QueryClient({
