@@ -13,3 +13,13 @@ export function parseDateString(value: string): Date | undefined {
   if (!year || !month || !day) return undefined;
   return new Date(year, month - 1, day);
 }
+
+export function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
+}
+
+// 월 전환으로 없는 날(예: 3/31 → 2월)이 되면 그 달 말일로 맞추고, min보다 이르면 min으로 올린다
+export function clampDate(year: number, month: number, day: number, min?: Date): Date {
+  const date = new Date(year, month - 1, Math.min(day, getDaysInMonth(year, month)));
+  return min && date < min ? min : date;
+}

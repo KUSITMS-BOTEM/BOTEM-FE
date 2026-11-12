@@ -3,6 +3,7 @@ import { fireEvent, render, screen, within, waitFor } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 
 import { mockPointer } from "@/__tests__/mockPointer";
+import { pickWheelDate } from "@/__tests__/pickWheelDate";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
 import type { WishResponse } from "@/types/wish/wish";
@@ -64,7 +65,12 @@ function Harness() {
 
 describe("FundingOpenSheet", () => {
   beforeEach(mockWishes);
-  beforeEach(() => mockPointer("coarse"));
+  beforeEach(() => {
+    mockPointer("coarse");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 13));
+  });
+  afterEach(() => vi.useRealTimers());
 
   it("처음에는 펀딩 열기 제목과 위시 선택 화면을 보여준다", () => {
     render(<Harness />);
@@ -149,13 +155,12 @@ describe("FundingOpenSheet", () => {
 
   describe("펀딩 정보 → 계좌 정보 단계", () => {
     const goToAccountStep = async () => {
-      const { container } = render(<Harness />);
+      render(<Harness />);
       await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
       await userEvent.type(await screen.findByLabelText("목표 금액"), "1000");
       await userEvent.tab();
-      const dateInput = container.querySelector<HTMLInputElement>('input[type="date"]')!;
-      fireEvent.change(dateInput, { target: { value: "2099-12-25" } });
-      fireEvent.blur(dateInput);
+      await userEvent.click(screen.getByRole("button", { name: "마감일 선택해주세요" }));
+      await pickWheelDate(userEvent.setup(), { year: 2027, month: 12, day: 25 });
       const story = screen.getByLabelText("사연");
       await userEvent.type(story, "생일 선물");
       fireEvent.blur(story);

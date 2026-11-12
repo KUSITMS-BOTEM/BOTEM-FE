@@ -1,6 +1,5 @@
 import {
   type ButtonHTMLAttributes,
-  type ChangeEvent,
   type HTMLAttributes,
   type ReactNode,
   useId,
@@ -11,6 +10,7 @@ import { BIRTH_YEAR } from "@/utils/date/dateString";
 import { useIsCoarsePointer } from "@/hooks/useIsCoarsePointer";
 import Asset from "@/components/Asset";
 import DatePickerPopover from "@/components/DatePickerPopover";
+import DateWheelSheet from "@/components/DateWheelSheet";
 import FieldMessage from "@/components/FieldMessage";
 import IconDown from "@/assets/icons/icon-down.svg?react";
 import IconCalendar from "@/assets/icons/icon-calendar.svg?react";
@@ -47,7 +47,7 @@ type SelectBoxOwnProps = {
 type SelectBoxProps = SelectBoxOwnProps &
   Omit<ButtonHTMLAttributes<HTMLButtonElement>, keyof SelectBoxOwnProps | "children">;
 
-// 옵션 목록은 디자인이 없어 트리거만 담당하고, 열기 동작은 onClick으로 사용처에서 처리한다 (variant="birth"는 예외 — 기기 기본 캘린더를 직접 띄운다)
+// 옵션 목록은 디자인이 없어 트리거만 담당하고, 열기 동작은 onClick으로 사용처에서 처리한다 (날짜 variant는 예외 — 마우스는 달력 팝오버, 터치는 휠 피커 시트를 직접 띄운다)
 export default function SelectBox({
   variant = "select",
   label,
@@ -76,6 +76,7 @@ export default function SelectBox({
   const currentDate = pickedDate ?? toPickerDate(variant, dateValue);
 
   const isCoarsePointer = useIsCoarsePointer();
+  const [wheelOpen, setWheelOpen] = useState(false);
 
   const applyDate = (date: string) => {
     setPickedDate(date);
@@ -86,8 +87,6 @@ export default function SelectBox({
     const [, month, day] = date.split("-").map(Number);
     onDateChange?.(month || null, day || null);
   };
-
-  const handleDateChange = (event: ChangeEvent<HTMLInputElement>) => applyDate(event.target.value);
 
   const dateAria = {
     id: controlId,
@@ -125,20 +124,15 @@ export default function SelectBox({
             {dateIcon}
           </DatePickerPopover>
         ) : hasDatePicker ? (
-          // 터치 기기는 기기 기본 캘린더를 쓴다. 아이콘 영역만 클릭 가능해야 해서, 네이티브 캘린더를 여는 input을 박스 전체가 아니라 아이콘 크기에만 포갠다
-          // (브라우저 기본 캘린더 팝업은 이 input 바로 아래에 열린다)
-          <span className="relative size-6 shrink-0">
+          <button
+            type="button"
+            disabled={disabled}
+            aria-haspopup="dialog"
+            onClick={() => setWheelOpen(true)}
+            className="size-6 shrink-0 cursor-pointer disabled:cursor-not-allowed"
+            {...dateAria}>
             {dateIcon}
-            <input
-              type="date"
-              value={currentDate}
-              min={minDate}
-              disabled={disabled}
-              onChange={handleDateChange}
-              className="absolute inset-0 size-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
-              {...dateAria}
-            />
-          </span>
+          </button>
         ) : (
           <Asset
             icon={<Icon aria-hidden />}
@@ -170,6 +164,16 @@ export default function SelectBox({
           {...props}>
           {triggerContent}
         </button>
+      )}
+      {hasDatePicker && isCoarsePointer && (
+        <DateWheelSheet
+          variant={variant}
+          open={wheelOpen}
+          value={currentDate}
+          minDate={minDate}
+          onSelect={applyDate}
+          onClose={() => setWheelOpen(false)}
+        />
       )}
       {helperText !== undefined && <FieldMessage id={helperTextId}>{helperText}</FieldMessage>}
     </div>

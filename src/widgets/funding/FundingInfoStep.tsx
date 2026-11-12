@@ -10,7 +10,6 @@ import InfoBox from "@/components/InfoBox";
 import SelectBox from "@/components/SelectBox";
 import TextArea from "@/components/TextArea";
 import Title from "@/components/Title";
-import { useIsCoarsePointer } from "@/hooks/useIsCoarsePointer";
 import type { WishResponse } from "@/types/wish/wish";
 import { cn } from "@/utils/cn";
 import { formatDeadline, getTodayDate } from "@/utils/funding/formatDeadline";
@@ -92,16 +91,10 @@ export default function FundingInfoStep({
   const storyRef = useRef<HTMLTextAreaElement>(null);
   const basePriceText = wish.price.toLocaleString("ko-KR");
   const today = getTodayDate();
-  const isCoarsePointer = useIsCoarsePointer();
 
   // iOS는 키보드 닫힘 이벤트가 없어 목표 금액 input의 blur(완료 버튼·바깥 탭)를 키보드가 닫힌 시점으로 본다
   const revealDeadline = () => {
     if (Number(targetAmount) > 0) setShowDeadline(true);
-  };
-
-  // 날짜 input의 blur가 버블링되어 마감일 영역에서 잡힌다
-  const revealStory = () => {
-    if (deadline) setShowStory(true);
   };
 
   // 사연 TextArea의 blur가 버블링되어 사연 영역에서 잡힌다
@@ -187,7 +180,6 @@ export default function FundingInfoStep({
           initial={isEdit ? false : { opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...DEADLINE_FIELD_TRANSITION, layout: PUSH_DOWN_TRANSITION }}
-          onBlur={revealStory}
           className="w-full">
           <SelectBox
             variant="deadline"
@@ -195,12 +187,12 @@ export default function FundingInfoStep({
             value={formatDeadline(deadline)}
             dateValue={deadline}
             minDate={today}
-            // 데스크탑에서 날짜를 직접 입력하면 min을 우회할 수 있어 한 번 더 거른다
+            // 날짜 선택 UI가 min을 막지만 한 번 더 거른다
             onDeadlineChange={date => {
               const next = date >= today ? date : "";
               setDeadline(next);
-              // 마우스 환경의 달력은 날짜를 고르면 blur 없이 닫혀서 선택 즉시 사연을 연다. 터치 기기는 기기 캘린더가 닫히며 나는 blur로 연다
-              if (!isCoarsePointer && next) setShowStory(true);
+              // 달력·휠 시트는 blur 없이 닫히므로 날짜를 확정하는 즉시 사연을 연다
+              if (next) setShowStory(true);
             }}
           />
         </motion.div>
