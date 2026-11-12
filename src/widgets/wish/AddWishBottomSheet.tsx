@@ -24,6 +24,8 @@ const INPUT_DEBOUNCE_MS = 1000;
 const PRODUCT_NAME_MAX_LENGTH = 20;
 const INVALID_LINK_MESSAGE = "올바른 링크 형식이 아니에요";
 
+// 현재 사용하지 않는다. 홈의 위시 추가는 /wish/recommended 이동으로 바뀌었다.
+// 디자인이 더 수정되거나 다시 쓰일 수 있어 삭제하지 않고 남겨둔다.
 type AddWishPayload = {
   productUrl: string;
   productImage: File;
