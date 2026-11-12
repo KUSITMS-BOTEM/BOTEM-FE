@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 
+import { useRouter } from "next/navigation";
+
 import { useHomeWishesQuery } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
-import { consumeWishPromptPending } from "@/utils/wish/wishPromptStorage";
 import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
 import FloatingButton from "@/widgets/home/FloatingButton";
 import HomeFundingTab from "@/widgets/home/HomeFundingTab";
@@ -13,11 +14,11 @@ import HomeWishTab from "@/widgets/home/HomeWishTab";
 import type { MenuDropdownItem } from "@/widgets/home/MenuDropdown";
 import type { SegmentValue } from "@/widgets/home/SegmentControl";
 import MyMenuSheet from "@/widgets/user/MyMenuSheet";
-import AddWishBottomSheet from "@/widgets/wish/AddWishBottomSheet";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 import IconWishAdd from "@/assets/icons/multicolor/icon-wish-add.svg?react";
 
 const WISH_ADD_LABEL = "위시 추가";
+const RECOMMENDED_WISH_PATH = "/wish/recommended";
 
 const FLOATING_MENU_ITEMS: MenuDropdownItem[] = [
   { icon: <IconWishAdd />, label: WISH_ADD_LABEL },
@@ -32,16 +33,16 @@ export default function HomeContainer() {
   useHomeWishesQuery();
   const { data: homeFundings } = useHomeFundingsQuery();
   const [segment, setSegment] = useState<SegmentValue>("funding");
-  const [wishSheetOpen, setWishSheetOpen] = useState(() => consumeWishPromptPending());
+  const router = useRouter();
   const [fundingSheetOpen, setFundingSheetOpen] = useState(false);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
 
-  const openWishSheet = () => setWishSheetOpen(true);
+  const goToRecommendedWish = () => router.push(RECOMMENDED_WISH_PATH);
   const openFundingSheet = () => {
     if (homeFundings?.canOpenFunding) setFundingSheetOpen(true);
   };
   const handleFloatingMenuSelect = (item: MenuDropdownItem) => {
-    if (item.label === WISH_ADD_LABEL) setWishSheetOpen(true);
+    if (item.label === WISH_ADD_LABEL) goToRecommendedWish();
     else openFundingSheet();
   };
 
@@ -54,18 +55,13 @@ export default function HomeContainer() {
       <HomeHeader onSegmentChange={setSegment} onMenuClick={() => setMenuSheetOpen(true)} />
       <main className="flex w-full flex-col px-5">
         {segment === "funding" ? (
-          <HomeFundingTab onAddWish={openWishSheet} onOpenFunding={openFundingSheet} />
+          <HomeFundingTab onAddWish={goToRecommendedWish} onOpenFunding={openFundingSheet} />
         ) : (
-          <HomeWishTab onAddWish={openWishSheet} />
+          <HomeWishTab onAddWish={goToRecommendedWish} />
         )}
       </main>
       <FloatingButton items={floatingMenuItems} onSelect={handleFloatingMenuSelect} />
       <FundingOpenSheet open={fundingSheetOpen} onClose={() => setFundingSheetOpen(false)} />
-      <AddWishBottomSheet
-        open={wishSheetOpen}
-        onClose={() => setWishSheetOpen(false)}
-        onSubmit={() => setWishSheetOpen(false)}
-      />
       <MyMenuSheet
         open={menuSheetOpen}
         onClose={() => setMenuSheetOpen(false)}

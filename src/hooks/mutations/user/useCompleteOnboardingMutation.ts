@@ -17,6 +17,7 @@ export const useCompleteOnboardingMutation = () => {
     // onSuccess/onError를 훅 레벨에 둬야 호출 화면이 언마운트돼도 실행된다 (mutate에 넘긴 콜백은 언마운트 시 미실행)
     onSuccess: () => {
       clearSignupFlow();
+      // 보류: 온보딩 직후 home에서 보여줄 화면이 미정이라 플래그만 켜두고 현재는 읽는 곳이 없다
       markWishPromptPending();
       router.replace("/home");
     },
