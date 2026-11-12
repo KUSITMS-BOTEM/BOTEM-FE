@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 import { notFound, useParams, useRouter } from "next/navigation";
 
+import { showGlobalErrorDialog } from "@/lib/queryClient";
 import { useAddWishMutation } from "@/hooks/mutations/wish/useAddWishMutation";
 import { useRecommendedProductQuery } from "@/hooks/queries/recommended-product/useRecommendedProductQuery";
 import ProductDetailFallback from "@/components/ProductDetailFallback";
@@ -32,7 +33,7 @@ export default function RecommendedProductDetailContainer() {
 
   useEffect(() => {
     if (errorAction === "unauthorized") router.replace("/");
-    else if (errorAction === "alert") alert(error?.message);
+    else if (errorAction === "alert" && error) showGlobalErrorDialog(error);
   }, [errorAction, error, router]);
 
   if (errorAction === "notFound") notFound();
