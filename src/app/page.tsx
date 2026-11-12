@@ -4,8 +4,6 @@ import BottomCTA from "@/components/BottomCTA";
 import Title from "@/components/Title";
 import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
 
-import RollingPaperContainer from "@/widgets/rolling-paper/RollingPaperContainer";
-
 import { handleKakaoLoginClick } from "./helpers";
 
 export default function Home() {
@@ -35,8 +33,6 @@ export default function Home() {
           </p>
         }
       />
-      {/* TEMP: 롤링페이퍼 모션 확인용. PR 전에 이 줄과 import 삭제 */}
-      <RollingPaperContainer count={6} />
     </>
   );
 }

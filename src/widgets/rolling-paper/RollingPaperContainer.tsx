@@ -6,7 +6,7 @@ import IconShare from "@/assets/icons/icon-share.svg?react";
 import IconButton from "@/components/IconButton";
 import OpenSheet from "@/components/OpenSheet";
 import RollingPaperCard from "@/widgets/rolling-paper/RollingPaperCard";
-import { getVisiblePoses } from "@/widgets/rolling-paper/rollingPaperMotion";
+import { getVisiblePoses, getVisibleSlots } from "@/widgets/rolling-paper/rollingPaperMotion";
 
 type RollingPaperContainerProps = {
   count: number;
@@ -14,6 +14,7 @@ type RollingPaperContainerProps = {
 
 export default function RollingPaperContainer({ count }: RollingPaperContainerProps) {
   const [open, setOpen] = useState(true);
+  const slots = getVisibleSlots(count);
 
   return (
     <OpenSheet open={open} title="" onClose={() => setOpen(false)}>
@@ -31,7 +32,7 @@ export default function RollingPaperContainer({ count }: RollingPaperContainerPr
         </div>
         <div className="from-base-gray-100/0 to-base-gray-100 relative h-[440px] w-full rounded-2xl bg-gradient-to-b">
           {getVisiblePoses(count).map((poses, index) => (
-            <RollingPaperCard key={index} poses={poses} />
+            <RollingPaperCard key={slots[index]} poses={poses} />
           ))}
         </div>
         <p className="from-semantic-background-default/70 to-semantic-background-default/0 text-semantic-text-secondary absolute top-[calc(90px+21px+440px+10px)] left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-b px-2.5 py-1.5 text-center [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-x-small-weak)]">
