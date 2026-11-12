@@ -112,46 +112,12 @@ describe("DatePickerPopover", () => {
     expect(screen.getByRole("gridcell", { selected: true })).toHaveTextContent("5");
   });
 
-  describe("disableBeforeSelected", () => {
-    it("value가 있으면 그 날짜 이전은 선택할 수 없고 그 날짜와 이후는 선택할 수 있다", async () => {
-      const { user, trigger } = setup({ value: "2026-11-20", disableBeforeSelected: true });
+  it("birth는 선택된 날짜 이전도 선택할 수 있다", async () => {
+    const { user, trigger } = setup({ variant: "birth", value: "1999-03-15" });
 
-      await user.click(trigger);
+    await user.click(trigger);
 
-      expect(screen.getByRole("button", { name: /11월 19일/ })).toBeDisabled();
-      expect(screen.getByRole("button", { name: /11월 20일/ })).toBeEnabled();
-      expect(screen.getByRole("button", { name: /11월 21일/ })).toBeEnabled();
-    });
-
-    it("value가 없으면 오늘 이전은 선택할 수 없다", async () => {
-      const { user, trigger } = setup({ disableBeforeSelected: true });
-
-      await user.click(trigger);
-
-      expect(screen.getByRole("button", { name: /11월 12일/ })).toBeDisabled();
-      expect(screen.getByRole("button", { name: /11월 13일/ })).toBeEnabled();
-    });
-
-    it("birth에서도 선택된 월·일 이전은 선택할 수 없다", async () => {
-      const { user, trigger } = setup({
-        variant: "birth",
-        value: "1999-03-15",
-        disableBeforeSelected: true,
-      });
-
-      await user.click(trigger);
-
-      expect(screen.getByRole("button", { name: /3월 14일/ })).toBeDisabled();
-      expect(screen.getByRole("button", { name: /3월 15일/ })).toBeEnabled();
-    });
-
-    it("지정하지 않으면 선택된 날짜 이전도 선택할 수 있다 (birth)", async () => {
-      const { user, trigger } = setup({ variant: "birth", value: "1999-03-15" });
-
-      await user.click(trigger);
-
-      expect(screen.getByRole("button", { name: /3월 14일/ })).toBeEnabled();
-    });
+    expect(screen.getByRole("button", { name: /3월 14일/ })).toBeEnabled();
   });
 
   it("disabled면 트리거를 눌러도 열리지 않는다", async () => {

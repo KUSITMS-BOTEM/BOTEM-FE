@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { DayPicker, type ChevronProps } from "react-day-picker";
 import { ko } from "react-day-picker/locale";
-import { BIRTH_YEAR, parseDateString, toDateString } from "@/utils/date/dateString";
+import { BIRTH_YEAR, getInitialDate, parseDateString, toDateString } from "@/utils/date/dateString";
 import Asset from "@/components/Asset";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconRight from "@/assets/icons/icon-right.svg?react";
@@ -12,8 +12,6 @@ type DatePickerPopoverProps = {
   value: string;
   // deadline에서 선택할 수 있는 가장 이른 날짜("YYYY-MM-DD"). 없으면 오늘
   minDate?: string;
-  // true면 열릴 때 선택돼 있는 날짜(value, 없으면 오늘) 이전 날짜를 고를 수 없다
-  disableBeforeSelected?: boolean;
   onSelect: (date: string) => void;
   disabled?: boolean;
   // 트리거 아이콘 버튼에 전달된다
@@ -55,7 +53,6 @@ export default function DatePickerPopover({
   variant,
   value,
   minDate,
-  disableBeforeSelected,
   onSelect,
   disabled,
   triggerProps,
@@ -81,15 +78,10 @@ export default function DatePickerPopover({
     };
   }, [open]);
 
-  const now = new Date();
-  const earliest = (minDate && parseDateString(minDate)) || now;
-  // 값이 없으면 오늘을 선택된 상태로 보여준다. minDate가 오늘보다 늦으면 선택 불가한 오늘 대신 minDate
-  const picked = parseDateString(value) ?? (isBirth || now >= earliest ? now : earliest);
+  const earliest = (minDate && parseDateString(minDate)) || new Date();
+  const picked = getInitialDate(value, isBirth ? undefined : earliest);
   const selected = isBirth ? new Date(BIRTH_YEAR, picked.getMonth(), picked.getDate()) : picked;
-  const disabledDates = [
-    ...(isBirth ? [] : [{ before: earliest }]),
-    ...(disableBeforeSelected ? [{ before: selected }] : []),
-  ];
+  const disabledDates = isBirth ? [] : [{ before: earliest }];
 
   const handleSelect = (date: Date) => {
     onSelect(toDateString(date));

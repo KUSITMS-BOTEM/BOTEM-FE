@@ -1,4 +1,10 @@
-import { clampDate, getDaysInMonth, parseDateString, toDateString } from "@/utils/date/dateString";
+import {
+  clampDate,
+  getDaysInMonth,
+  getInitialDate,
+  parseDateString,
+  toDateString,
+} from "@/utils/date/dateString";
 
 describe("toDateString", () => {
   it("로컬 날짜를 YYYY-MM-DD로 만들고 한 자리 월·일은 0으로 채운다", () => {
@@ -24,6 +30,27 @@ describe("parseDateString", () => {
   it("빈 문자열이나 형식이 틀린 값은 undefined를 돌려준다", () => {
     expect(parseDateString("")).toBeUndefined();
     expect(parseDateString("abc")).toBeUndefined();
+  });
+});
+
+describe("getInitialDate", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 10, 13, 15, 30));
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it("value가 있으면 그 날짜를 쓴다", () => {
+    expect(toDateString(getInitialDate("2026-11-20"))).toBe("2026-11-20");
+  });
+
+  it("value가 없으면 오늘을 쓴다", () => {
+    expect(toDateString(getInitialDate(""))).toBe("2026-11-13");
+    expect(toDateString(getInitialDate("", new Date(2026, 10, 1)))).toBe("2026-11-13");
+  });
+
+  it("value가 없고 min이 오늘보다 늦으면 min을 쓴다", () => {
+    expect(toDateString(getInitialDate("", new Date(2026, 11, 5)))).toBe("2026-12-05");
   });
 });
 

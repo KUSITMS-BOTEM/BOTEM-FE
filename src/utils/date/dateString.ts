@@ -14,6 +14,12 @@ export function parseDateString(value: string): Date | undefined {
   return new Date(year, month - 1, day);
 }
 
+// 값이 없으면 오늘을 보여준다. min이 오늘보다 늦으면 선택 불가한 오늘 대신 min
+export function getInitialDate(value: string, min?: Date): Date {
+  const now = new Date();
+  return parseDateString(value) ?? (min && min > now ? min : now);
+}
+
 export function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }

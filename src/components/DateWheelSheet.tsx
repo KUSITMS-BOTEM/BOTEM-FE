@@ -4,6 +4,7 @@ import {
   BIRTH_YEAR,
   clampDate,
   getDaysInMonth,
+  getInitialDate,
   parseDateString,
   toDateString,
 } from "@/utils/date/dateString";
@@ -35,9 +36,8 @@ export default function DateWheelSheet({
   onClose,
 }: DateWheelSheetProps) {
   const isBirth = variant === "birth";
-  const now = new Date();
-  const earliest = isBirth ? undefined : (minDate && parseDateString(minDate)) || now;
-  const initial = parseDateString(value) ?? (earliest && earliest > now ? earliest : now);
+  const earliest = isBirth ? undefined : (minDate && parseDateString(minDate)) || new Date();
+  const initial = getInitialDate(value, earliest);
   const initialDate = clampDate(
     isBirth ? BIRTH_YEAR : initial.getFullYear(),
     initial.getMonth() + 1,
