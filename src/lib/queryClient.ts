@@ -15,7 +15,14 @@ declare module "@tanstack/react-query" {
 
 // 서버가 돌려준 비즈니스 에러(ApiError)까지 보내면 알림이 잡음이 되므로 예상치 못한 에러만 보고한다.
 // INVALID_RESPONSE(502 등 게이트웨이가 HTML을 돌려준 경우)와 NETWORK_ERROR(서버에 닿지 못한 경우)는 장애 신호로 본다.
-const REPORTED_API_ERROR_CODES = ["INVALID_RESPONSE", "NETWORK_ERROR"];
+// AUTH_005(redirect URI 설정 불일치)·UNKNOWN_ERROR(응답 계약 위반)·USER_003(외부 연동 장애)도 운영 신호로 본다.
+const REPORTED_API_ERROR_CODES = [
+  "INVALID_RESPONSE",
+  "NETWORK_ERROR",
+  "AUTH_005",
+  "UNKNOWN_ERROR",
+  "USER_003",
+];
 
 function reportUnexpectedError(error: Error) {
   if (error instanceof ApiError && !REPORTED_API_ERROR_CODES.includes(error.code)) return;

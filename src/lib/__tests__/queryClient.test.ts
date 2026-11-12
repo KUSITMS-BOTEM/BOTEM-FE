@@ -1,3 +1,5 @@
+import * as Sentry from "@sentry/nextjs";
+
 import { queryClient } from "../queryClient";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { ApiError } from "@/types/api";
@@ -54,5 +56,17 @@ describe("queryClient 전역 onError", () => {
     await failQuery(new ApiError("USER_002"), { skipGlobalError: true });
 
     expect(useErrorDialogStore.getState().message).toBeNull();
+  });
+
+  it("운영 신호 코드만 Sentry에 보고한다", async () => {
+    vi.mocked(Sentry.captureException).mockClear();
+
+    await failQuery(new ApiError("USER_002"));
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+
+    for (const code of ["AUTH_005", "UNKNOWN_ERROR", "USER_003"]) {
+      await failQuery(new ApiError(code));
+    }
+    expect(Sentry.captureException).toHaveBeenCalledTimes(3);
   });
 });
