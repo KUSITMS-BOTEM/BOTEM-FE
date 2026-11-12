@@ -86,6 +86,30 @@ export const CARD_POSES: CardPose[][] = [
   ],
 ];
 
+export const MAX_CARDS = CARD_POSES.length;
+const LINED_STAGE = 2;
+// 편지지가 추가되는 순서(우상 → 좌하 → 우하 → 좌상 → 하단)에 해당하는 슬롯 번호
+const SLOT_BY_ORDER = [2, 3, 4, 1, 0];
+
+function lineCenterY(cards: CardPose[][]) {
+  const lined = cards.map(poses => poses[LINED_STAGE]);
+  const top = Math.min(...lined.map(({ y, height }) => y - height / 2));
+  const bottom = Math.max(...lined.map(({ y, height }) => y + height / 2));
+  return (top + bottom) / 2;
+}
+
+// 화면에 보일 카드만 골라 슬롯(쌓임) 순서로 돌려준다. 일렬 단계는 5장일 때의 세로 중심에 맞춰 y를 보정한다.
+// shortcut: 회전은 무시하고 높이만으로 중심을 계산, 디자인이 따로 나오면 교체
+export function getVisiblePoses(count: number): CardPose[][] {
+  const slots = SLOT_BY_ORDER.slice(0, Math.min(count, MAX_CARDS)).sort((a, b) => a - b);
+  const visible = slots.map(slot => CARD_POSES[slot]);
+  const shift = lineCenterY(CARD_POSES) - lineCenterY(visible);
+
+  return visible.map(poses =>
+    poses.map((pose, stage) => (stage === LINED_STAGE ? { ...pose, y: pose.y + shift } : pose)),
+  );
+}
+
 export function toKeyframes(poses: CardPose[]) {
   return {
     x: poses.map(pose => pose.x),

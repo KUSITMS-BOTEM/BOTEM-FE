@@ -36,7 +36,7 @@ export default function Home() {
         }
       />
       {/* TEMP: 롤링페이퍼 모션 확인용. PR 전에 이 줄과 import 삭제 */}
-      <RollingPaperContainer />
+      <RollingPaperContainer count={6} />
     </>
   );
 }

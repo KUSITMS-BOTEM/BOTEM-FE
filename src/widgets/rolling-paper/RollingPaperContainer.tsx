@@ -6,9 +6,13 @@ import IconShare from "@/assets/icons/icon-share.svg?react";
 import IconButton from "@/components/IconButton";
 import OpenSheet from "@/components/OpenSheet";
 import RollingPaperCard from "@/widgets/rolling-paper/RollingPaperCard";
-import { CARD_POSES } from "@/widgets/rolling-paper/rollingPaperMotion";
+import { getVisiblePoses } from "@/widgets/rolling-paper/rollingPaperMotion";
 
-export default function RollingPaperContainer() {
+type RollingPaperContainerProps = {
+  count: number;
+};
+
+export default function RollingPaperContainer({ count }: RollingPaperContainerProps) {
   const [open, setOpen] = useState(true);
 
   return (
@@ -20,14 +24,14 @@ export default function RollingPaperContainer() {
             생일 축하해요 지유님!
           </p>
           <p className="text-semantic-text-strong text-2xl [line-height:var(--line-height-default)] font-semibold">
-            총 <span className="text-semantic-fill-brand">5</span>개의 메세지가
+            총 <span className="text-semantic-fill-brand">{count}</span>개의 메세지가
             <br />
             도착했어요!
           </p>
         </div>
         <div className="from-base-gray-100/0 to-base-gray-100 relative h-[440px] w-full rounded-2xl bg-gradient-to-b">
-          {CARD_POSES.map((poses, slot) => (
-            <RollingPaperCard key={slot} poses={poses} />
+          {getVisiblePoses(count).map((poses, index) => (
+            <RollingPaperCard key={index} poses={poses} />
           ))}
         </div>
         <p className="from-semantic-background-default/70 to-semantic-background-default/0 text-semantic-text-secondary absolute top-[calc(90px+21px+440px+10px)] left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-b px-2.5 py-1.5 text-center [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-x-small-weak)]">
