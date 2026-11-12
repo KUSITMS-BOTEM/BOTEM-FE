@@ -70,7 +70,7 @@ export default function ChipGroup({ items, value, onChange, className }: ChipGro
       onPointerCancel={handlePointerUp}
       onClickCapture={handleClickCapture}
       className={cn(
-        "flex w-full cursor-grab touch-pan-x gap-1 overflow-x-auto active:cursor-grabbing",
+        "flex w-full cursor-grab touch-pan-x gap-1 overflow-x-auto overflow-y-hidden active:cursor-grabbing",
         "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
         className,
       )}>
