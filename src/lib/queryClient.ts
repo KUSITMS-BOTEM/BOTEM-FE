@@ -1,6 +1,8 @@
 import * as Sentry from "@sentry/nextjs";
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 
+import { DEFAULT_ERROR_MESSAGE, ERROR_MESSAGES } from "@/constants/errorMessages";
+import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { ApiError } from "@/types/api";
 
 // meta 키를 타입으로 등록해, skipGlobalError 같은 키 오타를 컴파일 타임에 잡는다
@@ -20,19 +22,26 @@ function reportUnexpectedError(error: Error) {
   Sentry.captureException(error);
 }
 
+// action이 dialog인 코드만 전역 Dialog로 띄운다. inline·redirect·none은 호출부가 직접 처리한다
+function showGlobalErrorDialog(error: Error) {
+  const entry =
+    (error instanceof ApiError ? ERROR_MESSAGES[error.code] : undefined) ?? DEFAULT_ERROR_MESSAGE;
+  if (entry.action === "dialog") useErrorDialogStore.getState().openErrorDialog(entry.message);
+}
+
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
       reportUnexpectedError(error);
       if (query.meta?.skipGlobalError) return;
-      alert(error.message);
+      showGlobalErrorDialog(error);
     },
   }),
   mutationCache: new MutationCache({
     onError: (error, _variables, _context, mutation) => {
       reportUnexpectedError(error);
       if (mutation.meta?.skipGlobalError) return;
-      alert(error.message);
+      showGlobalErrorDialog(error);
     },
   }),
 });
