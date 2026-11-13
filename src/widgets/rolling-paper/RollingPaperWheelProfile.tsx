@@ -13,7 +13,7 @@ import {
 import {
   toProfilePose,
   toTransform,
-  wrapOffset,
+  toWheelOffset,
   type WheelPose,
 } from "@/widgets/rolling-paper/wheelGeometry";
 
@@ -23,17 +23,19 @@ const PLACEHOLDER_PROFILES = [ProfileOrange, ProfilePink, ProfileLime];
 
 type RollingPaperWheelProfileProps = {
   index: number;
+  count: number;
   progress: MotionValue<number>;
   animated: boolean;
 };
 
 export default function RollingPaperWheelProfile({
   index,
+  count,
   progress,
   animated,
 }: RollingPaperWheelProfileProps) {
   const pose = useTransform<number, WheelPose>(progress, value =>
-    toProfilePose(wrapOffset(index, value)),
+    toProfilePose(toWheelOffset(index, value, count)),
   );
   const transform = useTransform(pose, toTransform);
   const opacity = useTransform(pose, ({ opacity }) => opacity);

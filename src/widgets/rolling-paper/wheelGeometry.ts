@@ -26,6 +26,15 @@ export type WheelPose = {
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
+// 5개 미만이면 순환하지 않고 progress 0~(count-1)에서 멈춘다. 순환하는 원은 5개부터 자연스럽다
+export function toWheelOffset(index: number, progress: number, count = WHEEL_ITEM_COUNT) {
+  return count >= WHEEL_ITEM_COUNT ? wrapOffset(index, progress, count) : index - progress;
+}
+
+export function clampProgress(progress: number, count = WHEEL_ITEM_COUNT) {
+  return count >= WHEEL_ITEM_COUNT ? progress : clamp(progress, 0, count - 1);
+}
+
 // 중앙 기준 -2.5 ~ 2.5 범위로 접어 5장이 무한히 순환하게 한다
 export function wrapOffset(index: number, progress: number, count = WHEEL_ITEM_COUNT) {
   const distance = (((index - progress) % count) + count) % count;

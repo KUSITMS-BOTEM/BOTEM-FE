@@ -15,13 +15,13 @@ const readPose = (element: HTMLElement) => {
 
 describe("RollingPaperWheelCard", () => {
   it("progress와 같은 번호의 카드는 기울지 않고 원래 크기로 불투명하게 보인다", () => {
-    render(<RollingPaperWheelCard index={0} progress={motionValue(0)} entrance={null} />);
+    render(<RollingPaperWheelCard index={0} count={5} progress={motionValue(0)} entrance={null} />);
 
     expect(readPose(screen.getByTestId("wheel-card"))).toEqual({ rotate: 0, scale: 1, opacity: 1 });
   });
 
   it("이웃 카드는 중앙보다 작고 기울어져 있다", () => {
-    render(<RollingPaperWheelCard index={1} progress={motionValue(0)} entrance={null} />);
+    render(<RollingPaperWheelCard index={1} count={5} progress={motionValue(0)} entrance={null} />);
 
     const { rotate, scale } = readPose(screen.getByTestId("wheel-card"));
 
@@ -31,7 +31,7 @@ describe("RollingPaperWheelCard", () => {
 
   it("progress가 바뀌면 카드가 따라 중앙으로 이동한다", async () => {
     const progress = motionValue(0);
-    render(<RollingPaperWheelCard index={1} progress={progress} entrance={null} />);
+    render(<RollingPaperWheelCard index={1} count={5} progress={progress} entrance={null} />);
 
     act(() => progress.set(1));
 
@@ -48,6 +48,7 @@ describe("RollingPaperWheelCard", () => {
     render(
       <RollingPaperWheelCard
         index={0}
+        count={5}
         progress={motionValue(0)}
         entrance={ARRIVAL_CARD_ENTRANCES[0]}
       />,
@@ -57,7 +58,7 @@ describe("RollingPaperWheelCard", () => {
   });
 
   it("등장 모션이 없으면 래퍼가 바로 보인다", () => {
-    render(<RollingPaperWheelCard index={0} progress={motionValue(0)} entrance={null} />);
+    render(<RollingPaperWheelCard index={0} count={5} progress={motionValue(0)} entrance={null} />);
 
     expect(screen.getByTestId("wheel-card").parentElement).toHaveStyle({ opacity: "1" });
   });

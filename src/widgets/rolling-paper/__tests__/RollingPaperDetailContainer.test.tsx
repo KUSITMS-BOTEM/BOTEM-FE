@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({
 describe("RollingPaperDetailContainer", () => {
   it("뒤로 가기 버튼을 누르면 이전 페이지로 돌아간다", async () => {
     const user = userEvent.setup();
-    render(<RollingPaperDetailContainer />);
+    render(<RollingPaperDetailContainer count={5} />);
 
     await user.click(screen.getByRole("button", { name: "뒤로 가기" }));
 
@@ -19,13 +19,13 @@ describe("RollingPaperDetailContainer", () => {
   });
 
   it("편지지와 프로필 휠을 함께 그린다", () => {
-    render(<RollingPaperDetailContainer />);
+    render(<RollingPaperDetailContainer count={5} />);
 
     expect(screen.getByTestId("rolling-paper-wheel")).toBeInTheDocument();
   });
 
   it("뒤로 가기 버튼은 페이드인을 위해 투명하게 시작한다", () => {
-    render(<RollingPaperDetailContainer />);
+    render(<RollingPaperDetailContainer count={5} />);
 
     expect(screen.getByRole("button", { name: "뒤로 가기" }).parentElement).toHaveStyle({
       opacity: "0",

@@ -3,7 +3,9 @@ import {
   WHEEL_ITEM_COUNT,
   toCardPose,
   toProfilePose,
+  clampProgress,
   toSnapTarget,
+  toWheelOffset,
   wrapOffset,
 } from "@/widgets/rolling-paper/wheelGeometry";
 
@@ -80,5 +82,20 @@ describe("PX_PER_STEP", () => {
   it("한 칸 거리가 카드 한 장 높이 안쪽인 양수다", () => {
     expect(PX_PER_STEP).toBeGreaterThan(0);
     expect(PX_PER_STEP).toBeLessThan(272);
+  });
+});
+
+describe("toWheelOffset·clampProgress", () => {
+  it("5개 이상이면 순환하고 progress를 제한하지 않는다", () => {
+    expect(toWheelOffset(0, 4, 5)).toBe(1);
+    expect(clampProgress(7, 5)).toBe(7);
+  });
+
+  it("5개 미만이면 순환하지 않고 0~(count-1)로 제한한다", () => {
+    expect(toWheelOffset(0, 1, 3)).toBe(-1);
+    expect(toWheelOffset(2, 0, 3)).toBe(2);
+    expect(clampProgress(-0.5, 3)).toBe(0);
+    expect(clampProgress(2.6, 3)).toBe(2);
+    expect(clampProgress(1.4, 1)).toBe(0);
   });
 });

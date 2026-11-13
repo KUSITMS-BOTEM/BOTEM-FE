@@ -22,21 +22,25 @@ import {
   getVisibleSlots,
 } from "@/widgets/rolling-paper/rollingPaperMotion";
 
-const ROLLING_PAPER_PATH = "/rolling-paper";
-
 type RollingPaperContainerProps = {
+  rollingPaperId: string;
   count: number;
 };
 
-export default function RollingPaperContainer({ count }: RollingPaperContainerProps) {
+export default function RollingPaperContainer({
+  rollingPaperId,
+  count,
+}: RollingPaperContainerProps) {
   const [open, setOpen] = useState(true);
   const [opened, setOpened] = useState(false);
   const router = useRouter();
   const slots = getVisibleSlots(count);
+  // TODO(API): 조회 API가 나오면 count 쿼리를 없애고 도착 페이지가 id로 직접 받아오게 한다
+  const detailPath = `/rolling-paper/${rollingPaperId}?count=${count}`;
 
   // 모션이 끝나는 1.1s 뒤 이동하므로 그 사이 페이지를 미리 받아둔다
   const handleOpen = () => {
-    router.prefetch(ROLLING_PAPER_PATH);
+    router.prefetch(detailPath);
     setOpened(true);
   };
 
@@ -46,9 +50,7 @@ export default function RollingPaperContainer({ count }: RollingPaperContainerPr
       title=""
       onClose={() => setOpen(false)}
       hideScrollbar
-      overlay={
-        opened && <RollingPaperOpenOverlay onCovered={() => router.push(ROLLING_PAPER_PATH)} />
-      }
+      overlay={opened && <RollingPaperOpenOverlay onCovered={() => router.push(detailPath)} />}
       headerAction={<IconButton size="large" icon={<IconShare />} aria-label="공유" />}>
       {/* 카드가 시트 좌우 끝까지 흩어졌다 모이므로 콘텐츠 패딩을 뚫고 시트 폭만큼 펼친 뒤 가로로만 잘라낸다 */}
       <div className="relative -mx-5 w-[calc(100%+2.5rem)] overflow-x-clip px-5 pb-28">

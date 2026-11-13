@@ -10,7 +10,7 @@ import {
 import {
   toCardPose,
   toTransform,
-  wrapOffset,
+  toWheelOffset,
   type WheelPose,
 } from "@/widgets/rolling-paper/wheelGeometry";
 
@@ -20,6 +20,7 @@ export const WHEEL_CARD_HEIGHT = 272;
 
 type RollingPaperWheelCardProps = {
   index: number;
+  count: number;
   progress: MotionValue<number>;
   entrance: ArrivalCardEntrance | null;
   onEntered?: () => void;
@@ -28,12 +29,13 @@ type RollingPaperWheelCardProps = {
 // 바깥은 등장 모션, 안쪽은 휠 위치를 맡는다. 둘 다 transform을 쓰므로 요소를 나눠 서로 덮어쓰지 않게 한다
 export default function RollingPaperWheelCard({
   index,
+  count,
   progress,
   entrance,
   onEntered,
 }: RollingPaperWheelCardProps) {
   const pose = useTransform<number, WheelPose>(progress, value =>
-    toCardPose(wrapOffset(index, value)),
+    toCardPose(toWheelOffset(index, value, count)),
   );
   const transform = useTransform(pose, toTransform);
   const opacity = useTransform(pose, ({ opacity }) => opacity);
