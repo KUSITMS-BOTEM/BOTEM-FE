@@ -133,7 +133,7 @@ export default function RollingPaperWheel({ count }: RollingPaperWheelProps) {
     const offset = toWheelOffset(index, progress.get(), itemCount);
     if (Math.abs(offset) < 0.5) {
       event.stopPropagation();
-      expand();
+      if (ready) expand();
       return;
     }
     if (expanded || !ready) return;

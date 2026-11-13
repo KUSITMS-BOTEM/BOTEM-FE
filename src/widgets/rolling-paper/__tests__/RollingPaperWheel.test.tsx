@@ -125,13 +125,13 @@ describe("RollingPaperWheel", () => {
     expect(voicePlayer).toHaveAttribute("aria-hidden", "true");
   });
 
-  it("등장 모션이 끝나기 전에 처음 보이는 가운데 편지지를 탭해도 확대된다", () => {
+  it("등장 모션이 끝나기 전에 가운데 편지지를 탭하면 확대되지 않는다", () => {
     reducedMotion = false;
     render(<RollingPaperWheel count={5} />);
 
     fireEvent.click(screen.getAllByTestId("wheel-card")[0]);
 
-    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "false");
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "true");
   });
 
   it("위·아래 편지지를 탭하면 그 편지지가 가운데로 오고 확대되지는 않는다", async () => {
