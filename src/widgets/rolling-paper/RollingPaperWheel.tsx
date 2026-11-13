@@ -117,12 +117,24 @@ export default function RollingPaperWheel({ count }: RollingPaperWheelProps) {
     );
   };
 
-  // 가운데 편지지를 탭하면 확대한다. 확대된 뒤에도 편지지 탭은 닫히지 않게 전파를 막는다
+  // 가운데 편지지를 탭하면 확대하고, 위·아래 편지지를 탭하면 그 편지지가 가운데로 오게 한다.
+  // 확대된 뒤에도 가운데 편지지 탭은 닫히지 않게 전파를 막고, 확대 중 다른 편지지 탭은 전파시켜 닫는다
   const handleCardClick = (event: MouseEvent<HTMLDivElement>, index: number) => {
-    const isCenter = Math.abs(toWheelOffset(index, progress.get(), itemCount)) < 0.5;
-    if (movedRef.current || !isCenter) return;
+    if (movedRef.current) return;
+    const offset = toWheelOffset(index, progress.get(), itemCount);
+    if (Math.abs(offset) < 0.5) {
+      event.stopPropagation();
+      expand();
+      return;
+    }
+    if (expanded || !ready) return;
     event.stopPropagation();
-    expand();
+    snapRef.current?.stop();
+    snapRef.current = animate(
+      progress,
+      clampProgress(progress.get() + offset, itemCount),
+      SNAP_SPRING,
+    );
   };
 
   return (

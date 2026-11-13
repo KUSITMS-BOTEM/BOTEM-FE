@@ -134,6 +134,31 @@ describe("RollingPaperWheel", () => {
     expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "false");
   });
 
+  it("위·아래 편지지를 탭하면 그 편지지가 가운데로 오고 확대되지는 않는다", async () => {
+    render(<RollingPaperWheel count={5} />);
+    const cards = screen.getAllByTestId("wheel-card");
+    const centerTransform = cards[0].style.transform;
+
+    fireEvent.click(cards[1]);
+
+    await waitFor(() => expect(cards[1].style.transform).toBe(centerTransform), {
+      timeout: 3000,
+    });
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("확대 중에 다른 편지지를 탭하면 가운데로 옮기지 않고 닫힌다", () => {
+    render(<RollingPaperWheel count={5} />);
+    const cards = screen.getAllByTestId("wheel-card");
+    const before = cards[1].style.transform;
+    fireEvent.click(cards[0]);
+
+    fireEvent.click(cards[1]);
+
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "true");
+    expect(cards[1].style.transform).toBe(before);
+  });
+
   it("회전이 멈춰도 자동으로 확대되지 않고 탭해야만 확대된다", async () => {
     render(<RollingPaperWheel count={5} />);
     dragVertically(screen.getByTestId("rolling-paper-wheel"), 100);
