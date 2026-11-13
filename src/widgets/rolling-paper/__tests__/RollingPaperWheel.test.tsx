@@ -161,11 +161,54 @@ describe("RollingPaperWheel", () => {
 
   it("회전이 멈춰도 자동으로 확대되지 않고 탭해야만 확대된다", async () => {
     render(<RollingPaperWheel count={5} />);
+    const before = screen.getAllByTestId("wheel-card")[1].style.transform;
     dragVertically(screen.getByTestId("rolling-paper-wheel"), 100);
 
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await waitFor(() =>
+      expect(screen.getAllByTestId("wheel-card")[1].style.transform).not.toBe(before),
+    );
 
     expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("드래그 직후 이어지는 click은 탭으로 보지 않는다", () => {
+    render(<RollingPaperWheel count={5} />);
+    dragVertically(screen.getByTestId("rolling-paper-wheel"), 100);
+
+    fireEvent.click(screen.getAllByTestId("wheel-card")[0]);
+
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("6px 미만으로 움직인 뒤의 click은 탭으로 보고 확대한다", () => {
+    render(<RollingPaperWheel count={5} />);
+    dragVertically(screen.getByTestId("rolling-paper-wheel"), 5);
+
+    fireEvent.click(screen.getAllByTestId("wheel-card")[0]);
+
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "false");
+  });
+
+  it("Enter로 확대하고 Escape로 닫는다", () => {
+    render(<RollingPaperWheel count={5} />);
+    const wheel = screen.getByTestId("rolling-paper-wheel");
+
+    fireEvent.keyDown(wheel, { key: "Enter" });
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "false");
+
+    fireEvent.keyDown(wheel, { key: "Escape" });
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("확대 중에는 드래그해도 휠이 움직이지 않는다", () => {
+    render(<RollingPaperWheel count={5} />);
+    const wheel = screen.getByTestId("rolling-paper-wheel");
+    fireEvent.keyDown(wheel, { key: "Enter" });
+    const before = screen.getAllByTestId("wheel-card")[1].style.transform;
+
+    dragVertically(wheel, 100);
+
+    expect(screen.getAllByTestId("wheel-card")[1].style.transform).toBe(before);
   });
 
   it("1개면 드래그해도 움직이지 않는다", () => {

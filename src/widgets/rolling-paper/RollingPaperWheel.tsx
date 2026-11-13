@@ -58,7 +58,16 @@ export default function RollingPaperWheel({ count }: RollingPaperWheelProps) {
   const movedRef = useRef(false);
   const snapRef = useRef<AnimationPlaybackControls | null>(null);
 
-  const expand = () => setExpanded(true);
+  // 스냅이 진행 중이어도 지금 가운데 편지지로 휠을 확정해, 확대된 뒤 휠이 다른 카드로 계속 도는 일이 없게 한다
+  const expand = () => {
+    snapRef.current?.stop();
+    snapRef.current = animate(
+      progress,
+      clampProgress(Math.round(progress.get()), itemCount),
+      SNAP_SPRING,
+    );
+    setExpanded(true);
+  };
   const collapse = () => setExpanded(false);
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
