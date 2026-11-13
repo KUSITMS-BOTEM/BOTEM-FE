@@ -3,7 +3,8 @@ import Image from "next/image";
 import { cn } from "@/utils/cn";
 import Badge from "@/components/Badge";
 import FundingCardGiftCover from "@/widgets/home/FundingCardGiftCover";
-import ProfileBox, { type ProfileColor } from "@/widgets/home/ProfileBox";
+import type { ProfileColor } from "@/components/Profile";
+import ProfileBox from "@/widgets/home/ProfileBox";
 import ProgressBar from "@/widgets/home/ProgressBar";
 import IconLock from "@/assets/icons/icon-lock.svg?react";
 

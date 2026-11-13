@@ -23,6 +23,10 @@ const PROFILE_COLORS = Object.keys(PROFILE_FALLBACKS) as ProfileColor[];
 
 export type ProfileColor = "orange" | "pink" | "lime" | "blue";
 
+// 같은 사용자는 어디서나 같은 색이 되도록 id로 결정한다
+export const getProfileColor = (userId: number): ProfileColor =>
+  PROFILE_COLORS[userId % PROFILE_COLORS.length];
+
 type ProfileProps = {
   imageUrl?: string;
   color?: ProfileColor;
@@ -38,18 +42,14 @@ const DECODE_ERROR_MESSAGE = "이미지를 불러올 수 없어요. 다른 파�
 
 export default function Profile({
   imageUrl,
-  color,
+  color = "orange",
   onImageChange,
   allowedTypes,
   maxSizeBytes,
   showIconButton = true,
   className,
 }: ProfileProps) {
-  // color 미지정 시 마운트마다 한 번만 뽑아 리렌더에도 색이 바뀌지 않게 고정
-  const [randomColor] = useState(
-    () => PROFILE_COLORS[Math.floor(Math.random() * PROFILE_COLORS.length)],
-  );
-  const Fallback = PROFILE_FALLBACKS[color ?? randomColor];
+  const Fallback = PROFILE_FALLBACKS[color];
   const inputRef = useRef<HTMLInputElement>(null);
   const latestRequestIdRef = useRef(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
