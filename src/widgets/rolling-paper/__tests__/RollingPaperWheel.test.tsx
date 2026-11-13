@@ -2,9 +2,10 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import RollingPaperWheel from "@/widgets/rolling-paper/RollingPaperWheel";
 
+let reducedMotion = true;
 vi.mock("framer-motion", async importOriginal => {
   const actual = await importOriginal<typeof import("framer-motion")>();
-  return { ...actual, useReducedMotion: () => true };
+  return { ...actual, useReducedMotion: () => reducedMotion };
 });
 
 function dragVertically(wheel: HTMLElement, distance: number) {
@@ -15,6 +16,7 @@ function dragVertically(wheel: HTMLElement, distance: number) {
 
 describe("RollingPaperWheel", () => {
   beforeEach(() => {
+    reducedMotion = true;
     // jsdom에는 PointerEvent가 없어 clientY가 전달되지 않는다
     vi.stubGlobal("PointerEvent", class extends MouseEvent {});
     Element.prototype.setPointerCapture = vi.fn();
@@ -109,6 +111,36 @@ describe("RollingPaperWheel", () => {
     await new Promise(resolve => setTimeout(resolve, 50));
 
     expect(screen.getAllByTestId("wheel-card")[1].style.transform).toBe(before);
+  });
+
+  it("가운데 편지지를 탭하면 Voice Player가 나타나고 바깥을 탭하면 닫힌다", () => {
+    render(<RollingPaperWheel count={5} />);
+    const voicePlayer = screen.getByTestId("voice-player");
+    expect(voicePlayer).toHaveAttribute("aria-hidden", "true");
+
+    fireEvent.click(screen.getAllByTestId("wheel-card")[0]);
+    expect(voicePlayer).toHaveAttribute("aria-hidden", "false");
+
+    fireEvent.click(screen.getByTestId("rolling-paper-wheel"));
+    expect(voicePlayer).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("등장 모션이 끝나기 전에 처음 보이는 가운데 편지지를 탭해도 확대된다", () => {
+    reducedMotion = false;
+    render(<RollingPaperWheel count={5} />);
+
+    fireEvent.click(screen.getAllByTestId("wheel-card")[0]);
+
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "false");
+  });
+
+  it("회전이 멈춰도 자동으로 확대되지 않고 탭해야만 확대된다", async () => {
+    render(<RollingPaperWheel count={5} />);
+    dragVertically(screen.getByTestId("rolling-paper-wheel"), 100);
+
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "true");
   });
 
   it("1개면 드래그해도 움직이지 않는다", () => {
