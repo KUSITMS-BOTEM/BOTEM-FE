@@ -8,10 +8,24 @@ import { cn } from "@/utils/cn";
 import IconButton from "@/components/IconButton";
 import ToastMessage from "@/components/ToastMessage";
 import ProfileOrange from "@/assets/icons/multicolor/profile-orange.svg?react";
+import ProfilePink from "@/assets/icons/multicolor/profile-pink.svg?react";
+import ProfileLime from "@/assets/icons/multicolor/profile-lime.svg?react";
+import ProfileBlue from "@/assets/icons/multicolor/profile-blue.svg?react";
 import IconPlus from "@/assets/icons/icon-plus.svg?react";
+
+const PROFILE_FALLBACKS = {
+  orange: ProfileOrange,
+  pink: ProfilePink,
+  lime: ProfileLime,
+  blue: ProfileBlue,
+};
+const PROFILE_COLORS = Object.keys(PROFILE_FALLBACKS) as ProfileColor[];
+
+export type ProfileColor = "orange" | "pink" | "lime" | "blue";
 
 type ProfileProps = {
   imageUrl?: string;
+  color?: ProfileColor;
   onImageChange?: (file: File) => void;
   allowedTypes?: string[];
   maxSizeBytes?: number;
@@ -24,12 +38,18 @@ const DECODE_ERROR_MESSAGE = "이미지를 불러올 수 없어요. 다른 파�
 
 export default function Profile({
   imageUrl,
+  color,
   onImageChange,
   allowedTypes,
   maxSizeBytes,
   showIconButton = true,
   className,
 }: ProfileProps) {
+  // color 미지정 시 마운트마다 한 번만 뽑아 리렌더에도 색이 바뀌지 않게 고정
+  const [randomColor] = useState(
+    () => PROFILE_COLORS[Math.floor(Math.random() * PROFILE_COLORS.length)],
+  );
+  const Fallback = PROFILE_FALLBACKS[color ?? randomColor];
   const inputRef = useRef<HTMLInputElement>(null);
   const latestRequestIdRef = useRef(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -111,7 +131,7 @@ export default function Profile({
             onError={() => setImageLoadError(true)}
           />
         ) : (
-          <ProfileOrange className="size-full" />
+          <Fallback className="size-full" />
         )}
       </div>
       {showIconButton && (
