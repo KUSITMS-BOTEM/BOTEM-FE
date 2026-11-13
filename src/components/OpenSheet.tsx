@@ -12,6 +12,7 @@ export type OpenSheetProps = {
   onClose: () => void;
   slideOutOnClose?: boolean;
   closeType?: ComponentProps<typeof SheetHeader>["closeType"];
+  headerAction?: ReactNode;
   children: ReactNode;
   className?: string;
 };
@@ -25,6 +26,7 @@ export default function OpenSheet({
   onClose,
   slideOutOnClose = false,
   closeType,
+  headerAction,
   children,
   className,
 }: OpenSheetProps) {
@@ -98,6 +100,7 @@ export default function OpenSheet({
                     onClose={onClose}
                     showHandle={false}
                     closeType={closeType}
+                    rightAction={headerAction}
                   />
                   <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pt-1 pb-4">
                     {children}

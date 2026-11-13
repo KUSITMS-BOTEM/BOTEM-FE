@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { useAddWishMutation } from "@/hooks/mutations/wish/useAddWishMutation";
 import { useRecommendedProductQuery } from "@/hooks/queries/recommended-product/useRecommendedProductQuery";
 import { ApiError } from "@/types/api";
@@ -157,13 +159,12 @@ describe("RecommendedProductDetailContainer", () => {
     expect(replace).toHaveBeenCalledWith("/");
   });
 
-  it("그 외 API 에러면 에러 메시지로 alert를 띄운다", () => {
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
+  it("그 외 API 에러면 매핑 테이블 메시지로 전역 Dialog를 띄운다", () => {
     mockProductQuery({ error: new ApiError("PRODUCT_002", "상품 조회 실패") as never });
 
     render(<RecommendedProductDetailContainer />);
 
-    expect(alertSpy).toHaveBeenCalledWith("상품 조회 실패");
-    alertSpy.mockRestore();
+    expect(useErrorDialogStore.getState().message).toBe(ERROR_MESSAGES.PRODUCT_002.message);
+    useErrorDialogStore.getState().closeErrorDialog();
   });
 });

@@ -26,6 +26,15 @@ describe("SheetHeader", () => {
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
+  it("rightAction이 있으면 닫기 버튼과 함께 렌더링된다", () => {
+    render(
+      <SheetHeader title="" onClose={vi.fn()} rightAction={<button type="button">공유</button>} />,
+    );
+
+    expect(screen.getByRole("button", { name: "공유" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "닫기" })).toBeInTheDocument();
+  });
+
   it("showHandle을 생략하면 드래그 핸들이 보인다", () => {
     const { container } = render(<SheetHeader title="타이틀" onClose={vi.fn()} />);
 

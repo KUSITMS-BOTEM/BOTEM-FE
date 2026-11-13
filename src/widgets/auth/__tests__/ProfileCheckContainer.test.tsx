@@ -9,6 +9,7 @@ import { pickWheelDate } from "@/__tests__/pickWheelDate";
 import { authService } from "@/apis/auth/authService";
 import { userService } from "@/apis/user/userService";
 import { useAuthStore } from "@/store/authStore";
+import { useErrorDialogStore } from "@/store/errorDialogStore";
 import type { MyProfile } from "@/types/user/profile";
 import { setSignupFlow } from "@/utils/auth/signupFlowStorage";
 import ProfileCheckContainer from "@/widgets/auth/ProfileCheckContainer";
@@ -75,7 +76,6 @@ beforeEach(() => {
   sessionStorage.clear();
   vi.clearAllMocks();
   uploadMutationState.isPending = false;
-  vi.spyOn(window, "alert").mockImplementation(() => {});
 });
 
 afterEach(() => {
@@ -239,7 +239,7 @@ describe("ProfileCheckContainer", () => {
     );
   });
 
-  it("이미지 업로드가 실패하면 실패 안내 alert를 띄우고 다음 단계로는 저장하지 않는다", async () => {
+  it("이미지 업로드가 실패하면 실패 안내 Dialog를 띄우고 다음 단계로는 저장하지 않는다", async () => {
     setSignupFlow({ step: "profile", nickname: "지유", birthday: "10-13" });
     vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());
     const file = new File(["dummy"], "photo.png", { type: "image/png" });
@@ -252,7 +252,10 @@ describe("ProfileCheckContainer", () => {
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     await userEvent.upload(input, file);
 
-    expect(window.alert).toHaveBeenCalledWith("이미지 업로드에 실패했어요. 다시 시도해주세요");
+    expect(useErrorDialogStore.getState().message).toBe(
+      "이미지 업로드에 실패했어요. 다시 시도해주세요",
+    );
+    useErrorDialogStore.getState().closeErrorDialog();
 
     await user.click(screen.getByRole("button", { name: "다음으로" }));
 
