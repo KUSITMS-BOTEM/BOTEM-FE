@@ -86,6 +86,31 @@ describe("RollingPaperWheel", () => {
     );
   });
 
+  it("키보드로 포커스할 수 있고 아래 방향키로 다음 카드로 이동한다", async () => {
+    render(<RollingPaperWheel count={3} />);
+    const wheel = screen.getByTestId("rolling-paper-wheel");
+    const before = screen.getAllByTestId("wheel-card")[1].style.transform;
+
+    expect(wheel).toHaveAttribute("tabindex", "0");
+    fireEvent.keyDown(wheel, { key: "ArrowDown" });
+
+    await waitFor(() =>
+      expect(screen.getAllByTestId("wheel-card")[1].style.transform).not.toBe(before),
+    );
+  });
+
+  it("첫 카드에서 위 방향키나 그 외 키는 움직이지 않는다", async () => {
+    render(<RollingPaperWheel count={3} />);
+    const wheel = screen.getByTestId("rolling-paper-wheel");
+    const before = screen.getAllByTestId("wheel-card")[1].style.transform;
+
+    fireEvent.keyDown(wheel, { key: "ArrowUp" });
+    fireEvent.keyDown(wheel, { key: "Enter" });
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    expect(screen.getAllByTestId("wheel-card")[1].style.transform).toBe(before);
+  });
+
   it("1개면 드래그해도 움직이지 않는다", () => {
     render(<RollingPaperWheel count={1} />);
     const wheel = screen.getByTestId("rolling-paper-wheel");

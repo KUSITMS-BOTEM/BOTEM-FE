@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type PointerEvent } from "react";
+import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 
 import {
   animate,
@@ -22,6 +22,8 @@ import {
 const SNAP_SPRING = { type: "spring", stiffness: 260, damping: 30 } as const;
 // 등장 모션이 가장 늦게 끝나는 카드(중앙)가 끝나면 드래그를 연다
 const LAST_ENTERING_INDEX = 0;
+// 위로 끌면 progress가 늘어나므로 아래/위 방향키를 다음/이전 카드로 맞춘다
+const KEY_STEPS: Record<string, number> = { ArrowDown: 1, ArrowUp: -1 };
 
 // 편지지와 프로필이 하나의 progress를 공유해 세로 드래그로 함께 회전한다
 type RollingPaperWheelProps = {
@@ -68,10 +70,26 @@ export default function RollingPaperWheel({ count }: RollingPaperWheelProps) {
     );
   };
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const step = KEY_STEPS[event.key];
+    if (!ready || !step) return;
+    event.preventDefault();
+    snapRef.current?.stop();
+    snapRef.current = animate(
+      progress,
+      clampProgress(Math.round(progress.get()) + step, itemCount),
+      SNAP_SPRING,
+    );
+  };
+
   return (
     <div
       data-testid="rolling-paper-wheel"
+      role="group"
+      aria-label="롤링페이퍼 편지지 목록. 위아래 방향키로 이동"
+      tabIndex={0}
       className="absolute inset-0 touch-none overflow-hidden"
+      onKeyDown={handleKeyDown}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
