@@ -11,6 +11,7 @@ export const useLogoutMutation = () =>
     onSuccess: () => {
       useAuthStore.getState().clearAccessToken();
       queryClient.removeQueries({ queryKey: ["users", "me"] });
+      queryClient.removeQueries({ queryKey: ["friends"] });
       clearWishPromptPending();
     },
   });

@@ -19,7 +19,7 @@ const COLLAPSED_COUNT = 2;
 
 export default function FriendsContainer() {
   const router = useRouter();
-  const { data } = useFriendsQuery();
+  const { data, isError, refetch } = useFriendsQuery();
   const [expanded, setExpanded] = useState(false);
 
   const upcoming = data?.upcomingBirthdayFriends ?? [];
@@ -43,6 +43,14 @@ export default function FriendsContainer() {
             </Button>
           }
         />
+        {isError && (
+          <div className="flex w-full flex-col items-center gap-3 py-10">
+            <p>친구 목록을 불러오지 못했어요.</p>
+            <Button color="brand" size="small" onClick={() => refetch()}>
+              다시 시도
+            </Button>
+          </div>
+        )}
         {data && (
           <div className="flex w-full flex-col gap-3">
             <ListHeader title={`전체 ${data.totalCount}명`} />

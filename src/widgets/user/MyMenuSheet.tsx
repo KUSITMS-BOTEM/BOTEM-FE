@@ -8,6 +8,7 @@ import List from "@/components/List";
 import ListHeader from "@/components/ListHeader";
 import CloseSheet from "@/components/CloseSheet";
 import TextButton from "@/components/TextButton";
+import { cn } from "@/utils/cn";
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
@@ -70,11 +71,9 @@ export default function MyMenuSheet({
               title="친구"
               onClick={() => router.push("/friends")}
               right={
-                <TextButton
-                  size="medium"
-                  label={`${friendCount}명`}
-                  className={MENU_TEXT_BUTTON_CLASS}
-                />
+                <span className={cn("[font:var(--semantic-label-small)]", MENU_TEXT_BUTTON_CLASS)}>
+                  {`${friendCount}명`}
+                </span>
               }
             />
             <List
