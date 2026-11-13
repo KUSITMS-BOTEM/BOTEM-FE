@@ -68,6 +68,7 @@ export default function MyMenuSheet({
             <List
               leading={<IconAccount />}
               title="친구"
+              onClick={() => router.push("/friends")}
               right={
                 <TextButton
                   size="medium"
