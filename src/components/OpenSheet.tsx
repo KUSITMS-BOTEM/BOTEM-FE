@@ -13,6 +13,9 @@ export type OpenSheetProps = {
   slideOutOnClose?: boolean;
   closeType?: ComponentProps<typeof SheetHeader>["closeType"];
   headerAction?: ReactNode;
+  hideScrollbar?: boolean;
+  // 헤더까지 포함한 시트 전체 위에 겹쳐 그린다
+  overlay?: ReactNode;
   children: ReactNode;
   className?: string;
 };
@@ -27,6 +30,8 @@ export default function OpenSheet({
   slideOutOnClose = false,
   closeType,
   headerAction,
+  hideScrollbar = false,
+  overlay,
   children,
   className,
 }: OpenSheetProps) {
@@ -85,7 +90,7 @@ export default function OpenSheet({
                 )}>
                 <motion.div
                   className={cn(
-                    "bg-semantic-fill-default flex h-full w-full flex-col overflow-clip",
+                    "bg-semantic-fill-default relative flex h-full w-full flex-col overflow-clip",
                     className,
                   )}
                   initial={{ x: "100%" }}
@@ -102,9 +107,15 @@ export default function OpenSheet({
                     closeType={closeType}
                     rightAction={headerAction}
                   />
-                  <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pt-1 pb-4">
+                  <div
+                    className={cn(
+                      "flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pt-1 pb-4",
+                      hideScrollbar &&
+                        "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+                    )}>
                     {children}
                   </div>
+                  {overlay}
                 </motion.div>
               </motion.div>
             </>

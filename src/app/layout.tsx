@@ -33,8 +33,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ko" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col pt-[env(safe-area-inset-top)]">
+    // 브라우저 확장(번역·색상 추출 등)이 html·body에 속성을 주입해 생기는 hydration 경고를 막는다
+    <html
+      lang="ko"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning>
+      <body
+        className="flex min-h-full flex-col pt-[env(safe-area-inset-top)]"
+        suppressHydrationWarning>
         <div className={cn("mx-auto flex w-full flex-1 flex-col", APP_MAX_WIDTH_CLASS)}>
           <MswProvider>
             <QueryProvider>
