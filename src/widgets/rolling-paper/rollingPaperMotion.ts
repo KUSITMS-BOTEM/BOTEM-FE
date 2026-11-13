@@ -66,6 +66,56 @@ const EASE_GRAY_AREA: Easing = [0.65, 0, 0.35, 1];
 export const EXIT_HEADER_TRANSITION = { delay: 0.5, duration: 0.45, ease: EASE_HEADER_FADE };
 // 페이지 이동 뒤 도착 화면에서는 클릭 시점 타임라인이 끊겨 지연 없이 바로 페이드인한다
 export const ARRIVAL_BACK_BUTTON_TRANSITION = { duration: 0.45, ease: EASE_HEADER_FADE };
+// 도착 화면 등장 모션. 디자인 2.4s 타임라인에서 회색 덮개가 끝나는 1.1s부터 페이지가 시작되므로 그만큼 앞당긴다
+const ARRIVAL_OFFSET = 1.1;
+const EASE_ARRIVAL_ROTATE: Easing = [0.25, 1, 0.4, 1];
+const EASE_ARRIVAL_X: Easing = [0.4, 0.6, 0.3, 1];
+const EASE_ARRIVAL_Y: Easing = [0.22, 1, 0.36, 1];
+const EASE_PROFILE_DROP: Easing = [0.32, 1.2, 0.5, 1];
+const ARRIVAL_CARD_FADE_DURATION = 0.3;
+
+export const ARRIVAL_BG_TRANSITION = { duration: 0.3, ease: EASE_FADE };
+
+// x·y·rotate(deg)·scale은 최종 위치 기준 시작 오프셋, start·end는 디자인 타임라인 기준 초
+export type ArrivalCardEntrance = {
+  x: number;
+  y: number;
+  rotate: number;
+  scale: number;
+  start: number;
+  end: number;
+};
+
+// 아이템 번호 순서(진행 0일 때 중앙·아래·맨 아래·맨 위·위)이며 디자인의 Haeun·Haeun·Seojun·Sua·Seojun 카드에 해당
+export const ARRIVAL_CARD_ENTRANCES: ArrivalCardEntrance[] = [
+  { x: -192.461, y: -535.975, rotate: 34, scale: 1.3089, start: 1.17, end: 1.97 },
+  { x: 184.396, y: -536.269, rotate: 34, scale: 0.764, start: 1.11, end: 1.91 },
+  { x: 191.413, y: -490.746, rotate: 33.4, scale: 1, start: 1.08, end: 1.88 },
+  { x: -8.497, y: -594.232, rotate: 35.2, scale: 1, start: 1.14, end: 1.94 },
+  { x: 118.738, y: -496.98, rotate: 34, scale: 1, start: 1.05, end: 1.85 },
+];
+
+export function toArrivalCardTransition({ start, end }: ArrivalCardEntrance) {
+  const delay = Math.max(0, start - ARRIVAL_OFFSET);
+  const duration = end - ARRIVAL_OFFSET - delay;
+  const timing = (ease: Easing) => ({ delay, duration, ease });
+
+  return {
+    x: timing(EASE_ARRIVAL_X),
+    y: timing(EASE_ARRIVAL_Y),
+    rotate: timing(EASE_ARRIVAL_ROTATE),
+    scale: timing(EASE_ARRIVAL_Y),
+    opacity: { delay, duration: ARRIVAL_CARD_FADE_DURATION, ease: EASE_FADE },
+  };
+}
+
+export const ARRIVAL_PROFILE_FROM = { y: -24, opacity: 0 };
+export const ARRIVAL_PROFILE_TO = { y: 0, opacity: 1 };
+export const ARRIVAL_PROFILE_TRANSITION = {
+  y: { delay: 0.4, duration: 0.4, ease: EASE_PROFILE_DROP },
+  opacity: { delay: 0.4, duration: 0.35, ease: EASE_FADE },
+};
+
 export const EXIT_BACKGROUND_TRANSITION = { delay: 0.55, duration: 0.1, ease: EASE_FADE };
 export const EXIT_HINT_TRANSITION = { delay: 0.5, duration: 0.35, ease: EASE_FADE };
 

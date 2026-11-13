@@ -18,6 +18,12 @@ describe("RollingPaperDetailContainer", () => {
     expect(backMock).toHaveBeenCalledTimes(1);
   });
 
+  it("편지지와 프로필 휠을 함께 그린다", () => {
+    render(<RollingPaperDetailContainer />);
+
+    expect(screen.getByTestId("rolling-paper-wheel")).toBeInTheDocument();
+  });
+
   it("뒤로 가기 버튼은 페이드인을 위해 투명하게 시작한다", () => {
     render(<RollingPaperDetailContainer />);
 

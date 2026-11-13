@@ -22,7 +22,7 @@ type RollingPaperCardProps = {
 export default function RollingPaperCard({ card, exiting = false }: RollingPaperCardProps) {
   return (
     <motion.div
-      className="bg-base-gray-200 z-10border-base-gray-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border shadow-[-2.63px_-2.63px_7.804px_0px_var(--color-semantic-shadow-strong)]"
+      className="bg-base-gray-200 border-base-gray-400 absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 border shadow-[-2.63px_-2.63px_7.804px_0px_var(--color-semantic-shadow-strong)]"
       style={{ width: card.width, height: card.height, borderRadius: CARD_RADIUS }}
       initial={{ ...card.poses[0], scale: START_SCALE, opacity: START_OPACITY }}
       animate={exiting ? toExitTarget(card) : toKeyframes(card.poses)}
