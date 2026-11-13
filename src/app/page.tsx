@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import BottomCTA from "@/components/BottomCTA";
 import Title from "@/components/Title";
 import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
@@ -31,6 +33,13 @@ export default function Home() {
           <p className="text-semantic-text-tertiary text-center whitespace-pre-line [font:var(--semantic-label-x-small-weak)]">
             {"친구 펀딩에 보태러 왔나요?\n받은 링크로 들어가면 로그인없이 보탤 수 있어요"}
           </p>
+        }
+        lower={
+          <Link
+            href="/privacy"
+            className="text-semantic-text-tertiary underline [font:var(--semantic-label-x-small-weak)]">
+            개인정보처리방침
+          </Link>
         }
       />
     </>
