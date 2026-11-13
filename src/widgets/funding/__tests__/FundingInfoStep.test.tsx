@@ -1,8 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { mockPointer } from "@/__tests__/mockPointer";
+import { pickWheelDate } from "@/__tests__/pickWheelDate";
 import type { WishResponse } from "@/types/wish/wish";
-import { getTodayDate } from "@/utils/funding/formatDeadline";
 import FundingInfoStep from "@/widgets/funding/FundingInfoStep";
 
 const wish: WishResponse = {
@@ -17,6 +18,21 @@ const wish: WishResponse = {
 };
 
 const renderStep = (onNext = vi.fn()) => render(<FundingInfoStep wish={wish} onNext={onNext} />);
+
+beforeEach(() => {
+  mockPointer("coarse");
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(2026, 10, 13));
+});
+
+afterEach(() => vi.useRealTimers());
+
+// 마감일 휠 시트를 열어 날짜를 확정한다
+const pickDeadline = async (date = { year: 2027, month: 12, day: 25 }) => {
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: /^마감일/ }));
+  await pickWheelDate(user, date);
+};
 
 describe("FundingInfoStep", () => {
   it("목표 금액은 비어 있고 안내 문구에 위시 가격을 보여준다", () => {
@@ -116,77 +132,85 @@ describe("FundingInfoStep", () => {
   });
 
   it("마감일에서 날짜를 고르면 연도와 요일을 포함해 보여준다", async () => {
-    const { container } = renderStep();
+    renderStep();
 
     await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
     await userEvent.tab();
-    fireEvent.change(container.querySelector('input[type="date"]')!, {
-      target: { value: "2099-12-25" },
-    });
+    await pickDeadline();
 
-    expect(screen.getByText(/^2099\.12\.25 \(.\)$/)).toBeInTheDocument();
+    expect(screen.getByText(/^2027\.12\.25 \(.\)$/)).toBeInTheDocument();
   });
 
-  it("마감일 캘린더는 오늘 이전 날짜를 선택할 수 없고, 직접 입력한 과거 날짜는 무시한다", async () => {
-    const { container } = renderStep();
+  it("마감일 휠은 오늘 이전 날짜를 보여주지 않고 오늘이 선택된 상태로 열린다", async () => {
+    renderStep();
 
     await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
     await userEvent.tab();
-    const dateInput = container.querySelector('input[type="date"]')!;
-    fireEvent.change(dateInput, { target: { value: "2000-01-01" } });
+    await userEvent.click(screen.getByRole("button", { name: "마감일 선택해주세요" }));
 
-    expect(dateInput).toHaveAttribute("min", getTodayDate());
-    expect(screen.getByText("선택해주세요")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "10월" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "12일" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "13일" })).toHaveAttribute("aria-pressed", "true");
   });
 
   describe("마감일 이후 사연 단계", () => {
-    const revealDeadline = async (container: HTMLElement) => {
+    const revealDeadline = async () => {
       await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
       await userEvent.tab();
-      const dateInput = container.querySelector<HTMLInputElement>('input[type="date"]')!;
-      return dateInput;
     };
 
-    it("날짜를 고르고 포커스가 빠지면 사연이 나타나고 제목이 바뀐다", async () => {
-      const { container } = renderStep();
-      const dateInput = await revealDeadline(container);
+    it("날짜를 확정하면 사연이 나타나고 제목이 바뀐다", async () => {
+      renderStep();
+      await revealDeadline();
 
-      fireEvent.change(dateInput, { target: { value: "2099-12-25" } });
+      await userEvent.click(screen.getByRole("button", { name: "마감일 선택해주세요" }));
       expect(screen.queryByLabelText("사연")).not.toBeInTheDocument();
-      fireEvent.blur(dateInput);
+      await pickWheelDate(userEvent.setup(), { year: 2027, month: 12, day: 25 });
 
       expect(screen.getByLabelText("사연")).toBeInTheDocument();
       expect(screen.getByText("어떤 사연인지 들려주세요")).toBeInTheDocument();
       expect(screen.queryByText("언제까지 모을까요?")).not.toBeInTheDocument();
     });
 
-    it("날짜를 고르지 않고 포커스가 빠지면 사연이 나타나지 않는다", async () => {
-      const { container } = renderStep();
-      const dateInput = await revealDeadline(container);
+    it("마우스 환경에서는 달력에서 날짜를 고르면 포커스 이동 없이 사연이 나타나고 제목이 바뀐다", async () => {
+      mockPointer("fine");
+      renderStep();
+      await revealDeadline();
 
-      fireEvent.blur(dateInput);
+      await userEvent.click(screen.getByRole("button", { name: "마감일 선택해주세요" }));
+      expect(screen.queryByLabelText("사연")).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: /11월 20일/ }));
+
+      expect(screen.getByLabelText("사연")).toBeInTheDocument();
+      expect(screen.getByText("어떤 사연인지 들려주세요")).toBeInTheDocument();
+    });
+
+    it("날짜를 확정하지 않고 시트를 닫으면 사연이 나타나지 않는다", async () => {
+      renderStep();
+      await revealDeadline();
+
+      await userEvent.click(screen.getByRole("button", { name: "마감일 선택해주세요" }));
+      await userEvent.click(screen.getByRole("button", { name: "닫기" }));
 
       expect(screen.queryByLabelText("사연")).not.toBeInTheDocument();
       expect(screen.getByText("언제까지 모을까요?")).toBeInTheDocument();
     });
 
-    it("사연이 나타난 뒤 날짜를 지워도 사연은 유지된다", async () => {
-      const { container } = renderStep();
-      const dateInput = await revealDeadline(container);
+    it("사연이 나타난 뒤 날짜를 다시 골라도 사연은 유지된다", async () => {
+      renderStep();
+      await revealDeadline();
 
-      fireEvent.change(dateInput, { target: { value: "2099-12-25" } });
-      fireEvent.blur(dateInput);
-      fireEvent.change(dateInput, { target: { value: "" } });
+      await pickDeadline();
+      await pickDeadline({ year: 2026, month: 12, day: 1 });
 
       expect(screen.getByLabelText("사연")).toBeInTheDocument();
     });
 
     it("사연 모션이 끝나면 사연에 포커스한다", async () => {
-      const { container } = renderStep();
-      const dateInput = await revealDeadline(container);
+      renderStep();
+      await revealDeadline();
 
-      fireEvent.change(dateInput, { target: { value: "2099-12-25" } });
-      fireEvent.blur(dateInput);
+      await pickDeadline();
 
       await waitFor(() => expect(screen.getByLabelText("사연")).toHaveFocus(), {
         timeout: 3000,
@@ -195,18 +219,19 @@ describe("FundingInfoStep", () => {
   });
 
   describe("사연 이후 공약 단계", () => {
-    const reachStory = async (container: HTMLElement) => {
+    const reachStory = async () => {
       await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
       await userEvent.tab();
-      const dateInput = container.querySelector<HTMLInputElement>('input[type="date"]')!;
-      fireEvent.change(dateInput, { target: { value: "2099-12-25" } });
-      fireEvent.blur(dateInput);
-      return screen.getByLabelText("사연");
+      await pickDeadline();
+      const story = screen.getByLabelText("사연");
+      // 모션이 끝나며 일어나는 자동 포커스가 이후 입력 도중 끼어들지 않도록 먼저 기다린다
+      await waitFor(() => expect(story).toHaveFocus(), { timeout: 3000 });
+      return story;
     };
 
     it("사연을 입력하고 포커스가 빠지면 공약·다음 버튼이 나타나고 제목이 바뀐다", async () => {
-      const { container } = renderStep();
-      const story = await reachStory(container);
+      renderStep();
+      const story = await reachStory();
 
       await userEvent.type(story, "생일 선물");
       expect(screen.queryByLabelText("공약")).not.toBeInTheDocument();
@@ -219,8 +244,8 @@ describe("FundingInfoStep", () => {
     });
 
     it("사연이 비었거나 공백뿐이면 포커스가 빠져도 공약이 나타나지 않는다", async () => {
-      const { container } = renderStep();
-      const story = await reachStory(container);
+      renderStep();
+      const story = await reachStory();
 
       await userEvent.type(story, "   ");
       fireEvent.blur(story);
@@ -230,8 +255,8 @@ describe("FundingInfoStep", () => {
     });
 
     it("목표 금액·마감일·사연이 모두 채워져 있으면 공약이 비어 있어도 다음 버튼이 활성화된다", async () => {
-      const { container } = renderStep();
-      const story = await reachStory(container);
+      renderStep();
+      const story = await reachStory();
       await userEvent.type(story, "생일 선물");
       fireEvent.blur(story);
 
@@ -240,8 +265,8 @@ describe("FundingInfoStep", () => {
     });
 
     it("목표 금액·마감일·사연 중 하나라도 비우면 다음 버튼이 비활성화된다", async () => {
-      const { container } = renderStep();
-      const story = await reachStory(container);
+      renderStep();
+      const story = await reachStory();
       await userEvent.type(story, "생일 선물");
       fireEvent.blur(story);
       const nextButton = screen.getByRole("button", { name: "다음" });
@@ -251,20 +276,13 @@ describe("FundingInfoStep", () => {
       await userEvent.type(story, "생일 선물");
       expect(nextButton).toBeEnabled();
 
-      fireEvent.change(container.querySelector('input[type="date"]')!, { target: { value: "" } });
-      expect(nextButton).toBeDisabled();
-      fireEvent.change(container.querySelector('input[type="date"]')!, {
-        target: { value: "2099-12-25" },
-      });
-      expect(nextButton).toBeEnabled();
-
       await userEvent.clear(screen.getByLabelText("목표 금액"));
       expect(nextButton).toBeDisabled();
     });
 
     it("텍스트 필드에 포커스가 있는 동안 터치 기기에서 CTA를 숨기고, 포커스가 빠지면 다시 보인다", async () => {
-      const { container } = renderStep();
-      const story = await reachStory(container);
+      renderStep();
+      const story = await reachStory();
       await userEvent.type(story, "생일 선물");
       fireEvent.blur(story);
       const cta = screen.getByRole("button", { name: "다음" }).closest(".fixed")!;
@@ -281,22 +299,22 @@ describe("FundingInfoStep", () => {
       expect(cta).not.toHaveClass(HIDE_CLASS);
     });
 
-    it("날짜 input에 포커스가 있어도 CTA를 숨기지 않는다", async () => {
-      const { container } = renderStep();
-      const story = await reachStory(container);
+    it("마감일 버튼에 포커스가 있어도 CTA를 숨기지 않는다", async () => {
+      renderStep();
+      const story = await reachStory();
       await userEvent.type(story, "생일 선물");
       fireEvent.blur(story);
       const cta = screen.getByRole("button", { name: "다음" }).closest(".fixed")!;
 
-      container.querySelector<HTMLInputElement>('input[type="date"]')!.focus();
+      screen.getByRole("button", { name: /^마감일/ }).focus();
 
       expect(cta).not.toHaveClass("pointer-coarse:hidden");
     });
 
     it("다음 버튼을 누르면 onNext를 호출한다", async () => {
       const onNext = vi.fn();
-      const { container } = renderStep(onNext);
-      const story = await reachStory(container);
+      renderStep(onNext);
+      const story = await reachStory();
       await userEvent.type(story, "생일 선물");
       fireEvent.blur(story);
 
@@ -306,8 +324,8 @@ describe("FundingInfoStep", () => {
     });
 
     it("사연을 지워도 공약 단계는 유지된다", async () => {
-      const { container } = renderStep();
-      const story = await reachStory(container);
+      renderStep();
+      const story = await reachStory();
       await userEvent.type(story, "생일 선물");
       fireEvent.blur(story);
       await userEvent.clear(story);

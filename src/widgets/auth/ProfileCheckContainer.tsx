@@ -128,6 +128,7 @@ export default function ProfileCheckContainer() {
               variant="birth"
               label="생일"
               value={birthday ? formatBirthdayDisplay(birthday) : ""}
+              dateValue={birthday}
               onDateChange={(month, day) =>
                 setBirthday(
                   month && day
