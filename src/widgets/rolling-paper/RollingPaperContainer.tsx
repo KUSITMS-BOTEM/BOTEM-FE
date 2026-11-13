@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import IconShare from "@/assets/icons/icon-share.svg?react";
@@ -10,17 +11,18 @@ import IconButton from "@/components/IconButton";
 import OpenSheet from "@/components/OpenSheet";
 import { cn } from "@/utils/cn";
 import RollingPaperCard from "@/widgets/rolling-paper/RollingPaperCard";
+import RollingPaperOpenOverlay from "@/widgets/rolling-paper/RollingPaperOpenOverlay";
 import {
   EXIT_BACKGROUND_TRANSITION,
   EXIT_CTA_CLASS,
-  EXIT_GRAY_AREA_TARGET,
-  EXIT_GRAY_AREA_TRANSITION,
   EXIT_CTA_HIDDEN_CLASS,
   EXIT_HEADER_TRANSITION,
   EXIT_HINT_TRANSITION,
   getVisibleCards,
   getVisibleSlots,
 } from "@/widgets/rolling-paper/rollingPaperMotion";
+
+const ROLLING_PAPER_PATH = "/rolling-paper";
 
 type RollingPaperContainerProps = {
   count: number;
@@ -29,7 +31,14 @@ type RollingPaperContainerProps = {
 export default function RollingPaperContainer({ count }: RollingPaperContainerProps) {
   const [open, setOpen] = useState(true);
   const [opened, setOpened] = useState(false);
+  const router = useRouter();
   const slots = getVisibleSlots(count);
+
+  // 모션이 끝나는 1.1s 뒤 이동하므로 그 사이 페이지를 미리 받아둔다
+  const handleOpen = () => {
+    router.prefetch(ROLLING_PAPER_PATH);
+    setOpened(true);
+  };
 
   return (
     <OpenSheet
@@ -37,6 +46,9 @@ export default function RollingPaperContainer({ count }: RollingPaperContainerPr
       title=""
       onClose={() => setOpen(false)}
       hideScrollbar
+      overlay={
+        opened && <RollingPaperOpenOverlay onCovered={() => router.push(ROLLING_PAPER_PATH)} />
+      }
       headerAction={<IconButton size="large" icon={<IconShare />} aria-label="공유" />}>
       {/* 카드가 시트 좌우 끝까지 흩어졌다 모이므로 콘텐츠 패딩을 뚫고 시트 폭만큼 펼친 뒤 가로로만 잘라낸다 */}
       <div className="relative -mx-5 w-[calc(100%+2.5rem)] overflow-x-clip px-5 pb-28">
@@ -67,12 +79,6 @@ export default function RollingPaperContainer({ count }: RollingPaperContainerPr
             transition={EXIT_HINT_TRANSITION}>
             클릭 시, 크게 볼 수 있어요
           </motion.p>
-          {/* 카드 배경 크기에서 커져 화면을 덮는다. 도착 화면(내부 배경)이 없어 페이드아웃은 구현하지 않고 덮은 채로 둔다 */}
-          <motion.div
-            className="bg-base-gray-100 absolute inset-0 rounded-2xl opacity-0"
-            animate={opened ? EXIT_GRAY_AREA_TARGET : undefined}
-            transition={EXIT_GRAY_AREA_TRANSITION}
-          />
           {/* 카드 모션 좌표의 기준점(배경 상단에서 233px 아래 가운데) */}
           <div className="absolute top-[233px] left-1/2 size-0">
             {getVisibleCards(count).map((card, index) => (
@@ -82,7 +88,7 @@ export default function RollingPaperContainer({ count }: RollingPaperContainerPr
         </div>
       </div>
       <BottomCTA className={cn(EXIT_CTA_CLASS, opened && EXIT_CTA_HIDDEN_CLASS)}>
-        <Button color="brand" size="xlarge" onClick={() => setOpened(true)}>
+        <Button color="brand" size="xlarge" onClick={handleOpen}>
           메시지 열어보기
         </Button>
       </BottomCTA>

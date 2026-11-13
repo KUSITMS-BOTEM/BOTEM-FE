@@ -64,6 +64,8 @@ const EASE_HEADER_FADE: Easing = [0.45, 0, 0.55, 1];
 const EASE_GRAY_AREA: Easing = [0.65, 0, 0.35, 1];
 
 export const EXIT_HEADER_TRANSITION = { delay: 0.5, duration: 0.45, ease: EASE_HEADER_FADE };
+// 페이지 이동 뒤 도착 화면에서는 클릭 시점 타임라인이 끊겨 지연 없이 바로 페이드인한다
+export const ARRIVAL_BACK_BUTTON_TRANSITION = { duration: 0.45, ease: EASE_HEADER_FADE };
 export const EXIT_BACKGROUND_TRANSITION = { delay: 0.55, duration: 0.1, ease: EASE_FADE };
 export const EXIT_HINT_TRANSITION = { delay: 0.5, duration: 0.35, ease: EASE_FADE };
 
@@ -76,13 +78,17 @@ export const EXIT_CTA_HIDDEN_CLASS = "translate-y-[170px] opacity-0";
 // shortcut: 뷰포트 높이와 무관한 고정값, 더 큰 화면을 지원하게 되면 뷰포트 기준 계산으로 교체
 const EXIT_OFFSCREEN_EXTRA = 400;
 
-export const EXIT_GRAY_AREA_TRANSITION = {
-  opacity: { delay: 0.55, duration: 0.07, ease: EASE_FADE },
-  scaleX: { delay: 0.55, duration: 0.55, ease: EASE_GRAY_AREA },
-  scaleY: { delay: 0.55, duration: 0.55, ease: EASE_GRAY_AREA },
-  y: { delay: 0.55, duration: 0.55, ease: EASE_GRAY_AREA },
+// 회색 덮개는 카드 배경 위치(시트 헤더 64 + 패딩 4 + 문구 98 = 상단 166, 좌우 20)에서 시트 전체로 커진다.
+// shortcut: 하단 32%는 812px 높이 기준 근사치, 시작은 투명해 어긋나도 눈에 띄지 않음
+export const EXIT_COVER_START = {
+  opacity: 0,
+  clipPath: "inset(166px 20px 32% 20px round 16px)",
 };
-export const EXIT_GRAY_AREA_TARGET = { opacity: 1, scaleX: 1.1475, scaleY: 2.140155, y: -11.5 };
+export const EXIT_COVER_END = { opacity: 1, clipPath: "inset(0px 0px 0% 0px round 0px)" };
+export const EXIT_COVER_TRANSITION = {
+  opacity: { delay: 0.55, duration: 0.07, ease: EASE_FADE },
+  clipPath: { delay: 0.55, duration: 0.55, ease: EASE_GRAY_AREA },
+};
 
 // 일렬 단계의 회전은 낙하하며 0°로 펴진다(디자인의 회전 변화량이 일렬 회전과 부호만 반대)
 export function toExitTarget(card: RollingCard) {

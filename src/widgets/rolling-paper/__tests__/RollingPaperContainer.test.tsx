@@ -3,6 +3,13 @@ import userEvent from "@testing-library/user-event";
 
 import RollingPaperContainer from "@/widgets/rolling-paper/RollingPaperContainer";
 
+const pushMock = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: pushMock, prefetch: vi.fn() }),
+}));
+
+beforeEach(() => pushMock.mockClear());
+
 // jsdom은 HTMLDialogElement의 showModal/close를 구현하지 않아 open 속성만 토글하도록 대체한다
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
@@ -49,6 +56,18 @@ describe("RollingPaperContainer", () => {
     await user.click(button);
 
     expect(cta).toHaveClass("opacity-0");
+  });
+
+  it("메시지 열어보기를 누르면 회색이 다 덮인 뒤에 롤링페이퍼 페이지로 이동한다", async () => {
+    const user = userEvent.setup();
+    render(<RollingPaperContainer count={5} />);
+
+    await user.click(screen.getByRole("button", { name: "메시지 열어보기" }));
+    expect(pushMock).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/rolling-paper"), {
+      timeout: 3000,
+    });
   });
 
   it("닫기 버튼을 누르면 시트가 닫힌다", async () => {
