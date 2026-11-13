@@ -80,7 +80,7 @@ describe("MyMenuSheet", () => {
 
     expect(screen.getByText("지유")).toBeInTheDocument();
     expect(screen.getByText("생일 10월 13일")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "8명" })).toBeInTheDocument();
+    expect(screen.getByText("8명")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "3개" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "토스뱅크" })).toBeInTheDocument();
   });

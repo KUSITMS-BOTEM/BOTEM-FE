@@ -80,6 +80,7 @@ export default function ProfileCheckContainer() {
       onSuccess: () => {
         useAuthStore.getState().clearAccessToken();
         queryClient.removeQueries({ queryKey: ["users", "me"] });
+        queryClient.removeQueries({ queryKey: ["friends"] });
         router.replace("/");
       },
     });
@@ -108,6 +109,7 @@ export default function ProfileCheckContainer() {
             animate={{ opacity: 1, y: 0 }}
             transition={FIELD_TRANSITION}>
             <Profile
+              color="orange"
               imageUrl={uploadedImageUrl ?? profile?.profileImageUrl ?? undefined}
               onImageChange={handleProfileImageChange}
               allowedTypes={ALLOWED_PROFILE_IMAGE_TYPES}

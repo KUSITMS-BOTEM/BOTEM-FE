@@ -2,13 +2,14 @@ import { cn } from "@/utils/cn";
 import ProfileOrange from "@/assets/icons/multicolor/profile-orange.svg?react";
 import ProfileLime from "@/assets/icons/multicolor/profile-lime.svg?react";
 import ProfilePink from "@/assets/icons/multicolor/profile-pink.svg?react";
-
-export type ProfileColor = "orange" | "lime" | "pink";
+import ProfileBlue from "@/assets/icons/multicolor/profile-blue.svg?react";
+import type { ProfileColor } from "@/components/Profile";
 
 const PROFILE_ICON: Record<ProfileColor, typeof ProfileOrange> = {
   orange: ProfileOrange,
   lime: ProfileLime,
   pink: ProfilePink,
+  blue: ProfileBlue,
 };
 
 const MAX_EXTRA_COUNT = 99;
