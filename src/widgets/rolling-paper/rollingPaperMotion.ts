@@ -6,11 +6,20 @@ export type CardPose = {
   rotate: number;
 };
 
+// 일렬 포즈에서 아래로 떨어지는 퇴장 모션. dx·dy는 일렬 포즈 기준 이동량(px), start·end는 클릭 시점 기준 초
+export type CardExit = {
+  dx: number;
+  dy: number;
+  start: number;
+  end: number;
+};
+
 // poses는 [시작(화면 밖), 모임, 일렬] 순서. 카드 크기는 일렬 크기로 고정이고 시작 scale로만 작아진다
 export type RollingCard = {
   width: number;
   height: number;
   poses: CardPose[];
+  exit: CardExit;
 };
 
 // 디자인팀 모션 스펙(총 1.65s): 0~0.1 대기 → 0.1~0.7 모임 → 0.7~1.2 쉼 → 1.2~1.65 펼침
@@ -49,6 +58,52 @@ export const CARD_TRANSITION = {
   opacity: timeline(["linear", EASE_FADE, "linear", "linear"]),
 };
 
+// 디자인팀 퇴장 스펙(2.4s 전환 중 앞 1.1s): 클릭 후 헤더·카드 배경·안내 문구가 사라지고 카드가 아래로 떨어진다
+const EASE_FALL: Easing = [0.5, 0, 0.75, 0];
+const EASE_HEADER_FADE: Easing = [0.45, 0, 0.55, 1];
+const EASE_GRAY_AREA: Easing = [0.65, 0, 0.35, 1];
+
+export const EXIT_HEADER_TRANSITION = { delay: 0.5, duration: 0.45, ease: EASE_HEADER_FADE };
+export const EXIT_BACKGROUND_TRANSITION = { delay: 0.55, duration: 0.1, ease: EASE_FADE };
+export const EXIT_HINT_TRANSITION = { delay: 0.5, duration: 0.35, ease: EASE_FADE };
+
+// 하단 CTA는 BottomCTA가 fixed라 transform 조상을 둘 수 없어 className으로 transition을 건다
+export const EXIT_CTA_CLASS =
+  "[transition:translate_0.4s_cubic-bezier(0.5,0,0.75,0)_0.35s,opacity_0.35s_cubic-bezier(0.33,0,0.2,1)_0.35s]";
+export const EXIT_CTA_HIDDEN_CLASS = "translate-y-[170px] opacity-0";
+
+// 디자인 낙하 거리만으로는 카드 윗부분이 화면에 남아, 뷰포트 높이 약 1180px까지 완전히 벗어나도록 더 내린다
+// shortcut: 뷰포트 높이와 무관한 고정값, 더 큰 화면을 지원하게 되면 뷰포트 기준 계산으로 교체
+const EXIT_OFFSCREEN_EXTRA = 400;
+
+export const EXIT_GRAY_AREA_TRANSITION = {
+  opacity: { delay: 0.55, duration: 0.07, ease: EASE_FADE },
+  scaleX: { delay: 0.55, duration: 0.55, ease: EASE_GRAY_AREA },
+  scaleY: { delay: 0.55, duration: 0.55, ease: EASE_GRAY_AREA },
+  y: { delay: 0.55, duration: 0.55, ease: EASE_GRAY_AREA },
+};
+export const EXIT_GRAY_AREA_TARGET = { opacity: 1, scaleX: 1.1475, scaleY: 2.140155, y: -11.5 };
+
+// 일렬 단계의 회전은 낙하하며 0°로 펴진다(디자인의 회전 변화량이 일렬 회전과 부호만 반대)
+export function toExitTarget(card: RollingCard) {
+  const lined = card.poses[LINED_STAGE];
+  const y = lined.y + card.exit.dy + EXIT_OFFSCREEN_EXTRA;
+
+  return { x: lined.x + card.exit.dx, y, rotate: 0, scale: 1, opacity: 1 };
+}
+
+export function toExitTransition({ start, end }: CardExit) {
+  const transition = { delay: start, duration: end - start, ease: EASE_FALL };
+
+  return {
+    x: transition,
+    y: transition,
+    rotate: transition,
+    scale: transition,
+    opacity: transition,
+  };
+}
+
 const LINED_WIDTH = 250.768;
 const LINED_STAGE = 2;
 
@@ -63,6 +118,7 @@ export const ROLLING_CARDS: RollingCard[] = [
       { x: -1.68, y: -39.54, rotate: 12.22 },
       { x: -0.43, y: -54.18, rotate: 4.19 },
     ],
+    exit: { dx: 0.351, dy: 577.177, start: 0.46, end: 0.88 },
   },
   {
     width: LINED_WIDTH,
@@ -72,6 +128,7 @@ export const ROLLING_CARDS: RollingCard[] = [
       { x: -11.24, y: -39.54, rotate: 3.62 },
       { x: 4.07, y: -13.37, rotate: -1.94 },
     ],
+    exit: { dx: -3.254, dy: 536.368, start: 0.42, end: 0.84 },
   },
   {
     width: LINED_WIDTH,
@@ -81,6 +138,7 @@ export const ROLLING_CARDS: RollingCard[] = [
       { x: 6.51, y: -40.05, rotate: -10.64 },
       { x: -1.82, y: 26.34, rotate: 5.18 },
     ],
+    exit: { dx: 1.453, dy: 496.659, start: 0.38, end: 0.8 },
   },
   {
     width: LINED_WIDTH,
@@ -90,6 +148,7 @@ export const ROLLING_CARDS: RollingCard[] = [
       { x: -0.85, y: -23.7, rotate: 8.77 },
       { x: 3.87, y: 52.79, rotate: -2.15 },
     ],
+    exit: { dx: -3.097, dy: 470.203, start: 0.34, end: 0.76 },
   },
   {
     width: LINED_WIDTH,
@@ -99,6 +158,7 @@ export const ROLLING_CARDS: RollingCard[] = [
       { x: -12.89, y: -38.57, rotate: -2.08 },
       { x: 2.44, y: 139.89, rotate: 0 },
     ],
+    exit: { dx: -1.907, dy: 382.888, start: 0.3, end: 0.72 },
   },
 ];
 

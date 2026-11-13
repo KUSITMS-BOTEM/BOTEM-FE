@@ -13,6 +13,7 @@ describe("RollingPaperCard", () => {
         { x: 0, y: 0, rotate: 0 },
         { x: 0, y: 0, rotate: 0 },
       ],
+      exit: { dx: 0, dy: 100, start: 0.3, end: 0.7 },
     };
 
     const { container } = render(<RollingPaperCard card={card} />);

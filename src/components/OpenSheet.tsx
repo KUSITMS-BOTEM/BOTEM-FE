@@ -13,6 +13,7 @@ export type OpenSheetProps = {
   slideOutOnClose?: boolean;
   closeType?: ComponentProps<typeof SheetHeader>["closeType"];
   headerAction?: ReactNode;
+  hideScrollbar?: boolean;
   children: ReactNode;
   className?: string;
 };
@@ -27,6 +28,7 @@ export default function OpenSheet({
   slideOutOnClose = false,
   closeType,
   headerAction,
+  hideScrollbar = false,
   children,
   className,
 }: OpenSheetProps) {
@@ -102,7 +104,12 @@ export default function OpenSheet({
                     closeType={closeType}
                     rightAction={headerAction}
                   />
-                  <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pt-1 pb-4">
+                  <div
+                    className={cn(
+                      "flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pt-1 pb-4",
+                      hideScrollbar &&
+                        "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+                    )}>
                     {children}
                   </div>
                 </motion.div>

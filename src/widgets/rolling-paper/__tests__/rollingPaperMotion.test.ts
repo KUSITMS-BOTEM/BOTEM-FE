@@ -4,6 +4,8 @@ import {
   START_OPACITY,
   START_SCALE,
   getVisibleCards,
+  toExitTarget,
+  toExitTransition,
   toKeyframes,
   type CardPose,
   type RollingCard,
@@ -84,6 +86,43 @@ describe("CARD_TRANSITION", () => {
 
   it("값마다 구간 수(4)와 같은 개수의 이징을 가진다", () => {
     Object.values(CARD_TRANSITION).forEach(({ ease }) => expect(ease).toHaveLength(4));
+  });
+});
+
+describe("toExitTarget", () => {
+  it("일렬 포즈에서 슬롯별 이동량만큼 아래로 내려가며 회전이 0°로 펴진다", () => {
+    const [doyun] = ROLLING_CARDS;
+    const target = toExitTarget(doyun);
+
+    expect(target.x).toBeCloseTo(doyun.poses[2].x + doyun.exit.dx);
+    expect(target.y).toBeGreaterThan(doyun.poses[2].y + doyun.exit.dy);
+    expect(target).toMatchObject({ rotate: 0, scale: 1, opacity: 1 });
+  });
+
+  it("모든 카드가 812px 화면 아래로 완전히 벗어난다", () => {
+    // 카드 기준점은 화면 상단에서 약 400px 아래(스크린샷 기준)
+    ROLLING_CARDS.forEach(card => {
+      expect(400 + toExitTarget(card).y - card.height / 2).toBeGreaterThan(812);
+    });
+  });
+
+  it("아래쪽 카드일수록 낙하 거리가 짧고 먼저 떨어지기 시작한다", () => {
+    const dys = ROLLING_CARDS.map(({ exit }) => exit.dy);
+    const starts = ROLLING_CARDS.map(({ exit }) => exit.start);
+
+    expect(dys).toEqual([...dys].sort((a, b) => b - a));
+    expect(starts).toEqual([...starts].sort((a, b) => b - a));
+  });
+});
+
+describe("toExitTransition", () => {
+  it("start부터 end까지의 시간 동안 모든 값이 같은 타이밍으로 움직인다", () => {
+    const { x, y, rotate } = toExitTransition({ dx: 0, dy: 0, start: 0.3, end: 0.72 });
+
+    [x, y, rotate].forEach(transition => {
+      expect(transition.delay).toBe(0.3);
+      expect(transition.duration).toBeCloseTo(0.42);
+    });
   });
 });
 

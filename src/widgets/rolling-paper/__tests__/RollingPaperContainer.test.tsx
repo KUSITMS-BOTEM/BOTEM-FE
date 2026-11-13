@@ -39,6 +39,18 @@ describe("RollingPaperContainer", () => {
     expect(container.textContent).toContain("총 12개의 메세지가");
   });
 
+  it("메시지 열어보기를 누르면 하단 CTA가 아래로 내려가며 사라지도록 표시된다", async () => {
+    const user = userEvent.setup();
+    render(<RollingPaperContainer count={5} />);
+    const button = screen.getByRole("button", { name: "메시지 열어보기" });
+    const cta = button.closest(".pointer-events-none");
+    expect(cta).not.toHaveClass("opacity-0");
+
+    await user.click(button);
+
+    expect(cta).toHaveClass("opacity-0");
+  });
+
   it("닫기 버튼을 누르면 시트가 닫힌다", async () => {
     const user = userEvent.setup();
     const { container } = render(<RollingPaperContainer count={5} />);
