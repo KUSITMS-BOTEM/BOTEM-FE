@@ -1,5 +1,7 @@
 "use client";
 
+import type { MouseEvent } from "react";
+
 import { motion, useTransform, type MotionValue } from "framer-motion";
 
 import {
@@ -24,6 +26,7 @@ type RollingPaperWheelCardProps = {
   progress: MotionValue<number>;
   entrance: ArrivalCardEntrance | null;
   onEntered?: () => void;
+  onClick?: (event: MouseEvent<HTMLDivElement>) => void;
 };
 
 // 바깥은 등장 모션, 안쪽은 휠 위치를 맡는다. 둘 다 transform을 쓰므로 요소를 나눠 서로 덮어쓰지 않게 한다
@@ -33,6 +36,7 @@ export default function RollingPaperWheelCard({
   progress,
   entrance,
   onEntered,
+  onClick,
 }: RollingPaperWheelCardProps) {
   const pose = useTransform<number, WheelPose>(progress, value =>
     toCardPose(toWheelOffset(index, value, count)),
@@ -42,7 +46,7 @@ export default function RollingPaperWheelCard({
 
   return (
     <motion.div
-      className="absolute top-1/2 left-1/2"
+      className="pointer-events-none absolute top-1/2 left-1/2"
       style={{
         width: WHEEL_CARD_WIDTH,
         height: WHEEL_CARD_HEIGHT,
@@ -65,8 +69,9 @@ export default function RollingPaperWheelCard({
       onAnimationComplete={onEntered}>
       <motion.div
         data-testid="wheel-card"
-        className="bg-base-gray-200 border-base-gray-400 size-full border shadow-[-2.63px_-2.63px_7.804px_0px_var(--color-semantic-shadow-strong)]"
+        className="bg-base-gray-200 border-base-gray-400 pointer-events-auto size-full border shadow-[-2.63px_-2.63px_7.804px_0px_var(--color-semantic-shadow-strong)]"
         style={{ borderRadius: CARD_RADIUS, transform, opacity }}
+        onClick={onClick}
       />
     </motion.div>
   );

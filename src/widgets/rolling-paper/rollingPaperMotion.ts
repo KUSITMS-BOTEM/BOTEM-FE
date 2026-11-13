@@ -116,6 +116,36 @@ export const ARRIVAL_PROFILE_TRANSITION = {
   opacity: { delay: 0.4, duration: 0.35, ease: EASE_FADE },
 };
 
+// 도착 화면 확대 모션(디자인 타임라인 1.5~2.9s). 가운데 편지지를 탭했을 때만 시작한다
+const EASE_EXPAND: Easing = [0.3, 1.15, 0.4, 1];
+const EASE_VOICE_PLAYER: Easing = [0.16, 1, 0.3, 1];
+const VOICE_PLAYER_DELAY = 0.6;
+
+// 가운데 편지지 중심(휠 중심에서 왼쪽 30px)을 기준으로 레이어 전체를 키워, 가운데 편지지는 화면 가운데로 오고 주변 편지지는 바깥으로 밀린다.
+// shortcut: 디자인은 카드마다 확대 비율(×1.26~1.32)과 이동량이 달라 일괄 ×1.32로 근사, 어긋나 보이면 카드별 값으로 교체
+export const CARD_LAYER_VARIANTS = {
+  collapsed: { x: 0, y: 0, scale: 1, transition: { delay: 0.15, duration: 0.4, ease: EASE_FADE } },
+  expanded: { x: 30, y: 2.5, scale: 1.32, transition: { duration: 0.55, ease: EASE_EXPAND } },
+};
+
+export const PROFILE_LAYER_VARIANTS = {
+  visible: { opacity: 1, transition: { delay: 0.3, duration: 0.25, ease: EASE_FADE } },
+  hidden: { opacity: 0, transition: { duration: 0.25, ease: EASE_FADE } },
+};
+
+// 확대가 끝난 뒤 아래에서 올라오고, 닫힐 때는 가장 먼저 내려간다
+export const VOICE_PLAYER_VARIANTS = {
+  hidden: { y: 240, opacity: 0, transition: { duration: 0.25, ease: EASE_VOICE_PLAYER } },
+  shown: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      y: { delay: VOICE_PLAYER_DELAY, duration: 0.45, ease: EASE_VOICE_PLAYER },
+      opacity: { delay: VOICE_PLAYER_DELAY, duration: 0.25, ease: EASE_FADE },
+    },
+  },
+};
+
 export const EXIT_BACKGROUND_TRANSITION = { delay: 0.55, duration: 0.1, ease: EASE_FADE };
 export const EXIT_HINT_TRANSITION = { delay: 0.5, duration: 0.35, ease: EASE_FADE };
 

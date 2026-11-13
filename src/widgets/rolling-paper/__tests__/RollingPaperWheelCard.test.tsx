@@ -57,6 +57,15 @@ describe("RollingPaperWheelCard", () => {
     expect(screen.getByTestId("wheel-card").parentElement).toHaveStyle({ opacity: "0" });
   });
 
+  it("겹쳐 있는 바깥 래퍼는 클릭을 통과시키고 실제 카드만 클릭을 받는다", () => {
+    render(<RollingPaperWheelCard index={0} count={5} progress={motionValue(0)} entrance={null} />);
+
+    const card = screen.getByTestId("wheel-card");
+
+    expect(card.parentElement).toHaveClass("pointer-events-none");
+    expect(card).toHaveClass("pointer-events-auto");
+  });
+
   it("등장 모션이 없으면 래퍼가 바로 보인다", () => {
     render(<RollingPaperWheelCard index={0} count={5} progress={motionValue(0)} entrance={null} />);
 

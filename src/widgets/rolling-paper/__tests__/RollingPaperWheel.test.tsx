@@ -2,9 +2,10 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import RollingPaperWheel from "@/widgets/rolling-paper/RollingPaperWheel";
 
+let reducedMotion = true;
 vi.mock("framer-motion", async importOriginal => {
   const actual = await importOriginal<typeof import("framer-motion")>();
-  return { ...actual, useReducedMotion: () => true };
+  return { ...actual, useReducedMotion: () => reducedMotion };
 });
 
 function dragVertically(wheel: HTMLElement, distance: number) {
@@ -15,6 +16,7 @@ function dragVertically(wheel: HTMLElement, distance: number) {
 
 describe("RollingPaperWheel", () => {
   beforeEach(() => {
+    reducedMotion = true;
     // jsdom에는 PointerEvent가 없어 clientY가 전달되지 않는다
     vi.stubGlobal("PointerEvent", class extends MouseEvent {});
     Element.prototype.setPointerCapture = vi.fn();
@@ -107,6 +109,104 @@ describe("RollingPaperWheel", () => {
     fireEvent.keyDown(wheel, { key: "ArrowUp" });
     fireEvent.keyDown(wheel, { key: "Enter" });
     await new Promise(resolve => setTimeout(resolve, 50));
+
+    expect(screen.getAllByTestId("wheel-card")[1].style.transform).toBe(before);
+  });
+
+  it("가운데 편지지를 탭하면 Voice Player가 나타나고 바깥을 탭하면 닫힌다", () => {
+    render(<RollingPaperWheel count={5} />);
+    const voicePlayer = screen.getByTestId("voice-player");
+    expect(voicePlayer).toHaveAttribute("aria-hidden", "true");
+
+    fireEvent.click(screen.getAllByTestId("wheel-card")[0]);
+    expect(voicePlayer).toHaveAttribute("aria-hidden", "false");
+
+    fireEvent.click(screen.getByTestId("rolling-paper-wheel"));
+    expect(voicePlayer).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("등장 모션이 끝나기 전에 가운데 편지지를 탭하면 확대되지 않는다", () => {
+    reducedMotion = false;
+    render(<RollingPaperWheel count={5} />);
+
+    fireEvent.click(screen.getAllByTestId("wheel-card")[0]);
+
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("위·아래 편지지를 탭하면 그 편지지가 가운데로 오고 확대되지는 않는다", async () => {
+    render(<RollingPaperWheel count={5} />);
+    const cards = screen.getAllByTestId("wheel-card");
+    const centerTransform = cards[0].style.transform;
+
+    fireEvent.click(cards[1]);
+
+    await waitFor(() => expect(cards[1].style.transform).toBe(centerTransform), {
+      timeout: 3000,
+    });
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("확대 중에 다른 편지지를 탭하면 가운데로 옮기지 않고 닫힌다", () => {
+    render(<RollingPaperWheel count={5} />);
+    const cards = screen.getAllByTestId("wheel-card");
+    const before = cards[1].style.transform;
+    fireEvent.click(cards[0]);
+
+    fireEvent.click(cards[1]);
+
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "true");
+    expect(cards[1].style.transform).toBe(before);
+  });
+
+  it("회전이 멈춰도 자동으로 확대되지 않고 탭해야만 확대된다", async () => {
+    render(<RollingPaperWheel count={5} />);
+    const before = screen.getAllByTestId("wheel-card")[1].style.transform;
+    dragVertically(screen.getByTestId("rolling-paper-wheel"), 100);
+
+    await waitFor(() =>
+      expect(screen.getAllByTestId("wheel-card")[1].style.transform).not.toBe(before),
+    );
+
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("드래그 직후 이어지는 click은 탭으로 보지 않는다", () => {
+    render(<RollingPaperWheel count={5} />);
+    dragVertically(screen.getByTestId("rolling-paper-wheel"), 100);
+
+    fireEvent.click(screen.getAllByTestId("wheel-card")[0]);
+
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("6px 미만으로 움직인 뒤의 click은 탭으로 보고 확대한다", () => {
+    render(<RollingPaperWheel count={5} />);
+    dragVertically(screen.getByTestId("rolling-paper-wheel"), 5);
+
+    fireEvent.click(screen.getAllByTestId("wheel-card")[0]);
+
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "false");
+  });
+
+  it("Enter로 확대하고 Escape로 닫는다", () => {
+    render(<RollingPaperWheel count={5} />);
+    const wheel = screen.getByTestId("rolling-paper-wheel");
+
+    fireEvent.keyDown(wheel, { key: "Enter" });
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "false");
+
+    fireEvent.keyDown(wheel, { key: "Escape" });
+    expect(screen.getByTestId("voice-player")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("확대 중에는 드래그해도 휠이 움직이지 않는다", () => {
+    render(<RollingPaperWheel count={5} />);
+    const wheel = screen.getByTestId("rolling-paper-wheel");
+    fireEvent.keyDown(wheel, { key: "Enter" });
+    const before = screen.getAllByTestId("wheel-card")[1].style.transform;
+
+    dragVertically(wheel, 100);
 
     expect(screen.getAllByTestId("wheel-card")[1].style.transform).toBe(before);
   });
