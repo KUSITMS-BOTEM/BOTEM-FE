@@ -9,9 +9,10 @@ import type { MyProfile } from "@/types/user/profile";
 import MyMenuSheet from "@/widgets/user/MyMenuSheet";
 
 const replace = vi.fn();
+const push = vi.fn();
 const logout = vi.fn();
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ replace }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, push }) }));
 vi.mock("@/hooks/mutations/auth/useLogoutMutation");
 vi.mock("@/hooks/queries/payout-account/usePayoutAccountsQuery");
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
@@ -20,9 +21,6 @@ vi.mock("@/widgets/funding/ClosedFundingSheet", () => ({
 }));
 vi.mock("@/widgets/payout-account/PayoutAccountEditSheet", () => ({
   default: ({ open }: { open: boolean }) => (open ? <div>대표 계좌 시트</div> : null),
-}));
-vi.mock("@/widgets/user/MyProfileSheet", () => ({
-  default: ({ open }: { open: boolean }) => (open ? <div>프로필 시트</div> : null),
 }));
 
 beforeAll(() => {
@@ -109,13 +107,12 @@ describe("MyMenuSheet", () => {
     expect(screen.getByText("대표 계좌 시트")).toBeInTheDocument();
   });
 
-  it("프로필 행을 누르면 내 프로필 시트가 열린다", async () => {
+  it("프로필 행을 누르면 /my/profile로 이동한다", async () => {
     renderSheet();
-    expect(screen.queryByText("프로필 시트")).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: /지유/ }));
 
-    expect(screen.getByText("프로필 시트")).toBeInTheDocument();
+    expect(push).toHaveBeenCalledWith("/my/profile");
   });
 
   it("로그아웃에 성공하면 랜딩으로 이동한다", async () => {

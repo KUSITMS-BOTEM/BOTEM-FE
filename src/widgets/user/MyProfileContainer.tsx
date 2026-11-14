@@ -5,25 +5,24 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import Button from "@/components/Button";
+import Header from "@/components/Header";
 import List from "@/components/List";
-import CloseSheet from "@/components/CloseSheet";
 import Profile from "@/components/Profile";
 import TextButton from "@/components/TextButton";
 import { useWithdrawMutation } from "@/hooks/mutations/user/useWithdrawMutation";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { handleWithdrawClick } from "@/utils/auth/handleWithdrawClick";
+import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
+import BirthdayEditContainer from "@/widgets/user/BirthdayEditContainer";
 import ConnectedAccountBottomSheet from "@/widgets/user/ConnectedAccountBottomSheet";
 import NameEditContainer from "@/widgets/user/NameEditContainer";
-import BirthdayEditContainer from "@/widgets/user/BirthdayEditContainer";
+import IconLeft from "@/assets/icons/icon-left.svg?react";
 
 const removeProtocol = (url: string) => url.replace(/^https?:\/\//, "");
 
-type MyProfileSheetProps = {
-  open: boolean;
-  onClose: () => void;
-};
+const VALUE_BUTTON_CLASS = "text-semantic-text-secondary max-w-36";
 
-export default function MyProfileSheet({ open, onClose }: MyProfileSheetProps) {
+export default function MyProfileContainer() {
   const router = useRouter();
   const { mutate: withdraw } = useWithdrawMutation();
   const { data: profile } = useMyProfileQuery();
@@ -33,14 +32,38 @@ export default function MyProfileSheet({ open, onClose }: MyProfileSheetProps) {
   const [birthdaySheetOpen, setBirthdaySheetOpen] = useState(false);
 
   return (
-    <CloseSheet open={open} title="내 프로필" onClose={onClose}>
-      <div className="flex w-full flex-1 flex-col items-center justify-between">
+    <div className="flex min-h-dvh flex-col">
+      <Header
+        title="내 프로필"
+        leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
+      />
+      <main className="flex w-full flex-1 flex-col items-center justify-between px-5 pb-[env(safe-area-inset-bottom)]">
         <div className="flex w-full flex-col gap-1">
           <div className="flex w-full justify-center">
             <Profile imageUrl={profile?.profileImageUrl ?? undefined} />
           </div>
-          <List title="이름" onClick={() => setNameSheetOpen(true)} />
-          <List title="생일" onClick={() => setBirthdaySheetOpen(true)} />
+          <List
+            title="이름"
+            right={
+              <TextButton
+                size="medium"
+                label={profile?.nickname ?? ""}
+                onClick={() => setNameSheetOpen(true)}
+                className={VALUE_BUTTON_CLASS}
+              />
+            }
+          />
+          <List
+            title="생일"
+            right={
+              <TextButton
+                size="medium"
+                label={profile?.birthday ? formatBirthdayDisplay(profile.birthday) : ""}
+                onClick={() => setBirthdaySheetOpen(true)}
+                className={VALUE_BUTTON_CLASS}
+              />
+            }
+          />
           <List title="연결된 계정" onClick={() => setAccountSheetOpen(true)} />
           <div className="bg-semantic-fill-neutral-weak rounded-xx-large flex w-full px-4 py-3">
             <List
@@ -68,7 +91,9 @@ export default function MyProfileSheet({ open, onClose }: MyProfileSheetProps) {
             className="text-semantic-text-secondary"
           />
         </div>
-      </div>
+      </main>
+      <NameEditContainer open={nameSheetOpen} onClose={() => setNameSheetOpen(false)} />
+      <BirthdayEditContainer open={birthdaySheetOpen} onClose={() => setBirthdaySheetOpen(false)} />
       {profile && (
         <ConnectedAccountBottomSheet
           open={accountSheetOpen}
@@ -77,8 +102,6 @@ export default function MyProfileSheet({ open, onClose }: MyProfileSheetProps) {
           connectedAt={profile.joinedAt}
         />
       )}
-      <NameEditContainer open={nameSheetOpen} onClose={() => setNameSheetOpen(false)} />
-      <BirthdayEditContainer open={birthdaySheetOpen} onClose={() => setBirthdaySheetOpen(false)} />
-    </CloseSheet>
+    </div>
   );
 }
