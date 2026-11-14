@@ -32,10 +32,10 @@ describe("RollingPaperContainer", () => {
     expect(screen.getByRole("button", { name: "공유" })).toBeInTheDocument();
   });
 
-  it("하단 CTA에 메시지 열어보기 버튼이 보인다", () => {
+  it("하단 CTA에 선물 받으러 가기 버튼이 보인다", () => {
     render(<RollingPaperContainer rollingPaperId="1" count={5} />);
 
-    expect(screen.getByRole("button", { name: "메시지 열어보기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "선물 받으러 가기" })).toBeInTheDocument();
   });
 
   it("타이틀 개수는 받은 편지지 개수를 나타낸다", () => {
@@ -46,10 +46,10 @@ describe("RollingPaperContainer", () => {
     expect(container.textContent).toContain("총 12개의 메세지가");
   });
 
-  it("메시지 열어보기를 누르면 하단 CTA가 아래로 내려가며 사라지도록 표시된다", async () => {
+  it("선물 받으러 가기를 누르면 하단 CTA가 아래로 내려가며 사라지도록 표시된다", async () => {
     const user = userEvent.setup();
     render(<RollingPaperContainer rollingPaperId="1" count={5} />);
-    const button = screen.getByRole("button", { name: "메시지 열어보기" });
+    const button = screen.getByRole("button", { name: "선물 받으러 가기" });
     const cta = button.closest(".pointer-events-none");
     expect(cta).not.toHaveClass("opacity-0");
 
@@ -58,11 +58,11 @@ describe("RollingPaperContainer", () => {
     expect(cta).toHaveClass("opacity-0");
   });
 
-  it("메시지 열어보기를 누르면 회색이 다 덮인 뒤에 롤링페이퍼 페이지로 이동한다", async () => {
+  it("선물 받으러 가기를 누르면 회색이 다 덮인 뒤에 롤링페이퍼 페이지로 이동한다", async () => {
     const user = userEvent.setup();
     render(<RollingPaperContainer rollingPaperId="1" count={5} />);
 
-    await user.click(screen.getByRole("button", { name: "메시지 열어보기" }));
+    await user.click(screen.getByRole("button", { name: "선물 받으러 가기" }));
     expect(pushMock).not.toHaveBeenCalled();
 
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/rolling-paper/1?count=5"), {

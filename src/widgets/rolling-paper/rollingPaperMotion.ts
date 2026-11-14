@@ -146,8 +146,30 @@ export const VOICE_PLAYER_VARIANTS = {
   },
 };
 
-export const EXIT_BACKGROUND_TRANSITION = { delay: 0.55, duration: 0.1, ease: EASE_FADE };
+// 디자인 낙하 시간(0.42s)에 더하는 여유. 낙하가 총 0.72s가 된다
+const EXIT_FALL_EXTRA = 0.3;
+// 마지막 카드(0.3~1.02s 낙하)까지 거의 다 내려간 뒤 회색 배경이 덮도록 디자인(0.55s)보다 늦춘다.
+// 세로로 긴 화면에서도 카드가 충분히 내려간 모습이 보인다
+const EXIT_COVER_DELAY = 1.0;
+
+export const EXIT_BACKGROUND_TRANSITION = {
+  delay: EXIT_COVER_DELAY,
+  duration: 0.1,
+  ease: EASE_FADE,
+};
 export const EXIT_HINT_TRANSITION = { delay: 0.5, duration: 0.35, ease: EASE_FADE };
+// 편지지가 세로로 다 정렬된 뒤(등장 모션이 끝나는 시점)에 안내 문구가 나타난다
+export const HINT_ENTER_TRANSITION = {
+  delay: MOTION_START_DELAY + TOTAL_DURATION,
+  duration: 0.35,
+  ease: EASE_FADE,
+};
+
+// 펼침이 시작되는 시점부터 편지지를 회색 배경 영역 안으로 자른다. 쉼 구간까지는 카드가 배경 안에 있어 즉시 켜도 티가 나지 않고,
+// 등장(화면 밖에서 날아옴) 때만 잘리지 않도록 크게 열어둔다. 켠 뒤에는 퇴장까지 유지한다
+export const CARD_CLIP_OPEN = "inset(-1500px -500px -1500px -500px round 16px)";
+export const CARD_CLIP_CLOSED = "inset(0px 0px 0px 0px round 16px)";
+export const CARD_CLIP_CLOSE_TRANSITION = { delay: MOTION_START_DELAY + HOLD_END, duration: 0 };
 
 // 하단 CTA는 BottomCTA가 fixed라 transform 조상을 둘 수 없어 className으로 transition을 건다
 export const EXIT_CTA_CLASS =
@@ -158,16 +180,22 @@ export const EXIT_CTA_HIDDEN_CLASS = "translate-y-[170px] opacity-0";
 // shortcut: 뷰포트 높이와 무관한 고정값, 더 큰 화면을 지원하게 되면 뷰포트 기준 계산으로 교체
 const EXIT_OFFSCREEN_EXTRA = 400;
 
-// 회색 덮개는 카드 배경 위치(시트 헤더 64 + 패딩 4 + 문구 98 = 상단 166, 좌우 20)에서 시트 전체로 커진다.
-// shortcut: 하단 32%는 812px 높이 기준 근사치, 시작은 투명해 어긋나도 눈에 띄지 않음
-export const EXIT_COVER_START = {
-  opacity: 0,
-  clipPath: "inset(166px 20px 32% 20px round 16px)",
-};
+// 회색 덮개는 카드 배경(회색 영역)과 같은 모양에서 시트 전체로 커진다. 영역 높이가 화면에 따라 달라 실제 위치를 받아 계산한다
+export function toExitCoverStart(sheet: DOMRect, background: DOMRect) {
+  const top = background.top - sheet.top;
+  const right = sheet.right - background.right;
+  const bottom = sheet.bottom - background.bottom;
+  const left = background.left - sheet.left;
+
+  return {
+    opacity: 0,
+    clipPath: `inset(${top}px ${right}px ${bottom}px ${left}px round 16px)`,
+  };
+}
 export const EXIT_COVER_END = { opacity: 1, clipPath: "inset(0px 0px 0% 0px round 0px)" };
 export const EXIT_COVER_TRANSITION = {
-  opacity: { delay: 0.55, duration: 0.07, ease: EASE_FADE },
-  clipPath: { delay: 0.55, duration: 0.55, ease: EASE_GRAY_AREA },
+  opacity: { delay: EXIT_COVER_DELAY, duration: 0.07, ease: EASE_FADE },
+  clipPath: { delay: EXIT_COVER_DELAY, duration: 0.55, ease: EASE_GRAY_AREA },
 };
 
 // 일렬 단계의 회전은 낙하하며 0°로 펴진다(디자인의 회전 변화량이 일렬 회전과 부호만 반대)
@@ -179,7 +207,7 @@ export function toExitTarget(card: RollingCard) {
 }
 
 export function toExitTransition({ start, end }: CardExit) {
-  const transition = { delay: start, duration: end - start, ease: EASE_FALL };
+  const transition = { delay: start, duration: end - start + EXIT_FALL_EXTRA, ease: EASE_FALL };
 
   return {
     x: transition,
