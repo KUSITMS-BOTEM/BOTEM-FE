@@ -4,6 +4,7 @@ import {
   START_OPACITY,
   START_SCALE,
   getVisibleCards,
+  toExitCoverStart,
   toExitTarget,
   toExitTransition,
   toKeyframes,
@@ -116,12 +117,12 @@ describe("toExitTarget", () => {
 });
 
 describe("toExitTransition", () => {
-  it("start부터 end까지의 시간 동안 모든 값이 같은 타이밍으로 움직인다", () => {
+  it("start부터 end까지에 낙하 여유 0.3초를 더한 시간 동안 모든 값이 같은 타이밍으로 움직인다", () => {
     const { x, y, rotate } = toExitTransition({ dx: 0, dy: 0, start: 0.3, end: 0.72 });
 
     [x, y, rotate].forEach(transition => {
       expect(transition.delay).toBe(0.3);
-      expect(transition.duration).toBeCloseTo(0.42);
+      expect(transition.duration).toBeCloseTo(0.72);
     });
   });
 });
@@ -134,5 +135,17 @@ describe("ROLLING_CARDS", () => {
 
   it("모든 카드가 같은 폭을 가진다", () => {
     ROLLING_CARDS.forEach(card => expect(card.width).toBe(250.768));
+  });
+});
+
+describe("toExitCoverStart", () => {
+  it("시트 기준으로 회색 영역과 같은 모양의 inset을 만든다", () => {
+    const sheet = { top: 0, right: 360, bottom: 812, left: 0 } as DOMRect;
+    const background = { top: 162, right: 340, bottom: 549, left: 20 } as DOMRect;
+
+    expect(toExitCoverStart(sheet, background)).toEqual({
+      opacity: 0,
+      clipPath: "inset(162px 20px 263px 20px round 16px)",
+    });
   });
 });
