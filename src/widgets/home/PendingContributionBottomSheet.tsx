@@ -28,7 +28,7 @@ type PendingContributionBottomSheetProps = {
   fundingId: number | null;
   onClose: () => void;
   onCheckToss?: () => void;
-  onOpenFunding?: () => void;
+  onAllConfirmed?: () => void;
 };
 
 export default function PendingContributionBottomSheet({
@@ -36,7 +36,7 @@ export default function PendingContributionBottomSheet({
   fundingId,
   onClose,
   onCheckToss,
-  onOpenFunding,
+  onAllConfirmed,
 }: PendingContributionBottomSheetProps) {
   const query = usePendingContributionsQuery({ fundingId, enabled: open });
   const { mutate } = useUpdateContributionStatusMutation(fundingId);
@@ -47,6 +47,13 @@ export default function PendingContributionBottomSheet({
   const contributions = query.data?.contributions;
   const count = contributions?.length ?? 0;
   const hasSelection = selectedIds.length > 0;
+  // 취소하기 토스트가 떠 있는 동안은 되돌릴 수 있어야 하므로, 토스트가 모두 사라진 뒤에 공개 단계로 넘긴다
+  const allConfirmed =
+    open && contributions?.length === 0 && toasts.length === 0 && !query.isFetching;
+
+  useEffect(() => {
+    if (allConfirmed) onAllConfirmed?.();
+  }, [allConfirmed, onAllConfirmed]);
 
   useEffect(() => {
     const timers = toastTimersRef.current;
@@ -194,7 +201,6 @@ export default function PendingContributionBottomSheet({
           onRetry={() => query.refetch()}
           selectedIds={selectedIds}
           onSelectedIdsChange={setSelectedIds}
-          onOpenFunding={onOpenFunding}
         />
       </div>
     </BottomSheet>

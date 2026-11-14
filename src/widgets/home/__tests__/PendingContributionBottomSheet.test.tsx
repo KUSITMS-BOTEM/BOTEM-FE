@@ -341,14 +341,19 @@ describe("PendingContributionBottomSheet", () => {
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
-  it("빈 목록에서 펀딩 열기를 누르면 onOpenFunding을 호출한다", async () => {
-    const onOpenFunding = vi.fn();
+  it("확인할 보탬이 없으면 onAllConfirmed를 호출한다", () => {
+    const onAllConfirmed = vi.fn();
     mockQuery({ data: [] });
-    renderSheet({ onOpenFunding });
+    renderSheet({ onAllConfirmed });
 
-    await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
+    expect(onAllConfirmed).toHaveBeenCalled();
+  });
 
-    expect(onOpenFunding).toHaveBeenCalledTimes(1);
+  it("확인할 보탬이 남아 있으면 onAllConfirmed를 호출하지 않는다", () => {
+    const onAllConfirmed = vi.fn();
+    renderSheet({ onAllConfirmed });
+
+    expect(onAllConfirmed).not.toHaveBeenCalled();
   });
 });
 

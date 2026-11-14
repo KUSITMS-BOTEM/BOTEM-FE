@@ -26,13 +26,11 @@ type SelectBoxOwnProps = {
   value?: string;
   placeholder?: string;
   helperText?: ReactNode;
-  // variant="birth"에서만 쓰인다. 기기 기본 캘린더로 고른 날짜의 연도를 뺀 월·일만 전달한다. 날짜를 지우면 둘 다 null로 전달된다.
   onDateChange?: (month: number | null, day: number | null) => void;
-  // variant="deadline"에서만 쓰인다. 연도를 포함한 날짜를 "YYYY-MM-DD"로 전달하고, 날짜를 지우면 빈 문자열이다.
   onDeadlineChange?: (date: string) => void;
-  // 날짜 선택 variant에서 고를 수 있는 가장 이른 날짜("YYYY-MM-DD"). 이전 날짜는 캘린더에서 선택할 수 없다.
   minDate?: string;
-  // 날짜 선택 variant에서 캘린더에 처음 선택돼 있을 날짜("YYYY-MM-DD"). 이미 정해진 값을 수정할 때 넘긴다.
+  // 날짜 선택 variant에서 고를 수 있는 가장 늦은 날짜("YYYY-MM-DD").
+  maxDate?: string;
   dateValue?: string;
 };
 
@@ -49,6 +47,7 @@ export default function SelectBox({
   onDateChange,
   onDeadlineChange,
   minDate,
+  maxDate,
   dateValue = "",
   id,
   disabled,
@@ -93,8 +92,6 @@ export default function SelectBox({
           {isFilled ? value : placeholder}
         </span>
         {hasDatePicker ? (
-          // 아이콘 영역만 클릭 가능해야 해서, 네이티브 캘린더를 여는 input을 박스 전체가 아니라 아이콘 크기에만 포갠다
-          // (브라우저 기본 캘린더 팝업은 이 input 바로 아래에 열린다)
           <span className="relative size-6 shrink-0">
             <Asset
               icon={<Icon aria-hidden />}
@@ -106,6 +103,7 @@ export default function SelectBox({
               id={controlId}
               value={pickedDate}
               min={minDate}
+              max={maxDate}
               disabled={disabled}
               onChange={handleDateChange}
               aria-labelledby={`${labelId} ${valueId}`}
@@ -129,7 +127,6 @@ export default function SelectBox({
       {hasDatePicker ? (
         <div
           className="bg-semantic-fill-neutral-weak flex w-full flex-col items-start justify-center overflow-clip rounded-3xl border-2 border-transparent px-5 py-3"
-          // button 전용 attrs(type 등)를 제외하면 div와 호환되는 공통 DOM attrs만 남는다
           {...(props as HTMLAttributes<HTMLDivElement>)}>
           {triggerContent}
         </div>

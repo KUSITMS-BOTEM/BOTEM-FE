@@ -21,4 +21,13 @@ describe("InfoBox", () => {
     expect(container.firstChild).toHaveClass("w-80", "rounded-xl");
     expect(container.firstChild).not.toHaveClass("w-full");
   });
+
+  it("icon을 전달하면 기본 info 아이콘 대신 전달한 아이콘을 렌더한다", () => {
+    const { container } = render(
+      <InfoBox text="안내 문구" icon={<span data-testid="custom-icon" />} />,
+    );
+
+    expect(screen.getByTestId("custom-icon")).toBeInTheDocument();
+    expect(container.querySelector("svg")).toBeNull();
+  });
 });

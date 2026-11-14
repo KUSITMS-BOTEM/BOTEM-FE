@@ -120,4 +120,10 @@ describe("List", () => {
 
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
+
+  it("caption을 전달하면 텍스트 영역에 함께 표시된다", () => {
+    render(<List title="429,000원" description="상품명" caption="기존 선물" />);
+
+    expect(screen.getByText("기존 선물")).toBeInTheDocument();
+  });
 });

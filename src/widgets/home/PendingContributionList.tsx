@@ -14,7 +14,6 @@ type PendingContributionListProps = {
   onRetry: () => void;
   selectedIds: number[];
   onSelectedIdsChange: (ids: number[]) => void;
-  onOpenFunding?: () => void;
 };
 
 export default function PendingContributionList({
@@ -24,7 +23,6 @@ export default function PendingContributionList({
   onRetry,
   selectedIds,
   onSelectedIdsChange,
-  onOpenFunding,
 }: PendingContributionListProps) {
   if (isLoading) {
     return (
@@ -58,9 +56,6 @@ export default function PendingContributionList({
             모든 내역을 확인했어요
           </p>
         </div>
-        <Button color="neutral" variant="weak" size="medium" onClick={onOpenFunding}>
-          펀딩 열기
-        </Button>
       </div>
     );
   }

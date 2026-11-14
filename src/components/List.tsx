@@ -15,6 +15,7 @@ type ListProps = {
   thumbnailAlt?: string;
   title: string;
   description?: string;
+  caption?: string;
   titleUp?: boolean;
   textType?: ComponentProps<typeof ListText>["type"];
   right?: ReactNode;
@@ -29,6 +30,7 @@ export default function List({
   thumbnailAlt = "",
   title,
   description,
+  caption,
   titleUp = false,
   textType,
   right,
@@ -67,6 +69,7 @@ export default function List({
         <ListText
           title={title}
           description={description}
+          caption={caption}
           titleUp={titleUp}
           type={textType}
           className="flex-1"
@@ -76,7 +79,6 @@ export default function List({
     </>
   );
 
-  // onClick이 있으면 행 전체가 버튼이 되므로 right에 또 다른 버튼을 넣으면 중첩 interactive가 된다
   if (onClick) {
     return (
       <button

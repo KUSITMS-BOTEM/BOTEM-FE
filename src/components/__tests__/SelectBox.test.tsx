@@ -206,4 +206,14 @@ describe("SelectBox", () => {
       expect(container.querySelector('[aria-label="생일 영역"]')).not.toBeNull();
     });
   });
+
+  it("deadline variant에서 maxDate가 날짜 입력의 max로 들어간다", () => {
+    const { container } = render(
+      <SelectBox variant="deadline" label="마감일" minDate="2026-10-14" maxDate="2026-10-27" />,
+    );
+    const input = container.querySelector('input[type="date"]');
+
+    expect(input).toHaveAttribute("min", "2026-10-14");
+    expect(input).toHaveAttribute("max", "2026-10-27");
+  });
 });

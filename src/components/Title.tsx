@@ -45,7 +45,7 @@ export default function Title({
         {description && (
           <p
             style={{ fontSize: descriptionSize }}
-            className="text-semantic-text-secondary w-full [font-family:var(--font-family-pretendard)] [line-height:var(--line-height-default)] font-normal [letter-spacing:var(--letter-spacing-default)]">
+            className="text-semantic-text-secondary w-full [font-family:var(--font-family-pretendard)] [line-height:var(--line-height-default)] font-normal [letter-spacing:var(--letter-spacing-default)] whitespace-pre-line">
             {description}
           </p>
         )}
