@@ -28,6 +28,7 @@ export type LetterPaperProps = {
   onLargeIconClick?: () => void;
   onSmallIconClick?: () => void;
   onPhotoChange?: (file: File) => void;
+  slotsInert?: boolean;
   className?: string;
 };
 
@@ -49,6 +50,7 @@ export default function LetterPaper({
   onLargeIconClick,
   onSmallIconClick,
   onPhotoChange,
+  slotsInert = false,
   className,
 }: LetterPaperProps) {
   const size = getLetterTextSize(text);
@@ -96,7 +98,7 @@ export default function LetterPaper({
           <span>From. {senderName}</span>
         </div>
       </div>
-      <div className="pointer-events-none absolute -inset-px">
+      <div inert={slotsInert} className="pointer-events-none absolute -inset-px">
         <AssetSlot
           type="photo"
           src={photoSrc}

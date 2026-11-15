@@ -28,6 +28,8 @@ describe("RollingPaperCard", () => {
     const { container } = render(<RollingPaperCard card={CARD} letter={LETTER} />);
 
     expect(screen.getByText("From. 민지")).toBeInTheDocument();
-    expect(container.querySelector("[inert]")).toContainElement(screen.getByText("생일 축하해!"));
+    expect(container.querySelector("[inert]")).toContainElement(
+      screen.getByRole("button", { name: "사진 선택", hidden: true }),
+    );
   });
 });

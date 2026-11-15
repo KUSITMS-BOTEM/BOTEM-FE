@@ -11,10 +11,14 @@ describe("RollingPaperLetter", () => {
     expect(container.firstElementChild).toHaveStyle({ scale: "0.5" });
   });
 
-  it("편지지를 보여주되 inert로 눌림·포커스를 막는다", () => {
+  it("본문은 접근 가능하게 두고 슬롯만 inert로 눌림·포커스를 막는다", () => {
     const { container } = render(<RollingPaperLetter letter={LETTER} width={320} />);
+    const inertEl = container.querySelector("[inert]");
 
-    expect(screen.getByText("생일 축하해!")).toBeInTheDocument();
-    expect(container.firstElementChild).toHaveAttribute("inert");
+    expect(container.firstElementChild).not.toHaveAttribute("inert");
+    expect(inertEl).not.toContainElement(screen.getByText("생일 축하해!"));
+    expect(inertEl).toContainElement(
+      screen.getByRole("button", { name: "사진 선택", hidden: true }),
+    );
   });
 });

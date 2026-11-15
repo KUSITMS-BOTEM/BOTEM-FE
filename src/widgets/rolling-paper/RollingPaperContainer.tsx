@@ -101,7 +101,7 @@ export default function RollingPaperContainer({
                 <RollingPaperCard
                   key={slots[index]}
                   card={card}
-                  letter={DUMMY_LETTERS[slots[index]]}
+                  letter={DUMMY_LETTERS[index]}
                   exiting={opened}
                 />
               ))}

@@ -89,7 +89,7 @@ function PhotoSlot({
             alt="선택한 사진"
             fill
             sizes="120px"
-            unoptimized={previewUrl !== null}
+            unoptimized={typeof imageSrc === "string"}
             className="object-cover"
           />
         ) : (
