@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import BottomSheet from "@/components/BottomSheet";
@@ -51,9 +51,11 @@ export default function PendingContributionBottomSheet({
   const allConfirmed =
     open && contributions?.length === 0 && toasts.length === 0 && !query.isFetching;
 
+  const notifyAllConfirmed = useEffectEvent(() => onAllConfirmed?.());
+
   useEffect(() => {
-    if (allConfirmed) onAllConfirmed?.();
-  }, [allConfirmed, onAllConfirmed]);
+    if (allConfirmed) notifyAllConfirmed();
+  }, [allConfirmed]);
 
   useEffect(() => {
     const timers = toastTimersRef.current;

@@ -349,6 +349,25 @@ describe("PendingContributionBottomSheet", () => {
     expect(onAllConfirmed).toHaveBeenCalled();
   });
 
+  it("다 확인된 상태에서 onAllConfirmed가 새 함수로 바뀌어 다시 렌더돼도 한 번만 호출한다", () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    mockQuery({ data: [] });
+    const { rerender } = renderSheet({ onAllConfirmed: first });
+
+    rerender(
+      <PendingContributionBottomSheet
+        open
+        fundingId={9}
+        onClose={vi.fn()}
+        onAllConfirmed={second}
+      />,
+    );
+
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).not.toHaveBeenCalled();
+  });
+
   it("확인할 보탬이 남아 있으면 onAllConfirmed를 호출하지 않는다", () => {
     const onAllConfirmed = vi.fn();
     renderSheet({ onAllConfirmed });
