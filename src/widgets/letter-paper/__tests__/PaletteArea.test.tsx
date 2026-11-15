@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import PaletteArea from "@/widgets/letter-paper/PaletteArea";
@@ -11,15 +11,18 @@ const SWATCH_LABEL: Record<Color, string> = {
   blue: "파랑",
 };
 
+const swatch = (name: string) => screen.getByRole("button", { name });
+
 describe("PaletteArea", () => {
-  it("스와치 4개가 라디오로 렌더되고 color와 일치하는 것만 선택 상태다", () => {
+  it("스와치 4개가 토글 버튼으로 렌더되고 color와 일치하는 것만 눌림 상태다", () => {
     render(<PaletteArea color="pink" />);
 
-    expect(screen.getAllByRole("radio")).toHaveLength(4);
-    expect(screen.getByRole("radio", { name: "핑크" })).toBeChecked();
-    expect(screen.getByRole("radio", { name: "주황" })).not.toBeChecked();
-    expect(screen.getByRole("radio", { name: "라임" })).not.toBeChecked();
-    expect(screen.getByRole("radio", { name: "파랑" })).not.toBeChecked();
+    const group = screen.getByRole("group", { name: "편지지 색상" });
+    expect(within(group).getAllByRole("button")).toHaveLength(4);
+    expect(swatch("핑크")).toHaveAttribute("aria-pressed", "true");
+    expect(swatch("주황")).toHaveAttribute("aria-pressed", "false");
+    expect(swatch("라임")).toHaveAttribute("aria-pressed", "false");
+    expect(swatch("파랑")).toHaveAttribute("aria-pressed", "false");
   });
 
   it.each<[Color, string]>([
@@ -30,9 +33,12 @@ describe("PaletteArea", () => {
   ])("color가 %s이면 해당 스와치에만 %s 링이 붙는다", (color, ringClass) => {
     render(<PaletteArea color={color} />);
 
-    expect(screen.getByRole("radio", { name: SWATCH_LABEL[color] })).toHaveClass(ringClass);
+    const group = screen.getByRole("group", { name: "편지지 색상" });
+    expect(swatch(SWATCH_LABEL[color])).toHaveClass(ringClass);
     expect(
-      screen.getAllByRole("radio").filter(radio => radio.className.includes("border-base-")),
+      within(group)
+        .getAllByRole("button")
+        .filter(button => button.className.includes("border-base-")),
     ).toHaveLength(1);
   });
 
@@ -40,20 +46,19 @@ describe("PaletteArea", () => {
     const onColorChange = vi.fn();
     render(<PaletteArea color="orange" onColorChange={onColorChange} />);
 
-    await userEvent.click(screen.getByRole("radio", { name: "파랑" }));
+    await userEvent.click(swatch("파랑"));
 
     expect(onColorChange).toHaveBeenCalledTimes(1);
     expect(onColorChange).toHaveBeenCalledWith("blue");
   });
 
-  it("onColorChange 없이도 클릭한 스와치로 선택(링)이 옮겨간다", async () => {
-    render(<PaletteArea color="orange" />);
+  it("부모가 color를 바꾸지 않으면 클릭해도 선택은 그대로다", async () => {
+    render(<PaletteArea color="orange" onColorChange={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole("radio", { name: "라임" }));
+    await userEvent.click(swatch("라임"));
 
-    expect(screen.getByRole("radio", { name: "라임" })).toBeChecked();
-    expect(screen.getByRole("radio", { name: "라임" })).toHaveClass("border-base-lime-900");
-    expect(screen.getByRole("radio", { name: "주황" })).not.toBeChecked();
+    expect(swatch("주황")).toHaveAttribute("aria-pressed", "true");
+    expect(swatch("라임")).toHaveAttribute("aria-pressed", "false");
   });
 
   it("부모가 color를 바꾸면 선택도 따라간다", () => {
@@ -61,7 +66,8 @@ describe("PaletteArea", () => {
 
     rerender(<PaletteArea color="blue" />);
 
-    expect(screen.getByRole("radio", { name: "파랑" })).toBeChecked();
+    expect(swatch("파랑")).toHaveAttribute("aria-pressed", "true");
+    expect(swatch("주황")).toHaveAttribute("aria-pressed", "false");
   });
 
   it("플러스 버튼을 클릭하면 onAddClick이 호출된다", async () => {

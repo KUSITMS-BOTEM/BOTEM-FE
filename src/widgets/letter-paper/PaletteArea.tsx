@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { cn } from "@/utils/cn";
 import IconButton from "@/components/IconButton";
 import {
@@ -31,34 +30,19 @@ export default function PaletteArea({
   tooltip = true,
   className,
 }: PaletteAreaProps) {
-  const [selected, setSelected] = useState(color);
-  const [prevColor, setPrevColor] = useState(color);
-
-  // 부모가 color를 바꾸면 내부 선택도 따라간다
-  if (color !== prevColor) {
-    setPrevColor(color);
-    setSelected(color);
-  }
-
-  const handleSelect = (next: Color) => {
-    setSelected(next);
-    onColorChange?.(next);
-  };
-
   return (
     <div className={cn("relative flex w-full flex-col px-5 pt-1 pb-5", className)}>
       <div className="flex w-full items-center justify-between">
-        <div role="radiogroup" aria-label="편지지 색상" className="flex items-center gap-3">
+        <div role="group" aria-label="편지지 색상" className="flex items-center gap-3">
           {PALETTE_COLORS.map(item => {
-            const isSelected = item.color === selected;
+            const isSelected = item.color === color;
             return (
               <button
                 key={item.color}
                 type="button"
-                role="radio"
-                aria-checked={isSelected}
+                aria-pressed={isSelected}
                 aria-label={item.label}
-                onClick={() => handleSelect(item.color)}
+                onClick={() => onColorChange?.(item.color)}
                 className={cn(
                   "relative flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full",
                   "before:absolute before:-inset-2 before:content-['']",

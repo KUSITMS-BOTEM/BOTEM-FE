@@ -33,9 +33,17 @@ describe("AssetSlot", () => {
   });
 
   describe("type=photo", () => {
+    let urlCount = 0;
+    const uploadInto = (container: HTMLElement, file: File) =>
+      userEvent.upload(container.querySelector("input[type=file]")!, file);
+
     beforeEach(() => {
-      URL.createObjectURL = vi.fn(() => "blob:preview");
+      urlCount = 0;
+      URL.createObjectURL = vi.fn(() => `blob:preview-${++urlCount}`);
       URL.revokeObjectURL = vi.fn();
+      global.createImageBitmap = vi
+        .fn()
+        .mockResolvedValue({ close: vi.fn() }) as unknown as typeof createImageBitmap;
     });
 
     it("사진이 없으면 120px 점선 슬롯과 플러스 아이콘을 보여준다", () => {
@@ -67,6 +75,66 @@ describe("AssetSlot", () => {
       await userEvent.click(screen.getByRole("button", { name: "사진 선택" }));
 
       expect(clickSpy).toHaveBeenCalled();
+    });
+
+    it("사진을 교체하면 이전 미리보기 URL을 해제한다", async () => {
+      const { container } = render(<AssetSlot type="photo" />);
+
+      await uploadInto(container, new File(["x"], "a.png", { type: "image/png" }));
+      await waitFor(() => expect(screen.getByAltText("선택한 사진")).toBeInTheDocument());
+      await uploadInto(container, new File(["y"], "b.png", { type: "image/png" }));
+
+      await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview-1"));
+      expect(URL.revokeObjectURL).not.toHaveBeenCalledWith("blob:preview-2");
+    });
+
+    it("언마운트하면 마지막 미리보기 URL을 해제한다", async () => {
+      const { container, unmount } = render(<AssetSlot type="photo" />);
+      await uploadInto(container, new File(["x"], "a.png", { type: "image/png" }));
+      await waitFor(() => expect(screen.getByAltText("선택한 사진")).toBeInTheDocument());
+
+      unmount();
+
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview-1");
+    });
+
+    it("allowedTypes에 없는 형식이면 onImageChange 없이 에러 토스트를 보여준다", async () => {
+      const onImageChange = vi.fn();
+      const { container } = render(
+        <AssetSlot type="photo" allowedTypes={["image/png"]} onImageChange={onImageChange} />,
+      );
+
+      await uploadInto(container, new File(["x"], "a.gif", { type: "image/gif" }));
+
+      expect(await screen.findByText("png 파일만 올릴 수 있어요")).toBeInTheDocument();
+      expect(onImageChange).not.toHaveBeenCalled();
+      expect(screen.queryByAltText("선택한 사진")).not.toBeInTheDocument();
+    });
+
+    it("maxSizeBytes를 넘으면 onImageChange 없이 에러 토스트를 보여준다", async () => {
+      const onImageChange = vi.fn();
+      const { container } = render(
+        <AssetSlot type="photo" maxSizeBytes={1024 * 1024} onImageChange={onImageChange} />,
+      );
+      const big = new File([new Uint8Array(2 * 1024 * 1024)], "big.png", { type: "image/png" });
+
+      await uploadInto(container, big);
+
+      expect(await screen.findByText("1MB 이하의 파일만 올릴 수 있어요")).toBeInTheDocument();
+      expect(onImageChange).not.toHaveBeenCalled();
+    });
+
+    it("디코딩할 수 없는 파일이면 onImageChange 없이 에러 토스트를 보여준다", async () => {
+      global.createImageBitmap = vi
+        .fn()
+        .mockRejectedValue(new Error("decode")) as unknown as typeof createImageBitmap;
+      const onImageChange = vi.fn();
+      const { container } = render(<AssetSlot type="photo" onImageChange={onImageChange} />);
+
+      await uploadInto(container, new File(["x"], "a.png", { type: "image/png" }));
+
+      expect(await screen.findByText(/이미지를 불러올 수 없어요/)).toBeInTheDocument();
+      expect(onImageChange).not.toHaveBeenCalled();
     });
   });
 });

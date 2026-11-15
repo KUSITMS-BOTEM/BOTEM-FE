@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import Image from "next/image";
 
 import { cn } from "@/utils/cn";
+import ToastMessage from "@/components/ToastMessage";
+import { useImageFileSelect } from "@/hooks/useImageFileSelect";
 import IconPlus from "@/assets/icons/icon-plus.svg?react";
 
 type AssetSlotProps =
@@ -17,6 +19,8 @@ type AssetSlotProps =
   | {
       type: "photo";
       onImageChange?: (file: File) => void;
+      allowedTypes?: string[];
+      maxSizeBytes?: number;
       className?: string;
     };
 
@@ -42,22 +46,27 @@ function IconSlot({ asset, onClick, className }: Extract<AssetSlotProps, { type:
   );
 }
 
-function PhotoSlot({ onImageChange, className }: Extract<AssetSlotProps, { type: "photo" }>) {
+function PhotoSlot({
+  onImageChange,
+  allowedTypes,
+  maxSizeBytes,
+  className,
+}: Extract<AssetSlotProps, { type: "photo" }>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const { errorText, handleFileChange } = useImageFileSelect({
+    allowedTypes,
+    maxSizeBytes,
+    onSelect: file => {
+      setPreviewUrl(URL.createObjectURL(file));
+      onImageChange?.(file);
+    },
+  });
 
   useEffect(() => {
     if (!previewUrl) return;
     return () => URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);
-
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    setPreviewUrl(URL.createObjectURL(file));
-    onImageChange?.(file);
-  };
 
   return (
     <>
@@ -84,6 +93,7 @@ function PhotoSlot({ onImageChange, className }: Extract<AssetSlotProps, { type:
         tabIndex={-1}
         onChange={handleFileChange}
       />
+      <ToastMessage show={errorText !== null} text={errorText ?? ""} state={false} />
     </>
   );
 }
