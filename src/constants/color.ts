@@ -45,3 +45,11 @@ export const RECORD_BUTTON_ICON_CLASS: Record<Color, string> = {
   lime: "text-semantic-text-strong",
   blue: "text-semantic-icon-on-fill",
 };
+
+// Figma에는 lime 선택 링(base-lime-900)만 있어 나머지 색도 같은 규칙으로 둔다
+export const LETTER_PALETTE_RING_BORDER_CLASS: Record<Color, string> = {
+  orange: "border-base-orange-900",
+  pink: "border-base-pink-900",
+  lime: "border-base-lime-900",
+  blue: "border-base-blue-900",
+};
