@@ -104,6 +104,17 @@ describe("queryClient 인증 에러 처리", () => {
     expect(replace).toHaveBeenCalledWith("/");
   });
 
+  it("AUTH_EXPIRED가 동시에 여러 건 나도 Dialog 확인 시 이동은 1회만 한다", async () => {
+    await Promise.all([
+      failQuery(new ApiError("AUTH_EXPIRED")),
+      failQuery(new ApiError("AUTH_EXPIRED")),
+    ]);
+    useErrorDialogStore.getState().closeErrorDialog();
+    useErrorDialogStore.getState().closeErrorDialog();
+
+    expect(replace).toHaveBeenCalledTimes(1);
+  });
+
   it("REISSUE_UNAVAILABLE는 Dialog만 띄우고 확인해도 이동하지 않는다", async () => {
     await failQuery(new ApiError("REISSUE_UNAVAILABLE"));
     useErrorDialogStore.getState().closeErrorDialog();
