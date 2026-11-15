@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import type { StaticImageData } from "next/image";
+
 import { cn } from "@/utils/cn";
 import { getLetterTextSize } from "@/utils/letter-paper/getLetterTextSize";
 import type { Color } from "@/constants/color";
@@ -14,12 +16,13 @@ import Profile from "@/components/Profile";
 import AssetSlot from "@/widgets/letter-paper/AssetSlot";
 import VoiceMessage from "@/widgets/letter-paper/VoiceMessage";
 
-type LetterPaperProps = {
+export type LetterPaperProps = {
   style?: LetterPaperStyle;
   color?: Color;
   text: string;
   senderName: string;
   hasVoiceMessage?: boolean;
+  photoSrc?: string | StaticImageData;
   largeIcon?: ReactNode;
   smallIcon?: ReactNode;
   onLargeIconClick?: () => void;
@@ -40,6 +43,7 @@ export default function LetterPaper({
   text,
   senderName,
   hasVoiceMessage = false,
+  photoSrc,
   largeIcon,
   smallIcon,
   onLargeIconClick,
@@ -94,6 +98,7 @@ export default function LetterPaper({
       <div className="pointer-events-none absolute -inset-px">
         <AssetSlot
           type="photo"
+          src={photoSrc}
           onImageChange={onPhotoChange}
           className="pointer-events-auto absolute top-[136px] left-[188.84px] origin-top-left rotate-[22deg]"
         />

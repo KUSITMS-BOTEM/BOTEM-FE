@@ -54,6 +54,13 @@ describe("AssetSlot", () => {
       expect(screen.queryByAltText("선택한 사진")).not.toBeInTheDocument();
     });
 
+    it("src가 있으면 선택 없이도 사진을 보여주고 테두리를 없앤다", () => {
+      render(<AssetSlot type="photo" src="/cat.jpg" />);
+
+      expect(screen.getByAltText("선택한 사진")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "사진 선택" })).not.toHaveClass("border-dashed");
+    });
+
     it("사진을 선택하면 미리보기를 보여주고 테두리를 없애며 onImageChange를 호출한다", async () => {
       const onImageChange = vi.fn();
       const { container } = render(<AssetSlot type="photo" onImageChange={onImageChange} />);

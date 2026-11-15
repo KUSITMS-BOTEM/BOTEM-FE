@@ -10,6 +10,7 @@ import Button from "@/components/Button";
 import IconButton from "@/components/IconButton";
 import OpenSheet from "@/components/OpenSheet";
 import { cn } from "@/utils/cn";
+import { DUMMY_LETTERS } from "@/widgets/rolling-paper/dummyLetters";
 import RollingPaperCard from "@/widgets/rolling-paper/RollingPaperCard";
 import RollingPaperOpenOverlay from "@/widgets/rolling-paper/RollingPaperOpenOverlay";
 import {
@@ -97,7 +98,12 @@ export default function RollingPaperContainer({
             {/* 카드 모션 좌표의 기준점(배경 상단에서 233px 아래 가운데) */}
             <div className="absolute top-[233px] left-1/2 size-0">
               {getVisibleCards(count).map((card, index) => (
-                <RollingPaperCard key={slots[index]} card={card} exiting={opened} />
+                <RollingPaperCard
+                  key={slots[index]}
+                  card={card}
+                  letter={DUMMY_LETTERS[slots[index]]}
+                  exiting={opened}
+                />
               ))}
             </div>
           </motion.div>
