@@ -8,6 +8,13 @@ export const LETTER_ACCENT_TEXT_CLASS: Record<Color, string> = {
   blue: "text-base-blue-500",
 };
 
+export const LETTER_ACCENT_BG_CLASS: Record<Color, string> = {
+  orange: "bg-base-orange-500",
+  pink: "bg-base-pink-500",
+  lime: "bg-base-lime-500",
+  blue: "bg-base-blue-500",
+};
+
 export const RECORD_BUTTON_BG_CLASS: Record<Color, string> = {
   orange: "bg-semantic-fill-brand",
   pink: "bg-semantic-fill-pink",
