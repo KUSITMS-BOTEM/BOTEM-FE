@@ -13,6 +13,7 @@ import {
 
 // TODO: 임시 Play 버튼. 디자이너의 VoicePlayer·PlayButton 컴포넌트가 나와 분리할 때 이 import와 아래 사용처를 함께 제거할 것
 import IconPlayButton from "@/assets/icons/multicolor/icon-play-button.svg?react";
+import { DUMMY_LETTERS } from "@/widgets/rolling-paper/dummyLetters";
 import RollingPaperWheelCard from "@/widgets/rolling-paper/RollingPaperWheelCard";
 import RollingPaperWheelProfile from "@/widgets/rolling-paper/RollingPaperWheelProfile";
 import {
@@ -170,6 +171,7 @@ export default function RollingPaperWheel({ count }: RollingPaperWheelProps) {
           {items.map(index => (
             <RollingPaperWheelCard
               key={`card-${index}`}
+              letter={DUMMY_LETTERS[index]}
               index={index}
               count={itemCount}
               progress={progress}

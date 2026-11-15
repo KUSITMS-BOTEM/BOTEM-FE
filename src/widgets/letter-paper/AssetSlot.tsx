@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-import Image from "next/image";
+import Image, { type StaticImageData } from "next/image";
 
 import { cn } from "@/utils/cn";
 import ToastMessage from "@/components/ToastMessage";
@@ -18,6 +18,7 @@ type AssetSlotProps =
     }
   | {
       type: "photo";
+      src?: string | StaticImageData;
       onImageChange?: (file: File) => void;
       allowedTypes?: string[];
       maxSizeBytes?: number;
@@ -47,6 +48,7 @@ function IconSlot({ asset, onClick, className }: Extract<AssetSlotProps, { type:
 }
 
 function PhotoSlot({
+  src,
   onImageChange,
   allowedTypes,
   maxSizeBytes,
@@ -68,6 +70,8 @@ function PhotoSlot({
     return () => URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);
 
+  const imageSrc = previewUrl ?? src;
+
   return (
     <>
       <button
@@ -76,11 +80,18 @@ function PhotoSlot({
         onClick={() => inputRef.current?.click()}
         className={cn(
           "relative flex size-[120px] items-center justify-center overflow-hidden rounded-lg",
-          !previewUrl && EMPTY_SLOT_CLASS,
+          !imageSrc && EMPTY_SLOT_CLASS,
           className,
         )}>
-        {previewUrl ? (
-          <Image src={previewUrl} alt="선택한 사진" fill unoptimized className="object-cover" />
+        {imageSrc ? (
+          <Image
+            src={imageSrc}
+            alt="선택한 사진"
+            fill
+            sizes="120px"
+            unoptimized={typeof imageSrc === "string"}
+            className="object-cover"
+          />
         ) : (
           <IconPlus aria-hidden className="text-semantic-icon-default size-7" />
         )}
