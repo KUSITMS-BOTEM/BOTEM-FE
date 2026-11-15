@@ -51,7 +51,7 @@ export const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     message: "일시적인 문제로 로그인 상태를 확인하지 못했어요. 잠시 후 다시 시도해주세요.",
     action: "dialog",
   },
-  REISSUE_FAILED: { message: "토큰 재발급에 실패했습니다.", action: "none" }, // reissueOrThrow가 즉시 AUTH_EXPIRED로 치환, UI 미도달
+  REISSUE_FAILED: { message: "토큰 재발급에 실패했습니다.", action: "none" }, // reissueOrThrow가 즉시 AUTH_EXPIRED로 치환, UI 미도달 (일시 장애는 REISSUE_UNAVAILABLE)
   UNKNOWN_ERROR: { message: "알 수 없는 오류가 발생했어요.", action: "dialog" },
 };
 
