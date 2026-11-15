@@ -6,6 +6,7 @@ import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
 import RevealMotion from "@/components/effects/RevealMotion";
 import Header from "@/components/Header";
+import LoadingAnimation from "@/components/LoadingAnimation";
 import { useFundingRevealQuery } from "@/hooks/queries/funding/useFundingRevealQuery";
 import FundingRevealEmptyView from "@/widgets/funding/FundingRevealEmptyView";
 import IconClose from "@/assets/icons/icon-close.svg?react";
@@ -17,7 +18,14 @@ export default function FundingRevealContainer() {
   const close = () => router.replace("/home");
 
   const renderContent = () => {
-    if (isLoading) return null;
+    if (isLoading) {
+      return (
+        <div role="status" className="flex flex-1 items-center justify-center">
+          <LoadingAnimation size="large" />
+          <span className="sr-only">펀딩 결과를 불러오는 중이에요</span>
+        </div>
+      );
+    }
     if (!reveal) {
       return (
         <main className="flex flex-1 flex-col items-center justify-center gap-4 text-center">

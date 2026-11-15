@@ -53,11 +53,12 @@ describe("FundingRevealContainer", () => {
     expect(useFundingRevealQuery).toHaveBeenCalledWith(12);
   });
 
-  it("로딩 중이면 결과·에러·빈 화면 본문을 렌더하지 않는다", () => {
+  it("로딩 중이면 로딩 안내만 보여주고 결과·에러·빈 화면 본문을 렌더하지 않는다", () => {
     mockQuery({ isLoading: true });
 
     render(<FundingRevealContainer />);
 
+    expect(screen.getByRole("status")).toHaveTextContent("펀딩 결과를 불러오는 중이에요");
     expect(screen.queryByRole("main")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "다시 시도" })).not.toBeInTheDocument();
   });
