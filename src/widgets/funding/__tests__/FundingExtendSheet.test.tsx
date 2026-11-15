@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { mockPointer } from "@/__tests__/mockPointer";
 import FundingExtendSheet from "@/widgets/funding/FundingExtendSheet";
 
 // jsdom은 HTMLDialogElement의 showModal/close를 구현하지 않아 open 속성만 토글하도록 대체한다
@@ -15,7 +16,7 @@ beforeAll(() => {
 
 const renderSheet = () => {
   const onExtend = vi.fn();
-  const { container } = render(
+  render(
     <FundingExtendSheet
       open
       collectedAmount={301000}
@@ -24,11 +25,24 @@ const renderSheet = () => {
       onClose={vi.fn()}
     />,
   );
-  const dateInput = container.ownerDocument.querySelector('input[type="date"]')!;
-  return { onExtend, dateInput };
+  return { onExtend, user: userEvent.setup() };
 };
 
+const openCalendar = (user: ReturnType<typeof userEvent.setup>) =>
+  user.click(screen.getByRole("button", { name: "새 마감일 날짜를 선택해주세요" }));
+
 describe("FundingExtendSheet", () => {
+  beforeEach(() => {
+    mockPointer("fine");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 13));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
   it("모인 금액과 기존 마감일 안내를 보여준다", () => {
     renderSheet();
 
@@ -43,18 +57,22 @@ describe("FundingExtendSheet", () => {
     expect(screen.getByRole("button", { name: "연장하기" })).toBeDisabled();
   });
 
-  it("기존 마감일 다음 날부터 14일 뒤까지만 고를 수 있다", () => {
-    const { dateInput } = renderSheet();
+  it("기존 마감일 다음 날부터 14일 뒤까지만 고를 수 있다", async () => {
+    const { user } = renderSheet();
 
-    expect(dateInput).toHaveAttribute("min", "2026-10-14");
-    expect(dateInput).toHaveAttribute("max", "2026-10-27");
+    await openCalendar(user);
+
+    expect(screen.getByRole("button", { name: /10월 13일/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /10월 14일/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /10월 27일/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /10월 28일/ })).toBeDisabled();
   });
 
   it("날짜를 고르면 'M월 D일'로 보여주고, 연장하기를 누르면 onExtend에 YYYY-MM-DD를 넘긴다", async () => {
-    const user = userEvent.setup();
-    const { onExtend, dateInput } = renderSheet();
+    const { onExtend, user } = renderSheet();
 
-    fireEvent.change(dateInput, { target: { value: "2026-10-20" } });
+    await openCalendar(user);
+    await user.click(screen.getByRole("button", { name: /10월 20일/ }));
     expect(screen.getByText("10월 20일")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "연장하기" }));

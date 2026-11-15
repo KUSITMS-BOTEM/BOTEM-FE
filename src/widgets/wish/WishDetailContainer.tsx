@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { notFound, useParams, useRouter } from "next/navigation";
 
+import { showGlobalErrorDialog } from "@/lib/queryClient";
 import Dialog from "@/components/Dialog";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
@@ -23,7 +24,7 @@ export default function WishDetailContainer() {
 
   useEffect(() => {
     if (errorAction === "unauthorized") router.replace("/");
-    else if (errorAction === "alert") alert(error?.message);
+    else if (errorAction === "alert" && error) showGlobalErrorDialog(error);
   }, [errorAction, error, router]);
 
   if (errorAction === "notFound") notFound();

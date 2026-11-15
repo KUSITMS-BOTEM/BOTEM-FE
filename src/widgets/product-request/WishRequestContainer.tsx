@@ -12,7 +12,9 @@ import TextField from "@/components/TextField";
 import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { useRequestProductMutation } from "@/hooks/mutations/product-request/useRequestProductMutation";
+import { ApiError } from "@/types/api";
 import { canSubmitWishRequest } from "@/utils/product-request/canSubmitWishRequest";
 import { isCoupangProductUrl } from "@/utils/product-request/isCoupangProductUrl";
 
@@ -46,6 +48,12 @@ export default function WishRequestContainer() {
       {
         // 성공 시 이동할 전용 페이지가 있지만 디자인이 아직 나오지 않아 만들지 못했다 — 임시로 /wish/recommended로 이동한다
         onSuccess: () => router.push("/wish/recommended"),
+        // inline 코드는 전역 Dialog가 띄우지 않으므로 여기서 Toast로 보여준다
+        onError: error => {
+          if (error instanceof ApiError && ERROR_MESSAGES[error.code]?.action === "inline") {
+            setToastText(ERROR_MESSAGES[error.code].message);
+          }
+        },
         onSettled: () => {
           isSubmitting.current = false;
         },

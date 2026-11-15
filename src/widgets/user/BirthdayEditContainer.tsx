@@ -37,6 +37,7 @@ export default function BirthdayEditContainer({
         variant="birth"
         label="생일"
         value={birthday ? formatBirthdayDisplay(birthday) : ""}
+        dateValue={birthday}
         onDateChange={(month, day) =>
           setBirthday(
             month && day ? `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "",

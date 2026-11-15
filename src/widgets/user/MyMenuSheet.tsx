@@ -8,6 +8,7 @@ import List from "@/components/List";
 import ListHeader from "@/components/ListHeader";
 import CloseSheet from "@/components/CloseSheet";
 import TextButton from "@/components/TextButton";
+import { cn } from "@/utils/cn";
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
@@ -16,7 +17,6 @@ import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
 import ClosedFundingSheet from "@/widgets/funding/ClosedFundingSheet";
 import PayoutAccountEditSheet from "@/widgets/payout-account/PayoutAccountEditSheet";
 import MyMenuProfileRow from "@/widgets/user/MyMenuProfileRow";
-import MyProfileSheet from "@/widgets/user/MyProfileSheet";
 import IconAccount from "@/assets/icons/multicolor/icon-account.svg?react";
 import IconFaqGuide from "@/assets/icons/multicolor/icon-faq-guide.svg?react";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
@@ -44,7 +44,6 @@ export default function MyMenuSheet({
   const { data: profile } = useMyProfileQuery();
   const { data: payoutAccounts } = usePayoutAccountsQuery();
   const defaultAccount = payoutAccounts?.find(account => account.isDefault);
-  const [profileSheetOpen, setProfileSheetOpen] = useState(false);
   const [closedFundingSheetOpen, setClosedFundingSheetOpen] = useState(false);
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
 
@@ -55,7 +54,7 @@ export default function MyMenuSheet({
           <div className="flex w-full flex-col">
             <ListHeader title="내 프로필" />
             <MyMenuProfileRow
-              onClick={() => setProfileSheetOpen(true)}
+              onClick={() => router.push("/my/profile")}
               nickname={profile?.nickname ?? ""}
               birthdayText={
                 profile?.birthday ? `생일 ${formatBirthdayDisplay(profile.birthday)}` : undefined
@@ -68,12 +67,11 @@ export default function MyMenuSheet({
             <List
               leading={<IconAccount />}
               title="친구"
+              onClick={() => router.push("/friends")}
               right={
-                <TextButton
-                  size="medium"
-                  label={`${friendCount}명`}
-                  className={MENU_TEXT_BUTTON_CLASS}
-                />
+                <span className={cn("[font:var(--semantic-label-small)]", MENU_TEXT_BUTTON_CLASS)}>
+                  {`${friendCount}명`}
+                </span>
               }
             />
             <List
@@ -115,7 +113,6 @@ export default function MyMenuSheet({
           />
         </div>
       </div>
-      <MyProfileSheet open={profileSheetOpen} onClose={() => setProfileSheetOpen(false)} />
       <ClosedFundingSheet
         open={closedFundingSheetOpen}
         onClose={() => setClosedFundingSheetOpen(false)}

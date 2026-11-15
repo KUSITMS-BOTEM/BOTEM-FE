@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 import { cn } from "@/utils/cn";
 import IconButton from "@/components/IconButton";
 import IconClose from "@/assets/icons/icon-close.svg?react";
@@ -10,6 +11,8 @@ type SheetHeaderProps = {
   showHandle?: boolean;
   closeType?: "close" | "back";
   type?: "title" | "handle";
+  // 닫기 버튼 왼쪽에 놓이는 액션(예: 공유)
+  rightAction?: ReactNode;
   className?: string;
 };
 
@@ -20,6 +23,7 @@ export default function SheetHeader({
   showHandle = true,
   closeType = "close",
   type = "title",
+  rightAction,
   className,
 }: SheetHeaderProps) {
   if (type === "handle") {
@@ -51,6 +55,10 @@ export default function SheetHeader({
           {title}
         </p>
       </div>
+      {rightAction && (
+        // 닫기 버튼(right 11px + 36px)과 4px 간격
+        <div className="absolute top-2 right-[51px]">{rightAction}</div>
+      )}
       {closeType === "back" ? (
         <IconButton
           size="xlarge"

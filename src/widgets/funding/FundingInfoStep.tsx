@@ -97,11 +97,6 @@ export default function FundingInfoStep({
     if (Number(targetAmount) > 0) setShowDeadline(true);
   };
 
-  // 날짜 input의 blur가 버블링되어 마감일 영역에서 잡힌다
-  const revealStory = () => {
-    if (deadline) setShowStory(true);
-  };
-
   // 사연 TextArea의 blur가 버블링되어 사연 영역에서 잡힌다
   const revealPledge = () => {
     if (story.trim()) setShowPledge(true);
@@ -185,7 +180,6 @@ export default function FundingInfoStep({
           initial={isEdit ? false : { opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...DEADLINE_FIELD_TRANSITION, layout: PUSH_DOWN_TRANSITION }}
-          onBlur={revealStory}
           className="w-full">
           <SelectBox
             variant="deadline"
@@ -193,8 +187,13 @@ export default function FundingInfoStep({
             value={formatDeadline(deadline)}
             dateValue={deadline}
             minDate={today}
-            // 데스크탑에서 날짜를 직접 입력하면 min을 우회할 수 있어 한 번 더 거른다
-            onDeadlineChange={date => setDeadline(date >= today ? date : "")}
+            // 날짜 선택 UI가 min을 막지만 한 번 더 거른다
+            onDeadlineChange={date => {
+              const next = date >= today ? date : "";
+              setDeadline(next);
+              // 달력·휠 시트는 blur 없이 닫히므로 날짜를 확정하는 즉시 사연을 연다
+              if (next) setShowStory(true);
+            }}
           />
         </motion.div>
       )}

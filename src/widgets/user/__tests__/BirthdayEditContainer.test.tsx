@@ -1,5 +1,8 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
+import { mockPointer } from "@/__tests__/mockPointer";
+import { pickWheelDate } from "@/__tests__/pickWheelDate";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import BirthdayEditContainer from "@/widgets/user/BirthdayEditContainer";
 
@@ -21,6 +24,7 @@ const mockBirthday = (birthday: string | null) =>
   } as unknown as ReturnType<typeof useMyProfileQuery>);
 
 beforeEach(() => {
+  mockPointer("coarse");
   vi.clearAllMocks();
 });
 
@@ -33,16 +37,16 @@ describe("BirthdayEditContainer", () => {
     expect(screen.getByRole("button", { name: "수정 완료" })).toBeEnabled();
   });
 
-  it("생일이 없으면 수정 완료가 비활성이고, 날짜를 고르면 표시되며 활성이 된다", () => {
+  it("생일이 없으면 수정 완료가 비활성이고, 날짜를 고르면 표시되며 활성이 된다", async () => {
+    const user = userEvent.setup();
     mockBirthday(null);
-    const { container } = render(<BirthdayEditContainer />);
+    render(<BirthdayEditContainer />);
     const submit = screen.getByRole("button", { name: "수정 완료" });
 
     expect(submit).toBeDisabled();
 
-    fireEvent.change(container.querySelector('input[type="date"]')!, {
-      target: { value: "2000-03-07" },
-    });
+    await user.click(screen.getByRole("button", { name: "생일 선택해주세요" }));
+    await pickWheelDate(user, { month: 3, day: 7 });
 
     expect(screen.getByText("3월 7일")).toBeInTheDocument();
     expect(submit).toBeEnabled();

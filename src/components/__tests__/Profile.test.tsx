@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import Profile from "@/components/Profile";
+import Profile, { getProfileColor } from "@/components/Profile";
 
 // vitest(jsdom) 환경은 정적 이미지 import가 {src,width,height} 객체가 아닌 문자열로 반환되어
 // next/image가 "width 누락" 에러를 던진다. 미리보기 img 렌더만 확인하기 위해 단순 img로 대체한다.
@@ -210,5 +210,13 @@ describe("Profile", () => {
     unmount();
 
     expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
+  });
+});
+
+describe("getProfileColor", () => {
+  it("같은 id는 항상 같은 색이고, id가 달라지면 4색을 순환한다", () => {
+    expect(getProfileColor(1)).toBe(getProfileColor(1));
+    expect(new Set([0, 1, 2, 3].map(getProfileColor)).size).toBe(4);
+    expect(getProfileColor(4)).toBe(getProfileColor(0));
   });
 });

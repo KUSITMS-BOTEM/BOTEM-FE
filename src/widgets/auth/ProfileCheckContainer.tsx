@@ -18,6 +18,7 @@ import { useUploadProfileImageMutation } from "@/hooks/mutations/user/useUploadP
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/store/authStore";
+import { useErrorDialogStore } from "@/store/errorDialogStore";
 import type { MyProfile } from "@/types/user/profile";
 import { getSignupFlow, setSignupFlow } from "@/utils/auth/signupFlowStorage";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
@@ -67,7 +68,10 @@ export default function ProfileCheckContainer() {
   const handleProfileImageChange = (file: File) => {
     uploadProfileImage(file, {
       onSuccess: imageUrl => setUploadedImageUrl(imageUrl),
-      onError: () => alert("이미지 업로드에 실패했어요. 다시 시도해주세요"),
+      onError: () =>
+        useErrorDialogStore
+          .getState()
+          .openErrorDialog("이미지 업로드에 실패했어요. 다시 시도해주세요"),
     });
   };
 
@@ -76,6 +80,7 @@ export default function ProfileCheckContainer() {
       onSuccess: () => {
         useAuthStore.getState().clearAccessToken();
         queryClient.removeQueries({ queryKey: ["users", "me"] });
+        queryClient.removeQueries({ queryKey: ["friends"] });
         router.replace("/");
       },
     });
@@ -104,6 +109,7 @@ export default function ProfileCheckContainer() {
             animate={{ opacity: 1, y: 0 }}
             transition={FIELD_TRANSITION}>
             <Profile
+              color="orange"
               imageUrl={uploadedImageUrl ?? profile?.profileImageUrl ?? undefined}
               onImageChange={handleProfileImageChange}
               allowedTypes={ALLOWED_PROFILE_IMAGE_TYPES}
@@ -124,6 +130,7 @@ export default function ProfileCheckContainer() {
               variant="birth"
               label="생일"
               value={birthday ? formatBirthdayDisplay(birthday) : ""}
+              dateValue={birthday}
               onDateChange={(month, day) =>
                 setBirthday(
                   month && day

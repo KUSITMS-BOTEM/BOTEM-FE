@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Play Button">
+<circle id="Circle" cx="15" cy="15" r="15" fill="#FC298A"/>
+<path id="Icon" d="M20.5607 12.6091C22.1303 13.5656 22.1303 15.8445 20.5607 16.8011L14.2319 20.658C12.5962 21.6548 10.5 20.4775 10.5 18.562V10.8481C10.5 8.93266 12.5962 7.75533 14.2319 8.75215L20.5607 12.6091Z" fill="black"/>
+</g>
+</svg>
