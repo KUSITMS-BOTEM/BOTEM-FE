@@ -48,11 +48,9 @@ export default function WishDetailContainer() {
         productName={wish.productName}
         price={wish.price}
         sellerName={wish.sellerName}
-        onSellerClick={() => {
-          // 서버 값이라도 javascript: 같은 스킴이면 열지 않는다
-          if (isValidUrl(wish.productUrl))
-            window.open(wish.productUrl, "_blank", "noopener,noreferrer");
-        }}
+        // 서버 값이라도 javascript: 같은 스킴이면 열지 않는다
+        sellerDisabled={!isValidUrl(wish.productUrl)}
+        onSellerClick={() => window.open(wish.productUrl, "_blank", "noopener,noreferrer")}
         rightItems={[
           { icon: <IconDelete />, ariaLabel: "삭제", onClick: () => setIsDeleteDialogOpen(true) },
         ]}
