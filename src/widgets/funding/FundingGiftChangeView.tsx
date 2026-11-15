@@ -4,6 +4,7 @@ import InfoBox from "@/components/InfoBox";
 import List from "@/components/List";
 import ListHeader from "@/components/ListHeader";
 import Title from "@/components/Title";
+import { formatWon, getRemainingAmount, getShortfall } from "@/utils/funding/giftChangeAmount";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 
@@ -24,8 +25,6 @@ type FundingGiftChangeViewProps = {
   onBrowseProducts: () => void;
 };
 
-const formatWon = (amount: number) => `${amount.toLocaleString("ko-KR")}원`;
-
 export default function FundingGiftChangeView({
   collectedAmount,
   currentGift,
@@ -35,7 +34,7 @@ export default function FundingGiftChangeView({
   onSelectWish,
   onBrowseProducts,
 }: FundingGiftChangeViewProps) {
-  const shortfall = Math.max(currentGift.price - collectedAmount, 0);
+  const shortfall = getShortfall(currentGift.price, collectedAmount);
 
   const renderSelectButton = (ariaLabel: string, onClick: () => void) => (
     <Button size="small" aria-label={ariaLabel} onClick={onClick}>
@@ -81,7 +80,7 @@ export default function FundingGiftChangeView({
                 thumbnailSrc={wish.productImageUrl}
                 description={wish.productName}
                 title={formatWon(wish.price)}
-                caption={`남는 금액 ${formatWon(collectedAmount - wish.price)}`}
+                caption={`남는 금액 ${formatWon(getRemainingAmount(collectedAmount, wish.price))}`}
                 titleUp
                 textType="price"
                 right={renderSelectButton(`${wish.productName} 선택`, () => onSelectWish(wish))}
