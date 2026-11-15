@@ -46,7 +46,17 @@ export function showErrorDialogThen(error: Error, onClose: () => void) {
   useErrorDialogStore.getState().openErrorDialog(getErrorEntry(error).message, onClose);
 }
 
+// 인증 만료·재발급 일시 장애는 reissue가 이미 재시도를 마친 결과라 다시 시도하면 지연만 늘어난다 (기본 retry 3회 ≈ 7초)
+const NON_RETRYABLE_CODES = ["AUTH_EXPIRED", "REISSUE_UNAVAILABLE"];
+
 export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) =>
+        failureCount < 3 &&
+        !(error instanceof ApiError && NON_RETRYABLE_CODES.includes(error.code)),
+    },
+  },
   queryCache: new QueryCache({
     onError: (error, query) => {
       reportUnexpectedError(error);

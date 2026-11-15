@@ -52,13 +52,36 @@ const baseKy = ky.create({
 
 let refreshPromise: Promise<ReissueTokens> | null = null;
 
-async function requestReissue(): Promise<ReissueTokens> {
-  const json = await baseKy
-    .post(getAuthUrl("/api/auth/reissue"))
-    .json<ApiResponse<ReissueTokens>>();
+const REISSUE_UNAVAILABLE = "REISSUE_UNAVAILABLE";
+
+// 인증 거부(401/403)와 달리 5xx·timeout·네트워크 오류는 refreshToken이 유효할 수 있는 일시 장애다
+async function requestReissueOnce(): Promise<ReissueTokens> {
+  const unavailable = () =>
+    new ApiError(REISSUE_UNAVAILABLE, "토큰 재발급이 일시적으로 실패했습니다.");
+
+  let response: Response;
+  try {
+    response = await baseKy.post(getAuthUrl("/api/auth/reissue"));
+  } catch {
+    throw unavailable();
+  }
+  if (response.status >= 500) throw unavailable();
+
+  const json = (await response.json().catch(toJsonParseError)) as ApiResponse<ReissueTokens>;
   const data = unwrap(json);
   if (!data) throw new ApiError("REISSUE_FAILED", "토큰 재발급에 실패했습니다.");
   return data;
+}
+
+async function requestReissue(): Promise<ReissueTokens> {
+  try {
+    return await requestReissueOnce();
+  } catch (error) {
+    if (error instanceof ApiError && error.code === REISSUE_UNAVAILABLE) {
+      return requestReissueOnce();
+    }
+    throw error;
+  }
 }
 
 export function reissue(): Promise<ReissueTokens> {
@@ -72,7 +95,9 @@ export function reissue(): Promise<ReissueTokens> {
 async function reissueOrThrow(): Promise<ReissueTokens> {
   try {
     return await reissue();
-  } catch {
+  } catch (error) {
+    // 일시 장애는 로그아웃으로 처리하지 않는다 — accessToken을 유지하고 호출부가 "다시 시도"를 안내한다
+    if (error instanceof ApiError && error.code === REISSUE_UNAVAILABLE) throw error;
     useAuthStore.getState().clearAccessToken();
     throw new ApiError("AUTH_EXPIRED", "인증이 만료되었습니다. 다시 로그인해주세요.");
   }

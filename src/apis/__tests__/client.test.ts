@@ -142,3 +142,85 @@ describe("clientApi", () => {
     expect(useAuthStore.getState().accessToken).toBeNull();
   });
 });
+
+describe("reissue 실패 유형 구분", () => {
+  const rejectedBody = {
+    success: false,
+    data: null,
+    error: { code: "AUTH_001", message: "유효하지 않은 인증 정보입니다." },
+  };
+
+  it.each([401, 403])(
+    "reissue가 %i이면 인증 거부로 보고 AUTH_EXPIRED + accessToken 삭제",
+    async status => {
+      useAuthStore.getState().setAccessToken(EXPIRED_TOKEN);
+      let reissueCalls = 0;
+
+      server.use(
+        http.post(`${BASE_URL}/api/auth/reissue`, () => {
+          reissueCalls += 1;
+          return HttpResponse.json(rejectedBody, { status });
+        }),
+      );
+
+      await expect(clientApi.get("/seed-pools")).rejects.toMatchObject({ code: "AUTH_EXPIRED" });
+      expect(reissueCalls).toBe(1);
+      expect(useAuthStore.getState().accessToken).toBeNull();
+    },
+  );
+
+  it("reissue가 5xx면 1회 재시도 후에도 실패 시 REISSUE_UNAVAILABLE이고 accessToken은 유지한다", async () => {
+    useAuthStore.getState().setAccessToken(EXPIRED_TOKEN);
+    let reissueCalls = 0;
+
+    server.use(
+      http.post(`${BASE_URL}/api/auth/reissue`, () => {
+        reissueCalls += 1;
+        return HttpResponse.json(
+          { success: false, data: null, error: { code: "COMMON_500", message: "서버 오류" } },
+          { status: 500 },
+        );
+      }),
+    );
+
+    await expect(clientApi.get("/seed-pools")).rejects.toMatchObject({
+      code: "REISSUE_UNAVAILABLE",
+    });
+    expect(reissueCalls).toBe(2);
+    expect(useAuthStore.getState().accessToken).toBe(EXPIRED_TOKEN);
+  });
+
+  it("reissue가 네트워크 오류면 REISSUE_UNAVAILABLE이고 accessToken은 유지한다", async () => {
+    useAuthStore.getState().setAccessToken(EXPIRED_TOKEN);
+
+    server.use(http.post(`${BASE_URL}/api/auth/reissue`, () => HttpResponse.error()));
+
+    await expect(clientApi.get("/seed-pools")).rejects.toMatchObject({
+      code: "REISSUE_UNAVAILABLE",
+    });
+    expect(useAuthStore.getState().accessToken).toBe(EXPIRED_TOKEN);
+  });
+
+  it("reissue가 5xx 후 재시도에서 성공하면 요청이 정상 완료된다", async () => {
+    useAuthStore.getState().setAccessToken(EXPIRED_TOKEN);
+    let reissueCalls = 0;
+
+    server.use(
+      http.post(`${BASE_URL}/api/auth/reissue`, () => {
+        reissueCalls += 1;
+        if (reissueCalls === 1) return new HttpResponse(null, { status: 503 });
+        return HttpResponse.json({
+          success: true,
+          data: { accessToken: VALID_TOKEN },
+          error: null,
+        });
+      }),
+      http.get(`${BASE_URL}/seed-pools`, () =>
+        HttpResponse.json({ success: true, data: { id: 3 }, error: null }),
+      ),
+    );
+
+    await expect(clientApi.get("/seed-pools")).resolves.toEqual({ id: 3 });
+    expect(useAuthStore.getState().accessToken).toBe(VALID_TOKEN);
+  });
+});
