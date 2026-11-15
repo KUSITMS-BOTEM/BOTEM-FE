@@ -23,6 +23,14 @@ export const RECORD_DONE_BUTTON_CLASS: Record<Color, string> = {
   blue: "bg-semantic-fill-blue text-semantic-text-on-fill",
 };
 
+// lime 면만 약한 색이 아닌 진한 면이라 글자를 검정으로 둔다
+export const NAME_CHIP_CLASS: Record<Color, string> = {
+  orange: "bg-semantic-fill-brand-weak text-semantic-fill-brand",
+  pink: "bg-semantic-fill-pink-weak text-semantic-fill-pink",
+  lime: "bg-semantic-fill-lime text-semantic-text-strong",
+  blue: "bg-semantic-fill-blue-weak text-semantic-fill-blue",
+};
+
 export const RECORD_BUTTON_BG_CLASS: Record<Color, string> = {
   orange: "bg-semantic-fill-brand",
   pink: "bg-semantic-fill-pink",
