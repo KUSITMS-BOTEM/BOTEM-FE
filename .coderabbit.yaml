@@ -134,7 +134,7 @@ reviews:
     - path: "src/apis/**"
       instructions: |
         API 관련 코드를 리뷰할 때 다음을 확인해주세요:
-        - api/ 폴더 아래에 도메인 기준으로 폴더를 구성하는지 확인
+        - apis/ 폴더 아래에 도메인 기준으로 폴더를 구성하는지 확인
         - 파일·함수명이 camelCase + Service 접미사 형식인지 확인 (ex. loginService.ts)
         - api는 순수 통신 계층으로 유지되는지 확인
 
