@@ -29,6 +29,9 @@ export function useImageFileSelect({
     event.target.value = "";
     if (!file) return;
 
+    // 파일 선택 사이 디코딩이 끝나는 순서가 뒤바뀌어도 가장 마지막 선택만 반영되도록 요청 id로 추적한다. 검증에서 거부된 선택도 이전 디코딩 결과를 무효화해야 하므로 검증보다 먼저 올린다
+    const requestId = ++latestRequestIdRef.current;
+
     if (allowedTypes && !allowedTypes.includes(file.type)) {
       setErrorText(
         `${allowedTypes.map(type => type.split("/")[1].replace("jpeg", "jpg")).join(", ")} 파일만 올릴 수 있어요`,
@@ -40,8 +43,6 @@ export function useImageFileSelect({
       return;
     }
 
-    // 파일 선택 사이 디코딩이 끝나는 순서가 뒤바뀌어도 가장 마지막 선택만 반영되도록 요청 id로 추적한다
-    const requestId = ++latestRequestIdRef.current;
     // 확장자만 이미지인 손상된 파일·텍스트 파일도 accept 필터를 통과할 수 있어 디코딩으로 직접 검증한다
     try {
       const bitmap = await createImageBitmap(file);

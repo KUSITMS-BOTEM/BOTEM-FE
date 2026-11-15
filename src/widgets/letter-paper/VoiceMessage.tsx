@@ -12,6 +12,8 @@ type VoiceMessageProps = {
 export default function VoiceMessage({ color = "pink", className }: VoiceMessageProps) {
   return (
     <div
+      role="img"
+      aria-label="음성 메시지"
       className={cn(
         "bg-semantic-fill-default flex h-10 w-[91px] items-center gap-2.5 rounded-full px-2 py-1 shadow-[0_4px_16px_var(--color-semantic-shadow-weak)] backdrop-blur-[3.57px]",
         className,
