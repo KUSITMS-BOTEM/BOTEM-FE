@@ -61,6 +61,27 @@ describe("useUpdateContributionStatusMutation", () => {
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["home", "fundings"] });
   });
 
+  it("pending 목록 재조회가 끝날 때까지 isPending을 유지한다", async () => {
+    vi.mocked(contributionService.updateContributionStatus).mockResolvedValue(null);
+    const { wrapper, invalidateQueries } = setup();
+    let finishRefetch!: () => void;
+    invalidateQueries.mockImplementation(
+      () => new Promise<void>(resolve => (finishRefetch = resolve)),
+    );
+    const { result } = renderHook(() => useUpdateContributionStatusMutation(5), { wrapper });
+
+    result.current.mutate(body);
+
+    await waitFor(() =>
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: pendingContributionsQueryKey(5) }),
+    );
+    expect(result.current.isPending).toBe(true);
+
+    finishRefetch();
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+
   it("서비스가 실패하면 isError가 true가 되고 쿼리를 무효화하지 않는다", async () => {
     const error = new Error("상태 변경 실패");
     vi.mocked(contributionService.updateContributionStatus).mockRejectedValue(error);

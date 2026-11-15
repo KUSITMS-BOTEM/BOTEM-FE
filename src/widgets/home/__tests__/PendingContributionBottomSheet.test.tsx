@@ -368,6 +368,18 @@ describe("PendingContributionBottomSheet", () => {
     expect(second).not.toHaveBeenCalled();
   });
 
+  it("상태 변경 요청이 진행 중이면 목록이 비어 있어도 onAllConfirmed를 호출하지 않는다", () => {
+    vi.mocked(useUpdateContributionStatusMutation).mockReturnValue({
+      mutate,
+      isPending: true,
+    } as unknown as ReturnType<typeof useUpdateContributionStatusMutation>);
+    const onAllConfirmed = vi.fn();
+    mockQuery({ data: [] });
+    renderSheet({ onAllConfirmed });
+
+    expect(onAllConfirmed).not.toHaveBeenCalled();
+  });
+
   it("확인할 보탬이 남아 있으면 onAllConfirmed를 호출하지 않는다", () => {
     const onAllConfirmed = vi.fn();
     renderSheet({ onAllConfirmed });

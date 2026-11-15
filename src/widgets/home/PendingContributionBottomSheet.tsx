@@ -10,6 +10,7 @@ import ToastMessage from "@/components/ToastMessage";
 import Title from "@/components/Title";
 import { useUpdateContributionStatusMutation } from "@/hooks/mutations/contribution/useUpdateContributionStatusMutation";
 import { usePendingContributionsQuery } from "@/hooks/queries/contribution/usePendingContributionsQuery";
+import { isAllContributionsConfirmed } from "@/utils/home/isAllContributionsConfirmed";
 import type {
   ContributionStatus,
   PendingContributionResponse,
@@ -39,7 +40,7 @@ export default function PendingContributionBottomSheet({
   onAllConfirmed,
 }: PendingContributionBottomSheetProps) {
   const query = usePendingContributionsQuery({ fundingId, enabled: open });
-  const { mutate } = useUpdateContributionStatusMutation(fundingId);
+  const { mutate, isPending } = useUpdateContributionStatusMutation(fundingId);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [toasts, setToasts] = useState<ContributionToast[]>([]);
   const toastTimersRef = useRef(new Map<number, ReturnType<typeof setTimeout>>());
@@ -47,9 +48,13 @@ export default function PendingContributionBottomSheet({
   const contributions = query.data?.contributions;
   const count = contributions?.length ?? 0;
   const hasSelection = selectedIds.length > 0;
-  // 취소하기 토스트가 떠 있는 동안은 되돌릴 수 있어야 하므로, 토스트가 모두 사라진 뒤에 공개 단계로 넘긴다
-  const allConfirmed =
-    open && contributions?.length === 0 && toasts.length === 0 && !query.isFetching;
+  const allConfirmed = isAllContributionsConfirmed({
+    open,
+    pendingCount: contributions?.length,
+    toastCount: toasts.length,
+    isFetching: query.isFetching,
+    isUpdating: isPending,
+  });
 
   const notifyAllConfirmed = useEffectEvent(() => onAllConfirmed?.());
 
