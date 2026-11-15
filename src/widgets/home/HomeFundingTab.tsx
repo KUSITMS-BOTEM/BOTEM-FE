@@ -1,9 +1,12 @@
 import { useState } from "react";
 
+import { useRouter } from "next/navigation";
+
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useHomeNoFundingQuery } from "@/hooks/queries/home/useHomeNoFundingQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { toFundingCardData } from "@/utils/home/toFundingCardData";
+import FundingRevealSheet from "@/widgets/funding/FundingRevealSheet";
 import HomeEmptyView from "@/widgets/home/HomeEmptyView";
 import HomeFundingView from "@/widgets/home/HomeFundingView";
 import HomeLoadError from "@/widgets/home/HomeLoadError";
@@ -23,8 +26,9 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding }: HomeFunding
   const noFundingQuery = useHomeNoFundingQuery({ enabled: hasNoFunding });
   const fundingsFailed = fundingsQuery.isError && !fundingCards;
   const noFundingFailed = hasNoFunding && noFundingQuery.isError && !noFundingQuery.data;
-  const [pendingFundingId, setPendingFundingId] = useState<number | null>(null);
-  const [pendingSheetOpen, setPendingSheetOpen] = useState(false);
+  const router = useRouter();
+  const [sheetFundingId, setSheetFundingId] = useState<number | null>(null);
+  const [openSheet, setOpenSheet] = useState<"pending" | "reveal" | null>(null);
 
   if (fundingsFailed || noFundingFailed) {
     const handleRetry = () => (fundingsFailed ? fundingsQuery.refetch() : noFundingQuery.refetch());
@@ -35,20 +39,27 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding }: HomeFunding
     if (!profile) return null;
     const cards = fundingCards.map(card => {
       const data = toFundingCardData(card, profile.nickname);
-      if (data.type !== "notification") return data;
-      const openPendingSheet = () => {
-        setPendingFundingId(card.fundingId);
-        setPendingSheetOpen(true);
+      if (data.type === "default") return data;
+      const sheet = data.type === "notification" ? "pending" : "reveal";
+      const openCardSheet = () => {
+        setSheetFundingId(card.fundingId);
+        setOpenSheet(sheet);
       };
-      return { ...data, onClick: openPendingSheet };
+      return { ...data, onClick: openCardSheet };
     });
     return (
       <>
         <HomeFundingView cards={cards} />
         <PendingContributionBottomSheet
-          open={pendingSheetOpen}
-          fundingId={pendingFundingId}
-          onClose={() => setPendingSheetOpen(false)}
+          open={openSheet === "pending"}
+          fundingId={sheetFundingId}
+          onClose={() => setOpenSheet(null)}
+          onAllConfirmed={() => setOpenSheet("reveal")}
+        />
+        <FundingRevealSheet
+          open={openSheet === "reveal"}
+          onClose={() => setOpenSheet(null)}
+          onReveal={() => router.push(`/funding/${sheetFundingId}/reveal`)}
         />
       </>
     );

@@ -9,11 +9,12 @@ type MockHomeScenario =
   | "SINGLE_FUNDING"
   | "CLOSED_PENDING"
   | "CLOSED_OPEN"
+  | "CLOSED_EMPTY"
   | "WISH_ONLY"
   | "EMPTY";
 
-// 홈 분기(마감·진행 중 / 진행 중만 / 1개 / 마감+확인대기 / 마감+확인대기 없음 / 위시만 / 빈 홈)를 눈으로 확인할 때 이 값만 바꾼다
-const MOCK_HOME_SCENARIO = "CLOSED_OPEN" as MockHomeScenario;
+// 홈 분기(마감·진행 중 / 진행 중만 / 1개 / 마감+확인대기 / 마감+확인대기 없음 / 마감+참여자 0명 / 위시만 / 빈 홈)를 눈으로 확인할 때 이 값만 바꾼다
+const MOCK_HOME_SCENARIO = "CLOSED_EMPTY" as MockHomeScenario;
 
 const [product1, product2, product3, product4] = MOCK_RECOMMENDED_PRODUCTS;
 
@@ -37,6 +38,17 @@ const MOCK_FUNDING_CARDS = [
     productImageUrl: product2.imageUrl,
     remainingDays: null,
     confirmedPercentage: 100,
+    pendingPercentage: 0,
+    pendingContributionCount: 0,
+  },
+  {
+    fundingId: 14,
+    cardType: "CLOSED_UNOPENED",
+    fundingType: "BIRTHDAY",
+    productName: product1.name,
+    productImageUrl: product1.imageUrl,
+    remainingDays: null,
+    confirmedPercentage: 0,
     pendingPercentage: 0,
     pendingContributionCount: 0,
   },
@@ -86,7 +98,13 @@ export const createHomeHandlers = (scenario: MockHomeScenario) => [
         card => card.cardType === "CLOSED_UNOPENED" && card.pendingContributionCount > 0,
       ),
       CLOSED_OPEN: MOCK_FUNDING_CARDS.filter(
-        card => card.cardType === "CLOSED_UNOPENED" && card.pendingContributionCount === 0,
+        card =>
+          card.cardType === "CLOSED_UNOPENED" &&
+          card.pendingContributionCount === 0 &&
+          card.confirmedPercentage > 0,
+      ),
+      CLOSED_EMPTY: MOCK_FUNDING_CARDS.filter(
+        card => card.cardType === "CLOSED_UNOPENED" && card.confirmedPercentage === 0,
       ),
       WISH_ONLY: [],
       EMPTY: [],

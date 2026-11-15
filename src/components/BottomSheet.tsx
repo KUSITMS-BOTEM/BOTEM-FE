@@ -23,6 +23,7 @@ type BottomSheetProps = {
   open: boolean;
   title: string;
   height: "auto" | "max";
+  headerType?: "title" | "handle";
   buttons?: BottomSheetButtons;
   toast?: ReactNode;
   onClose: () => void;
@@ -46,6 +47,7 @@ export default function BottomSheet({
   open,
   title,
   height,
+  headerType = "title",
   buttons,
   toast,
   onClose,
@@ -95,7 +97,8 @@ export default function BottomSheet({
   return (
     <dialog
       ref={dialogRef}
-      aria-labelledby={titleId}
+      aria-labelledby={headerType === "title" ? titleId : undefined}
+      aria-label={headerType === "handle" ? title : undefined}
       className="m-0 border-none bg-transparent p-0 outline-none backdrop:bg-transparent">
       <MotionConfig reducedMotion="user">
         <AnimatePresence onExitComplete={() => dialogRef.current?.close()}>
@@ -129,6 +132,7 @@ export default function BottomSheet({
                   titleId={titleId}
                   onClose={onClose}
                   showHandle={height === "auto"}
+                  type={headerType}
                 />
                 <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pt-1 pb-4">
                   {children}

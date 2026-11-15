@@ -16,7 +16,6 @@ const baseProps = {
   onRetry: vi.fn(),
   selectedIds: [] as number[],
   onSelectedIdsChange: vi.fn(),
-  onOpenFunding: vi.fn(),
 };
 
 beforeEach(() => {
@@ -63,20 +62,12 @@ describe("PendingContributionList", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("빈 배열이면 '모든 내역을 확인했어요'와 펀딩 열기 버튼을 보여준다", () => {
+  it("빈 배열이면 '모든 내역을 확인했어요'를 보여준다", () => {
     render(<PendingContributionList {...baseProps} contributions={[]} />);
 
     expect(screen.getByText("모든 내역을 확인했어요")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "펀딩 열기" })).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
-  });
-
-  it("펀딩 열기를 누르면 onOpenFunding을 호출한다", async () => {
-    render(<PendingContributionList {...baseProps} contributions={[]} />);
-
-    await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
-
-    expect(baseProps.onOpenFunding).toHaveBeenCalledTimes(1);
   });
 
   it("N건이면 '미확인 보탬 N건' 헤더와 N개 아이템을 보여준다", () => {

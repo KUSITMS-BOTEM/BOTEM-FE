@@ -112,6 +112,16 @@ describe("DatePickerPopover", () => {
     expect(screen.getByRole("gridcell", { selected: true })).toHaveTextContent("5");
   });
 
+  it("deadline은 maxDate 이후 날짜를 선택할 수 없고 maxDate 다음 달로 넘어갈 수 없다", async () => {
+    const { user, trigger } = setup({ maxDate: "2026-11-20" });
+
+    await user.click(trigger);
+
+    expect(screen.getByRole("button", { name: /11월 20일/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /11월 21일/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /다음/ })).toHaveAttribute("aria-disabled", "true");
+  });
+
   it("birth는 선택된 날짜 이전도 선택할 수 있다", async () => {
     const { user, trigger } = setup({ variant: "birth", value: "1999-03-15" });
 

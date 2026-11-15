@@ -433,6 +433,18 @@ describe("SelectBox", () => {
       expect(handleDeadlineChange).not.toHaveBeenCalled();
     });
 
+    it("maxDate가 있으면 maxDate 이후 날짜를 선택할 수 없다", async () => {
+      const user = userEvent.setup();
+      render(
+        <SelectBox variant="deadline" label="마감일" minDate="2026-11-14" maxDate="2026-11-20" />,
+      );
+
+      await user.click(screen.getByRole("button", { name: "마감일 선택해주세요" }));
+
+      expect(screen.getByRole("button", { name: /11월 20일/ })).toBeEnabled();
+      expect(screen.getByRole("button", { name: /11월 21일/ })).toBeDisabled();
+    });
+
     it("disabled이면 달력을 열 수 없다", async () => {
       const user = userEvent.setup();
       render(<SelectBox variant="deadline" label="마감일" disabled />);

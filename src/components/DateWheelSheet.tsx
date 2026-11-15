@@ -10,7 +10,7 @@ import {
 } from "@/utils/date/dateString";
 import BottomSheet from "@/components/BottomSheet";
 
-// 마감일 년 휠은 minDate 연도부터 이 연도까지 보여준다
+// 마감일 년 휠은 minDate 연도부터 이 연도(maxDate가 있으면 그 연도)까지 보여준다
 const MAX_DEADLINE_YEAR = 2099;
 
 type DateWheelSheetProps = {
@@ -20,6 +20,8 @@ type DateWheelSheetProps = {
   value: string;
   // deadline에서 고를 수 있는 가장 이른 날짜("YYYY-MM-DD"). 없으면 오늘
   minDate?: string;
+  // deadline에서 고를 수 있는 가장 늦은 날짜("YYYY-MM-DD"). 없으면 제한 없음
+  maxDate?: string;
   onSelect: (date: string) => void;
   onClose: () => void;
 };
@@ -32,17 +34,20 @@ export default function DateWheelSheet({
   open,
   value,
   minDate,
+  maxDate,
   onSelect,
   onClose,
 }: DateWheelSheetProps) {
   const isBirth = variant === "birth";
   const earliest = isBirth ? undefined : (minDate && parseDateString(minDate)) || new Date();
+  const latest = isBirth || !maxDate ? undefined : parseDateString(maxDate);
   const initial = getInitialDate(value, earliest);
   const initialDate = clampDate(
     isBirth ? BIRTH_YEAR : initial.getFullYear(),
     initial.getMonth() + 1,
     initial.getDate(),
     earliest,
+    latest,
   );
 
   const [draft, setDraft] = useState(initialDate);
@@ -58,12 +63,22 @@ export default function DateWheelSheet({
   const day = draft.getDate();
   const isMinYear = earliest?.getFullYear() === year;
   const isMinMonth = isMinYear && earliest.getMonth() + 1 === month;
-  const years = earliest ? range(earliest.getFullYear(), MAX_DEADLINE_YEAR) : [];
-  const months = range(isMinYear ? earliest.getMonth() + 1 : 1, 12);
-  const days = range(isMinMonth ? earliest.getDate() : 1, getDaysInMonth(year, month));
+  const isMaxYear = latest?.getFullYear() === year;
+  const isMaxMonth = isMaxYear && latest.getMonth() + 1 === month;
+  const years = earliest
+    ? range(earliest.getFullYear(), latest?.getFullYear() ?? MAX_DEADLINE_YEAR)
+    : [];
+  const months = range(
+    isMinYear ? earliest.getMonth() + 1 : 1,
+    isMaxYear ? latest.getMonth() + 1 : 12,
+  );
+  const days = range(
+    isMinMonth ? earliest.getDate() : 1,
+    isMaxMonth ? latest.getDate() : getDaysInMonth(year, month),
+  );
 
   const handleChange = (next: Record<string, string>) =>
-    setDraft(clampDate(Number(next.year), Number(next.month), Number(next.day), earliest));
+    setDraft(clampDate(Number(next.year), Number(next.month), Number(next.day), earliest, latest));
 
   const columns = [
     ...(isBirth ? [] : [{ name: "year", options: years, unit: "년" }]),

@@ -39,6 +39,8 @@ type SelectBoxOwnProps = {
   onDeadlineChange?: (date: string) => void;
   // 날짜 선택 variant에서 고를 수 있는 가장 이른 날짜("YYYY-MM-DD"). 이전 날짜는 캘린더에서 선택할 수 없다.
   minDate?: string;
+  // 날짜 선택 variant에서 고를 수 있는 가장 늦은 날짜("YYYY-MM-DD"). 이후 날짜는 캘린더에서 선택할 수 없다.
+  maxDate?: string;
   // 날짜 선택 variant에서 캘린더에 선택돼 있을 날짜. deadline은 "YYYY-MM-DD", birth는 "MM-DD". 이미 정해진 값이 있을 때 넘긴다.
   // 사용자가 아직 날짜를 고르지 않았다면 이 값을 따라가므로 프로필처럼 비동기로 도착하는 값도 반영된다.
   dateValue?: string;
@@ -57,6 +59,7 @@ export default function SelectBox({
   onDateChange,
   onDeadlineChange,
   minDate,
+  maxDate,
   dateValue = "",
   id,
   disabled,
@@ -118,6 +121,7 @@ export default function SelectBox({
             variant={variant}
             value={currentDate}
             minDate={minDate}
+            maxDate={maxDate}
             onSelect={applyDate}
             disabled={disabled}
             triggerProps={dateAria}>
@@ -171,6 +175,7 @@ export default function SelectBox({
           open={wheelOpen}
           value={currentDate}
           minDate={minDate}
+          maxDate={maxDate}
           onSelect={applyDate}
           onClose={() => setWheelOpen(false)}
         />

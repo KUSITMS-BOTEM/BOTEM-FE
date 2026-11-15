@@ -66,6 +66,20 @@ describe("DateWheelSheet", () => {
     expect(screen.getByRole("button", { name: "1월" })).toBeInTheDocument();
   });
 
+  it("maxDate가 있으면 연도는 maxDate 연도까지, 마지막 달·날은 maxDate까지만 보여준다", async () => {
+    const { user } = setup({ minDate: "2026-11-14", maxDate: "2027-01-10" });
+
+    const years = screen.getAllByRole("button", { name: /년$/ }).map(button => button.textContent);
+    expect(years).toEqual(["2026년", "2027년"]);
+
+    await user.click(screen.getByRole("button", { name: "2027년" }));
+
+    expect(screen.getByRole("button", { name: "1월" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "2월" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "10일" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "11일" })).not.toBeInTheDocument();
+  });
+
   it("다시 열면 고르던 값이 아니라 현재 value로 되돌아간다", async () => {
     const { user, rerender } = setup({ value: "2026-12-01" });
     await user.click(screen.getByRole("button", { name: "12월" }));

@@ -1,9 +1,9 @@
 import { setupServer } from "msw/node";
 
-import { homeHandlers } from "../homeService.msw";
+import { createHomeHandlers } from "../homeService.msw";
 
 describe("homeHandlers", () => {
-  const server = setupServer(...homeHandlers);
+  const server = setupServer(...createHomeHandlers("CLOSED_OPEN"));
 
   beforeAll(() => server.listen());
   afterAll(() => server.close());

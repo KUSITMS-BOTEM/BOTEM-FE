@@ -52,6 +52,10 @@ describe("getInitialDate", () => {
   it("value가 없고 min이 오늘보다 늦으면 min을 쓴다", () => {
     expect(toDateString(getInitialDate("", new Date(2026, 11, 5)))).toBe("2026-12-05");
   });
+
+  it("value가 없고 max가 오늘보다 이르면 max를 쓴다", () => {
+    expect(toDateString(getInitialDate("", undefined, new Date(2026, 10, 1)))).toBe("2026-11-01");
+  });
 });
 
 describe("getDaysInMonth", () => {
@@ -77,5 +81,13 @@ describe("clampDate", () => {
     expect(toDateString(clampDate(2026, 11, 5, min))).toBe("2026-11-13");
     expect(toDateString(clampDate(2026, 11, 13, min))).toBe("2026-11-13");
     expect(toDateString(clampDate(2027, 1, 1, min))).toBe("2027-01-01");
+  });
+
+  it("max보다 늦으면 max로 내리고, 같거나 이르면 그대로 둔다", () => {
+    const max = new Date(2026, 11, 13);
+
+    expect(toDateString(clampDate(2026, 12, 20, undefined, max))).toBe("2026-12-13");
+    expect(toDateString(clampDate(2026, 12, 13, undefined, max))).toBe("2026-12-13");
+    expect(toDateString(clampDate(2026, 11, 1, undefined, max))).toBe("2026-11-01");
   });
 });

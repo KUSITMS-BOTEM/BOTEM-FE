@@ -6,6 +6,7 @@ type ListTextAlign = "left" | "right";
 type ListTextProps = {
   title: string;
   description?: string;
+  caption?: string;
   titleUp?: boolean;
   type?: ListTextType;
   align?: ListTextAlign;
@@ -20,6 +21,7 @@ const TITLE_FONT: Record<ListTextType, string> = {
 export default function ListText({
   title,
   description,
+  caption,
   titleUp = false,
   type = "default",
   align = "left",
@@ -46,6 +48,11 @@ export default function ListText({
       )}>
       {firstLine}
       {secondLine}
+      {caption && (
+        <p className="text-semantic-text-tertiary [font:var(--semantic-subtext-small)]">
+          {caption}
+        </p>
+      )}
     </div>
   );
 }
