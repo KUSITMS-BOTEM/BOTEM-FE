@@ -9,7 +9,8 @@ import type { LetterPaperProps } from "@/widgets/letter-paper/LetterPaper";
 
 const icon = (Icon: typeof IconAccount) => <Icon aria-hidden className="size-full" />;
 
-// TODO(API): 더미 데이터입니다. 실제 편지지 조회 API를 연결하면 이 파일을 지우고 응답 데이터로 교체하세요
+// TODO(API): 더미 데이터입니다. 실제 편지지 조회 API를 연결하면 이 파일과 __tests__/dummyLetters.test.tsx를 지우고,
+// RollingPaperContainer·RollingPaperWheel의 DUMMY_LETTERS import와 사용처를 응답 데이터로 교체하세요
 export const DUMMY_LETTERS: LetterPaperProps[] = [
   {
     style: "whiteDot",

@@ -60,69 +60,31 @@ export const LETTER_PAPER_DOT_COLOR_CLASS: Partial<StyleClassMap> = {
   },
 };
 
+const TEXT_STRONG = "text-semantic-text-strong";
+const TEXT_TERTIARY = "text-semantic-text-tertiary";
+const TEXT_ON_FILL = "text-semantic-text-on-fill";
+
+const allColors = (value: string, overrides: Partial<Record<Color, string>> = {}) => ({
+  orange: value,
+  pink: value,
+  lime: value,
+  blue: value,
+  ...overrides,
+});
+
 // whiteDot은 진한 면 위라 흰 글씨지만, lime 면만 밝아서 검정 글씨를 쓴다 (Figma 기준)
 export const LETTER_PAPER_TEXT_CLASS: StyleClassMap = {
-  vividSolid: {
-    orange: "text-semantic-text-strong",
-    pink: "text-semantic-text-strong",
-    lime: "text-semantic-text-strong",
-    blue: "text-semantic-text-strong",
-  },
-  colorDot: {
-    orange: "text-semantic-text-strong",
-    pink: "text-semantic-text-strong",
-    lime: "text-semantic-text-strong",
-    blue: "text-semantic-text-strong",
-  },
-  whiteDot: {
-    orange: "text-semantic-text-on-fill",
-    pink: "text-semantic-text-on-fill",
-    lime: "text-semantic-text-strong",
-    blue: "text-semantic-text-on-fill",
-  },
-  dotGrid: {
-    orange: "text-semantic-text-strong",
-    pink: "text-semantic-text-strong",
-    lime: "text-semantic-text-strong",
-    blue: "text-semantic-text-strong",
-  },
-  solid: {
-    orange: "text-semantic-text-strong",
-    pink: "text-semantic-text-strong",
-    lime: "text-semantic-text-strong",
-    blue: "text-semantic-text-strong",
-  },
+  vividSolid: allColors(TEXT_STRONG),
+  colorDot: allColors(TEXT_STRONG),
+  whiteDot: allColors(TEXT_ON_FILL, { lime: TEXT_STRONG }),
+  dotGrid: allColors(TEXT_STRONG),
+  solid: allColors(TEXT_STRONG),
 };
 
 export const LETTER_PAPER_FROM_TEXT_CLASS: StyleClassMap = {
-  vividSolid: {
-    orange: "text-semantic-text-tertiary",
-    pink: "text-semantic-text-tertiary",
-    lime: "text-semantic-text-tertiary",
-    blue: "text-semantic-text-tertiary",
-  },
-  colorDot: {
-    orange: "text-semantic-text-tertiary",
-    pink: "text-semantic-text-tertiary",
-    lime: "text-semantic-text-tertiary",
-    blue: "text-semantic-text-tertiary",
-  },
-  whiteDot: {
-    orange: "text-semantic-text-on-fill",
-    pink: "text-semantic-text-on-fill",
-    lime: "text-semantic-text-tertiary",
-    blue: "text-semantic-text-on-fill",
-  },
-  dotGrid: {
-    orange: "text-semantic-text-tertiary",
-    pink: "text-semantic-text-tertiary",
-    lime: "text-semantic-text-tertiary",
-    blue: "text-semantic-text-tertiary",
-  },
-  solid: {
-    orange: "text-semantic-text-tertiary",
-    pink: "text-semantic-text-tertiary",
-    lime: "text-semantic-text-tertiary",
-    blue: "text-semantic-text-tertiary",
-  },
+  vividSolid: allColors(TEXT_TERTIARY),
+  colorDot: allColors(TEXT_TERTIARY),
+  whiteDot: allColors(TEXT_ON_FILL, { lime: TEXT_TERTIARY }),
+  dotGrid: allColors(TEXT_TERTIARY),
+  solid: allColors(TEXT_TERTIARY),
 };

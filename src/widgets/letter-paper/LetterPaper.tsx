@@ -64,6 +64,7 @@ export default function LetterPaper({
       {dotColorClass && (
         <div aria-hidden className="pointer-events-none absolute -inset-px">
           <div
+            data-testid="letter-paper-dots"
             className={cn(
               "absolute top-[20px] left-[18px] h-[308px] w-[290px] bg-[radial-gradient(circle_at_1px_1px,var(--dot)_1px,transparent_1px)] bg-[length:18px_18px]",
               dotColorClass,

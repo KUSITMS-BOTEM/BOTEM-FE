@@ -35,13 +35,11 @@ describe("LetterPaper", () => {
   });
 
   it("점 패턴이 있는 스타일에만 점 패턴을 그린다", () => {
-    const { container, rerender } = render(
-      <LetterPaper style="solid" text="안녕" senderName="민지" />,
-    );
-    expect(container.querySelector("[class*='--dot']")).toBeNull();
+    const { rerender } = render(<LetterPaper style="solid" text="안녕" senderName="민지" />);
+    expect(screen.queryByTestId("letter-paper-dots")).not.toBeInTheDocument();
 
     rerender(<LetterPaper style="colorDot" text="안녕" senderName="민지" />);
-    expect(container.querySelector("[class*='--dot']")).not.toBeNull();
+    expect(screen.getByTestId("letter-paper-dots")).toBeInTheDocument();
   });
 
   it("style과 color 조합에 맞는 배경색을 쓴다", () => {
