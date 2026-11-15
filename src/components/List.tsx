@@ -79,6 +79,7 @@ export default function List({
     </>
   );
 
+  // onClick이 있으면 행 전체가 버튼이 되므로 right에 또 다른 버튼을 넣으면 중첩 interactive가 된다
   if (onClick) {
     return (
       <button
