@@ -21,6 +21,11 @@ describe("isValidUrl", () => {
     expect(isValidUrl("ftp://example.com")).toBe(false);
   });
 
+  it("javascript:·data: 스킴이면 false를 반환한다", () => {
+    expect(isValidUrl("javascript:alert(1)")).toBe(false);
+    expect(isValidUrl("data:text/html,<script>alert(1)</script>")).toBe(false);
+  });
+
   it("URL 형식이 아닌 임의 문자열이면 false를 반환한다", () => {
     expect(isValidUrl("not a url")).toBe(false);
   });

@@ -76,6 +76,30 @@ describe("WishDetailContainer", () => {
     expect(screen.getByRole("button", { name: "이 상품으로 펀딩 열기" })).toBeInTheDocument();
   });
 
+  it("판매처를 누르면 상품 링크를 새 탭으로 연다", async () => {
+    const user = userEvent.setup();
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    mockWishQuery({ data: mockWish });
+
+    render(<WishDetailContainer />);
+    await user.click(screen.getByRole("button", { name: /쿠팡 Apple 공식 브랜드관/ }));
+
+    expect(open).toHaveBeenCalledWith(mockWish.productUrl, "_blank", "noopener,noreferrer");
+    open.mockRestore();
+  });
+
+  it("상품 링크가 http/https가 아니면 판매처를 눌러도 열지 않는다", async () => {
+    const user = userEvent.setup();
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    mockWishQuery({ data: { ...mockWish, productUrl: "javascript:alert(1)" } });
+
+    render(<WishDetailContainer />);
+    await user.click(screen.getByRole("button", { name: /쿠팡 Apple 공식 브랜드관/ }));
+
+    expect(open).not.toHaveBeenCalled();
+    open.mockRestore();
+  });
+
   it("로딩 중이면 스켈레톤만 보이고 상품명과 CTA 버튼은 렌더하지 않는다", () => {
     mockWishQuery({ isLoading: true });
 

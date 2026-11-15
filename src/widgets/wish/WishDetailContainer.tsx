@@ -11,6 +11,7 @@ import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import ProductDetailFallback from "@/components/ProductDetailFallback";
 import ProductDetailView from "@/components/ProductDetailView";
 import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
+import { isValidUrl } from "@/utils/isValidUrl";
 import { resolveWishErrorAction } from "@/utils/wish/resolveWishErrorAction";
 import IconDelete from "@/assets/icons/icon-delete.svg?react";
 
@@ -47,7 +48,11 @@ export default function WishDetailContainer() {
         productName={wish.productName}
         price={wish.price}
         sellerName={wish.sellerName}
-        onSellerClick={() => window.open(wish.productUrl, "_blank", "noopener,noreferrer")}
+        onSellerClick={() => {
+          // 서버 값이라도 javascript: 같은 스킴이면 열지 않는다
+          if (isValidUrl(wish.productUrl))
+            window.open(wish.productUrl, "_blank", "noopener,noreferrer");
+        }}
         rightItems={[
           { icon: <IconDelete />, ariaLabel: "삭제", onClick: () => setIsDeleteDialogOpen(true) },
         ]}
