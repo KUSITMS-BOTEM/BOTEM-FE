@@ -7,3 +7,18 @@ export const LETTER_ACCENT_TEXT_CLASS: Record<Color, string> = {
   lime: "text-base-lime-500",
   blue: "text-base-blue-500",
 };
+
+export const RECORD_BUTTON_BG_CLASS: Record<Color, string> = {
+  orange: "bg-semantic-fill-brand",
+  pink: "bg-semantic-fill-pink",
+  lime: "bg-semantic-fill-lime",
+  blue: "bg-semantic-fill-blue",
+};
+
+// 라임 배경에서만 아이콘이 검정이다 (Figma 기준)
+export const RECORD_BUTTON_ICON_CLASS: Record<Color, string> = {
+  orange: "text-semantic-icon-on-fill",
+  pink: "text-semantic-icon-on-fill",
+  lime: "text-semantic-text-strong",
+  blue: "text-semantic-icon-on-fill",
+};
