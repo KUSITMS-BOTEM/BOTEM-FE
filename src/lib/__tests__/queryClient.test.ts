@@ -1,10 +1,13 @@
 import * as Sentry from "@sentry/nextjs";
 
 import { queryClient } from "../queryClient";
+import { useAuthStore } from "@/store/authStore";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { ApiError } from "@/types/api";
+import { clearLoggedInCookie } from "@/utils/auth/clearLoggedInCookie";
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
+vi.mock("@/utils/auth/clearLoggedInCookie", () => ({ clearLoggedInCookie: vi.fn() }));
 
 const failQuery = (error: Error, meta?: { skipGlobalError: boolean }) =>
   queryClient
@@ -69,4 +72,54 @@ describe("queryClient 전역 onError", () => {
     }
     expect(Sentry.captureException).toHaveBeenCalledTimes(3);
   });
+});
+
+describe("queryClient 인증 에러 처리", () => {
+  const replace = vi.fn();
+
+  beforeEach(() => {
+    replace.mockClear();
+    vi.mocked(clearLoggedInCookie).mockClear();
+    vi.stubGlobal("location", { ...window.location, replace });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    useErrorDialogStore.getState().closeErrorDialog();
+  });
+
+  it("AUTH_EXPIRED는 Dialog 확인 시 토큰·isLoggedIn을 지우고 '/'로 이동한다", async () => {
+    useAuthStore.getState().setAccessToken("token");
+    await failQuery(new ApiError("AUTH_EXPIRED"));
+
+    expect(useErrorDialogStore.getState().message).toBe(
+      "인증이 만료되었습니다. 다시 로그인해주세요.",
+    );
+    expect(replace).not.toHaveBeenCalled();
+
+    useErrorDialogStore.getState().closeErrorDialog();
+
+    expect(useAuthStore.getState().accessToken).toBeNull();
+    expect(clearLoggedInCookie).toHaveBeenCalledTimes(1);
+    expect(replace).toHaveBeenCalledWith("/");
+  });
+
+  it("REISSUE_UNAVAILABLE는 Dialog만 띄우고 확인해도 이동하지 않는다", async () => {
+    await failQuery(new ApiError("REISSUE_UNAVAILABLE"));
+    useErrorDialogStore.getState().closeErrorDialog();
+
+    expect(replace).not.toHaveBeenCalled();
+    expect(clearLoggedInCookie).not.toHaveBeenCalled();
+  });
+
+  it.each(["AUTH_EXPIRED", "REISSUE_UNAVAILABLE"])(
+    "%s는 기본 retry를 타지 않고 1회만 호출한다",
+    async code => {
+      const queryFn = vi.fn().mockRejectedValue(new ApiError(code));
+
+      await queryClient.fetchQuery({ queryKey: [code], queryFn, retryDelay: 0 }).catch(() => {});
+
+      expect(queryFn).toHaveBeenCalledTimes(1);
+    },
+  );
 });
