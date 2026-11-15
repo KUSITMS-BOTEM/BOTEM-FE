@@ -21,6 +21,7 @@ type ProductDetailViewProps = {
   price: number;
   sellerName: string;
   onSellerClick?: () => void;
+  sellerDisabled?: boolean;
   rightItems?: ComponentProps<typeof Header>["rightItems"];
   onBack: () => void;
   ctaLabel: string;
@@ -34,6 +35,7 @@ export default function ProductDetailView({
   price,
   sellerName,
   onSellerClick,
+  sellerDisabled = false,
   rightItems,
   onBack,
   ctaLabel,
@@ -80,7 +82,11 @@ export default function ProductDetailView({
           </div>
         </div>
         {onSellerClick ? (
-          <button type="button" onClick={onSellerClick} className="w-full cursor-pointer text-left">
+          <button
+            type="button"
+            onClick={onSellerClick}
+            disabled={sellerDisabled}
+            className="w-full text-left enabled:cursor-pointer disabled:opacity-40">
             {sellerRow}
           </button>
         ) : (
