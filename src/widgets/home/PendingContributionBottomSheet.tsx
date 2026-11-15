@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import BottomSheet from "@/components/BottomSheet";
@@ -10,6 +10,7 @@ import ToastMessage from "@/components/ToastMessage";
 import Title from "@/components/Title";
 import { useUpdateContributionStatusMutation } from "@/hooks/mutations/contribution/useUpdateContributionStatusMutation";
 import { usePendingContributionsQuery } from "@/hooks/queries/contribution/usePendingContributionsQuery";
+import { isAllContributionsConfirmed } from "@/utils/home/isAllContributionsConfirmed";
 import type {
   ContributionStatus,
   PendingContributionResponse,
@@ -28,7 +29,7 @@ type PendingContributionBottomSheetProps = {
   fundingId: number | null;
   onClose: () => void;
   onCheckToss?: () => void;
-  onOpenFunding?: () => void;
+  onAllConfirmed?: () => void;
 };
 
 export default function PendingContributionBottomSheet({
@@ -36,10 +37,10 @@ export default function PendingContributionBottomSheet({
   fundingId,
   onClose,
   onCheckToss,
-  onOpenFunding,
+  onAllConfirmed,
 }: PendingContributionBottomSheetProps) {
   const query = usePendingContributionsQuery({ fundingId, enabled: open });
-  const { mutate } = useUpdateContributionStatusMutation(fundingId);
+  const { mutate, isPending } = useUpdateContributionStatusMutation(fundingId);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [toasts, setToasts] = useState<ContributionToast[]>([]);
   const toastTimersRef = useRef(new Map<number, ReturnType<typeof setTimeout>>());
@@ -47,6 +48,19 @@ export default function PendingContributionBottomSheet({
   const contributions = query.data?.contributions;
   const count = contributions?.length ?? 0;
   const hasSelection = selectedIds.length > 0;
+  const allConfirmed = isAllContributionsConfirmed({
+    open,
+    pendingCount: contributions?.length,
+    toastCount: toasts.length,
+    isFetching: query.isFetching,
+    isUpdating: isPending,
+  });
+
+  const notifyAllConfirmed = useEffectEvent(() => onAllConfirmed?.());
+
+  useEffect(() => {
+    if (allConfirmed) notifyAllConfirmed();
+  }, [allConfirmed]);
 
   useEffect(() => {
     const timers = toastTimersRef.current;
@@ -194,7 +208,6 @@ export default function PendingContributionBottomSheet({
           onRetry={() => query.refetch()}
           selectedIds={selectedIds}
           onSelectedIdsChange={setSelectedIds}
-          onOpenFunding={onOpenFunding}
         />
       </div>
     </BottomSheet>

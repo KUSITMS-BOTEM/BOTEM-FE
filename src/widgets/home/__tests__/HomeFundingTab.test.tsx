@@ -10,9 +10,36 @@ import HomeFundingTab from "@/widgets/home/HomeFundingTab";
 vi.mock("@/hooks/queries/home/useHomeFundingsQuery");
 vi.mock("@/hooks/queries/home/useHomeNoFundingQuery");
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
+const push = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push }),
+}));
 vi.mock("@/widgets/home/PendingContributionBottomSheet", () => ({
-  default: ({ open, fundingId }: { open: boolean; fundingId: number | null }) =>
-    open ? <div role="dialog">입금 확인 {fundingId}</div> : null,
+  default: ({
+    open,
+    fundingId,
+    onAllConfirmed,
+  }: {
+    open: boolean;
+    fundingId: number | null;
+    onAllConfirmed: () => void;
+  }) =>
+    open ? (
+      <div role="dialog">
+        입금 확인 {fundingId}
+        <button onClick={onAllConfirmed}>모두 확인</button>
+      </div>
+    ) : null,
+}));
+vi.mock("@/widgets/funding/FundingRevealSheet", () => ({
+  default: ({ open, onReveal }: { open: boolean; onReveal: () => void }) =>
+    open ? (
+      <div role="dialog">
+        펀딩 공개
+        <button onClick={onReveal}>펀딩 열기</button>
+      </div>
+    ) : null,
 }));
 
 const fundingCard: HomeFundingCardResponse = {
@@ -191,15 +218,33 @@ describe("HomeFundingTab", () => {
     expect(screen.queryByRole("button", { name: "지유님의 생일 펀딩" })).not.toBeInTheDocument();
   });
 
-  it("확인대기 보탬이 없는 마감 카드(open)에는 카드 버튼이 없다", () => {
+  it("확인대기 보탬이 없는 마감 카드(open)를 누르면 공개 시트가 열리고, 펀딩 열기로 마감 공개 화면에 이동한다", async () => {
     mockQueries({
       data: fundingList([
-        { ...fundingCard, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
+        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
       ]),
     });
 
     render(<HomeFundingTab onAddWish={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    expect(screen.getByRole("dialog")).toHaveTextContent("펀딩 공개");
+    await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
 
-    expect(screen.queryByRole("button", { name: "지유님의 생일 펀딩" })).not.toBeInTheDocument();
+    expect(push).toHaveBeenCalledWith("/funding/42/reveal");
+  });
+
+  it("입금 확인을 모두 마치면 입금 확인 시트가 공개 시트로 바뀐다", async () => {
+    mockQueries({
+      data: fundingList([
+        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 2 },
+      ]),
+    });
+
+    render(<HomeFundingTab onAddWish={vi.fn()} />);
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    await userEvent.click(screen.getByRole("button", { name: "모두 확인" }));
+
+    expect(screen.getByRole("dialog")).toHaveTextContent("펀딩 공개");
+    expect(screen.queryByText(/입금 확인/)).not.toBeInTheDocument();
   });
 });

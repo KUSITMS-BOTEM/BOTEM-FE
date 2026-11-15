@@ -52,4 +52,20 @@ describe("ListText", () => {
 
     expect(container.firstChild).toHaveClass("text-right");
   });
+
+  it("caption이 있으면 세 번째 줄로 tertiary 색·subtext-small 폰트로 렌더된다", () => {
+    const { container } = render(<ListText title="타이틀" description="설명" caption="캡션" />);
+
+    expect(getLines(container)).toEqual(["타이틀", "설명", "캡션"]);
+    expect(screen.getByText("캡션")).toHaveClass(
+      "text-semantic-text-tertiary",
+      "[font:var(--semantic-subtext-small)]",
+    );
+  });
+
+  it("caption이 빈 문자열이면 캡션 줄이 렌더되지 않는다", () => {
+    const { container } = render(<ListText title="타이틀" description="설명" caption="" />);
+
+    expect(getLines(container)).toEqual(["타이틀", "설명"]);
+  });
 });

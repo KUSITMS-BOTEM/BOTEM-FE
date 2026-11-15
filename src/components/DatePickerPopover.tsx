@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { DayPicker, type ChevronProps } from "react-day-picker";
 import { ko } from "react-day-picker/locale";
 import { BIRTH_YEAR, getInitialDate, parseDateString, toDateString } from "@/utils/date/dateString";
@@ -12,6 +13,8 @@ type DatePickerPopoverProps = {
   value: string;
   // deadline에서 선택할 수 있는 가장 이른 날짜("YYYY-MM-DD"). 없으면 오늘
   minDate?: string;
+  // deadline에서 선택할 수 있는 가장 늦은 날짜("YYYY-MM-DD"). 없으면 제한 없음
+  maxDate?: string;
   onSelect: (date: string) => void;
   disabled?: boolean;
   // 트리거 아이콘 버튼에 전달된다
@@ -53,35 +56,62 @@ export default function DatePickerPopover({
   variant,
   value,
   minDate,
+  maxDate,
   onSelect,
   disabled,
   triggerProps,
   children,
 }: DatePickerPopoverProps) {
   const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<{
+    top: number;
+    right: number;
+    portalTarget: Element;
+  } | null>(null);
   const containerRef = useRef<HTMLSpanElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
   const isBirth = variant === "birth";
 
   useEffect(() => {
     if (!open) return;
+    const updatePosition = () => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setPosition({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+        portalTarget: containerRef.current?.closest("dialog") ?? document.body,
+      });
+    };
+    updatePosition();
     const handlePointerDown = (event: PointerEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (!containerRef.current?.contains(target) && !popoverRef.current?.contains(target))
+        setOpen(false);
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
     document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
+    // 시트 본문처럼 트리거를 감싼 스크롤 영역이 움직여도 따라가도록 캡처 단계에서 듣는다
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
     };
   }, [open]);
 
   const earliest = (minDate && parseDateString(minDate)) || new Date();
-  const picked = getInitialDate(value, isBirth ? undefined : earliest);
+  const latest = maxDate ? parseDateString(maxDate) : undefined;
+  const picked = isBirth ? getInitialDate(value) : getInitialDate(value, earliest, latest);
   const selected = isBirth ? new Date(BIRTH_YEAR, picked.getMonth(), picked.getDate()) : picked;
-  const disabledDates = isBirth ? [] : [{ before: earliest }];
+  const disabledDates = isBirth
+    ? []
+    : [{ before: earliest }, ...(latest ? [{ after: latest }] : [])];
 
   const handleSelect = (date: Date) => {
     onSelect(toDateString(date));
@@ -100,32 +130,38 @@ export default function DatePickerPopover({
         {...triggerProps}>
         {children}
       </button>
-      {open && (
-        <div
-          role="dialog"
-          aria-label={isBirth ? "생일 선택" : "마감일 선택"}
-          className="bg-semantic-background-floated absolute top-full right-0 z-10 mt-2 w-fit rounded-xl p-2 shadow-[0_4px_16px_var(--color-semantic-shadow-default)]">
-          <DayPicker
-            mode="single"
-            required
-            autoFocus
-            locale={ko}
-            selected={selected}
-            onSelect={handleSelect}
-            classNames={CLASS_NAMES}
-            components={{ Chevron }}
-            defaultMonth={selected}
-            disabled={disabledDates}
-            {...(isBirth
-              ? {
-                  startMonth: new Date(BIRTH_YEAR, 0),
-                  endMonth: new Date(BIRTH_YEAR, 11),
-                  formatters: { formatCaption: (month: Date) => `${month.getMonth() + 1}월` },
-                }
-              : { startMonth: earliest })}
-          />
-        </div>
-      )}
+      {open &&
+        position &&
+        // 바텀시트 본문의 overflow에 잘리지 않도록 포탈로 띄운다. 모달 <dialog>(top layer) 안이면 body로 보내면 dim 아래에 깔리므로 가장 가까운 dialog에 붙인다
+        createPortal(
+          <div
+            ref={popoverRef}
+            role="dialog"
+            aria-label={isBirth ? "생일 선택" : "마감일 선택"}
+            style={{ top: position.top, right: position.right }}
+            className="bg-semantic-background-floated fixed z-50 w-fit rounded-xl p-2 shadow-[0_4px_16px_var(--color-semantic-shadow-default)]">
+            <DayPicker
+              mode="single"
+              required
+              autoFocus
+              locale={ko}
+              selected={selected}
+              onSelect={handleSelect}
+              classNames={CLASS_NAMES}
+              components={{ Chevron }}
+              defaultMonth={selected}
+              disabled={disabledDates}
+              {...(isBirth
+                ? {
+                    startMonth: new Date(BIRTH_YEAR, 0),
+                    endMonth: new Date(BIRTH_YEAR, 11),
+                    formatters: { formatCaption: (month: Date) => `${month.getMonth() + 1}월` },
+                  }
+                : { startMonth: earliest, endMonth: latest })}
+            />
+          </div>,
+          position.portalTarget,
+        )}
     </span>
   );
 }

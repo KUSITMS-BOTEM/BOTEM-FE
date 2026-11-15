@@ -14,18 +14,24 @@ export function parseDateString(value: string): Date | undefined {
   return new Date(year, month - 1, day);
 }
 
-// 값이 없으면 오늘을 보여준다. min이 오늘보다 늦으면 선택 불가한 오늘 대신 min
-export function getInitialDate(value: string, min?: Date): Date {
+// 값이 없으면 오늘을 보여준다. 오늘이 min보다 이르거나 max보다 늦어 선택할 수 없으면 가까운 쪽 경계
+export function getInitialDate(value: string, min?: Date, max?: Date): Date {
+  const parsed = parseDateString(value);
+  if (parsed) return parsed;
   const now = new Date();
-  return parseDateString(value) ?? (min && min > now ? min : now);
+  if (min && min > now) return min;
+  if (max && max < now) return max;
+  return now;
 }
 
 export function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }
 
-// 월 전환으로 없는 날(예: 3/31 → 2월)이 되면 그 달 말일로 맞추고, min보다 이르면 min으로 올린다
-export function clampDate(year: number, month: number, day: number, min?: Date): Date {
+// 월 전환으로 없는 날(예: 3/31 → 2월)이 되면 그 달 말일로 맞추고, min보다 이르면 min으로 올리고 max보다 늦으면 max로 내린다
+export function clampDate(year: number, month: number, day: number, min?: Date, max?: Date): Date {
   const date = new Date(year, month - 1, Math.min(day, getDaysInMonth(year, month)));
-  return min && date < min ? min : date;
+  if (min && date < min) return min;
+  if (max && date > max) return max;
+  return date;
 }

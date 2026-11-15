@@ -341,14 +341,50 @@ describe("PendingContributionBottomSheet", () => {
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
-  it("빈 목록에서 펀딩 열기를 누르면 onOpenFunding을 호출한다", async () => {
-    const onOpenFunding = vi.fn();
+  it("확인할 보탬이 없으면 onAllConfirmed를 호출한다", () => {
+    const onAllConfirmed = vi.fn();
     mockQuery({ data: [] });
-    renderSheet({ onOpenFunding });
+    renderSheet({ onAllConfirmed });
 
-    await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
+    expect(onAllConfirmed).toHaveBeenCalled();
+  });
 
-    expect(onOpenFunding).toHaveBeenCalledTimes(1);
+  it("다 확인된 상태에서 onAllConfirmed가 새 함수로 바뀌어 다시 렌더돼도 한 번만 호출한다", () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    mockQuery({ data: [] });
+    const { rerender } = renderSheet({ onAllConfirmed: first });
+
+    rerender(
+      <PendingContributionBottomSheet
+        open
+        fundingId={9}
+        onClose={vi.fn()}
+        onAllConfirmed={second}
+      />,
+    );
+
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).not.toHaveBeenCalled();
+  });
+
+  it("상태 변경 요청이 진행 중이면 목록이 비어 있어도 onAllConfirmed를 호출하지 않는다", () => {
+    vi.mocked(useUpdateContributionStatusMutation).mockReturnValue({
+      mutate,
+      isPending: true,
+    } as unknown as ReturnType<typeof useUpdateContributionStatusMutation>);
+    const onAllConfirmed = vi.fn();
+    mockQuery({ data: [] });
+    renderSheet({ onAllConfirmed });
+
+    expect(onAllConfirmed).not.toHaveBeenCalled();
+  });
+
+  it("확인할 보탬이 남아 있으면 onAllConfirmed를 호출하지 않는다", () => {
+    const onAllConfirmed = vi.fn();
+    renderSheet({ onAllConfirmed });
+
+    expect(onAllConfirmed).not.toHaveBeenCalled();
   });
 });
 
