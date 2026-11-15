@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Image from "next/image";
 
 import { cn } from "@/utils/cn";
+import type { Color } from "@/constants/color";
 import IconButton from "@/components/IconButton";
 import ToastMessage from "@/components/ToastMessage";
 import ProfileOrange from "@/assets/icons/multicolor/profile-orange.svg?react";
@@ -19,17 +20,15 @@ const PROFILE_FALLBACKS = {
   lime: ProfileLime,
   blue: ProfileBlue,
 };
-const PROFILE_COLORS = Object.keys(PROFILE_FALLBACKS) as ProfileColor[];
-
-export type ProfileColor = "orange" | "pink" | "lime" | "blue";
+const PROFILE_COLORS = Object.keys(PROFILE_FALLBACKS) as Color[];
 
 // 같은 사용자는 어디서나 같은 색이 되도록 id로 결정한다
-export const getProfileColor = (userId: number): ProfileColor =>
+export const getProfileColor = (userId: number): Color =>
   PROFILE_COLORS[userId % PROFILE_COLORS.length];
 
 type ProfileProps = {
   imageUrl?: string;
-  color?: ProfileColor;
+  color?: Color;
   onImageChange?: (file: File) => void;
   allowedTypes?: string[];
   maxSizeBytes?: number;

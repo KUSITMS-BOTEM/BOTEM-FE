@@ -3,7 +3,7 @@ import Image from "next/image";
 import { cn } from "@/utils/cn";
 import Badge from "@/components/Badge";
 import FundingCardGiftCover from "@/widgets/home/FundingCardGiftCover";
-import type { ProfileColor } from "@/components/Profile";
+import type { Color } from "@/constants/color";
 import ProfileBox from "@/widgets/home/ProfileBox";
 import ProgressBar from "@/widgets/home/ProgressBar";
 import IconLock from "@/assets/icons/icon-lock.svg?react";
@@ -18,7 +18,7 @@ export type FundingCardProps = {
   progress: number;
   dDay: number | null;
   targetAmount?: number;
-  participants?: ProfileColor[];
+  participants?: Color[];
   extraParticipantCount?: number;
   pendingCount?: number;
   isSurprise?: boolean;
