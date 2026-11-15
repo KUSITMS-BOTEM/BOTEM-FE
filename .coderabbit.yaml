@@ -79,6 +79,7 @@ reviews:
 
     # 개발 전용 코드 (프로덕션 규칙 미적용 - 리뷰 제외)
     - "!**/src/mocks/**" # MSW 목 핸들러 제외
+    - "!**/*.msw.ts" # 도메인별 MSW 목 서비스 제외
 
     # 설계 문서 (별도 리뷰 프로세스 - 코드 리뷰 대상 아님)
     - "!docs/**" # 한국어 설계 문서 제외
@@ -130,10 +131,10 @@ reviews:
         - HTTP 요청을 직접 구현하지 않고 api service를 통해 호출하는지 확인
         - 의존성 배열(dependency array)이 올바르게 설정되어 있는지
 
-    - path: "src/api/**"
+    - path: "src/apis/**"
       instructions: |
         API 관련 코드를 리뷰할 때 다음을 확인해주세요:
-        - api/ 폴더 아래에 도메인 기준으로 폴더를 구성하는지 확인
+        - apis/ 폴더 아래에 도메인 기준으로 폴더를 구성하는지 확인
         - 파일·함수명이 camelCase + Service 접미사 형식인지 확인 (ex. loginService.ts)
         - api는 순수 통신 계층으로 유지되는지 확인
 
