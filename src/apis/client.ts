@@ -60,9 +60,12 @@ async function requestReissueOnce(): Promise<ReissueTokens> {
   const unavailable = () =>
     new ApiError(REISSUE_UNAVAILABLE, "토큰 재발급이 일시적으로 실패했습니다.");
 
+  // ky의 timeout은 Response를 받은 뒤 본문 읽기를 제한하지 않으므로, 요청~본문 수신 전체를 하나의 signal로 묶는다
+  const signal = AbortSignal.timeout(REISSUE_TIMEOUT_MS);
+
   let response: Response;
   try {
-    response = await baseKy.post(getAuthUrl("/api/auth/reissue"), { timeout: REISSUE_TIMEOUT_MS });
+    response = await baseKy.post(getAuthUrl("/api/auth/reissue"), { signal });
   } catch {
     throw unavailable();
   }
@@ -74,6 +77,8 @@ async function requestReissueOnce(): Promise<ReissueTokens> {
   try {
     json = (await response.json()) as ApiResponse<ReissueTokens>;
   } catch (error) {
+    // SyntaxError가 아니면 본문 수신 중 연결 끊김·timeout이다 — 인증 거부가 아닌 일시 장애
+    if (!(error instanceof SyntaxError)) throw unavailable();
     // 401/403은 본문이 비어 있어도 인증 거부다 — 그 외 비JSON 4xx만 게이트웨이 장애로 본다
     if (!response.ok && response.status !== 401 && response.status !== 403) throw unavailable();
     return toJsonParseError(error);

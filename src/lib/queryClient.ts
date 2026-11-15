@@ -51,6 +51,8 @@ export function showGlobalErrorDialog(error: Error) {
     showErrorDialogThen(error, redirectToLanding);
     return;
   }
+  // 확인 뒤 이동할 콜백이 걸린 대화상자(인증 만료)를 다른 오류가 덮어쓰면 onClose가 사라져 이동이 누락된다
+  if (useErrorDialogStore.getState().onClose) return;
   const entry = getErrorEntry(error);
   if (entry.action === "dialog") useErrorDialogStore.getState().openErrorDialog(entry.message);
 }
