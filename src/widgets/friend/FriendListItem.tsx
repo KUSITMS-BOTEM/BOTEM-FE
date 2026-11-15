@@ -1,11 +1,12 @@
 import Badge from "@/components/Badge";
-import Profile, { type ProfileColor } from "@/components/Profile";
+import Profile from "@/components/Profile";
+import type { Color } from "@/constants/color";
 
 type FriendListItemProps = {
   name: string;
   wishCount: number;
   imageUrl?: string;
-  profileColor?: ProfileColor;
+  profileColor?: Color;
   birthdayText?: string;
   dDayText?: string;
   badge?: { label: string; color: "neutral" | "brand" };
