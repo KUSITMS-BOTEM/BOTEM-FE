@@ -19,6 +19,7 @@ import PayoutAccountEditSheet from "@/widgets/payout-account/PayoutAccountEditSh
 import MyMenuProfileRow from "@/widgets/user/MyMenuProfileRow";
 import IconAccount from "@/assets/icons/multicolor/icon-account.svg?react";
 import IconFaqGuide from "@/assets/icons/multicolor/icon-faq-guide.svg?react";
+import IconFriend from "@/assets/icons/multicolor/icon-friend.svg?react";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 import IconNotification from "@/assets/icons/multicolor/icon-notification.svg?react";
 import IconTerms from "@/assets/icons/multicolor/icon-terms.svg?react";
@@ -65,7 +66,7 @@ export default function MyMenuSheet({
           <div aria-hidden className="bg-semantic-border-weak -mx-5 h-px" />
           <div className="flex w-full flex-col">
             <List
-              leading={<IconAccount />}
+              leading={<IconFriend />}
               title="친구"
               onClick={() => router.push("/friends")}
               right={

@@ -31,6 +31,11 @@ describe("parseDateString", () => {
     expect(parseDateString("")).toBeUndefined();
     expect(parseDateString("abc")).toBeUndefined();
   });
+
+  it("없는 날짜(월·일 범위 초과)는 다음 달로 넘기지 않고 undefined를 돌려준다", () => {
+    expect(parseDateString("2026-02-31")).toBeUndefined();
+    expect(parseDateString("2026-13-01")).toBeUndefined();
+  });
 });
 
 describe("getInitialDate", () => {
