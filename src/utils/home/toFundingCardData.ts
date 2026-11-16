@@ -7,7 +7,7 @@ import type {
 import { isValidUrl } from "@/utils/isValidUrl";
 import type { FundingCardType } from "@/widgets/home/FundingCard";
 import type { FundingCardData } from "@/widgets/home/FundingCardCarousel";
-import type { ProfileBoxItem } from "@/widgets/home/ProfileBox";
+import type { ProfileBoxItem } from "@/components/ProfileBox";
 
 const FUNDING_TYPE_LABEL: Record<FundingType, string> = {
   BIRTHDAY: "생일",

@@ -3,7 +3,7 @@ import Image from "next/image";
 import { cn } from "@/utils/cn";
 import Badge from "@/components/Badge";
 import FundingCardGiftCover from "@/widgets/home/FundingCardGiftCover";
-import ProfileBox, { type ProfileBoxItem } from "@/widgets/home/ProfileBox";
+import ProfileBox, { type ProfileBoxItem } from "@/components/ProfileBox";
 import ProgressBar from "@/widgets/home/ProgressBar";
 import IconLock from "@/assets/icons/icon-lock.svg?react";
 

@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import ProfileBox from "@/widgets/home/ProfileBox";
+import ProfileBox from "@/components/ProfileBox";
 import SampleProduct from "@/assets/images/samples/sample-product.png";
 
 const meta = {
-  title: "Widgets/Main/ProfileBox",
+  title: "Components/ProfileBox",
   component: ProfileBox,
   parameters: {
     layout: "centered",
