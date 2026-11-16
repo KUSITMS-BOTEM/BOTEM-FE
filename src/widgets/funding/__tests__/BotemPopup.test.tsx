@@ -88,6 +88,13 @@ describe("BotemPopup 친구 목록", () => {
     expect(screen.getByText("2026.10.10")).toBeInTheDocument();
   });
 
+  it("날짜로 해석할 수 없는 값은 날짜를 비우고 이름은 그대로 보여준다", () => {
+    renderPopup({ friends: [{ id: 1, name: "이동현", contributedAt: "잘못된 값" }] });
+
+    expect(screen.getByText("이동현")).toBeInTheDocument();
+    expect(screen.queryByText(/\d{4}\.\d{2}\.\d{2}/)).not.toBeInTheDocument();
+  });
+
   it("친구가 없으면 빈 상태 문구를 보여준다", () => {
     renderPopup({ friends: [] });
 
@@ -115,5 +122,40 @@ describe("BotemPopup 닫기", () => {
 
     expect(notPrevented).toBe(false);
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("딤(다이얼로그 바깥) 클릭은 onClose를 호출하지만 안쪽 콘텐츠 클릭은 호출하지 않는다", () => {
+    const { onClose } = renderPopup();
+
+    fireEvent.click(screen.getByText("이동현"));
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("dialog"));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("BotemPopup 열림 상태", () => {
+  it("open이 바뀌면 다이얼로그를 열고 닫는다", () => {
+    const props = {
+      unconfirmedCount: 0,
+      friends: FRIENDS,
+      ownerName: "지유",
+      isClosed: false,
+      onClose: vi.fn(),
+      onUnconfirmedClick: vi.fn(),
+      onEditClick: vi.fn(),
+      onMessageClick: vi.fn(),
+      onContributeClick: vi.fn(),
+    };
+    const { container, rerender } = render(<BotemPopup {...props} open={false} />);
+    const dialog = container.querySelector("dialog")!;
+    expect(dialog).not.toHaveAttribute("open");
+
+    rerender(<BotemPopup {...props} open />);
+    expect(dialog).toHaveAttribute("open");
+
+    rerender(<BotemPopup {...props} open={false} />);
+    expect(dialog).not.toHaveAttribute("open");
   });
 });

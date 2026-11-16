@@ -44,6 +44,16 @@ describe("Profile", () => {
     expect(container.querySelector("svg")).not.toBeInTheDocument();
   });
 
+  it("alt를 넘기지 않으면 '프로필 이미지'이고, 넘기면 그 값을 쓴다", () => {
+    const { container, rerender } = render(
+      <Profile imageUrl="https://example.com/a.png" showIconButton={false} />,
+    );
+    expect(container.querySelector("img")).toHaveAttribute("alt", "프로필 이미지");
+
+    rerender(<Profile imageUrl="https://example.com/a.png" alt="" showIconButton={false} />);
+    expect(container.querySelector("img")).toHaveAttribute("alt", "");
+  });
+
   it("showIconButton 기본값(true)이면 아이콘 버튼과 숨겨진 파일 input이 렌더된다", () => {
     const { container } = render(<Profile />);
 

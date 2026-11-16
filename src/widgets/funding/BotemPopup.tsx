@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, type SyntheticEvent } from "react";
 import Button from "@/components/Button";
 import IconButton from "@/components/IconButton";
 import Profile, { getProfileColor } from "@/components/Profile";
+import { toDateString } from "@/utils/date/dateString";
 import { withSubjectParticle } from "@/utils/withSubjectParticle";
 import BotemPopupRow from "@/widgets/funding/BotemPopupRow";
 import IconClose from "@/assets/icons/icon-close.svg?react";
@@ -31,9 +32,11 @@ type BotemPopupProps = {
   onContributeClick: () => void;
 };
 
-// 서버가 주는 ISO 문자열의 날짜 부분만 쓰면 시간대 변환 없이 '2026.10.13' 형태가 된다
-const formatContributedDate = (contributedAt: string) =>
-  contributedAt.slice(0, 10).replaceAll("-", ".");
+// UTC(Z)로 와도 로컬 날짜로 맞추도록 Date로 파싱하고, 파싱이 안 되는 값은 날짜를 비운다
+const formatContributedDate = (contributedAt: string) => {
+  const date = new Date(contributedAt);
+  return Number.isNaN(date.getTime()) ? "" : toDateString(date).replaceAll("-", ".");
+};
 
 export default function BotemPopup({
   open,
@@ -135,6 +138,7 @@ export default function BotemPopup({
                   <div className="flex min-w-0 flex-1 items-center gap-2">
                     <Profile
                       imageUrl={friend.profileImageUrl}
+                      alt=""
                       color={getProfileColor(friend.id)}
                       showIconButton={false}
                       className="size-9 shrink-0"
