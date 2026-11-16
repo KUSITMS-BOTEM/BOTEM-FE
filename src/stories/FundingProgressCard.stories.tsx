@@ -15,7 +15,10 @@ const meta = {
   decorators: [
     Story => (
       <div className="bg-semantic-background-lower p-12">
-        <Story />
+        {/* 카드는 부모 가로를 채우므로 폭을 줘야 한다. 폭을 바꿔 보면 비율 확대를 확인할 수 있다 */}
+        <div className="w-80">
+          <Story />
+        </div>
       </div>
     ),
   ],
