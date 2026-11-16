@@ -8,6 +8,9 @@ const back = vi.fn();
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back }) }));
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
+vi.mock("@/hooks/mutations/user/useUpdateMyProfileMutation", () => ({
+  useUpdateMyProfileMutation: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
@@ -21,7 +24,7 @@ beforeAll(() => {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(useMyProfileQuery).mockReturnValue({
-    data: { nickname: "지유" },
+    data: { nickname: "지유", name: null, birthday: "10-13" },
   } as unknown as ReturnType<typeof useMyProfileQuery>);
 });
 

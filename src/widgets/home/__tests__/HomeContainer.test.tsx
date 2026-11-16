@@ -8,7 +8,11 @@ import HomeContainer from "@/widgets/home/HomeContainer";
 vi.mock("@/hooks/queries/home/useHomeFundingsQuery");
 vi.mock("@/hooks/queries/wish/useHomeWishesQuery", () => ({ useHomeWishesQuery: vi.fn() }));
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+const replace = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, replace }),
+  useSearchParams: () => new URLSearchParams(),
+}));
 vi.mock("@/widgets/funding/FundingOpenSheet", () => ({
   default: ({ open }: { open: boolean }) => (open ? <div>펀딩 열기 시트</div> : null),
 }));
@@ -27,6 +31,7 @@ vi.mock("@/widgets/user/MyMenuSheet", () => ({
 describe("HomeContainer", () => {
   beforeEach(() => {
     push.mockClear();
+    replace.mockClear();
     vi.mocked(useHomeFundingsQuery).mockReturnValue({
       data: { fundingCards: [], activeFundingCount: 0, canOpenFunding: true },
     } as unknown as ReturnType<typeof useHomeFundingsQuery>);
@@ -41,6 +46,14 @@ describe("HomeContainer", () => {
 
     expect(screen.getByText("위시 탭 내용")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "펀딩 탭 위시 추가" })).not.toBeInTheDocument();
+  });
+
+  it("헤더의 '메뉴 열기'를 누르면 /home?menu=open으로 replace한다", async () => {
+    render(<HomeContainer />);
+
+    await userEvent.click(screen.getByRole("button", { name: "메뉴 열기" }));
+
+    expect(replace).toHaveBeenCalledWith("/home?menu=open", { scroll: false });
   });
 
   it("+ 메뉴에서 '위시 추가'를 고르면 /wish/recommended로 이동한다", async () => {

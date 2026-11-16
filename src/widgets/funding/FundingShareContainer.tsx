@@ -83,7 +83,7 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
           className="flex cursor-pointer items-center gap-2 self-end">
           <Tooltip>나도 {funding.hostName}님께 보태볼까요?</Tooltip>
           <ProfileBox
-            profiles={[...funding.participants]}
+            profiles={funding.participants.map(color => ({ color }))}
             extraCount={funding.extraParticipantCount}
             className="bg-semantic-fill-default shadow-[0_4px_8px_0_var(--color-semantic-shadow-weak)]"
           />

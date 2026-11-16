@@ -5,12 +5,14 @@ import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { cn } from "@/utils/cn";
 import SheetHeader from "@/components/SheetHeader";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
+import { SLIDE_TRANSITION } from "@/constants/motion";
 
 export type OpenSheetProps = {
   open: boolean;
   title: string;
   onClose: () => void;
   slideOutOnClose?: boolean;
+  slideInOnOpen?: boolean;
   closeType?: ComponentProps<typeof SheetHeader>["closeType"];
   headerAction?: ReactNode;
   hideScrollbar?: boolean;
@@ -20,7 +22,6 @@ export type OpenSheetProps = {
   className?: string;
 };
 
-const SLIDE_TRANSITION = { duration: 0.3, ease: "easeOut" } as const;
 const NO_TRANSITION = { duration: 0 } as const;
 
 export default function OpenSheet({
@@ -28,6 +29,7 @@ export default function OpenSheet({
   title,
   onClose,
   slideOutOnClose = false,
+  slideInOnOpen = true,
   closeType,
   headerAction,
   hideScrollbar = false,
@@ -93,7 +95,7 @@ export default function OpenSheet({
                     "bg-semantic-fill-default relative flex h-full w-full flex-col overflow-clip",
                     className,
                   )}
-                  initial={{ x: "100%" }}
+                  initial={slideInOnOpen ? { x: "100%" } : false}
                   animate={{ x: 0, transition: SLIDE_TRANSITION }}
                   exit={{
                     x: "100%",
