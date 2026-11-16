@@ -274,6 +274,23 @@ describe("HomeFundingTab", () => {
     await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
   });
 
+  it("결과 데이터 응답이 1.5초 안에 오지 않으면 기다리지 않고 공개 화면으로 이동한다", async () => {
+    vi.mocked(fundingService.getReveal).mockReturnValue(new Promise(() => {}));
+    mockQueries({
+      data: fundingList([
+        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
+      ]),
+    });
+
+    renderTab();
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    expect(push).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"), {
+      timeout: 2500,
+    });
+  });
+
   it("결과 데이터를 받는 동안 마감 카드를 연타해도 요청과 이동은 한 번만 한다", async () => {
     let resolveReveal: (
       value: Awaited<ReturnType<typeof fundingService.getReveal>>,

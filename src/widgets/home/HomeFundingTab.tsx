@@ -15,6 +15,8 @@ import HomeLoadError from "@/widgets/home/HomeLoadError";
 import HomeWishRecommendation from "@/widgets/home/HomeWishRecommendation";
 import PendingContributionBottomSheet from "@/widgets/home/PendingContributionBottomSheet";
 
+const REVEAL_PREFETCH_TIMEOUT_MS = 1500;
+
 type HomeFundingTabProps = {
   onAddWish: () => void;
   onOpenFunding?: () => void;
@@ -50,7 +52,11 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding }: HomeFunding
         const openReveal = async () => {
           if (revealLockRef.current) return;
           revealLockRef.current = true;
-          await queryClient.prefetchQuery(fundingRevealQueryOptions(card.fundingId));
+          // 응답이 늦거나 오프라인이면 프리페치가 끝나지 않아 이동이 막히므로 제한 시간이 지나면 그대로 이동한다
+          await Promise.race([
+            queryClient.prefetchQuery(fundingRevealQueryOptions(card.fundingId)),
+            new Promise(resolve => setTimeout(resolve, REVEAL_PREFETCH_TIMEOUT_MS)),
+          ]);
           router.push(`/funding/${card.fundingId}/reveal`);
         };
         return { ...data, onClick: openReveal };
