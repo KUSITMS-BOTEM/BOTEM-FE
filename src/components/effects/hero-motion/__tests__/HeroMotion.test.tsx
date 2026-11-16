@@ -51,6 +51,14 @@ describe("HeroMotion", () => {
     expect(container.querySelectorAll(CONFETTI_BIT)).toHaveLength(0);
   });
 
+  it("모션 감소 설정을 아직 알 수 없으면(null) 재생하지 않는다", () => {
+    vi.mocked(useReducedMotion).mockReturnValue(null);
+    const { container } = render(<HeroMotion />);
+
+    expect(container.querySelectorAll(CONFETTI_BIT)).toHaveLength(0);
+    expect(container.querySelectorAll(RING)).toHaveLength(0);
+  });
+
   it("모션 감소가 켜져 있으면 링과 반짝임 없이 마크만 남는다", () => {
     vi.mocked(useReducedMotion).mockReturnValue(true);
     const { container } = render(<HeroMotion />);

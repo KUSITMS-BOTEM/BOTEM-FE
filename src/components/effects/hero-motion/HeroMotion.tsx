@@ -24,7 +24,8 @@ type HeroMotionProps = {
 // 마크·공·링·컨페티가 영역 정중앙에 오도록 Figma의 시각 보정(별 중심이 영역 중앙보다 8px 왼쪽, 16px 위)을 되돌려 translate-x-2·translate-y-4로 민다
 export default function HeroMotion({ className }: HeroMotionProps) {
   const reduceMotion = useReducedMotion();
-  const playing = !reduceMotion;
+  // 첫 렌더에는 null이라 !reduceMotion을 쓰면 모션 감소 사용자도 애니메이션이 먼저 재생된다
+  const playing = reduceMotion === false;
 
   return (
     // 공이 Title 바로 밑에서 떨어지기 시작하도록 위쪽만 클리핑을 푼다 (좌우·아래는 그대로 자른다)

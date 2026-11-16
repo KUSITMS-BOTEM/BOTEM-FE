@@ -1,12 +1,17 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 
 import BottomCTA from "@/components/BottomCTA";
-import HeroMotion from "@/components/effects/hero-motion/HeroMotion";
 import Logo from "@/components/Logo";
 import Title from "@/components/Title";
 import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
+
+// framer-motion과 2천 줄 모션 데이터를 첫 번들에서 분리한다. 영역 높이가 고정이라 ssr:false여도 레이아웃 시프트가 없다.
+const HeroMotion = dynamic(() => import("@/components/effects/hero-motion/HeroMotion"), {
+  ssr: false,
+});
 
 import { handleKakaoLoginClick } from "./helpers";
 
