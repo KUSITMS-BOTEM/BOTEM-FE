@@ -29,6 +29,7 @@ export const getProfileColor = (userId: number): Color =>
 
 type ProfileProps = {
   imageUrl?: string;
+  alt?: string;
   color?: Color;
   onImageChange?: (file: File) => void;
   allowedTypes?: string[];
@@ -39,6 +40,7 @@ type ProfileProps = {
 
 export default function Profile({
   imageUrl,
+  alt = "프로필 이미지",
   color = "orange",
   onImageChange,
   allowedTypes,
@@ -89,7 +91,7 @@ export default function Profile({
         {displayUrl && !imageLoadError ? (
           <Image
             src={displayUrl}
-            alt="프로필 이미지"
+            alt={alt}
             fill
             unoptimized
             className="object-cover"
