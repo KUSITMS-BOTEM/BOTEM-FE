@@ -46,11 +46,14 @@ export default function LetterWriteBody({
   const lastFitTextRef = useRef(initialText);
   const isGuest = onNameChange !== undefined;
 
+  const composingRef = useRef(false);
+
   // 글자 수에 따라 글씨 크기가 바뀐 뒤의 높이로 재야 해서 그리기 전에 검사한다
-  useLayoutEffect(() => {
+  const fitToArea = () => {
     const editor = editorRef.current;
     const area = editor?.parentElement;
-    if (!editor || !area) return;
+    // 한글 조합 중에 글자를 덮어쓰면 조합이 끊기므로 조합이 끝난 뒤(onCompositionEnd)에 검사한다
+    if (!editor || !area || composingRef.current) return;
     const available = area.clientHeight - (parseFloat(getComputedStyle(area).paddingTop) || 0);
     // 이름 입력란이 다시 열려 이미 넘친 글도 지우는 동작은 막지 않도록 글이 늘어난 경우만 되돌린다
     const grew = (editor.textContent ?? "").length > lastFitTextRef.current.length;
@@ -61,7 +64,9 @@ export default function LetterWriteBody({
       return;
     }
     lastFitTextRef.current = editor.textContent ?? "";
-  }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
+  };
+
+  useLayoutEffect(fitToArea, [text]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -98,6 +103,11 @@ export default function LetterWriteBody({
         contentEditable="plaintext-only"
         suppressContentEditableWarning
         onInput={event => onTextChange(event.currentTarget.textContent ?? "")}
+        onCompositionStart={() => (composingRef.current = true)}
+        onCompositionEnd={() => {
+          composingRef.current = false;
+          fitToArea();
+        }}
         className="text-semantic-text-strong relative outline-none">
         {initialText}
       </div>

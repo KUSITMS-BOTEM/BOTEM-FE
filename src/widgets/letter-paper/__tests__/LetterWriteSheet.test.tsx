@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
@@ -123,6 +123,19 @@ describe("LetterWriteSheet", () => {
     await userEvent.click(screen.getByRole("button", { name: "다음" }));
 
     expect(onNext).toHaveBeenCalledWith({ text: "생일 축하해", name: "민수", color: "blue" });
+  });
+
+  it("시트를 닫았다 다시 열면 빈 편지로 시작한다", async () => {
+    const { rerender } = renderSheet();
+    typeLetter("생일 축하해");
+
+    await userEvent.click(screen.getByRole("button", { name: "이전" }));
+    rerender(<LetterWriteSheet open={false} onClose={vi.fn()} recipientName="지유" isLoggedIn />);
+    await waitFor(() => expect(screen.queryByRole("textbox", { name: "편지 내용" })).toBeNull());
+    rerender(<LetterWriteSheet open onClose={vi.fn()} recipientName="지유" isLoggedIn />);
+
+    expect(await screen.findByRole("button", { name: "다음" })).toBeDisabled();
+    expect(letterInput()).toBeEmptyDOMElement();
   });
 
   it("이전 버튼을 누르면 onClose가 호출된다", async () => {

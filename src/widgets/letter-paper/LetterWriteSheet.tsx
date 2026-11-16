@@ -77,13 +77,26 @@ export default function LetterWriteSheet({
     }
   };
 
+  // 시트를 닫으면 다음에 열 때 빈 편지로 시작한다
+  const handleClose = () => {
+    setText("");
+    setName("");
+    setColor("orange");
+    setToolOpen(false);
+    setTooltipDismissed(false);
+    setIsTyping(false);
+    setNameOpen(true);
+    setNameReopened(false);
+    onClose();
+  };
+
   const handleAddClick = () => {
     setToolOpen(true);
     setTooltipDismissed(true);
   };
 
   return (
-    <OpenSheet open={open} title="" closeType="back" onClose={onClose}>
+    <OpenSheet open={open} title="" closeType="back" onClose={handleClose}>
       <div
         onFocus={handleFocus}
         onBlur={() => setIsTyping(false)}
@@ -134,7 +147,7 @@ export default function LetterWriteSheet({
             animate={{ opacity: 1, y: 0 }}
             transition={CONTENT_TRANSITION}
             className="flex gap-2 *:min-w-24 *:flex-1">
-            <Button color="neutral" variant="weak" size="xlarge" onClick={onClose}>
+            <Button color="neutral" variant="weak" size="xlarge" onClick={handleClose}>
               이전
             </Button>
             <Button

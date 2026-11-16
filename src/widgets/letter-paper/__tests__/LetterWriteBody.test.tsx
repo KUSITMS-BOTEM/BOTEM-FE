@@ -122,6 +122,20 @@ describe("LetterWriteBody", () => {
       expect(onTextChange).toHaveBeenLastCalledWith("안녕");
     });
 
+    it("한글 조합 중에는 글을 되돌리지 않고 조합이 끝난 뒤에 되돌린다", () => {
+      render(<Harness onTextChange={vi.fn()} />);
+      setHeights(243);
+      type("안녕");
+
+      setHeights(270);
+      fireEvent.compositionStart(letterInput());
+      type("안녕하");
+      expect(letterInput()).toHaveTextContent("안녕하");
+
+      fireEvent.compositionEnd(letterInput());
+      expect(letterInput()).toHaveTextContent(/^안녕$/);
+    });
+
     it("반올림으로 생기는 1px 오차는 넘친 것으로 보지 않는다", () => {
       render(<Harness onTextChange={vi.fn()} />);
       setHeights(244);
