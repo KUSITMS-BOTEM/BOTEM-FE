@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
+
 import Header from "@/components/Header";
 import ProfileBox from "@/components/ProfileBox";
 import Tooltip from "@/components/Tooltip";
+import BotemPopup from "@/widgets/funding/BotemPopup";
 import FundingMessage from "@/widgets/funding/FundingMessage";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
 import SampleProduct from "@/assets/images/samples/sample-product.png";
@@ -27,6 +30,11 @@ const MOCK_FUNDING = {
   targetAmount: 123456789,
   participants: ["orange", "blue", "pink"] as const,
   extraParticipantCount: 99,
+  unconfirmedCount: 1,
+  friends: [
+    { id: 1, name: "민수", contributedAt: "2026-11-10T09:00:00" },
+    { id: 2, name: "서연", contributedAt: "2026-11-12T18:30:00" },
+  ],
 };
 
 // TODO: 공유·더보기 동작은 디자인이 정해지면 연결한다
@@ -34,6 +42,8 @@ const noop = () => {};
 
 export default function FundingShareContainer({ fundingId }: FundingShareContainerProps) {
   const funding = MOCK_FUNDING;
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const closePopup = () => setIsPopupOpen(false);
 
   return (
     <main className="flex min-h-dvh flex-col">
@@ -64,10 +74,9 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
           currentAmount={funding.currentAmount}
           targetAmount={funding.targetAmount}
         />
-        {/* TODO: 보탬 폼 디자인이 정해지면 onClick을 연결한다 */}
         <button
           type="button"
-          onClick={noop}
+          onClick={() => setIsPopupOpen(true)}
           className="flex cursor-pointer items-center gap-2 self-end">
           <Tooltip>나도 {funding.hostName}님께 보태볼까요?</Tooltip>
           <ProfileBox
@@ -77,6 +86,19 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
           />
         </button>
       </div>
+      {/* TODO: 팝업 내부 동작(미확인·수정·메세지·보태기)은 보탬 폼 디자인이 정해지면 연결한다 */}
+      <BotemPopup
+        open={isPopupOpen}
+        unconfirmedCount={funding.unconfirmedCount}
+        friends={funding.friends}
+        ownerName={funding.hostName}
+        isClosed={false}
+        onClose={closePopup}
+        onUnconfirmedClick={noop}
+        onEditClick={noop}
+        onMessageClick={noop}
+        onContributeClick={noop}
+      />
     </main>
   );
 }
