@@ -11,7 +11,10 @@ export function toDateString(date: Date): string {
 export function parseDateString(value: string): Date | undefined {
   const [year, month, day] = value.split("-").map(Number);
   if (!year || !month || !day) return undefined;
-  return new Date(year, month - 1, day);
+  const date = new Date(year, month - 1, day);
+  // 2026-02-31처럼 범위를 넘은 값은 Date가 다음 달로 넘겨 버리므로 되돌려 보아 걸러낸다
+  if (date.getMonth() !== month - 1 || date.getDate() !== day) return undefined;
+  return date;
 }
 
 // 값이 없으면 오늘을 보여준다. 오늘이 min보다 이르거나 max보다 늦어 선택할 수 없으면 가까운 쪽 경계

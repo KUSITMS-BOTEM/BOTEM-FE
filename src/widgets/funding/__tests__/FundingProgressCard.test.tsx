@@ -19,7 +19,19 @@ const BASE = {
   targetAmount: 1000,
 };
 
+const getCard = () => screen.getByRole("region", { name: "에어팟 펀딩 진행 상황" });
+
 describe("FundingProgressCard", () => {
+  // 서울 2026-11-16 12:00. 마감일 판단이 실제 시계에 흔들리지 않도록 고정한다
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-16T03:00:00Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("모인 금액이 0이면 첫 보탬 문구와 0%를 보여준다", () => {
     render(<FundingProgressCard {...BASE} currentAmount={0} />);
 
@@ -40,26 +52,23 @@ describe("FundingProgressCard", () => {
     expect(screen.getByText("목표가 123,456,789원")).toBeInTheDocument();
   });
 
-  it("같은 fundingId로 다시 렌더해도 같은 색 클래스를 유지한다", () => {
-    const blur = `bg-base-${getFundingCardColor(1)}-200`;
-    const { container, rerender } = render(<FundingProgressCard {...BASE} />);
-    expect(container.querySelector(`.${blur}`)).toBeInTheDocument();
+  it("같은 fundingId로 다시 렌더해도 같은 색을 유지한다", () => {
+    const color = getFundingCardColor(1);
+    const { rerender } = render(<FundingProgressCard {...BASE} />);
+    expect(getCard()).toHaveAttribute("data-color", color);
 
     rerender(<FundingProgressCard {...BASE} currentAmount={600} />);
 
-    expect(container.querySelector(`.${blur}`)).toBeInTheDocument();
+    expect(getCard()).toHaveAttribute("data-color", color);
+  });
+
+  it("모인 금액이 0이면 disabled(회색) 색을 쓴다", () => {
+    render(<FundingProgressCard {...BASE} currentAmount={0} />);
+
+    expect(getCard()).toHaveAttribute("data-color", "disabled");
   });
 
   describe("마감 뱃지", () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date(2026, 10, 16, 12, 0, 0));
-    });
-
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
     it("진행 중이면 뱃지가 없다", () => {
       render(<FundingProgressCard {...BASE} />);
 
@@ -80,11 +89,5 @@ describe("FundingProgressCard", () => {
       expect(screen.getByText("마감")).toBeInTheDocument();
       expect(screen.getByText(/D-7$/)).toBeInTheDocument();
     });
-  });
-
-  it("모인 금액이 0이면 gray 계열 클래스를 쓴다", () => {
-    const { container } = render(<FundingProgressCard {...BASE} currentAmount={0} />);
-
-    expect(container.querySelector(".bg-base-gray-200")).toBeInTheDocument();
   });
 });

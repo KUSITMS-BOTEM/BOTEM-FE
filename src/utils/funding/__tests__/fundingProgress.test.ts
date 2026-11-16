@@ -25,7 +25,7 @@ describe("calcFundingPercent", () => {
 describe("getClosedLabel", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 10, 16, 12, 0, 0));
+    vi.setSystemTime(new Date("2026-11-16T03:00:00Z"));
   });
 
   afterEach(() => {

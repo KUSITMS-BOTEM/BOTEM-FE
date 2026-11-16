@@ -3,7 +3,7 @@ import { getDDayLabel, isDeadlinePassed } from "@/utils/funding/getDDayLabel";
 describe("getDDayLabel", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 10, 16, 12, 0, 0));
+    vi.setSystemTime(new Date("2026-11-16T03:00:00Z"));
   });
 
   afterEach(() => {
@@ -24,13 +24,22 @@ describe("getDDayLabel", () => {
 
   it("날짜 형식이 틀리면 빈 문자열을 반환한다", () => {
     expect(getDDayLabel("")).toBe("");
+    expect(getDDayLabel("2026-02-31")).toBe("");
+  });
+
+  it("서버 시간대(UTC)가 아직 전날이어도 서울 날짜 기준으로 계산한다", () => {
+    // UTC 2026-11-15 20:00 = 서울 2026-11-16 05:00
+    vi.setSystemTime(new Date("2026-11-15T20:00:00Z"));
+
+    expect(getDDayLabel("2026-11-16")).toBe("D-Day");
+    expect(getDDayLabel("2026-11-23")).toBe("D-7");
   });
 });
 
 describe("isDeadlinePassed", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 10, 16, 12, 0, 0));
+    vi.setSystemTime(new Date("2026-11-16T03:00:00Z"));
   });
 
   afterEach(() => {

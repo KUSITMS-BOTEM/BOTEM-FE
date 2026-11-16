@@ -12,7 +12,7 @@ vi.mock("next/image", () => ({
 describe("ProductInfo", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 10, 16, 12, 0, 0));
+    vi.setSystemTime(new Date("2026-11-16T03:00:00Z"));
   });
 
   afterEach(() => {
@@ -29,5 +29,11 @@ describe("ProductInfo", () => {
     render(<ProductInfo productImageUrl="/a.png" productName="에어팟" deadline="2026-11-23" />);
 
     expect(screen.getByText("마감 11월 23일 · D-7")).toBeInTheDocument();
+  });
+
+  it("날짜 형식이 틀려 D-day를 계산할 수 없으면 구분자(·) 없이 보여준다", () => {
+    render(<ProductInfo productImageUrl="/a.png" productName="에어팟" deadline="2026-02-31" />);
+
+    expect(screen.getByText("마감 2월 31일")).toBeInTheDocument();
   });
 });

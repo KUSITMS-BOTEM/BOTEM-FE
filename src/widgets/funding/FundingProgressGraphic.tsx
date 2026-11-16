@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion, type Easing } from "framer-motion";
+import { motion, useInView, useReducedMotion, type Easing } from "framer-motion";
+import { useRef } from "react";
 
 import { cn } from "@/utils/cn";
 import type { Color } from "@/constants/color";
@@ -27,6 +28,7 @@ const SINE: Easing = [0.37, 0, 0.63, 1];
 const LOOP = { duration: 2, ease: SINE, repeat: Infinity };
 
 // Figma 키프레임: 선물상자가 위로 6px 떠올랐다 내려온다
+// 끝값(-0.16px)이 시작값(0)과 다른 건 Figma 값을 그대로 옮긴 것이다. 반복 경계에서 0.16px 튀지만 눈에 띄지 않아 둔다
 const FLOAT_ANIMATE = { y: [0, -6, 0, -0.159904, -0.159904] };
 const FLOAT_TRANSITION = { y: { ...LOOP, times: [0, 0.475, 0.95, 0.9991, 1] } };
 
@@ -54,22 +56,26 @@ type FundingProgressGraphicProps = {
 
 export default function FundingProgressGraphic({ color }: FundingProgressGraphicProps) {
   const reduceMotion = useReducedMotion();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(rootRef);
   const BackShadow = BACK_SHADOW[color];
   const isDisabled = color === "disabled";
+  // 모션 감소 설정이거나 화면 밖이면 멈춘다 (무한 반복 + blur·blend 합성 비용을 아끼기 위해)
+  const paused = reduceMotion || !inView;
 
   const float = {
     initial: { y: 0 },
-    animate: reduceMotion ? undefined : FLOAT_ANIMATE,
+    animate: paused ? undefined : FLOAT_ANIMATE,
     transition: FLOAT_TRANSITION,
   };
   const wave = {
     initial: { x: -7.944, y: -0.918, rotate: -2 },
-    animate: reduceMotion ? undefined : WAVE_ANIMATE,
+    animate: paused ? undefined : WAVE_ANIMATE,
     transition: WAVE_TRANSITION,
   };
 
   return (
-    <div aria-hidden className="absolute inset-0 overflow-clip rounded-4xl">
+    <div ref={rootRef} aria-hidden className="absolute inset-0 overflow-clip rounded-4xl">
       <motion.div {...float} className={cn(BOX, "mix-blend-screen")}>
         <div className={SHAPE}>
           {isDisabled ? (

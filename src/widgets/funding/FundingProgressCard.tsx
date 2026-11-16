@@ -90,6 +90,7 @@ export default function FundingProgressCard({
   return (
     <section
       aria-label={`${productName} 펀딩 진행 상황`}
+      data-color={color}
       className={cn("relative flex h-100.25 w-80 flex-col items-start p-3", className)}>
       <div
         aria-hidden

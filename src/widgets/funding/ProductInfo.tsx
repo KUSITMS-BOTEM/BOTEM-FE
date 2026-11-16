@@ -18,6 +18,9 @@ export default function ProductInfo({
   deadline,
   className,
 }: ProductInfoProps) {
+  // 날짜 형식이 틀리면 빈 문자열이라 구분자(·)를 붙이지 않는다
+  const dDay = getDDayLabel(deadline);
+
   return (
     <div
       className={cn(
@@ -25,6 +28,7 @@ export default function ProductInfo({
         className,
       )}>
       <div className="bg-base-gray-200 relative size-12 shrink-0 overflow-hidden rounded-[6.857px]">
+        {/* 상품 이미지 도메인이 제각각이라 next/image 최적화(remotePatterns)를 쓰지 않는다. 프로젝트 공통 관례 */}
         <Image
           src={productImageUrl}
           alt=""
@@ -37,7 +41,8 @@ export default function ProductInfo({
       <div className="flex min-w-0 flex-1 flex-col gap-[1.755px]">
         <p className="truncate [font:var(--semantic-label-small)]">{productName}</p>
         <p className="truncate [font:var(--semantic-body-x-small)]">
-          마감 {formatDeadlineShort(deadline)} · {getDDayLabel(deadline)}
+          마감 {formatDeadlineShort(deadline)}
+          {dDay && ` · ${dDay}`}
         </p>
       </div>
     </div>
