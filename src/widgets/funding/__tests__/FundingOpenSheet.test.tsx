@@ -157,11 +157,15 @@ describe("FundingOpenSheet", () => {
     const goToAccountStep = async () => {
       render(<Harness />);
       await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
-      await userEvent.type(await screen.findByLabelText("목표 금액"), "1000");
+      // 필드 모션이 끝나면 자동 포커스가 걸려 타이핑 도중 포커스를 가져가므로, 먼저 포커스가 옮겨올 때까지 기다린다
+      const amount = await screen.findByLabelText("목표 금액");
+      await waitFor(() => expect(amount).toHaveFocus(), { timeout: 3000 });
+      await userEvent.type(amount, "1000");
       await userEvent.tab();
       await userEvent.click(screen.getByRole("button", { name: "마감일 선택해주세요" }));
       await pickWheelDate(userEvent.setup(), { year: 2027, month: 12, day: 25 });
       const story = screen.getByLabelText("사연");
+      await waitFor(() => expect(story).toHaveFocus(), { timeout: 3000 });
       await userEvent.type(story, "생일 선물");
       fireEvent.blur(story);
       await userEvent.click(screen.getByRole("button", { name: "다음" }));
