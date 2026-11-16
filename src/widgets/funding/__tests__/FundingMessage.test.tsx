@@ -59,13 +59,13 @@ describe("FundingMessage", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("움직임 줄이기 설정이면 5초가 지나도 사연에 고정된다", () => {
+  it("움직임 줄이기 설정이면 회전 없이 사연과 공약을 모두 보여준다", () => {
     vi.mocked(useReducedMotion).mockReturnValue(true);
     render(<FundingMessage story={STORY} pledge={PLEDGE} />);
 
     advance(10000);
 
     expect(visible(STORY)).toBeInTheDocument();
-    expect(visible(PLEDGE)).not.toBeInTheDocument();
+    expect(visible(PLEDGE)).toBeInTheDocument();
   });
 });

@@ -36,12 +36,18 @@ export default function FundingMessage({ story, pledge, className }: FundingMess
   return (
     <div className={cn("bg-semantic-fill-neutral-weak rounded-[20px] px-5 py-3", className)}>
       {/* 슬라이드 중 박스 높이가 출렁이지 않게 모든 문구를 같은 칸에 숨겨 쌓아 가장 긴 문구에 높이를 맞춘다 */}
-      <div className="grid overflow-hidden [&>*]:col-start-1 [&>*]:row-start-1">
-        {texts.map((text, i) => (
-          <p key={i} aria-hidden className={cn("invisible", TEXT_STYLE)}>
-            {text}
-          </p>
-        ))}
+      <div
+        className={cn(
+          slidable
+            ? "grid overflow-hidden [&>*]:col-start-1 [&>*]:row-start-1"
+            : "flex flex-col gap-2",
+        )}>
+        {slidable &&
+          texts.map((text, i) => (
+            <p key={i} aria-hidden className={cn("invisible", TEXT_STYLE)}>
+              {text}
+            </p>
+          ))}
         {slidable ? (
           <AnimatePresence initial={false}>
             <motion.p
@@ -58,7 +64,12 @@ export default function FundingMessage({ story, pledge, className }: FundingMess
             </motion.p>
           </AnimatePresence>
         ) : (
-          <p className={TEXT_STYLE}>{texts[0]}</p>
+          // 모션을 줄인 사용자도 사연·공약을 모두 볼 수 있게 회전 대신 나열한다
+          texts.map((text, i) => (
+            <p key={i} className={TEXT_STYLE}>
+              {text}
+            </p>
+          ))
         )}
       </div>
     </div>

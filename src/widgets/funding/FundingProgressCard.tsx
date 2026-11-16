@@ -14,6 +14,7 @@ import FundingProgressGraphic, {
   type FundingCardColor,
 } from "@/widgets/funding/FundingProgressGraphic";
 import ProductInfo from "@/widgets/funding/ProductInfo";
+import FundingProgressCardSkeleton from "@/widgets/funding/skeleton/FundingProgressCardSkeleton";
 
 type CardTheme = {
   stops: string;
@@ -97,12 +98,13 @@ export default function FundingProgressCard({
   // 카드는 320×401 기준 px로 그려져 있어, 부모 가로 실측값에 맞춰 통째로 비율 확대한다.
   // CSS만으로 길이÷길이를 하는 기법(tan(atan2()))은 브라우저마다 계산이 달라 쓰지 않는다
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  // 실측 전(SSR·하이드레이션 전)에는 null로 두고 카드를 숨긴다. 320px 고정 폭으로 그려져 좁은 화면에서 넘치는 걸 막는다
+  const [scale, setScale] = useState<number | null>(null);
   useLayoutEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
     const update = () => {
-      if (el.clientWidth > 0) setScale(el.clientWidth / CARD_DESIGN_WIDTH);
+      setScale(el.clientWidth > 0 ? el.clientWidth / CARD_DESIGN_WIDTH : 1);
     };
     update();
     if (typeof ResizeObserver === "undefined") return;
@@ -113,10 +115,11 @@ export default function FundingProgressCard({
 
   return (
     <div ref={wrapperRef} className={cn("relative aspect-320/401 w-full", className)}>
+      {scale === null && <FundingProgressCardSkeleton />}
       <section
         aria-label={`${productName} 펀딩 진행 상황`}
         data-color={color}
-        style={{ transform: `scale(${scale})` }}
+        style={scale === null ? { display: "none" } : { transform: `scale(${scale})` }}
         className="absolute top-0 left-0 flex h-100.25 w-80 origin-top-left flex-col items-start p-3">
         <div
           aria-hidden
