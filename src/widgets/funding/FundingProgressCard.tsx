@@ -123,7 +123,15 @@ export default function FundingProgressCard({
             {getFundingProgressMessage(percent)}
           </p>
           <div className="flex flex-col gap-1">
-            <p className="whitespace-nowrap [font:900_72px/0.79_Pretendard]">{percent}%</p>
+            <p
+              role="progressbar"
+              aria-label="펀딩 달성률"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={percent}
+              className="whitespace-nowrap [font:900_72px/0.79_Pretendard]">
+              {percent}%
+            </p>
             <p className="px-0.5 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-subtext-large)]">
               목표가 {targetAmount.toLocaleString("ko-KR")}원
             </p>
