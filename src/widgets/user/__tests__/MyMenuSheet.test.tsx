@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
+import { useFriendsQuery } from "@/hooks/queries/friend/useFriendsQuery";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import type { PayoutAccountResponse } from "@/types/payout-account/payoutAccount";
@@ -14,6 +15,7 @@ const logout = vi.fn();
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, push }) }));
 vi.mock("@/hooks/mutations/auth/useLogoutMutation");
+vi.mock("@/hooks/queries/friend/useFriendsQuery");
 vi.mock("@/hooks/queries/payout-account/usePayoutAccountsQuery");
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
 vi.mock("@/widgets/funding/ClosedFundingSheet", () => ({
@@ -34,6 +36,7 @@ beforeAll(() => {
 
 const PROFILE: MyProfile = {
   nickname: "지유",
+  name: null,
   profileImageUrl: null,
   birthday: "10-13",
   wishProfileUrl: "https://botem.site/@jiyu",
@@ -61,8 +64,14 @@ const mockQueries = (profile: MyProfile, accounts: PayoutAccountResponse[]) => {
   >);
 };
 
+const mockFriendsQuery = (state: { data?: { totalCount: number }; isPending: boolean }) => {
+  vi.mocked(useFriendsQuery).mockReturnValue(
+    state as unknown as ReturnType<typeof useFriendsQuery>,
+  );
+};
+
 const renderSheet = (open = true) =>
-  render(<MyMenuSheet open={open} onClose={vi.fn()} friendCount={8} closedFundingCount={3} />);
+  render(<MyMenuSheet open={open} onClose={vi.fn()} closedFundingCount={3} />);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -70,6 +79,7 @@ beforeEach(() => {
     typeof useLogoutMutation
   >);
   mockQueries(PROFILE, [ACCOUNT]);
+  mockFriendsQuery({ data: { totalCount: 8 }, isPending: false });
 });
 
 describe("MyMenuSheet", () => {
@@ -81,6 +91,23 @@ describe("MyMenuSheet", () => {
     expect(screen.getByText("8명")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "3개" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "토스뱅크" })).toBeInTheDocument();
+  });
+
+  it("친구 목록을 불러오는 동안 친구 수 자리에 스켈레톤을 보여준다", () => {
+    mockFriendsQuery({ isPending: true });
+    renderSheet();
+
+    expect(screen.getByRole("status", { name: "친구 수 불러오는 중" })).toBeInTheDocument();
+    expect(screen.queryByText(/명$/)).not.toBeInTheDocument();
+  });
+
+  it("친구 목록 조회에 실패하면 친구 수를 0명으로 보여주지 않는다", () => {
+    mockFriendsQuery({ isPending: false });
+    renderSheet();
+
+    expect(screen.getByText("친구")).toBeInTheDocument();
+    expect(screen.queryByText(/명$/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("status", { name: "친구 수 불러오는 중" })).not.toBeInTheDocument();
   });
 
   it("생일이 없으면 생일 문구를 보여주지 않는다", () => {

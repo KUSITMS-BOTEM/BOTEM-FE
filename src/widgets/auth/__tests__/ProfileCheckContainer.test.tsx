@@ -43,6 +43,7 @@ vi.mock("@/hooks/mutations/user/useUploadProfileImageMutation", () => ({
 
 const mockProfile: MyProfile = {
   nickname: "지유",
+  name: null,
   profileImageUrl: null,
   birthday: "10-13",
   wishProfileUrl: "https://example.com/wish",

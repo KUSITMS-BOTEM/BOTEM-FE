@@ -6,6 +6,7 @@ import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery"
 import { useHomeNoFundingQuery } from "@/hooks/queries/home/useHomeNoFundingQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { toFundingCardData } from "@/utils/home/toFundingCardData";
+import { getDisplayName } from "@/utils/user/getDisplayName";
 import FundingRevealSheet from "@/widgets/funding/FundingRevealSheet";
 import HomeEmptyView from "@/widgets/home/HomeEmptyView";
 import HomeFundingView from "@/widgets/home/HomeFundingView";
@@ -38,7 +39,7 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding }: HomeFunding
   if (fundingCards && fundingCards.length > 0) {
     if (!profile) return null;
     const cards = fundingCards.map(card => {
-      const data = toFundingCardData(card, profile.nickname);
+      const data = toFundingCardData(card, getDisplayName(profile));
       if (data.type === "default") return data;
       const sheet = data.type === "notification" ? "pending" : "reveal";
       const openCardSheet = () => {

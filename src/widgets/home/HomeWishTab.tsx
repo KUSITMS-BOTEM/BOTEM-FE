@@ -2,6 +2,7 @@ import Asset from "@/components/Asset";
 import Button from "@/components/Button";
 import { useHomeWishesQuery } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
+import { getDisplayName } from "@/utils/user/getDisplayName";
 import HomeEmptyView from "@/widgets/home/HomeEmptyView";
 import HomeLoadError from "@/widgets/home/HomeLoadError";
 import HomeWishTabSkeleton from "@/widgets/home/skeleton/HomeWishTabSkeleton";
@@ -35,7 +36,7 @@ export default function HomeWishTab({ onAddWish }: HomeWishTabProps) {
       <div className="flex h-[51px] w-full items-center justify-between">
         <div className="flex items-center gap-0.5">
           <h2 className="text-semantic-text-strong [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-title-a2-z-small-weak)]">
-            {profile.nickname}의 위시
+            {getDisplayName(profile)}의 위시
           </h2>
           {/* 공유 플로우가 정해지면 링크 복사 동작을 연결한다 */}
           <Asset icon={<IconLink />} size="medium" className="text-semantic-icon-brand" />

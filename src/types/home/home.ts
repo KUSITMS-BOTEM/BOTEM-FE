@@ -2,12 +2,20 @@ export type HomeFundingCardType = "CLOSED_UNOPENED" | "IN_PROGRESS";
 
 export type FundingType = "BIRTHDAY" | "SURPRISE";
 
+export type HomeFundingParticipantPreviewResponse = {
+  participantName: string;
+  profileImageUrl: string | null;
+};
+
 export type HomeFundingCardResponse = {
   fundingId: number;
   cardType: HomeFundingCardType;
   fundingType: FundingType;
   productName: string;
   productImageUrl: string;
+  targetAmount: number;
+  participantCount: number;
+  participantPreviews: HomeFundingParticipantPreviewResponse[];
   remainingDays: number | null;
   confirmedPercentage: number;
   pendingPercentage: number;

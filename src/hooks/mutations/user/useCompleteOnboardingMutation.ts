@@ -16,6 +16,8 @@ export const useCompleteOnboardingMutation = () => {
     meta: { skipGlobalError: true },
     // onSuccess/onError를 훅 레벨에 둬야 호출 화면이 언마운트돼도 실행된다 (mutate에 넘긴 콜백은 언마운트 시 미실행)
     onSuccess: () => {
+      // 온보딩 화면에서 캐시된 프로필은 name이 null이고, 이 API는 프로필을 돌려주지 않아 무효화로 다시 조회하게 한다
+      queryClient.invalidateQueries({ queryKey: ["users", "me"] });
       clearSignupFlow();
       // 보류: 온보딩 직후 home에서 보여줄 화면이 미정이라 플래그만 켜두고 현재는 읽는 곳이 없다
       markWishPromptPending();
