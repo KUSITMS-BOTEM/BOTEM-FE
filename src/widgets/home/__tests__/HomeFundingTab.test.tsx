@@ -1,5 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useReducedMotion } from "framer-motion";
+
+import { fundingService } from "@/apis/funding/fundingService";
 
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useHomeNoFundingQuery } from "@/hooks/queries/home/useHomeNoFundingQuery";
@@ -7,9 +11,16 @@ import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import type { HomeFundingCardResponse, HomeNoFundingResponse } from "@/types/home/home";
 import HomeFundingTab from "@/widgets/home/HomeFundingTab";
 
+vi.mock("framer-motion", async importOriginal => ({
+  ...(await importOriginal<typeof import("framer-motion")>()),
+  useReducedMotion: vi.fn(),
+}));
 vi.mock("@/hooks/queries/home/useHomeFundingsQuery");
 vi.mock("@/hooks/queries/home/useHomeNoFundingQuery");
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
+vi.mock("@/apis/funding/fundingService", () => ({
+  fundingService: { getReveal: vi.fn() },
+}));
 const push = vi.fn();
 
 vi.mock("next/navigation", () => ({
@@ -29,15 +40,6 @@ vi.mock("@/widgets/home/PendingContributionBottomSheet", () => ({
       <div role="dialog">
         입금 확인 {fundingId}
         <button onClick={onAllConfirmed}>모두 확인</button>
-      </div>
-    ) : null,
-}));
-vi.mock("@/widgets/funding/FundingRevealSheet", () => ({
-  default: ({ open, onReveal }: { open: boolean; onReveal: () => void }) =>
-    open ? (
-      <div role="dialog">
-        펀딩 공개
-        <button onClick={onReveal}>펀딩 열기</button>
       </div>
     ) : null,
 }));
@@ -102,8 +104,19 @@ const fundingList = (cards: HomeFundingCardResponse[]) => ({
   canOpenFunding: true,
 });
 
+const renderTab = (onAddWish: () => void = vi.fn()) =>
+  render(<HomeFundingTab onAddWish={onAddWish} />, {
+    wrapper: ({ children }) => (
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        {children}
+      </QueryClientProvider>
+    ),
+  });
+
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(useReducedMotion).mockReturnValue(true);
   vi.mocked(useMyProfileQuery).mockReturnValue({
     data: { nickname: "지유" },
   } as unknown as ReturnType<typeof useMyProfileQuery>);
@@ -113,7 +126,7 @@ describe("HomeFundingTab", () => {
   it("펀딩 카드가 있으면 카드 캐러셀을 보여주고 펀딩 없는 홈은 요청하지 않는다", () => {
     mockQueries({ data: fundingList([fundingCard]) });
 
-    render(<HomeFundingTab onAddWish={vi.fn()} />);
+    renderTab();
 
     expect(screen.getByText("작은 보탬들이 차곡차곡 쌓이고 있어요")).toBeInTheDocument();
     expect(screen.getByText("지유님의 생일 펀딩")).toBeInTheDocument();
@@ -123,7 +136,7 @@ describe("HomeFundingTab", () => {
   it("펀딩이 없고 위시 추천 상태면 닉네임 제목과 위시 카드를 보여준다", () => {
     mockQueries({ data: fundingList([]) }, { data: makeNoFunding("WISH_RECOMMENDATION") });
 
-    render(<HomeFundingTab onAddWish={vi.fn()} />);
+    renderTab();
 
     expect(useHomeNoFundingQuery).toHaveBeenCalledWith({ enabled: true });
     expect(screen.getByText("지유님, 펀딩 열어볼까요?")).toBeInTheDocument();
@@ -135,7 +148,7 @@ describe("HomeFundingTab", () => {
     const onAddWish = vi.fn();
     mockQueries({ data: fundingList([]) }, { data: makeNoFunding("EMPTY") });
 
-    render(<HomeFundingTab onAddWish={onAddWish} />);
+    renderTab(onAddWish);
     await userEvent.click(screen.getByRole("button", { name: "위시 추가하기" }));
 
     expect(screen.getByText("갖고 싶은걸 먼저 담아볼까요?")).toBeInTheDocument();
@@ -145,7 +158,7 @@ describe("HomeFundingTab", () => {
   it("펀딩 조회가 실패하면 다시 시도로 펀딩 조회를 다시 요청한다", async () => {
     mockQueries({ isError: true });
 
-    render(<HomeFundingTab onAddWish={vi.fn()} />);
+    renderTab();
     await userEvent.click(screen.getByRole("button", { name: "다시 시도" }));
 
     expect(fundingsRefetch).toHaveBeenCalledTimes(1);
@@ -155,7 +168,7 @@ describe("HomeFundingTab", () => {
   it("펀딩 없는 홈 조회가 실패하면 다시 시도로 그 조회를 다시 요청한다", async () => {
     mockQueries({ data: fundingList([]) }, { isError: true });
 
-    render(<HomeFundingTab onAddWish={vi.fn()} />);
+    renderTab();
     await userEvent.click(screen.getByRole("button", { name: "다시 시도" }));
 
     expect(noFundingRefetch).toHaveBeenCalledTimes(1);
@@ -165,7 +178,7 @@ describe("HomeFundingTab", () => {
   it("펀딩 카드가 있으면 이전에 실패한 펀딩 없는 홈 조회 에러는 무시하고 카드를 보여준다", () => {
     mockQueries({ data: fundingList([fundingCard]) }, { isError: true });
 
-    render(<HomeFundingTab onAddWish={vi.fn()} />);
+    renderTab();
 
     expect(screen.getByText("지유님의 생일 펀딩")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "다시 시도" })).not.toBeInTheDocument();
@@ -174,7 +187,7 @@ describe("HomeFundingTab", () => {
   it("펀딩 재조회가 실패해도 이미 받은 카드가 있으면 카드를 계속 보여준다", () => {
     mockQueries({ data: fundingList([fundingCard]), isError: true });
 
-    render(<HomeFundingTab onAddWish={vi.fn()} />);
+    renderTab();
 
     expect(screen.getByText("지유님의 생일 펀딩")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "다시 시도" })).not.toBeInTheDocument();
@@ -186,7 +199,7 @@ describe("HomeFundingTab", () => {
       { data: makeNoFunding("WISH_RECOMMENDATION"), isError: true },
     );
 
-    render(<HomeFundingTab onAddWish={vi.fn()} />);
+    renderTab();
 
     expect(screen.getByText("지유님, 펀딩 열어볼까요?")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "다시 시도" })).not.toBeInTheDocument();
@@ -195,7 +208,7 @@ describe("HomeFundingTab", () => {
   it("조회 중에는 어떤 분기 화면도 보여주지 않는다", () => {
     mockQueries({});
 
-    const { container } = render(<HomeFundingTab onAddWish={vi.fn()} />);
+    const { container } = renderTab();
 
     expect(container).toBeEmptyDOMElement();
   });
@@ -206,7 +219,7 @@ describe("HomeFundingTab", () => {
       ]),
     });
 
-    render(<HomeFundingTab onAddWish={vi.fn()} />);
+    renderTab();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
 
@@ -216,38 +229,108 @@ describe("HomeFundingTab", () => {
   it("진행 중(default) 카드에는 카드 버튼이 없다", () => {
     mockQueries({ data: fundingList([fundingCard]) });
 
-    render(<HomeFundingTab onAddWish={vi.fn()} />);
+    renderTab();
 
     expect(screen.queryByRole("button", { name: "지유님의 생일 펀딩" })).not.toBeInTheDocument();
   });
 
-  it("확인대기 보탬이 없는 마감 카드(open)를 누르면 공개 시트가 열리고, 펀딩 열기로 마감 공개 화면에 이동한다", async () => {
+  it("참여자가 없는 마감 카드(open)를 누르면 시트 없이 마감 공개 화면으로 이동한다", async () => {
     mockQueries({
       data: fundingList([
         { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
       ]),
     });
 
-    render(<HomeFundingTab onAddWish={vi.fn()} />);
+    renderTab();
     await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
-    expect(screen.getByRole("dialog")).toHaveTextContent("펀딩 공개");
-    await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
 
-    expect(push).toHaveBeenCalledWith("/funding/42/reveal");
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("입금 확인을 모두 마치면 입금 확인 시트가 공개 시트로 바뀐다", async () => {
+  it("마감 카드를 누르면 결과 데이터를 받은 뒤에 공개 화면으로 이동한다", async () => {
+    let resolveReveal: (
+      value: Awaited<ReturnType<typeof fundingService.getReveal>>,
+    ) => void = () => {};
+    vi.mocked(fundingService.getReveal).mockReturnValue(
+      new Promise(resolve => {
+        resolveReveal = resolve;
+      }),
+    );
+    mockQueries({
+      data: fundingList([
+        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
+      ]),
+    });
+
+    renderTab();
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+
+    expect(fundingService.getReveal).toHaveBeenCalledWith(42);
+    expect(push).not.toHaveBeenCalled();
+
+    resolveReveal({ contributorNames: [], totalAmount: 0, goalAchieved: false });
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
+  });
+
+  it("결과 데이터를 받는 동안 마감 카드를 연타해도 요청과 이동은 한 번만 한다", async () => {
+    let resolveReveal: (
+      value: Awaited<ReturnType<typeof fundingService.getReveal>>,
+    ) => void = () => {};
+    vi.mocked(fundingService.getReveal).mockReturnValue(
+      new Promise(resolve => {
+        resolveReveal = resolve;
+      }),
+    );
+    mockQueries({
+      data: fundingList([
+        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
+      ]),
+    });
+
+    renderTab();
+    const card = screen.getByRole("button", { name: "지유님의 생일 펀딩" });
+    await userEvent.click(card);
+    await userEvent.click(card);
+    resolveReveal({ contributorNames: [], totalAmount: 0, goalAchieved: false });
+
+    await waitFor(() => expect(push).toHaveBeenCalledTimes(1));
+    expect(fundingService.getReveal).toHaveBeenCalledTimes(1);
+  });
+
+  it("확인대기가 없고 참여자가 있는 마감 카드(complete)를 누르면 공개 시트 없이 공개 화면으로 이동한다", async () => {
+    mockQueries({
+      data: fundingList([
+        {
+          ...fundingCard,
+          fundingId: 42,
+          cardType: "CLOSED_UNOPENED",
+          pendingContributionCount: 0,
+          participantCount: 3,
+        },
+      ]),
+    });
+
+    renderTab();
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("입금 확인을 모두 마치면 입금 확인 시트가 닫히고 공개 시트는 열리지 않는다", async () => {
     mockQueries({
       data: fundingList([
         { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 2 },
       ]),
     });
 
-    render(<HomeFundingTab onAddWish={vi.fn()} />);
+    renderTab();
     await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
     await userEvent.click(screen.getByRole("button", { name: "모두 확인" }));
 
-    expect(screen.getByRole("dialog")).toHaveTextContent("펀딩 공개");
-    expect(screen.queryByText(/입금 확인/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByText(/펀딩 공개/)).not.toBeInTheDocument();
   });
 });
