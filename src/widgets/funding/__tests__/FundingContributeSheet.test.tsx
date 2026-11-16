@@ -94,6 +94,33 @@ describe("FundingContributeSheet", () => {
     });
   });
 
+  describe("금액 입력 상한", () => {
+    it("지나치게 긴 숫자를 넣어도 표시가 깨지지 않고 초과로 처리된다", async () => {
+      const user = userEvent.setup();
+      render(<Harness />);
+
+      await user.type(getInput(), "9".repeat(400));
+
+      expect(getInput()).not.toHaveValue("∞");
+      expect(getNext()).toBeDisabled();
+      expect(screen.getByText(TOAST_TEXT)).toBeInTheDocument();
+    });
+  });
+
+  describe("키보드 대응", () => {
+    it("입력에 포커스가 있으면 터치 기기에서 CTA를 숨기고, 벗어나면 다시 보인다", async () => {
+      const user = userEvent.setup();
+      render(<Harness />);
+      const cta = getNext().closest(".fixed");
+
+      expect(cta).not.toHaveClass("pointer-coarse:hidden");
+      await user.click(getInput());
+      expect(cta).toHaveClass("pointer-coarse:hidden");
+      await user.click(screen.getByText("얼마를 보탤까요?"));
+      expect(cta).not.toHaveClass("pointer-coarse:hidden");
+    });
+  });
+
   describe("금액 칩", () => {
     it("칩을 누를 때마다 금액이 누적된다", async () => {
       const user = userEvent.setup();

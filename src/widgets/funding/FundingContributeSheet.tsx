@@ -21,6 +21,9 @@ const AMOUNT_CHIPS: ComboboxChip[] = [5000, 10000, 50000].map(amount => ({
   value: String(amount),
 }));
 
+// 지나치게 긴 입력이 Number 정밀도 손실·Infinity로 표시가 깨지지 않게 막는다 (초과 검증은 그대로 걸린다)
+const capAmount = (value: number) => Math.min(value, Number.MAX_SAFE_INTEGER);
+
 type FundingContributeSheetProps = {
   open: boolean;
   hostName: string;
@@ -94,10 +97,10 @@ export default function FundingContributeSheet({
             chips={AMOUNT_CHIPS}
             chipPosition="bottom"
             value={amount ? amount.toLocaleString("ko-KR") : ""}
-            onChange={event => setAmount(Number(event.target.value.replace(/\D/g, "")))}
+            onChange={event => setAmount(capAmount(Number(event.target.value.replace(/\D/g, ""))))}
             onClear={() => setAmount(0)}
             // 칩은 누를 때마다 금액을 더한다 (5,000 → 10,000 → 15,000)
-            onChipSelect={chip => setAmount(prev => prev + Number(chip.value))}
+            onChipSelect={chip => setAmount(prev => capAmount(prev + Number(chip.value)))}
             error={isOverMax}
           />
         </motion.div>

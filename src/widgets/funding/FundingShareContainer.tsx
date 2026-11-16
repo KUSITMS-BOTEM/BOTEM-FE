@@ -46,6 +46,7 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isContributeOpen, setIsContributeOpen] = useState(false);
   const closePopup = () => setIsPopupOpen(false);
+  const remainingAmount = funding.targetAmount - funding.currentAmount;
 
   return (
     <main className="flex min-h-dvh flex-col">
@@ -94,7 +95,7 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
         unconfirmedCount={funding.unconfirmedCount}
         friends={funding.friends}
         ownerName={funding.hostName}
-        isClosed={false}
+        isClosed={remainingAmount <= 0}
         onClose={closePopup}
         onUnconfirmedClick={noop}
         onEditClick={noop}
@@ -108,7 +109,7 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
       <FundingContributeSheet
         open={isContributeOpen}
         hostName={funding.hostName}
-        maxAmount={funding.targetAmount - funding.currentAmount}
+        maxAmount={remainingAmount}
         onClose={() => setIsContributeOpen(false)}
         onNext={noop}
       />
