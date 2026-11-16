@@ -1,3 +1,7 @@
+"use client";
+
+import { useLayoutEffect, useRef, useState } from "react";
+
 import Badge from "@/components/Badge";
 import { cn } from "@/utils/cn";
 import {
@@ -60,6 +64,9 @@ const CARD_THEME: Record<FundingCardColor, CardTheme> = {
 const FILL =
   "[background-image:radial-gradient(ellipse_194px_243.1px_at_50%_50%,rgb(255_255_255/0)_0%,rgb(255_255_255/0.04)_65%,rgb(255_255_255/0.18)_100%),linear-gradient(130.45deg,rgb(255_240_235/0)_-48.2%,var(--card-1)_15.1%,var(--card-2)_77.2%,var(--card-3)_97.1%)]";
 
+// Tailwind의 w-80(320px)과 같은 값. 확대 배율의 기준 폭이다
+const CARD_DESIGN_WIDTH = 320;
+
 type FundingProgressCardProps = {
   /** 색상을 고정하는 키라서 제목처럼 바뀌는 값이 아닌 펀딩 고유 id를 넘긴다 */
   fundingId: number | string;
@@ -87,57 +94,77 @@ export default function FundingProgressCard({
   // 금액을 다 채운 마감이 기간 마감보다 우선한다
   const closedLabel = getClosedLabel({ currentAmount, targetAmount, deadline });
 
+  // 카드는 320×401 기준 px로 그려져 있어, 부모 가로 실측값에 맞춰 통째로 비율 확대한다.
+  // CSS만으로 길이÷길이를 하는 기법(tan(atan2()))은 브라우저마다 계산이 달라 쓰지 않는다
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useLayoutEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const update = () => {
+      if (el.clientWidth > 0) setScale(el.clientWidth / CARD_DESIGN_WIDTH);
+    };
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section
-      aria-label={`${productName} 펀딩 진행 상황`}
-      data-color={color}
-      className={cn("relative flex h-100.25 w-80 flex-col items-start p-3", className)}>
-      <div
-        aria-hidden
-        className={cn(
-          "absolute inset-0 rounded-4xl bg-white shadow-[0_15px_18.5px_0]",
-          theme.shadow,
-        )}
-      />
-      {theme.glow && (
+    <div ref={wrapperRef} className={cn("relative aspect-320/401 w-full", className)}>
+      <section
+        aria-label={`${productName} 펀딩 진행 상황`}
+        data-color={color}
+        style={{ transform: `scale(${scale})` }}
+        className="absolute top-0 left-0 flex h-100.25 w-80 origin-top-left flex-col items-start p-3">
         <div
           aria-hidden
           className={cn(
-            "absolute top-84.5 left-[16.33px] h-23.5 w-70.25 rounded-[155px] opacity-41 blur-[26.2px]",
-            theme.glow,
+            "absolute inset-0 rounded-4xl bg-white shadow-[0_15px_18.5px_0]",
+            theme.shadow,
           )}
         />
-      )}
-      <div aria-hidden className={cn("absolute inset-0 rounded-4xl blur-[1px]", theme.blur)} />
-      <div aria-hidden className={cn("absolute inset-0 rounded-4xl", FILL, theme.stops)} />
-      <FundingProgressGraphic color={color} />
-      <div className="text-semantic-text-on-fill relative flex min-h-0 w-full flex-1 flex-col justify-between">
-        <ProductInfo
-          productImageUrl={productImageUrl}
-          productName={productName}
-          deadline={deadline}
-        />
-        <div className="flex w-full flex-col items-start gap-2 px-3 pt-1 pb-2">
-          {closedLabel && <Badge label={closedLabel} />}
-          <p className="px-0.5 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-title-x-small-weak)]">
-            {getFundingProgressMessage(percent)}
-          </p>
-          <div className="flex flex-col gap-1">
-            <p
-              role="progressbar"
-              aria-label="펀딩 달성률"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={percent}
-              className="whitespace-nowrap [font:900_72px/0.79_Pretendard]">
-              {percent}%
+        {theme.glow && (
+          <div
+            aria-hidden
+            className={cn(
+              "absolute top-84.5 left-[16.33px] h-23.5 w-70.25 rounded-[155px] opacity-41 blur-[26.2px]",
+              theme.glow,
+            )}
+          />
+        )}
+        <div aria-hidden className={cn("absolute inset-0 rounded-4xl blur-[1px]", theme.blur)} />
+        <div aria-hidden className={cn("absolute inset-0 rounded-4xl", FILL, theme.stops)} />
+        <FundingProgressGraphic color={color} />
+        <div className="text-semantic-text-on-fill relative flex min-h-0 w-full flex-1 flex-col justify-between">
+          <ProductInfo
+            productImageUrl={productImageUrl}
+            productName={productName}
+            deadline={deadline}
+          />
+          <div className="flex w-full flex-col items-start gap-2 px-3 pt-1 pb-2">
+            {closedLabel && <Badge label={closedLabel} />}
+            <p className="px-0.5 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-title-x-small-weak)]">
+              {getFundingProgressMessage(percent)}
             </p>
-            <p className="px-0.5 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-subtext-large)]">
-              목표가 {targetAmount.toLocaleString("ko-KR")}원
-            </p>
+            <div className="flex flex-col gap-1">
+              <p
+                role="progressbar"
+                aria-label="펀딩 달성률"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={percent}
+                className="whitespace-nowrap [font:900_72px/0.79_Pretendard]">
+                {percent}%
+              </p>
+              <p className="px-0.5 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-subtext-large)]">
+                목표가 {targetAmount.toLocaleString("ko-KR")}원
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

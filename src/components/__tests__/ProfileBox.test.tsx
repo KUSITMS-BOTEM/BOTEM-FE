@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 
-import ProfileBox from "@/widgets/home/ProfileBox";
+import ProfileBox from "@/components/ProfileBox";
 
 describe("ProfileBox", () => {
   it("profiles 개수만큼 아바타(svg)를 렌더한다", () => {
