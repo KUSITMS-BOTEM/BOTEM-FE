@@ -66,10 +66,16 @@ describe("FundingCard", () => {
     expect(screen.getByText("+3")).toBeInTheDocument();
   });
 
-  it("default 타입에서 participants가 빈 배열이면 프로필 영역이 없다", () => {
+  it("default 타입에서 participants가 빈 배열이어도 추가 인원이 있으면 '+N'을 표시한다", () => {
     render(<FundingCard {...baseProps} participants={[]} extraParticipantCount={3} />);
 
-    expect(screen.queryByText("+3")).not.toBeInTheDocument();
+    expect(screen.getByText("+3")).toBeInTheDocument();
+  });
+
+  it("default 타입에서 participants가 빈 배열이고 추가 인원도 0이면 프로필 영역이 없다", () => {
+    render(<FundingCard {...baseProps} participants={[]} extraParticipantCount={0} />);
+
+    expect(screen.queryByText(/^\+\d+$/)).not.toBeInTheDocument();
   });
 
   it("default 타입에서 pendingCount가 양수면 '확인대기 N' 배지를 표시한다", () => {
