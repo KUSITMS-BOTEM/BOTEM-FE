@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import ProfileBox from "@/components/ProfileBox";
 import Tooltip from "@/components/Tooltip";
 import BotemPopup from "@/widgets/funding/BotemPopup";
+import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
 import FundingMessage from "@/widgets/funding/FundingMessage";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
 import SampleProduct from "@/assets/images/samples/sample-product.png";
@@ -43,6 +44,7 @@ const noop = () => {};
 export default function FundingShareContainer({ fundingId }: FundingShareContainerProps) {
   const funding = MOCK_FUNDING;
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isContributeOpen, setIsContributeOpen] = useState(false);
   const closePopup = () => setIsPopupOpen(false);
 
   return (
@@ -97,7 +99,18 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
         onUnconfirmedClick={noop}
         onEditClick={noop}
         onMessageClick={noop}
-        onContributeClick={noop}
+        onContributeClick={() => {
+          closePopup();
+          setIsContributeOpen(true);
+        }}
+      />
+      {/* TODO: 다음 단계(메시지·결제) 디자인이 정해지면 onNext를 연결한다 */}
+      <FundingContributeSheet
+        open={isContributeOpen}
+        hostName={funding.hostName}
+        maxAmount={funding.targetAmount - funding.currentAmount}
+        onClose={() => setIsContributeOpen(false)}
+        onNext={noop}
       />
     </main>
   );
