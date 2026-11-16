@@ -20,7 +20,7 @@ const meta = {
   argTypes: {
     type: { control: "inline-radio", options: ["default", "notification", "open"] },
     progress: { control: { type: "range", min: 0, max: 100, step: 1 } },
-    participants: { control: "check", options: ["orange", "lime", "pink"] },
+    participants: { control: "object" },
     productImageUrl: { control: false },
     className: { control: false },
   },
@@ -32,7 +32,7 @@ const meta = {
     progress: 40,
     dDay: 7,
     targetAmount: 999999999,
-    participants: ["orange", "lime", "pink"],
+    participants: [{ color: "orange" }, { color: "lime" }, { color: "pink" }],
     extraParticipantCount: 99,
     pendingCount: 2,
     isSurprise: true,

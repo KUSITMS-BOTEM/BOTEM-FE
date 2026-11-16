@@ -1,6 +1,6 @@
 import { clientApi } from "@/apis/client";
 import type { RegisterOnboardingRequest } from "@/types/user/onboarding";
-import type { MyProfile } from "@/types/user/profile";
+import type { MyProfile, UpdateMyProfileRequest } from "@/types/user/profile";
 import type {
   CreateProfileImageUploadUrlRequest,
   ProfileImageUploadUrlResponse,
@@ -8,6 +8,8 @@ import type {
 
 export const userService = {
   getMyProfile: () => clientApi.get<MyProfile>("/api/users/me/profile"),
+  updateMyProfile: (body: UpdateMyProfileRequest) =>
+    clientApi.put<MyProfile>("/api/users/me/profile", body),
   completeOnboarding: (body: RegisterOnboardingRequest) =>
     clientApi.post<null>("/api/users/me/onboarding", body),
   withdraw: () => clientApi.deleteAuth<null>("/api/users/me"),

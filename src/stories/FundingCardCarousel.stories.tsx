@@ -10,7 +10,7 @@ const baseCard: Omit<FundingCardData, "id"> = {
   progress: 40,
   dDay: 7,
   targetAmount: 999999999,
-  participants: ["orange", "lime", "pink"],
+  participants: [{ color: "orange" }, { color: "lime" }, { color: "pink" }],
   extraParticipantCount: 99,
   pendingCount: 2,
   isSurprise: true,

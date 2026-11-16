@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import Profile from "@/components/Profile";
-import SampleProduct from "@/assets/images/samples/sample-product.png";
+import SampleProduct from "@/assets/images/samples/cat.jpg";
 
 const meta = {
   title: "Components/Profile",
