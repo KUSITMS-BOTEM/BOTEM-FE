@@ -48,6 +48,7 @@ export default function LetterWriteSheet({
 }: LetterWriteSheetProps) {
   const [text, setText] = useState("");
   const [name, setName] = useState("");
+  const [shrunk, setShrunk] = useState(false);
   const [color, setColor] = useState<Color>("orange");
   const [toolOpen, setToolOpen] = useState(false);
   // 툴 영역을 한 번 연 뒤에는 안내 말풍선을 다시 보여주지 않는다
@@ -80,6 +81,7 @@ export default function LetterWriteSheet({
   // 시트를 닫으면 다음에 열 때 빈 편지로 시작한다
   const handleClose = () => {
     setText("");
+    setShrunk(false);
     setName("");
     setColor("orange");
     setToolOpen(false);
@@ -96,7 +98,7 @@ export default function LetterWriteSheet({
   };
 
   return (
-    <OpenSheet open={open} title="" closeType="back" onClose={handleClose}>
+    <OpenSheet open={open} title="" closeType="back" onClose={handleClose} hideScrollbar>
       <div
         onFocus={handleFocus}
         onBlur={() => setIsTyping(false)}
@@ -118,12 +120,18 @@ export default function LetterWriteSheet({
             color={color}
             text={text}
             senderName={name}
+            forceSmallText={shrunk}
             textTopInset={!isLoggedIn && nameOpen}
             onSenderClick={isLoggedIn ? undefined : handleSenderClick}
             textSlot={
               <LetterWriteBody
                 text={text}
-                onTextChange={setText}
+                onTextChange={value => {
+                  setText(value);
+                  if (value === "") setShrunk(false);
+                }}
+                shrunk={shrunk}
+                onShrink={() => setShrunk(true)}
                 placeholder={`${withVocativeParticle(recipientName)} 생일 축하해!`}
                 name={name}
                 onNameChange={isLoggedIn || !nameOpen ? undefined : setName}

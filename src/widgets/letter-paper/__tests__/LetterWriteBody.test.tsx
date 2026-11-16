@@ -122,18 +122,27 @@ describe("LetterWriteBody", () => {
       expect(onTextChange).toHaveBeenLastCalledWith("안녕");
     });
 
-    it("한글 조합 중에는 글을 되돌리지 않고 조합이 끝난 뒤에 되돌린다", () => {
+    it("한글 조합 중인 글자가 영역을 넘치면 조합이 끝나기를 기다리지 않고 되돌린다", () => {
       render(<Harness onTextChange={vi.fn()} />);
       setHeights(243);
       type("안녕");
 
       setHeights(270);
       fireEvent.compositionStart(letterInput());
-      type("안녕하");
-      expect(letterInput()).toHaveTextContent("안녕하");
+      type("안녕ㅎ");
 
-      fireEvent.compositionEnd(letterInput());
       expect(letterInput()).toHaveTextContent(/^안녕$/);
+    });
+
+    it("한글 조합 중인 글자가 영역 안이면 덮어쓰지 않는다", () => {
+      render(<Harness onTextChange={vi.fn()} />);
+      setHeights(243);
+      type("안녕");
+
+      fireEvent.compositionStart(letterInput());
+      type("안녕하");
+
+      expect(letterInput()).toHaveTextContent("안녕하");
     });
 
     it("반올림으로 생기는 1px 오차는 넘친 것으로 보지 않는다", () => {

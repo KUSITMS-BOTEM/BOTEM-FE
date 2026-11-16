@@ -35,6 +35,8 @@ export type LetterPaperProps = {
   textTopInset?: boolean;
   // 있으면 'Profile + From. 이름' 영역이 버튼이 된다(편지 작성 화면에서 이름 입력란을 다시 연다)
   onSenderClick?: () => void;
+  // 글자 수와 무관하게 작은 글씨로 고정한다(편지 작성 화면에서 글이 큰 글씨 영역을 넘칠 때)
+  forceSmallText?: boolean;
   className?: string;
 };
 
@@ -64,9 +66,10 @@ export default function LetterPaper({
   textSlot,
   textTopInset = false,
   onSenderClick,
+  forceSmallText = false,
   className,
 }: LetterPaperProps) {
-  const size = getLetterTextSize(text);
+  const size = forceSmallText ? "small" : getLetterTextSize(text);
   const SenderTag = onSenderClick ? "button" : "div";
   const dotColorClass = LETTER_PAPER_DOT_COLOR_CLASS[style]?.[color];
 

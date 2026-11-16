@@ -14,6 +14,9 @@ type LetterWriteBodyProps = {
   onNameBlur?: () => void;
   // 이름 입력란을 다시 열 때 바로 입력할 수 있게 포커스를 준다
   nameAutoFocus?: boolean;
+  // 이미 작은 글씨로 줄었는지, 큰 글씨 영역을 넘쳤을 때 줄이도록 요청하는 콜백
+  shrunk?: boolean;
+  onShrink?: () => void;
 };
 
 // 소수점 줄 높이(22.95px×11줄)가 반올림되며 생기는 오차는 넘친 것으로 보지 않는다
@@ -39,6 +42,8 @@ export default function LetterWriteBody({
   onNameChange,
   onNameBlur,
   nameAutoFocus,
+  shrunk = false,
+  onShrink,
 }: LetterWriteBodyProps) {
   // 편집 영역의 글자는 DOM이 관리한다. React가 다시 그리면 한글 조합 중 커서가 튀므로 처음 값만 넣는다
   const [initialText] = useState(text);
@@ -52,21 +57,34 @@ export default function LetterWriteBody({
   const fitToArea = () => {
     const editor = editorRef.current;
     const area = editor?.parentElement;
-    // 한글 조합 중에 글자를 덮어쓰면 조합이 끊기므로 조합이 끝난 뒤(onCompositionEnd)에 검사한다
-    if (!editor || !area || composingRef.current) return;
+    if (!editor || !area) return;
+    const composing = composingRef.current;
     const available = area.clientHeight - (parseFloat(getComputedStyle(area).paddingTop) || 0);
     // 이름 입력란이 다시 열려 이미 넘친 글도 지우는 동작은 막지 않도록 글이 늘어난 경우만 되돌린다
     const grew = (editor.textContent ?? "").length > lastFitTextRef.current.length;
     if (grew && editor.offsetHeight - available > OVERFLOW_TOLERANCE_PX) {
+      // 큰 글씨 영역을 넘으면 막기 전에 작은 글씨로 줄여 다시 잰다(shrunk가 바뀌면 아래 effect가 재검사)
+      if (!shrunk && onShrink) {
+        onShrink();
+        return;
+      }
+      // 조합 중인 글자(마지막 자모)가 새 줄을 만들면, 조합을 먼저 blur로 확정한 뒤에야 글을 덮어써도 입력이 끊기지 않는다
+      if (composing) {
+        composingRef.current = false;
+        editor.blur();
+      }
       editor.textContent = lastFitTextRef.current;
+      if (composing) editor.focus();
       moveCaretToEnd(editor);
       onTextChange(lastFitTextRef.current);
       return;
     }
+    // 조합 중에는 확정된 글만 기준으로 삼아야 조합 글자가 넘쳤을 때 그 앞 상태로 되돌릴 수 있다
+    if (composing) return;
     lastFitTextRef.current = editor.textContent ?? "";
   };
 
-  useLayoutEffect(fitToArea, [text]); // eslint-disable-line react-hooks/exhaustive-deps
+  useLayoutEffect(fitToArea, [text, shrunk]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
