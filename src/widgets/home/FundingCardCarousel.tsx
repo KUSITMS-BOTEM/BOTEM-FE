@@ -6,7 +6,7 @@ import { cn } from "@/utils/cn";
 import FundingCard, { type FundingCardProps } from "@/widgets/home/FundingCard";
 import PageIndicator from "@/widgets/home/PageIndicator";
 
-export type FundingCardData = Omit<FundingCardProps, "className" | "animateGift"> & {
+export type FundingCardData = Omit<FundingCardProps, "className" | "animate"> & {
   id: string | number;
 };
 
@@ -81,12 +81,12 @@ export default function FundingCardCarousel({
       <div className="relative flex w-full">
         {prev && (
           <div aria-hidden className={cn(PEEK_STYLE, "left-[-96.86px] origin-left")}>
-            <FundingCard {...prev} onClick={undefined} animateGift={false} />
+            <FundingCard {...prev} onClick={undefined} animate={false} />
           </div>
         )}
         {next && (
           <div aria-hidden className={cn(PEEK_STYLE, "right-[-96.86px] origin-right")}>
-            <FundingCard {...next} onClick={undefined} animateGift={false} />
+            <FundingCard {...next} onClick={undefined} animate={false} />
           </div>
         )}
         <AnimatePresence initial={animateOnMount} custom={direction} mode="popLayout">
