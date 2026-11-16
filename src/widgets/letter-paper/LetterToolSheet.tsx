@@ -42,7 +42,7 @@ const TOOLS = [
 
 export default function LetterToolSheet({ onClose }: LetterToolSheetProps) {
   return (
-    <div className="absolute inset-x-0 bottom-0 z-20 px-4 pt-1 pb-[calc(0.125rem+env(safe-area-inset-bottom))]">
+    <div className="w-full px-4 pt-1">
       <div className="bg-semantic-fill-default/70 flex h-[168px] flex-col gap-2 overflow-clip rounded-2xl px-4 pt-3 pb-4 shadow-[0_4px_16px_var(--color-semantic-shadow-weak)]">
         <div className="flex items-start gap-2">
           <p className="text-semantic-text-strong min-w-0 flex-1 [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-medium)]">

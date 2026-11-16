@@ -83,12 +83,7 @@ export default function LetterWriteSheet({
   };
 
   return (
-    <OpenSheet
-      open={open}
-      title=""
-      closeType="back"
-      onClose={onClose}
-      overlay={toolOpen && <LetterToolSheet onClose={() => setToolOpen(false)} />}>
+    <OpenSheet open={open} title="" closeType="back" onClose={onClose}>
       <div
         onFocus={handleFocus}
         onBlur={() => setIsTyping(false)}
@@ -131,6 +126,7 @@ export default function LetterWriteSheet({
             tooltip={!tooltipDismissed}
             className="-mx-5 w-[calc(100%+2.5rem)]"
           />
+          {toolOpen && <LetterToolSheet onClose={() => setToolOpen(false)} />}
         </motion.div>
         <BottomCTA className={cn(isTyping && "pointer-coarse:hidden")}>
           <motion.div
