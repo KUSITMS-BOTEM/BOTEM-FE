@@ -7,6 +7,8 @@ import EmptyFloorShadow from "@/assets/icons/multicolor/empty-floor-shadow.svg?r
 
 const DURATION_S = 4;
 const SINE: Easing = [0.37, 0, 0.63, 1];
+const STANDARD: Easing = [0.4, 0, 0.2, 1];
+const DECELERATE: Easing = [0, 0, 0.2, 1];
 
 type DotBlink = { opacity: number[]; times: number[] };
 
@@ -36,8 +38,22 @@ export default function EmptyIllustration({ className }: EmptyIllustrationProps)
         "relative flex h-50 w-80 shrink-0 flex-col items-center justify-center",
         className,
       )}>
-      <EmptyFloorShadow className="absolute top-[126px] left-[86px]" />
-      <div className="bg-base-gray-50 relative flex size-28 items-center justify-center gap-2.5 overflow-clip rounded-full">
+      <motion.div
+        className="absolute top-[126px] left-[86px]"
+        initial={reduceMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1, duration: 0.55, ease: STANDARD }}>
+        <EmptyFloorShadow />
+      </motion.div>
+      <motion.div
+        className="bg-base-gray-50 relative flex size-28 items-center justify-center gap-2.5 overflow-clip rounded-full"
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.94, y: 6 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{
+          opacity: { duration: 0.55, ease: STANDARD },
+          scale: { duration: 0.65, ease: DECELERATE },
+          y: { duration: 0.65, ease: DECELERATE },
+        }}>
         {DOTS.map(({ opacity, times }, index) => (
           <motion.div
             key={index}
@@ -48,7 +64,7 @@ export default function EmptyIllustration({ className }: EmptyIllustrationProps)
             <EmptyDot />
           </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -1,13 +1,22 @@
-import { useId } from "react";
+import { useId, useState } from "react";
 import Image from "next/image";
+import { useReducedMotion } from "framer-motion";
 import { cn } from "@/utils/cn";
 import Badge from "@/components/Badge";
-import FundingCardGiftCover from "@/widgets/home/FundingCardGiftCover";
+import FundingCardCompleteFx from "@/widgets/home/FundingCardCompleteFx";
+import FundingCardExpiredFx from "@/widgets/home/FundingCardExpiredFx";
+import type { FundingCardFxPhase } from "@/widgets/home/fundingCardFxMotion";
 import ProfileBox, { type ProfileBoxItem } from "@/components/ProfileBox";
 import ProgressBar from "@/widgets/home/ProgressBar";
 import IconLock from "@/assets/icons/icon-lock.svg?react";
 
-export type FundingCardType = "default" | "notification" | "open";
+export type FundingCardType = "default" | "notification" | "complete" | "open";
+
+const FX_LABEL: Partial<Record<FundingCardType, (pendingCount: number) => string>> = {
+  notification: count => `확인 대기 ${count}건을 확인하고 터트려보아요!`,
+  complete: () => "전부 다 모였어요. 펑! 터트려볼까요?",
+  open: () => "기간이 만료되었어요.",
+};
 
 export type FundingCardProps = {
   type?: FundingCardType;
@@ -21,7 +30,8 @@ export type FundingCardProps = {
   extraParticipantCount?: number;
   pendingCount?: number;
   isSurprise?: boolean;
-  animateGift?: boolean;
+  animate?: boolean;
+  fxPaused?: boolean;
   onClick?: () => void;
   className?: string;
 };
@@ -38,97 +48,127 @@ export default function FundingCard({
   extraParticipantCount = 0,
   pendingCount = 0,
   isSurprise = false,
-  animateGift = true,
+  animate = true,
+  fxPaused = false,
   onClick,
   className,
 }: FundingCardProps) {
-  const isGiftCover = type !== "default";
+  const fxLabel = FX_LABEL[type]?.(pendingCount);
   const titleId = useId();
+  const fxLabelId = useId();
+  const reduceMotion = useReducedMotion();
+  const [fxPhase, setFxPhase] = useState<FundingCardFxPhase>("idle");
+  const fxAnimate = animate && !reduceMotion;
+
+  const handleClick = () => {
+    if (!fxLabel || !fxAnimate) return onClick?.();
+    if (fxPhase !== "idle") return;
+    if (type === "complete") return setFxPhase("burst");
+    if (type === "open") return setFxPhase("press");
+    setFxPhase("press");
+    onClick?.();
+  };
+
+  const card = (
+    <div className="relative flex w-full flex-col overflow-clip rounded-3xl">
+      <div className="relative flex h-63.75 w-full flex-col items-start gap-2.5 px-4 pt-5">
+        <div className="absolute inset-[0_0_-12.68%_0]">
+          <Image
+            src={productImageUrl}
+            alt={productName}
+            fill
+            unoptimized
+            className="object-cover"
+          />
+          <div
+            aria-hidden
+            className="to-semantic-fill-default absolute inset-0 bg-linear-to-b from-transparent from-64% to-88%"
+          />
+        </div>
+        {/* open(참여자 0명)은 Figma상 프로필·배지 없이 만료 안내만 보인다 */}
+        {type !== "open" && (participants.length > 0 || extraParticipantCount > 0) && (
+          <ProfileBox
+            profiles={participants}
+            extraCount={extraParticipantCount}
+            className="shrink-0"
+          />
+        )}
+        {type !== "open" && pendingCount > 0 && (
+          <Badge
+            color="danger"
+            label={`확인대기 ${pendingCount}`}
+            className="absolute bottom-0 left-4"
+          />
+        )}
+      </div>
+      <div className="from-semantic-fill-default to-semantic-fill-default/60 relative flex w-full flex-col gap-4 bg-linear-to-b px-4 pt-2.5 pb-5">
+        <div className="flex w-full flex-col gap-1">
+          <div className="flex w-full min-w-0 items-center gap-1">
+            <p
+              id={titleId}
+              className="text-semantic-text-strong truncate [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-title-a2-z-x-small-weak)]">
+              {title}
+            </p>
+            {isSurprise && (
+              <IconLock
+                aria-label="서프라이즈 펀딩"
+                className="text-semantic-icon-secondary size-4 shrink-0"
+              />
+            )}
+          </div>
+          <p className="text-semantic-text-secondary w-full truncate [letter-spacing:var(--letter-spacing-default)] opacity-72 [font:var(--semantic-subtext-large)]">
+            {productName}
+          </p>
+        </div>
+        <div className="flex w-full flex-col gap-1">
+          <ProgressBar progress={progress} aria-labelledby={titleId} />
+          <div className="text-semantic-text-tertiary flex w-full items-center justify-between [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-subtext-medium)]">
+            <span>{dDay === null ? "마감" : `마감까지 D-${dDay}`}</span>
+            {targetAmount !== undefined && (
+              <span className="flex items-center gap-0.5">
+                <span>목표</span>
+                <span>{targetAmount.toLocaleString("ko-KR")}원</span>
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <article className={cn("relative flex w-80 flex-col items-center", className)}>
       <div className="absolute inset-x-[8.13%] -bottom-7 h-40.5 overflow-hidden rounded-full opacity-40 blur-[18.484px]">
         <Image src={productImageUrl} alt="" fill unoptimized className="object-cover" />
       </div>
-      <div className="relative flex w-full flex-col overflow-clip rounded-3xl">
-        <div className="relative flex h-63.75 w-full flex-col items-start gap-2.5 px-4 pt-5">
-          <div className="absolute inset-[0_0_-12.68%_0]">
-            <Image
-              src={productImageUrl}
-              alt={productName}
-              fill
-              unoptimized
-              className="object-cover"
-            />
-            <div
-              aria-hidden
-              className="to-semantic-fill-default absolute inset-0 bg-linear-to-b from-transparent from-64% to-88%"
-            />
-          </div>
-          {isGiftCover ? (
-            <FundingCardGiftCover
-              type={type}
-              pendingCount={pendingCount}
-              productImageUrl={productImageUrl}
-              animateGift={animateGift}
-            />
-          ) : (
-            <>
-              {(participants.length > 0 || extraParticipantCount > 0) && (
-                <ProfileBox
-                  profiles={participants}
-                  extraCount={extraParticipantCount}
-                  className="shrink-0"
-                />
-              )}
-              {pendingCount > 0 && (
-                <Badge
-                  color="danger"
-                  label={`확인대기 ${pendingCount}`}
-                  className="absolute bottom-0 left-4"
-                />
-              )}
-            </>
-          )}
-        </div>
-        <div className="from-semantic-fill-default to-semantic-fill-default/60 relative flex w-full flex-col gap-4 bg-linear-to-b px-4 pt-2.5 pb-5">
-          <div className={cn("flex w-full flex-col gap-1", isGiftCover && "opacity-50")}>
-            <div className="flex w-full min-w-0 items-center gap-1">
-              <p
-                id={titleId}
-                className="text-semantic-text-strong truncate [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-title-a2-z-x-small-weak)]">
-                {title}
-              </p>
-              {isSurprise && (
-                <IconLock
-                  aria-label="서프라이즈 펀딩"
-                  className="text-semantic-icon-secondary size-4 shrink-0"
-                />
-              )}
-            </div>
-            <p className="text-semantic-text-secondary w-full truncate [letter-spacing:var(--letter-spacing-default)] opacity-72 [font:var(--semantic-subtext-large)]">
-              {productName}
-            </p>
-          </div>
-          <div className={cn("flex w-full flex-col gap-1", isGiftCover && "opacity-50")}>
-            <ProgressBar progress={progress} aria-labelledby={titleId} />
-            <div className="text-semantic-text-tertiary flex w-full items-center justify-between [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-subtext-medium)]">
-              <span>{dDay === null ? "마감" : `마감까지 D-${dDay}`}</span>
-              {targetAmount !== undefined && (
-                <span className="flex items-center gap-0.5">
-                  <span>목표</span>
-                  <span>{targetAmount.toLocaleString("ko-KR")}원</span>
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      {type === "open" && fxLabel ? (
+        <FundingCardExpiredFx
+          label={fxLabel}
+          labelId={fxLabelId}
+          phase={fxPhase === "press" ? "press" : "idle"}
+          animate={fxAnimate}
+          onExitEnd={() => onClick?.()}>
+          {card}
+        </FundingCardExpiredFx>
+      ) : fxLabel ? (
+        <FundingCardCompleteFx
+          label={fxLabel}
+          labelId={fxLabelId}
+          phase={fxPhase}
+          animate={fxAnimate && !(fxPaused && fxPhase === "idle")}
+          onPressEnd={() => setFxPhase("idle")}
+          onBurstEnd={() => onClick?.()}>
+          {card}
+        </FundingCardCompleteFx>
+      ) : (
+        card
+      )}
       {onClick && (
         <button
           type="button"
           aria-labelledby={titleId}
-          onClick={onClick}
+          aria-describedby={fxLabel ? fxLabelId : undefined}
+          onClick={handleClick}
           className="focus-visible:ring-semantic-border-strong absolute inset-0 cursor-pointer rounded-3xl focus-visible:ring-2 focus-visible:outline-none"
         />
       )}

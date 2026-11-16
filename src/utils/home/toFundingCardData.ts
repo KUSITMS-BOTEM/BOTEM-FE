@@ -19,7 +19,8 @@ const PARTICIPANT_COLORS: Color[] = ["orange", "lime", "pink", "blue"];
 
 function toCardType(card: HomeFundingCardResponse): FundingCardType {
   if (card.cardType === "IN_PROGRESS") return "default";
-  return card.pendingContributionCount > 0 ? "notification" : "open";
+  if (card.pendingContributionCount > 0) return "notification";
+  return card.participantCount > 0 ? "complete" : "open";
 }
 
 function toParticipant(

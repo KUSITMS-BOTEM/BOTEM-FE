@@ -3,7 +3,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-import BottomSheet from "@/components/BottomSheet";
+import BottomSheet, { type BottomSheetEnterTransition } from "@/components/BottomSheet";
 import Button from "@/components/Button";
 import CheckBox from "@/components/CheckBox";
 import ToastMessage from "@/components/ToastMessage";
@@ -19,6 +19,11 @@ import PendingContributionList from "@/widgets/home/PendingContributionList";
 import IconRight from "@/assets/icons/icon-right.svg?react";
 
 const TOAST_DURATION_MS = 2500;
+// Pending 카드 탭 전환 스펙: 카드 눌림(0–0.32s)이 먼저 보이도록 딤(0.25–0.6s)·시트(0.28–0.85s, 오버슈트 없음) 진입을 늦춘다
+const PENDING_SHEET_ENTER: BottomSheetEnterTransition = {
+  dim: { delay: 0.25, duration: 0.35, ease: [0.4, 0, 0.2, 1] },
+  sheet: { delay: 0.28, duration: 0.57, ease: [0.32, 0.72, 0, 1] },
+};
 
 type ContributionToast = Pick<PendingContributionResponse, "contributionId" | "senderName"> & {
   status: Extract<ContributionStatus, "CONFIRMED" | "REJECTED">;
@@ -136,6 +141,7 @@ export default function PendingContributionBottomSheet({
       open={open}
       title="입금 확인"
       height="auto"
+      enterTransition={PENDING_SHEET_ENTER}
       onClose={handleClose}
       toast={
         <div className="flex w-full flex-col items-center gap-2">
