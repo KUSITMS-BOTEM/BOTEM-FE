@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import FundingTransferGuideSheet from "@/widgets/funding/FundingTransferGuideSheet";
@@ -29,9 +29,13 @@ const ACCOUNT = {
   accountNumber: "1000-1234-5678",
 } as const;
 
-type HarnessProps = { onClose?: () => void; onComplete?: () => void };
+type HarnessProps = {
+  onClose?: () => void;
+  onComplete?: () => void;
+  closeOnComplete?: boolean;
+};
 
-function Harness({ onClose, onComplete = vi.fn() }: HarnessProps) {
+function Harness({ onClose, onComplete = vi.fn(), closeOnComplete = false }: HarnessProps) {
   const [open, setOpen] = useState(true);
   return (
     <>
@@ -45,7 +49,10 @@ function Harness({ onClose, onComplete = vi.fn() }: HarnessProps) {
           onClose?.();
           setOpen(false);
         }}
-        onComplete={onComplete}
+        onComplete={() => {
+          onComplete();
+          if (closeOnComplete) setOpen(false);
+        }}
       />
     </>
   );
@@ -119,5 +126,62 @@ describe("FundingTransferGuideSheet", () => {
 
     await user.click(screen.getByRole("button", { name: "열기" }));
     expect(getCheckbox()).not.toBeChecked();
+  });
+
+  it("완료하기를 연속으로 눌러도 onComplete는 한 번만 호출된다", async () => {
+    const user = userEvent.setup();
+    const onComplete = vi.fn();
+    render(<Harness onComplete={onComplete} />);
+    await user.click(getCheckbox());
+
+    await user.dblClick(getComplete());
+
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it("완료 후 부모가 닫았다 다시 열면 체크가 해제되고 다시 완료할 수 있다", async () => {
+    const user = userEvent.setup();
+    const onComplete = vi.fn();
+    render(<Harness onComplete={onComplete} closeOnComplete />);
+    await user.click(getCheckbox());
+    await user.click(getComplete());
+
+    await user.click(screen.getByRole("button", { name: "열기" }));
+    expect(getCheckbox()).not.toBeChecked();
+    expect(getComplete()).toBeDisabled();
+
+    await user.click(getCheckbox());
+    await user.click(getComplete());
+    expect(onComplete).toHaveBeenCalledTimes(2);
+  });
+
+  describe("복사 토스트 표시 시간", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("연속으로 복사하면 마지막 복사 시점부터 2초 동안 보여준다", async () => {
+      // user-event는 가짜 타이머에서 멈추므로 클립보드 stub만 먼저 설치하고 클릭은 fireEvent로 한다
+      userEvent.setup();
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      render(<Harness />);
+      const copy = screen.getByRole("button", { name: "계좌복사" });
+      const clickCopy = () => act(async () => void fireEvent.click(copy));
+
+      await clickCopy();
+      expect(screen.getByText("계좌번호를 복사했어요")).toBeInTheDocument();
+
+      await act(() => vi.advanceTimersByTimeAsync(1500));
+      await clickCopy();
+      // 첫 복사 기준이었다면 이미 사라졌을 시점이다
+      await act(() => vi.advanceTimersByTimeAsync(1500));
+      expect(screen.getByText("계좌번호를 복사했어요")).toBeInTheDocument();
+
+      await act(() => vi.advanceTimersByTimeAsync(600));
+      vi.useRealTimers();
+      await waitFor(() =>
+        expect(screen.queryByText("계좌번호를 복사했어요")).not.toBeInTheDocument(),
+      );
+    });
   });
 });

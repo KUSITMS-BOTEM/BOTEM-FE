@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
@@ -43,34 +43,54 @@ export default function FundingTransferGuideSheet({
   const bank = BANKS.find(item => item.code === account.bank);
   const bankName = bank?.name ?? "";
 
-  useEffect(() => {
-    if (!copyResult) return;
-    const timer = setTimeout(() => setCopyResult(null), TOAST_DURATION_MS);
-    return () => clearTimeout(timer);
-  }, [copyResult]);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const completeLockRef = useRef(false);
 
-  // 시트를 닫으면 다음에 열 때 체크 해제 상태로 시작한다
-  const handleClose = () => {
-    setTransferred(false);
-    setCopyResult(null);
-    onClose();
+  // 닫히는 경로(뒤로가기·ESC·완료 후 부모가 닫음)와 상관없이 다음에 열 때 처음 상태로 시작한다
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (!open) {
+      setTransferred(false);
+      setCopyResult(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!open) completeLockRef.current = false;
+  }, [open]);
+
+  useEffect(() => () => clearTimeout(toastTimerRef.current), []);
+
+  // 같은 결과를 연속으로 복사해도 매번 표시 시간을 다시 잰다
+  const showCopyResult = (result: "success" | "fail") => {
+    setCopyResult(result);
+    clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setCopyResult(null), TOAST_DURATION_MS);
   };
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(`${bankName} ${account.accountNumber}`);
-      setCopyResult("success");
+      showCopyResult("success");
     } catch {
       // 권한 거부·비보안 컨텍스트에서는 복사가 실패한다
-      setCopyResult("fail");
+      showCopyResult("fail");
     }
+  };
+
+  // 연타·부모가 닫기 전 재클릭으로 onComplete가 두 번 불리지 않게 동기 잠금을 건다
+  const handleComplete = () => {
+    if (completeLockRef.current) return;
+    completeLockRef.current = true;
+    onComplete();
   };
 
   return (
     <OpenSheet
       open={open}
       title="보태러 가기"
-      onClose={handleClose}
+      onClose={onClose}
       closeType="back"
       className={className}
       overlay={
@@ -118,7 +138,7 @@ export default function FundingTransferGuideSheet({
             onChange={event => setTransferred(event.target.checked)}
           />
         }>
-        <Button color="brand" size="xlarge" disabled={!transferred} onClick={onComplete}>
+        <Button color="brand" size="xlarge" disabled={!transferred} onClick={handleComplete}>
           완료하기
         </Button>
       </BottomCTA>
