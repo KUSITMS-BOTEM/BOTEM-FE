@@ -27,9 +27,17 @@ export default function HeroMotion({ className }: HeroMotionProps) {
   const playing = !reduceMotion;
 
   return (
-    <div aria-hidden className={cn("relative h-77 w-80 shrink-0 overflow-hidden", className)}>
-      {playing &&
-        SNOW_CONFETTI.map((particle, index) => <HeroConfetti key={index} particle={particle} />)}
+    // 공이 Title 바로 밑에서 떨어지기 시작하도록 위쪽만 클리핑을 푼다 (좌우·아래는 그대로 자른다)
+    <div
+      aria-hidden
+      className={cn("relative h-77 w-80 shrink-0 [clip-path:inset(-100vh_0_0_0)]", className)}>
+      {playing && (
+        <div className="absolute inset-0 overflow-hidden">
+          {SNOW_CONFETTI.map((particle, index) => (
+            <HeroConfetti key={index} particle={particle} />
+          ))}
+        </div>
+      )}
       <div className="absolute inset-0 translate-x-2 translate-y-4">
         {playing && (
           <>
