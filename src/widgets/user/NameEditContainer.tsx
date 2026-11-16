@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -8,35 +8,54 @@ import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
 import CloseSheet from "@/components/CloseSheet";
 import TextField from "@/components/TextField";
+import { useUpdateMyProfileMutation } from "@/hooks/mutations/user/useUpdateMyProfileMutation";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
+import { getDisplayName } from "@/utils/user/getDisplayName";
 
 type NameEditContainerProps = { open?: boolean; onClose?: () => void };
 
 export default function NameEditContainer({ open = true, onClose }: NameEditContainerProps) {
   const router = useRouter();
   const { data: profile } = useMyProfileQuery();
+  const { mutate: updateProfile, isPending } = useUpdateMyProfileMutation();
   const [nickname, setNickname] = useState("");
   const [synced, setSynced] = useState(false);
+  const isSavingRef = useRef(false);
+  const close = onClose ?? (() => router.back());
 
   if (profile && !synced) {
     setSynced(true);
-    setNickname(profile.nickname);
+    setNickname(getDisplayName(profile));
   }
 
+  const handleSave = () => {
+    if (!profile?.birthday || isSavingRef.current) return;
+    isSavingRef.current = true;
+    updateProfile(
+      { name: nickname.trim(), birthday: profile.birthday },
+      {
+        onSuccess: close,
+        // 시트는 닫혀도 언마운트되지 않아, 다음에 다시 열었을 때 저장할 수 있게 성공 후에도 잠금을 푼다
+        onSettled: () => (isSavingRef.current = false),
+      },
+    );
+  };
+
   return (
-    <CloseSheet
-      open={open}
-      title="이름 수정"
-      closeType="back"
-      onClose={onClose ?? (() => router.back())}>
+    <CloseSheet open={open} title="이름 수정" closeType="back" onClose={close}>
       <TextField
         label="이름"
         value={nickname}
         onChange={event => setNickname(event.target.value)}
       />
-      {/* 이름 수정 API 명세가 나오기 전이라 저장 동작은 아직 연결하지 않았다 */}
       <BottomCTA>
-        <Button color="brand" size="xlarge" disabled={!nickname.trim()}>
+        <Button
+          color="brand"
+          size="xlarge"
+          // 수정 API가 생일을 필수로 받는다. 온보딩에서 생일을 필수로 받아 실제로는 비어 있지 않다
+          disabled={!nickname.trim() || !profile?.birthday}
+          states={isPending ? "loading" : "default"}
+          onClick={handleSave}>
           수정 완료
         </Button>
       </BottomCTA>

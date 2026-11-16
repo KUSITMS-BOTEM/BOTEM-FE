@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/utils/cn";
 import ProfileOrange from "@/assets/icons/multicolor/profile-orange.svg?react";
 import ProfileLime from "@/assets/icons/multicolor/profile-lime.svg?react";
@@ -14,8 +15,13 @@ const PROFILE_ICON: Record<Color, typeof ProfileOrange> = {
 
 const MAX_EXTRA_COUNT = 99;
 
+export type ProfileBoxItem = {
+  color: Color;
+  imageUrl?: string;
+};
+
 type ProfileBoxProps = {
-  profiles: Color[];
+  profiles: ProfileBoxItem[];
   extraCount?: number;
   notification?: boolean;
   className?: string;
@@ -30,20 +36,28 @@ export default function ProfileBox({
   return (
     <div
       className={cn(
-        "bg-semantic-fill-default/70 relative flex min-w-14.5 items-center justify-center rounded-full p-2 shadow-[0_4px_16px_0_var(--color-semantic-shadow-weak)]",
+        "bg-semantic-fill-default/70 relative flex items-center justify-center rounded-full p-2 shadow-[0_4px_16px_0_var(--color-semantic-shadow-weak)]",
         className,
       )}>
       <span className="sr-only">참여자 {profiles.length + extraCount}명</span>
-      <div className="-mr-1 flex items-center">
-        {profiles.map((color, index) => {
+      <div className={cn("flex items-center", extraCount > 0 && "-mr-1")}>
+        {profiles.map(({ color, imageUrl }, index) => {
+          const className = cn("size-6 shrink-0", index < profiles.length - 1 && "-mr-1");
+          if (imageUrl) {
+            return (
+              <span
+                key={index}
+                aria-hidden
+                className={cn(
+                  "border-semantic-border-inverted relative overflow-hidden rounded-full border",
+                  className,
+                )}>
+                <Image src={imageUrl} alt="" fill unoptimized className="object-cover" />
+              </span>
+            );
+          }
           const Icon = PROFILE_ICON[color];
-          return (
-            <Icon
-              key={index}
-              aria-hidden
-              className={cn("size-6 shrink-0", index < profiles.length - 1 && "-mr-1")}
-            />
-          );
+          return <Icon key={index} aria-hidden className={className} />;
         })}
       </div>
       {extraCount > 0 && (

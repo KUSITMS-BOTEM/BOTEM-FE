@@ -56,7 +56,11 @@ describe("FundingCard", () => {
 
   it("default 타입에서 participants가 있으면 프로필과 '+N'을 표시한다", () => {
     render(
-      <FundingCard {...baseProps} participants={["orange", "lime"]} extraParticipantCount={3} />,
+      <FundingCard
+        {...baseProps}
+        participants={[{ color: "orange" }, { color: "lime" }]}
+        extraParticipantCount={3}
+      />,
     );
 
     expect(screen.getByText("+3")).toBeInTheDocument();
@@ -111,7 +115,7 @@ describe("FundingCard", () => {
         {...baseProps}
         type="notification"
         pendingCount={3}
-        participants={["orange"]}
+        participants={[{ color: "orange" }]}
         extraParticipantCount={4}
       />,
     );
@@ -126,7 +130,7 @@ describe("FundingCard", () => {
         {...baseProps}
         type="open"
         pendingCount={3}
-        participants={["orange"]}
+        participants={[{ color: "orange" }]}
         extraParticipantCount={4}
       />,
     );

@@ -8,12 +8,15 @@ import List from "@/components/List";
 import ListHeader from "@/components/ListHeader";
 import CloseSheet from "@/components/CloseSheet";
 import TextButton from "@/components/TextButton";
+import ShimmerBar from "@/components/skeleton/ShimmerBar";
 import { cn } from "@/utils/cn";
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
+import { useFriendsQuery } from "@/hooks/queries/friend/useFriendsQuery";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { handleLogoutClick } from "@/utils/auth/handleLogoutClick";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
+import { getDisplayName } from "@/utils/user/getDisplayName";
 import ClosedFundingSheet from "@/widgets/funding/ClosedFundingSheet";
 import PayoutAccountEditSheet from "@/widgets/payout-account/PayoutAccountEditSheet";
 import MyMenuProfileRow from "@/widgets/user/MyMenuProfileRow";
@@ -24,39 +27,39 @@ import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?rea
 import IconNotification from "@/assets/icons/multicolor/icon-notification.svg?react";
 import IconTerms from "@/assets/icons/multicolor/icon-terms.svg?react";
 
-// Figma의 메뉴 우측 텍스트 버튼은 보조 텍스트 색이라 TextButton 기본색(primary)을 덮어쓴다
 const MENU_TEXT_BUTTON_CLASS = "text-semantic-text-secondary";
 
 type MyMenuSheetProps = {
   open: boolean;
   onClose: () => void;
-  friendCount: number;
   closedFundingCount: number;
+  slideInOnOpen?: boolean;
 };
 
 export default function MyMenuSheet({
   open,
   onClose,
-  friendCount,
   closedFundingCount,
+  slideInOnOpen,
 }: MyMenuSheetProps) {
   const router = useRouter();
   const { mutate: logout } = useLogoutMutation();
   const { data: profile } = useMyProfileQuery();
+  const { data: friends, isPending: isFriendsPending } = useFriendsQuery();
   const { data: payoutAccounts } = usePayoutAccountsQuery();
   const defaultAccount = payoutAccounts?.find(account => account.isDefault);
   const [closedFundingSheetOpen, setClosedFundingSheetOpen] = useState(false);
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
 
   return (
-    <CloseSheet open={open} title="" onClose={onClose}>
+    <CloseSheet open={open} title="" onClose={onClose} slideInOnOpen={slideInOnOpen}>
       <div className="flex w-full flex-1 flex-col justify-between pb-4">
         <div className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col">
             <ListHeader title="내 프로필" />
             <MyMenuProfileRow
               onClick={() => router.push("/my/profile")}
-              nickname={profile?.nickname ?? ""}
+              nickname={profile ? getDisplayName(profile) : ""}
               birthdayText={
                 profile?.birthday ? `생일 ${formatBirthdayDisplay(profile.birthday)}` : undefined
               }
@@ -70,9 +73,18 @@ export default function MyMenuSheet({
               title="친구"
               onClick={() => router.push("/friends")}
               right={
-                <span className={cn("[font:var(--semantic-label-small)]", MENU_TEXT_BUTTON_CLASS)}>
-                  {`${friendCount}명`}
-                </span>
+                isFriendsPending ? (
+                  <div role="status" aria-label="친구 수 불러오는 중">
+                    <ShimmerBar className="h-4.5 w-8" />
+                  </div>
+                ) : (
+                  friends && (
+                    <span
+                      className={cn("[font:var(--semantic-label-small)]", MENU_TEXT_BUTTON_CLASS)}>
+                      {`${friends.totalCount}명`}
+                    </span>
+                  )
+                )
               }
             />
             <List

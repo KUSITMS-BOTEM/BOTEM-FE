@@ -7,6 +7,9 @@ const makeCard = (overrides: Partial<HomeFundingCardResponse> = {}): HomeFunding
   fundingType: "BIRTHDAY",
   productName: "무선 헤드폰",
   productImageUrl: "https://example.com/headphone.png",
+  targetAmount: 300000,
+  participantCount: 0,
+  participantPreviews: [],
   remainingDays: 7,
   confirmedPercentage: 55,
   pendingPercentage: 15,
@@ -54,6 +57,65 @@ describe("toFundingCardData", () => {
 
     expect(result.title).toBe("지유님의 서프라이즈 펀딩");
     expect(result.isSurprise).toBe(true);
+  });
+
+  it("목표 금액을 그대로 넘긴다", () => {
+    const result = toFundingCardData(makeCard({ targetAmount: 1500000 }), "지유");
+
+    expect(result.targetAmount).toBe(1500000);
+  });
+
+  it("참여자 미리보기를 순서대로 orange·lime·pink 색으로 매핑하고 이미지 URL을 넘긴다", () => {
+    const result = toFundingCardData(
+      makeCard({
+        participantCount: 3,
+        participantPreviews: [
+          { participantName: "민지", profileImageUrl: "https://example.com/a.png" },
+          { participantName: "서준", profileImageUrl: "https://example.com/b.png" },
+          { participantName: "하린", profileImageUrl: "https://example.com/c.png" },
+        ],
+      }),
+      "지유",
+    );
+
+    expect(result.participants).toEqual([
+      { color: "orange", imageUrl: "https://example.com/a.png" },
+      { color: "lime", imageUrl: "https://example.com/b.png" },
+      { color: "pink", imageUrl: "https://example.com/c.png" },
+    ]);
+  });
+
+  it("프로필 이미지가 null이거나 http(s)가 아니면 imageUrl이 없다", () => {
+    const result = toFundingCardData(
+      makeCard({
+        participantCount: 2,
+        participantPreviews: [
+          { participantName: "민지", profileImageUrl: null },
+          { participantName: "서준", profileImageUrl: "javascript:alert(1)" },
+        ],
+      }),
+      "지유",
+    );
+
+    expect(result.participants?.map(participant => participant.imageUrl)).toEqual([
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it("나머지 참여자 수는 전체에서 미리보기 수를 뺀 값이고 0보다 작아지지 않는다", () => {
+    const preview = { participantName: "민지", profileImageUrl: null };
+
+    expect(
+      toFundingCardData(
+        makeCard({ participantCount: 7, participantPreviews: [preview, preview, preview] }),
+        "지유",
+      ).extraParticipantCount,
+    ).toBe(4);
+    expect(
+      toFundingCardData(makeCard({ participantCount: 0, participantPreviews: [preview] }), "지유")
+        .extraParticipantCount,
+    ).toBe(0);
   });
 
   it("진행률은 확인 대기 금액 비율을 쓴다", () => {

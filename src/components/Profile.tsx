@@ -8,6 +8,7 @@ import { cn } from "@/utils/cn";
 import type { Color } from "@/constants/color";
 import { useImageFileSelect } from "@/hooks/useImageFileSelect";
 import IconButton from "@/components/IconButton";
+import LoadingAnimation from "@/components/LoadingAnimation";
 import ToastMessage from "@/components/ToastMessage";
 import ProfileOrange from "@/assets/icons/multicolor/profile-orange.svg?react";
 import ProfilePink from "@/assets/icons/multicolor/profile-pink.svg?react";
@@ -34,6 +35,7 @@ type ProfileProps = {
   allowedTypes?: string[];
   maxSizeBytes?: number;
   showIconButton?: boolean;
+  isUploading?: boolean;
   className?: string;
 };
 
@@ -44,6 +46,7 @@ export default function Profile({
   allowedTypes,
   maxSizeBytes,
   showIconButton = true,
+  isUploading = false,
   className,
 }: ProfileProps) {
   const Fallback = PROFILE_FALLBACKS[color];
@@ -61,7 +64,6 @@ export default function Profile({
   const [syncedImageUrl, setSyncedImageUrl] = useState(imageUrl);
   const [imageLoadError, setImageLoadError] = useState(false);
 
-  // 업로드 성공으로 서버의 imageUrl이 갱신되면 로컬 미리보기를 내려 서버 URL이 보이게 한다 — effect가 아닌 렌더 중 동기화
   if (imageUrl !== syncedImageUrl) {
     setSyncedImageUrl(imageUrl);
     setSelectedFile(null);
@@ -84,7 +86,7 @@ export default function Profile({
   const displayUrl = previewUrl ?? imageUrl;
 
   return (
-    <div className={cn("relative size-[68px]", className)}>
+    <div className={cn("relative size-[68px]", className)} aria-busy={isUploading}>
       <div className="relative size-full overflow-hidden rounded-full">
         {displayUrl && !imageLoadError ? (
           <Image
@@ -98,6 +100,14 @@ export default function Profile({
         ) : (
           <Fallback className="size-full" />
         )}
+        {isUploading && (
+          <div
+            role="status"
+            aria-label="프로필 이미지 저장 중"
+            className="bg-semantic-background-dim absolute inset-0 flex items-center justify-center">
+            <LoadingAnimation size="small" color="white" />
+          </div>
+        )}
       </div>
       {showIconButton && (
         <>
@@ -106,6 +116,7 @@ export default function Profile({
             variant="stroke"
             icon={<IconPlus />}
             aria-label="프로필 이미지 선택"
+            disabled={isUploading}
             onClick={() => inputRef.current?.click()}
             className="absolute right-[-7px] bottom-0"
           />

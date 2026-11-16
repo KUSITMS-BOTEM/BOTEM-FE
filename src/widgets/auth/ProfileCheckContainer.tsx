@@ -13,6 +13,10 @@ import Profile from "@/components/Profile";
 import SelectBox from "@/components/SelectBox";
 import TextField from "@/components/TextField";
 import Title from "@/components/Title";
+import {
+  ALLOWED_PROFILE_IMAGE_TYPES,
+  MAX_PROFILE_IMAGE_SIZE_BYTES,
+} from "@/constants/profileImage";
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
 import { useUploadProfileImageMutation } from "@/hooks/mutations/user/useUploadProfileImageMutation";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
@@ -22,16 +26,13 @@ import { useErrorDialogStore } from "@/store/errorDialogStore";
 import type { MyProfile } from "@/types/user/profile";
 import { getSignupFlow, setSignupFlow } from "@/utils/auth/signupFlowStorage";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
+import { getDisplayName } from "@/utils/user/getDisplayName";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 
 // Figma "01 모션 토큰" 기준: ease.standard / duration.enter·move / delay.start·stagger / distance.title·field
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
 const TITLE_TRANSITION = { delay: 0.3, duration: 0.45, ease: EASE_STANDARD };
 const FIELD_TRANSITION = { delay: 0.8, duration: 0.4, ease: EASE_STANDARD };
-
-// 백엔드 업로드 URL 발급 API(/profile-image/upload-url) 제약과 동일
-const ALLOWED_PROFILE_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_PROFILE_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 export default function ProfileCheckContainer() {
   const router = useRouter();
@@ -56,7 +57,7 @@ export default function ProfileCheckContainer() {
   if (profile && !syncedProfile) {
     setSyncedProfile(profile);
     const flow = getSignupFlow();
-    setNickname(flow?.nickname ?? profile.nickname);
+    setNickname(flow?.nickname ?? getDisplayName(profile));
     setBirthday(flow?.birthday ?? profile.birthday ?? "");
   }
 
@@ -114,6 +115,7 @@ export default function ProfileCheckContainer() {
               onImageChange={handleProfileImageChange}
               allowedTypes={ALLOWED_PROFILE_IMAGE_TYPES}
               maxSizeBytes={MAX_PROFILE_IMAGE_SIZE_BYTES}
+              isUploading={isUploadingImage}
             />
           </motion.div>
           <motion.div

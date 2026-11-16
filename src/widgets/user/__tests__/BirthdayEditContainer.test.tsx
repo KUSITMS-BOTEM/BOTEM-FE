@@ -8,6 +8,9 @@ import BirthdayEditContainer from "@/widgets/user/BirthdayEditContainer";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
+vi.mock("@/hooks/mutations/user/useUpdateMyProfileMutation", () => ({
+  useUpdateMyProfileMutation: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
