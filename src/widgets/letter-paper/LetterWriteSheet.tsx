@@ -10,7 +10,7 @@ import Title from "@/components/Title";
 import type { Color } from "@/constants/color";
 import { cn } from "@/utils/cn";
 import { withVocativeParticle } from "@/utils/withSubjectParticle";
-import LetterPaper from "@/widgets/letter-paper/LetterPaper";
+import ScaledLetterPaper from "@/widgets/letter-paper/ScaledLetterPaper";
 import LetterToolSheet from "@/widgets/letter-paper/LetterToolSheet";
 import LetterWriteBody from "@/widgets/letter-paper/LetterWriteBody";
 import PaletteArea from "@/widgets/letter-paper/PaletteArea";
@@ -113,7 +113,7 @@ export default function LetterWriteSheet({
           animate={{ opacity: 1, y: 0 }}
           transition={CONTENT_TRANSITION}
           className="flex w-full flex-col items-center gap-1">
-          <LetterPaper
+          <ScaledLetterPaper
             style="vividSolid"
             color={color}
             text={text}
