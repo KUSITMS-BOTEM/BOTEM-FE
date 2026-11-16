@@ -44,6 +44,7 @@ export default function MyProfileContainer() {
   const { mutate: uploadProfileImage, isPending: isUploadingImage } =
     useUploadProfileImageMutation();
   const { mutate: updateProfile, isPending: isSavingImage } = useUpdateMyProfileMutation();
+  const isImageBusy = isUploadingImage || isSavingImage;
 
   const handleProfileImageChange = (file: File) => {
     if (!profile?.birthday) return;
@@ -88,7 +89,7 @@ export default function MyProfileContainer() {
                   maxSizeBytes={MAX_PROFILE_IMAGE_SIZE_BYTES}
                   // 수정 API가 생일을 필수로 받아, 생일이 없으면 저장할 수 없는 선택 버튼을 숨긴다
                   showIconButton={Boolean(profile?.birthday)}
-                  isUploading={isUploadingImage || isSavingImage}
+                  isUploading={isImageBusy}
                 />
               </div>
               <List
@@ -98,6 +99,8 @@ export default function MyProfileContainer() {
                     size="medium"
                     label={profile ? getDisplayName(profile) : ""}
                     onClick={() => setNameSheetOpen(true)}
+                    // 이미지 저장이 업로드 시작 시점의 이름·생일을 함께 보내, 그 사이 수정하면 덮어써진다
+                    disabled={isImageBusy}
                     className={VALUE_BUTTON_CLASS}
                   />
                 }
@@ -109,6 +112,7 @@ export default function MyProfileContainer() {
                     size="medium"
                     label={profile?.birthday ? formatBirthdayDisplay(profile.birthday) : ""}
                     onClick={() => setBirthdaySheetOpen(true)}
+                    disabled={isImageBusy}
                     className={VALUE_BUTTON_CLASS}
                   />
                 }

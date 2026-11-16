@@ -74,7 +74,7 @@ export default function FundingCard({
             />
           ) : (
             <>
-              {participants.length > 0 && (
+              {(participants.length > 0 || extraParticipantCount > 0) && (
                 <ProfileBox
                   profiles={participants}
                   extraCount={extraParticipantCount}

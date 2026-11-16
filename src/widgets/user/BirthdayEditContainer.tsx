@@ -24,8 +24,15 @@ export default function BirthdayEditContainer({
   const { mutate: updateProfile, isPending } = useUpdateMyProfileMutation();
   const [birthday, setBirthday] = useState("");
   const [synced, setSynced] = useState(false);
+  const [prevOpen, setPrevOpen] = useState(open);
   const isSavingRef = useRef(false);
   const close = onClose ?? (() => router.back());
+
+  // 시트는 닫혀도 언마운트되지 않아, 다시 열 때 저장하지 않은 입력을 버리고 현재 프로필로 맞춘다
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setSynced(false);
+  }
 
   if (profile && !synced) {
     setSynced(true);
