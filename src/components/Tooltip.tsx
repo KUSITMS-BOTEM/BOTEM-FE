@@ -11,7 +11,7 @@ type TooltipProps = {
 export default function Tooltip({ children, className }: TooltipProps) {
   return (
     <div className={cn("relative z-10 flex items-center", className)}>
-      <p className="bg-semantic-border-inverted text-semantic-text-primary rounded-lg px-3 py-2 [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-x-small-weak)]">
+      <p className="bg-semantic-border-inverted text-semantic-text-primary rounded-lg px-3 py-2 [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap shadow-[0_4px_8px_0_var(--color-semantic-shadow-weak)] [font:var(--semantic-label-x-small-weak)]">
         {children}
       </p>
       <TooltipTail aria-hidden className="h-3 w-1.5 shrink-0" />

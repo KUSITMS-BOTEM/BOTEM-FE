@@ -46,7 +46,7 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
   const closePopup = () => setIsPopupOpen(false);
 
   return (
-    <main className="bg-semantic-background-lower flex min-h-dvh flex-col">
+    <main className="flex min-h-dvh flex-col">
       <Header
         title=""
         rightItems={[

@@ -22,6 +22,8 @@ const nextConfig: NextConfig = {
                     name: "preset-default",
                     params: { overrides: { removeViewBox: false } },
                   },
+                  // preset-default가 id를 a·b로 줄이면 SVG끼리 id가 겹쳐 다른 SVG의 gradient·filter를 참조한다
+                  "prefixIds",
                 ],
               },
             },
