@@ -3,10 +3,10 @@
 import IconButton from "@/components/IconButton";
 import { cn } from "@/utils/cn";
 import IconClose from "@/assets/icons/icon-close.svg?react";
-import ToolLetter from "@/assets/icons/multicolor/letter-tool-letter.svg?react";
-import ToolPhoto from "@/assets/icons/multicolor/letter-tool-photo.svg?react";
-import ToolRecord from "@/assets/icons/multicolor/letter-tool-record.svg?react";
-import ToolSticker from "@/assets/icons/multicolor/letter-tool-sticker.svg?react";
+import ToolLetter from "@/assets/icons/multicolor/tool-sheet-letter.svg?react";
+import ToolPhoto from "@/assets/icons/multicolor/tool-sheet-photo.svg?react";
+import ToolRecord from "@/assets/icons/multicolor/tool-sheet-record.svg?react";
+import ToolSticker from "@/assets/icons/multicolor/tool-sheet-sticker.svg?react";
 
 type LetterToolSheetProps = {
   onClose: () => void;
@@ -58,7 +58,9 @@ export default function LetterToolSheet({ onClose }: LetterToolSheetProps) {
         </div>
         <ul className="flex min-h-0 flex-1 items-center justify-center px-2.5">
           {TOOLS.map(({ label, Icon, boxClass, tiltClass }) => (
-            <li key={label} className={cn("flex shrink-0 items-center justify-center", boxClass)}>
+            <li
+              key={label}
+              className={cn("flex shrink-0 cursor-pointer items-center justify-center", boxClass)}>
               <div
                 className={cn(
                   "flex w-[61px] flex-none flex-col items-center justify-center gap-2 py-[7px]",
