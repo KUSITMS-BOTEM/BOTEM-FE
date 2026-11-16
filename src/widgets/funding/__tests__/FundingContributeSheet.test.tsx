@@ -92,6 +92,28 @@ describe("FundingContributeSheet", () => {
 
       expect(getNext()).toBeDisabled();
     });
+
+    it("입력 전에는 오류 문구가 없고, 입력을 비우면 안내가 보인다", async () => {
+      const user = userEvent.setup();
+      render(<Harness />);
+      expect(screen.queryByText("1원 이상 입력해주세요")).not.toBeInTheDocument();
+
+      await user.type(getInput(), "5000");
+      await user.clear(getInput());
+
+      expect(screen.getByText("1원 이상 입력해주세요")).toBeInTheDocument();
+    });
+
+    it("0원을 입력하면 안내가 보이고 금액을 넣으면 사라진다", async () => {
+      const user = userEvent.setup();
+      render(<Harness />);
+
+      await user.type(getInput(), "0");
+      expect(screen.getByText("1원 이상 입력해주세요")).toBeInTheDocument();
+
+      await user.type(getInput(), "5000");
+      expect(screen.queryByText("1원 이상 입력해주세요")).not.toBeInTheDocument();
+    });
   });
 
   describe("금액 입력 상한", () => {

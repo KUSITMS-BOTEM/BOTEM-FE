@@ -43,14 +43,18 @@ export default function FundingContributeSheet({
   className,
 }: FundingContributeSheetProps) {
   const [amount, setAmount] = useState(0);
+  // 처음 열었을 때부터 오류를 띄우지 않고, 입력했다가 비우거나 0원이 된 뒤에만 안내한다
+  const [touched, setTouched] = useState(false);
   // iOS는 키보드 열림·닫힘 이벤트가 없어 input의 focus·blur를 키보드가 올라온 시점으로 본다
   const [isTyping, setIsTyping] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isOverMax = amount > maxAmount;
+  const isEmpty = touched && amount <= 0;
 
   // 시트를 닫으면 다음에 열 때 빈 입력으로 시작한다
   const handleClose = () => {
     setAmount(0);
+    setTouched(false);
     setIsTyping(false);
     onClose();
   };
@@ -97,11 +101,18 @@ export default function FundingContributeSheet({
             chips={AMOUNT_CHIPS}
             chipPosition="bottom"
             value={amount ? amount.toLocaleString("ko-KR") : ""}
-            onChange={event => setAmount(capAmount(Number(event.target.value.replace(/\D/g, ""))))}
-            onClear={() => setAmount(0)}
+            onChange={event => {
+              setTouched(true);
+              setAmount(capAmount(Number(event.target.value.replace(/\D/g, ""))));
+            }}
+            onClear={() => {
+              setTouched(true);
+              setAmount(0);
+            }}
             // 칩은 누를 때마다 금액을 더한다 (5,000 → 10,000 → 15,000)
             onChipSelect={chip => setAmount(prev => capAmount(prev + Number(chip.value)))}
-            error={isOverMax}
+            error={isOverMax || isEmpty}
+            helperText={isEmpty ? "1원 이상 입력해주세요" : undefined}
           />
         </motion.div>
       </div>
