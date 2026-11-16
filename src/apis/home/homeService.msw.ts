@@ -15,7 +15,7 @@ type MockHomeScenario =
   | "EMPTY";
 
 // 홈 분기(마감·진행 중 / 진행 중만 / 1개 / 마감+확인대기 / 마감+확인대기 없음 / 마감+참여자 0명 / 위시만 / 빈 홈)를 눈으로 확인할 때 이 값만 바꾼다
-const MOCK_HOME_SCENARIO = "IN_PROGRESS" as MockHomeScenario;
+const MOCK_HOME_SCENARIO = "CLOSED_EMPTY" as MockHomeScenario;
 
 const [product1, product2, product3, product4] = MOCK_RECOMMENDED_PRODUCTS;
 

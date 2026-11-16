@@ -9,6 +9,7 @@ import BotemPopup from "@/widgets/funding/BotemPopup";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
 import FundingMessage from "@/widgets/funding/FundingMessage";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
+import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
 import SampleProduct from "@/assets/images/samples/sample-product.png";
 import IconShare from "@/assets/icons/icon-share.svg?react";
 import IconDotVertical from "@/assets/icons/icon-dotvertical.svg?react";
@@ -45,6 +46,7 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
   const funding = MOCK_FUNDING;
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isContributeOpen, setIsContributeOpen] = useState(false);
+  const [isLetterOpen, setIsLetterOpen] = useState(false);
   const closePopup = () => setIsPopupOpen(false);
   const remainingAmount = funding.targetAmount - funding.currentAmount;
 
@@ -105,12 +107,20 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
           setIsContributeOpen(true);
         }}
       />
-      {/* TODO: 다음 단계(메시지·결제) 디자인이 정해지면 onNext를 연결한다 */}
+      {/* 금액 시트는 열어 둔 채 위에 편지 시트를 띄워, 편지 시트의 이전을 누르면 금액 시트로 돌아온다 */}
       <FundingContributeSheet
         open={isContributeOpen}
         hostName={funding.hostName}
         maxAmount={remainingAmount}
         onClose={() => setIsContributeOpen(false)}
+        onNext={() => setIsLetterOpen(true)}
+      />
+      {/* TODO: 쿠키가 httpOnly라 로그인 여부를 클라이언트에서 못 읽어 비회원(false)으로 둔다. 결제 단계가 정해지면 onNext를 연결한다 */}
+      <LetterWriteSheet
+        open={isLetterOpen}
+        recipientName={funding.hostName}
+        isLoggedIn={false}
+        onClose={() => setIsLetterOpen(false)}
         onNext={noop}
       />
     </main>

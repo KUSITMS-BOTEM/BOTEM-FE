@@ -1,4 +1,14 @@
-import { withSubjectParticle } from "@/utils/withSubjectParticle";
+import { withSubjectParticle, withVocativeParticle } from "@/utils/withSubjectParticle";
+
+describe("withVocativeParticle", () => {
+  it.each(["민준", "서진"])("받침이 있는 이름 %s 뒤에는 '아'를 붙인다", name => {
+    expect(withVocativeParticle(name)).toBe(`${name}아`);
+  });
+
+  it.each(["지유", "Tom"])("받침이 없거나 영문인 이름 %s 뒤에는 '야'를 붙인다", name => {
+    expect(withVocativeParticle(name)).toBe(`${name}야`);
+  });
+});
 
 describe("withSubjectParticle", () => {
   it.each(["민준", "서진", "혁"])("받침이 있는 이름 %s 뒤에는 '이'를 붙인다", name => {
