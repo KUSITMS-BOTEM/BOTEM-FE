@@ -122,6 +122,17 @@ describe("LetterWriteBody", () => {
       expect(onTextChange).toHaveBeenLastCalledWith("안녕");
     });
 
+    it("길이가 같은 글로 교체해 영역을 넘쳐도 직전에 들어맞던 글로 되돌린다", () => {
+      render(<Harness onTextChange={vi.fn()} />);
+      setHeights(243);
+      type("가가가");
+
+      setHeights(270);
+      type("가\n가");
+
+      expect(letterInput()).toHaveTextContent(/^가가가$/);
+    });
+
     it("한글 조합 중인 글자가 영역을 넘치면 조합이 끝나기를 기다리지 않고 되돌린다", () => {
       render(<Harness onTextChange={vi.fn()} />);
       setHeights(243);

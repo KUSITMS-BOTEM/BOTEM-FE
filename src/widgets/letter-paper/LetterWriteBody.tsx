@@ -60,8 +60,10 @@ export default function LetterWriteBody({
     if (!editor || !area) return;
     const composing = composingRef.current;
     const available = area.clientHeight - (parseFloat(getComputedStyle(area).paddingTop) || 0);
-    // 이름 입력란이 다시 열려 이미 넘친 글도 지우는 동작은 막지 않도록 글이 늘어난 경우만 되돌린다
-    const grew = (editor.textContent ?? "").length > lastFitTextRef.current.length;
+    // 이름 입력란이 다시 열려 이미 넘친 글도 지우는 동작은 막지 않도록 글이 줄어든 경우는 되돌리지 않는다. 길이가 같은 선택 영역 교체는 검사한다
+    const current = editor.textContent ?? "";
+    const grew =
+      current !== lastFitTextRef.current && current.length >= lastFitTextRef.current.length;
     if (grew && editor.offsetHeight - available > OVERFLOW_TOLERANCE_PX) {
       // 큰 글씨 영역을 넘으면 막기 전에 작은 글씨로 줄여 다시 잰다(shrunk가 바뀌면 아래 effect가 재검사)
       if (!shrunk && onShrink) {
@@ -92,6 +94,7 @@ export default function LetterWriteBody({
         <input
           type="text"
           aria-label="친구에게 보여질 이름"
+          required
           placeholder="친구에게 보여질 이름은 무엇인가요?"
           value={name ?? ""}
           onChange={event => onNameChange(event.target.value)}
@@ -116,6 +119,7 @@ export default function LetterWriteBody({
         ref={editorRef}
         role="textbox"
         aria-multiline="true"
+        aria-required="true"
         aria-label="편지 내용"
         tabIndex={0}
         contentEditable="plaintext-only"
