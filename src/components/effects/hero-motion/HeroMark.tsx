@@ -29,6 +29,7 @@ export default function HeroMark({ playing }: HeroMarkProps) {
   return (
     // Figma 순서: 회전(바깥) → 눌림(안쪽)
     <motion.div
+      key={playing ? "playing" : "static"}
       {...toMotion(markMove, playing)}
       className="absolute top-[78px] left-[79px] h-30 w-33.25 origin-center">
       <motion.div
