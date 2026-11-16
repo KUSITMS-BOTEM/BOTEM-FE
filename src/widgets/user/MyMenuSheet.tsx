@@ -27,6 +27,7 @@ import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?rea
 import IconNotification from "@/assets/icons/multicolor/icon-notification.svg?react";
 import IconTerms from "@/assets/icons/multicolor/icon-terms.svg?react";
 
+// Figma의 메뉴 우측 텍스트 버튼은 보조 텍스트 색이라 TextButton 기본색(primary)을 덮어쓴다
 const MENU_TEXT_BUTTON_CLASS = "text-semantic-text-secondary";
 
 type MyMenuSheetProps = {

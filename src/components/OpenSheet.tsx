@@ -16,6 +16,7 @@ export type OpenSheetProps = {
   closeType?: ComponentProps<typeof SheetHeader>["closeType"];
   headerAction?: ReactNode;
   hideScrollbar?: boolean;
+  // 헤더까지 포함한 시트 전체 위에 겹쳐 그린다
   overlay?: ReactNode;
   children: ReactNode;
   className?: string;

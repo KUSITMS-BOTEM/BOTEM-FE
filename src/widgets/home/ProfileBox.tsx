@@ -42,7 +42,7 @@ export default function ProfileBox({
       <span className="sr-only">참여자 {profiles.length + extraCount}명</span>
       <div className={cn("flex items-center", extraCount > 0 && "-mr-1")}>
         {profiles.map(({ color, imageUrl }, index) => {
-          const className = cn("size-6 shrink-0", index < profiles.length - 1 && "-mr-1");
+          const avatarClassName = cn("size-6 shrink-0", index < profiles.length - 1 && "-mr-1");
           if (imageUrl) {
             return (
               <span
@@ -50,14 +50,14 @@ export default function ProfileBox({
                 aria-hidden
                 className={cn(
                   "border-semantic-border-inverted relative overflow-hidden rounded-full border",
-                  className,
+                  avatarClassName,
                 )}>
                 <Image src={imageUrl} alt="" fill unoptimized className="object-cover" />
               </span>
             );
           }
           const Icon = PROFILE_ICON[color];
-          return <Icon key={index} aria-hidden className={className} />;
+          return <Icon key={index} aria-hidden className={avatarClassName} />;
         })}
       </div>
       {extraCount > 0 && (
