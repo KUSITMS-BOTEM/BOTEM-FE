@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, type SyntheticEvent } from "react";
 import Button from "@/components/Button";
 import IconButton from "@/components/IconButton";
 import Profile, { getProfileColor } from "@/components/Profile";
-import { toDateString } from "@/utils/date/dateString";
+import { formatContributedDate } from "@/utils/funding/formatContributedDate";
 import { withSubjectParticle } from "@/utils/withSubjectParticle";
 import BotemPopupRow from "@/widgets/funding/BotemPopupRow";
 import IconClose from "@/assets/icons/icon-close.svg?react";
@@ -30,12 +30,6 @@ type BotemPopupProps = {
   onEditClick: () => void;
   onMessageClick: () => void;
   onContributeClick: () => void;
-};
-
-// UTC(Z)로 와도 로컬 날짜로 맞추도록 Date로 파싱하고, 파싱이 안 되는 값은 날짜를 비운다
-const formatContributedDate = (contributedAt: string) => {
-  const date = new Date(contributedAt);
-  return Number.isNaN(date.getTime()) ? "" : toDateString(date).replaceAll("-", ".");
 };
 
 export default function BotemPopup({
@@ -83,7 +77,7 @@ export default function BotemPopup({
       aria-labelledby={titleId}
       onCancel={handleCancel}
       onClick={handleDialogClick}
-      className="bg-semantic-background-default rounded-xxx-large backdrop:bg-semantic-background-dim m-auto w-[324px] flex-col overflow-hidden p-0 shadow-[0_4px_16px_var(--color-semantic-shadow-weak)] outline-none open:flex">
+      className="bg-semantic-background-default rounded-xxx-large backdrop:bg-semantic-background-dim m-auto w-[324px] flex-col overflow-y-auto p-0 shadow-[0_4px_16px_var(--color-semantic-shadow-weak)] outline-none open:flex">
       <div className="flex w-full flex-col">
         <div className="flex w-full flex-col px-4 py-3">
           <div className="flex w-full items-center justify-between">
