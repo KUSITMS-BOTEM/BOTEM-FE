@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="433.974" height="236.992" viewBox="0 0 433.974 236.992" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Wave" style="mix-blend-mode:overlay">
+<path d="M197.309 42.5202C103.281 1.95548 26.5915 -2.2203 0 0.762399L106.366 236.992L388.768 223.271L433.974 11.4997C394.264 38.7419 291.337 83.0849 197.309 42.5202Z" fill="url(#paint0_linear_0_92)"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_92" x1="570.917" y1="199.275" x2="-95.0494" y2="-216.648" gradientUnits="userSpaceOnUse">
+<stop stop-color="white" stop-opacity="0"/>
+<stop offset="1" stop-color="white"/>
+</linearGradient>
+</defs>
+</svg>
