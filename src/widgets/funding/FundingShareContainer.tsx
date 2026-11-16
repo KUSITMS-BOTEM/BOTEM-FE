@@ -40,7 +40,9 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
       <Header
         title=""
         rightItems={[
+          // TODO: 공유 버튼 클릭 시 동작 구현 필요 (예: 카카오톡/링크 공유)
           { icon: <IconShare />, ariaLabel: "공유", onClick: noop },
+          // TODO: 더보기 버튼 클릭 시 동작 구현 필요 (예: 메뉴/바텀시트 노출)
           { icon: <IconDotVertical />, ariaLabel: "더보기", onClick: noop },
         ]}
       />
