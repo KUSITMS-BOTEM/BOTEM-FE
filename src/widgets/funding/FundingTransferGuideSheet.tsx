@@ -45,6 +45,8 @@ export default function FundingTransferGuideSheet({
 
   const toastTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const completeLockRef = useRef(false);
+  // 시트가 닫히거나 언마운트될 때 올려서, 대기 중이던 복사 완료가 이전 세션의 토스트를 띄우지 않게 한다
+  const copySessionRef = useRef(0);
 
   // 닫히는 경로(뒤로가기·ESC·완료 후 부모가 닫음)와 상관없이 다음에 열 때 처음 상태로 시작한다
   const [prevOpen, setPrevOpen] = useState(open);
@@ -57,10 +59,19 @@ export default function FundingTransferGuideSheet({
   }
 
   useEffect(() => {
-    if (!open) completeLockRef.current = false;
+    if (!open) {
+      completeLockRef.current = false;
+      copySessionRef.current += 1;
+    }
   }, [open]);
 
-  useEffect(() => () => clearTimeout(toastTimerRef.current), []);
+  useEffect(
+    () => () => {
+      clearTimeout(toastTimerRef.current);
+      copySessionRef.current += 1;
+    },
+    [],
+  );
 
   // 같은 결과를 연속으로 복사해도 매번 표시 시간을 다시 잰다
   const showCopyResult = (result: "success" | "fail") => {
@@ -70,13 +81,16 @@ export default function FundingTransferGuideSheet({
   };
 
   const handleCopy = async () => {
+    const session = copySessionRef.current;
+    let result: "success" | "fail" = "success";
     try {
       await navigator.clipboard.writeText(`${bankName} ${account.accountNumber}`);
-      showCopyResult("success");
     } catch {
       // 권한 거부·비보안 컨텍스트에서는 복사가 실패한다
-      showCopyResult("fail");
+      result = "fail";
     }
+    if (session !== copySessionRef.current) return;
+    showCopyResult(result);
   };
 
   // 연타·부모가 닫기 전 재클릭으로 onComplete가 두 번 불리지 않게 동기 잠금을 건다

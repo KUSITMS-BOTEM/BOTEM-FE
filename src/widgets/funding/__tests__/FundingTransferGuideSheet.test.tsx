@@ -98,6 +98,22 @@ describe("FundingTransferGuideSheet", () => {
     expect(await screen.findByText("복사하지 못했어요")).toBeInTheDocument();
   });
 
+  it("복사 대기 중 시트를 닫았다 다시 열면 늦게 끝난 복사의 토스트를 띄우지 않는다", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    let resolveCopy!: () => void;
+    vi.spyOn(navigator.clipboard, "writeText").mockReturnValue(
+      new Promise<void>(resolve => (resolveCopy = resolve)),
+    );
+
+    await user.click(screen.getByRole("button", { name: "계좌복사" }));
+    await user.click(screen.getByRole("button", { name: "뒤로 가기" }));
+    await user.click(screen.getByRole("button", { name: "열기" }));
+    await act(async () => resolveCopy());
+
+    expect(screen.queryByText("계좌번호를 복사했어요")).not.toBeInTheDocument();
+  });
+
   it("송금했어요를 체크해야 완료하기가 활성화되고 누르면 onComplete가 호출된다", async () => {
     const user = userEvent.setup();
     const onComplete = vi.fn();
