@@ -1,6 +1,6 @@
 "use client";
 
-import { type FocusEvent, useState } from "react";
+import { type FocusEvent, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 import BottomCTA from "@/components/BottomCTA";
@@ -63,6 +63,7 @@ export default function LetterWriteSheet({
   const [recordOpen, setRecordOpen] = useState(false);
   const [voice, setVoice] = useState<LetterVoice | null>(null);
   const recorder = useVoiceRecorder();
+  const toolAreaRef = useRef<HTMLDivElement>(null);
   // 툴 영역을 한 번 연 뒤에는 안내 말풍선을 다시 보여주지 않는다
   const [tooltipDismissed, setTooltipDismissed] = useState(false);
   // iOS는 키보드 열림·닫힘 이벤트가 없어 필드의 focus·blur를 키보드가 올라온 시점으로 본다
@@ -70,6 +71,11 @@ export default function LetterWriteSheet({
   // 비로그인 이름 입력란은 이름을 적고 포커스를 벗어나면 접히고, From 영역을 누르면 다시 열린다
   const [nameOpen, setNameOpen] = useState(true);
   const [nameReopened, setNameReopened] = useState(false);
+
+  // 짧은 화면에서 툴 영역이 하단 CTA에 가려지면 스크롤을 내리고, 이미 보이면 그대로 둔다(nearest)
+  useEffect(() => {
+    if (toolOpen) toolAreaRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [toolOpen, recordOpen]);
 
   const canNext = text.trim() !== "" && (isLoggedIn || name.trim() !== "");
 
@@ -175,25 +181,28 @@ export default function LetterWriteSheet({
             tooltip={!tooltipDismissed}
             className="-mx-5 w-[calc(100%+2.5rem)]"
           />
-          {toolOpen && !recordOpen && (
-            <LetterToolSheet
-              onClose={() => setToolOpen(false)}
-              onSelectRecord={() => setRecordOpen(true)}
-            />
-          )}
-          {toolOpen && recordOpen && (
-            <LetterRecordSheet
-              status={recorder.status}
-              error={recorder.error}
-              color={color}
-              transcript={recorder.transcript}
-              interim={recorder.interim}
-              isSpeaking={recorder.isSpeaking}
-              onStart={recorder.start}
-              onStop={recorder.stop}
-              onDone={handleRecordDone}
-              onClose={closeRecord}
-            />
+          {toolOpen && (
+            <div ref={toolAreaRef} className="w-full scroll-mb-24">
+              {recordOpen ? (
+                <LetterRecordSheet
+                  status={recorder.status}
+                  error={recorder.error}
+                  color={color}
+                  transcript={recorder.transcript}
+                  interim={recorder.interim}
+                  isSpeaking={recorder.isSpeaking}
+                  onStart={recorder.start}
+                  onStop={recorder.stop}
+                  onDone={handleRecordDone}
+                  onClose={closeRecord}
+                />
+              ) : (
+                <LetterToolSheet
+                  onClose={() => setToolOpen(false)}
+                  onSelectRecord={() => setRecordOpen(true)}
+                />
+              )}
+            </div>
           )}
         </motion.div>
         <BottomCTA className={cn(isTyping && "pointer-coarse:hidden")}>

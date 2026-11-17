@@ -17,7 +17,24 @@ const typeLetter = (value: string) => {
   fireEvent.input(letterInput());
 };
 
+const scrollIntoView = vi.fn();
+
 describe("LetterWriteSheet", () => {
+  // jsdom에는 scrollIntoView가 없다
+  beforeEach(() => {
+    scrollIntoView.mockClear();
+    Element.prototype.scrollIntoView = scrollIntoView;
+  });
+
+  it("툴 영역을 열면 화면에 보이도록 가장 가까운 위치로 스크롤한다", async () => {
+    renderSheet();
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: "나만의 편지 만들기" }));
+
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest", behavior: "smooth" });
+  });
+
   it("수신자 이름이 들어간 제목과 안내 문구를 보여준다", () => {
     renderSheet();
 
