@@ -225,7 +225,7 @@ export default function LetterWriteSheet({
             onLargeIconRemove={() => setLargeSticker(null)}
             onSmallIconRemove={() => setSmallSticker(null)}
             iconSlotsActive={stickerOpen}
-            hidePhotoSlot={stickerOpen}
+            hidePhotoSlot={stickerOpen && !photo}
             photoSrc={photo?.url}
             // 사진 툴을 골랐을 때만 슬롯이 눌린다
             photoSlotDisabled={!photoOpen}

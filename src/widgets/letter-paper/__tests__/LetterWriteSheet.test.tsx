@@ -292,6 +292,17 @@ describe("LetterWriteSheet", () => {
       expect(photoSlot).toHaveClass("border-solid");
     });
 
+    it("사진이 있을 때 스티커 툴을 고르면 사진이 숨겨지지 않고 그대로 남는다", async () => {
+      const { container } = renderSheet();
+      await openPhotoMode();
+      await addPhoto(container);
+      await userEvent.click(screen.getByRole("button", { name: "나만의 편지 만들기" }));
+
+      await userEvent.click(screen.getByRole("button", { name: "스티커" }));
+
+      expect(screen.getByAltText("선택한 사진").closest(".invisible")).toBeNull();
+    });
+
     it("사진을 넣고 다음을 누르면 photo가 전달된다", async () => {
       const onNext = vi.fn();
       const { container } = renderSheet({ onNext });
