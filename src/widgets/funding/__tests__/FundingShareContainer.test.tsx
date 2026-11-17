@@ -102,4 +102,52 @@ describe("FundingShareContainer", () => {
     const heading = await screen.findByRole("heading", { level: 1, name: /지유의 계좌로/ });
     expect(heading).toHaveTextContent("50,000원");
   });
+
+  describe("보태기 플로우 나가기", () => {
+    const openExitDialog = async (user: ReturnType<typeof userEvent.setup>) => {
+      await clickTopmost(user, "닫기");
+      return screen.findByRole("heading", { name: /보태기를 그만둘까요\?/ });
+    };
+
+    it("편지 시트의 X를 누르면 나가기 확인 Dialog가 뜨고, 아니오를 누르면 Dialog만 닫힌다", async () => {
+      const user = userEvent.setup();
+      render(<FundingShareContainer fundingId="1" />);
+      await goToPasswordSheet(user);
+      await screen.findByLabelText("비밀번호 4자리");
+      await clickTopmost(user, "이전");
+      await screen.findByRole("textbox", { name: "편지 내용" });
+
+      const title = await openExitDialog(user);
+      expect(title).toHaveTextContent("지유에게");
+
+      await user.click(screen.getByRole("button", { name: "아니오" }));
+
+      await waitFor(() =>
+        expect(
+          screen.queryByRole("heading", { name: /보태기를 그만둘까요\?/ }),
+        ).not.toBeInTheDocument(),
+      );
+      expect(screen.getByRole("textbox", { name: "편지 내용" })).toHaveTextContent("생일 축하해!");
+    });
+
+    it("예를 누르면 열린 시트가 모두 닫히고, 다시 시작하면 입력이 비어 있다", async () => {
+      const user = userEvent.setup();
+      render(<FundingShareContainer fundingId="1" />);
+      await goToPasswordSheet(user);
+      await screen.findByLabelText("비밀번호 4자리");
+
+      await user.click(screen.getAllByRole("button", { name: "닫기", hidden: true }).at(-1)!);
+      await user.click(await screen.findByRole("button", { name: "예" }));
+
+      await waitFor(() => {
+        expect(screen.queryByLabelText("비밀번호 4자리")).not.toBeInTheDocument();
+        expect(screen.queryByRole("textbox", { name: "편지 내용" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("textbox", { name: "보탬 금액" })).not.toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole("button", { name: /나도 지유님께 보태볼까요\?/ }));
+      await user.click(screen.getByRole("button", { name: "보태기" }));
+      expect(await screen.findByRole("textbox", { name: "보탬 금액" })).toHaveValue("");
+    });
+  });
 });

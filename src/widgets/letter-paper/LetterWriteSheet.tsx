@@ -42,7 +42,10 @@ export type LetterWriteValues = {
 
 type LetterWriteSheetProps = {
   open: boolean;
+  // 이전 버튼에서 호출된다 (편지를 비우고 닫는다)
   onClose: () => void;
+  // 우측 상단 X·ESC에서 호출된다. 편지는 비우지 않고 부모가 나가기 확인을 받게 한다
+  onExit?: () => void;
   recipientName: string;
   isLoggedIn: boolean;
   onNext?: (values: LetterWriteValues) => void;
@@ -51,6 +54,7 @@ type LetterWriteSheetProps = {
 export default function LetterWriteSheet({
   open,
   onClose,
+  onExit,
   recipientName,
   isLoggedIn,
   onNext,
@@ -136,7 +140,7 @@ export default function LetterWriteSheet({
   };
 
   return (
-    <OpenSheet open={open} title="" closeType="back" onClose={handleClose} hideScrollbar>
+    <OpenSheet open={open} title="" onClose={onExit ?? handleClose} hideScrollbar>
       <div
         onFocus={handleFocus}
         onBlur={() => setIsTyping(false)}

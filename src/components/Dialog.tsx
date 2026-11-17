@@ -83,7 +83,9 @@ export default function Dialog({ open, title, description, className, ...props }
         className,
       )}>
       <div className="flex min-h-[102px] w-full flex-col gap-2 px-6 pt-6 pb-2 [letter-spacing:var(--letter-spacing-default)] break-words">
-        <h2 id={titleId} className="text-semantic-text-strong [font:var(--semantic-title-small)]">
+        <h2
+          id={titleId}
+          className="text-semantic-text-strong whitespace-pre-line [font:var(--semantic-title-small)]">
           {title}
         </h2>
         {description && (
