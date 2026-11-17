@@ -51,6 +51,7 @@ export default function BottomSheet({
   title,
   height,
   headerType = "title",
+  showHandleClose,
   buttons,
   toast,
   enterTransition = DEFAULT_ENTER_TRANSITION,
@@ -134,6 +135,7 @@ export default function BottomSheet({
                   onClose={onClose}
                   showHandle={height === "auto"}
                   type={headerType}
+                  showHandleClose={showHandleClose}
                 />
                 <div className="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 pt-1 pb-4">
                   {children}
