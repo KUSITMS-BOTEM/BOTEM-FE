@@ -34,3 +34,9 @@ if (typeof HTMLDialogElement !== "undefined") {
 
 // 날짜 휠 피커는 jsdom에서 조작할 수 없어 버튼으로 대체한다. 실제 휠 동작은 브라우저에서 확인한다
 vi.mock("react-mobile-picker", () => import("@/__tests__/mockMobilePicker"));
+
+// 병렬 실행 부하로 느려질 때 findBy·waitFor가 기본 1초에 먼저 실패하지 않게 한다. node 환경 테스트에는 DOM이 없다
+if (typeof document !== "undefined") {
+  const { configure } = await import("@testing-library/react");
+  configure({ asyncUtilTimeout: 5000 });
+}
