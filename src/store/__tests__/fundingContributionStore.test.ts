@@ -17,12 +17,12 @@ describe("useFundingContributionStore", () => {
     const { setAmount, setLetter, setPassword } = useFundingContributionStore.getState();
 
     setAmount(50000);
-    setLetter({ text: "생일 축하해!", name: "민수", color: "orange" });
+    setLetter({ text: "생일 축하해!", name: "민수", color: "orange", paperStyle: "vividSolid" });
     setPassword("1234");
 
     expect(useFundingContributionStore.getState()).toMatchObject({
       amount: 50000,
-      letter: { text: "생일 축하해!", name: "민수", color: "orange" },
+      letter: { text: "생일 축하해!", name: "민수", color: "orange", paperStyle: "vividSolid" },
       password: "1234",
     });
   });
@@ -30,7 +30,7 @@ describe("useFundingContributionStore", () => {
   it("reset하면 저장한 값이 모두 초기값으로 돌아간다", () => {
     const { setAmount, setLetter, setPassword, reset } = useFundingContributionStore.getState();
     setAmount(50000);
-    setLetter({ text: "생일 축하해!", name: "민수", color: "orange" });
+    setLetter({ text: "생일 축하해!", name: "민수", color: "orange", paperStyle: "vividSolid" });
     setPassword("1234");
 
     reset();
