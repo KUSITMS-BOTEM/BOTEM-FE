@@ -34,6 +34,15 @@ describe("LetterToolSheet", () => {
     expect(onSelectSticker).toHaveBeenCalledTimes(1);
   });
 
+  it("편지지 툴을 누르면 onSelectLetter가 호출된다", async () => {
+    const onSelectLetter = vi.fn();
+    render(<LetterToolSheet onClose={vi.fn()} onSelectLetter={onSelectLetter} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "편지지" }));
+
+    expect(onSelectLetter).toHaveBeenCalledTimes(1);
+  });
+
   it("닫기 버튼을 누르면 onClose가 호출된다", async () => {
     const onClose = vi.fn();
     render(<LetterToolSheet onClose={onClose} />);

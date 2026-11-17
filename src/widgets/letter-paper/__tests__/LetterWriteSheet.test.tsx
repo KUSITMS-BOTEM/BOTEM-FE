@@ -139,7 +139,32 @@ describe("LetterWriteSheet", () => {
     await userEvent.click(screen.getByRole("button", { name: "파랑" }));
     await userEvent.click(screen.getByRole("button", { name: "다음" }));
 
-    expect(onNext).toHaveBeenCalledWith({ text: "생일 축하해", name: "민수", color: "blue" });
+    expect(onNext).toHaveBeenCalledWith({
+      text: "생일 축하해",
+      name: "민수",
+      color: "blue",
+      paperStyle: "vividSolid",
+    });
+  });
+
+  it("편지지 툴에서 style을 고르면 선택 표시가 되고 onNext에 담긴다", async () => {
+    const onNext = vi.fn();
+    renderSheet({ onNext });
+    typeLetter("생일 축하해");
+    await userEvent.click(screen.getByRole("button", { name: "나만의 편지 만들기" }));
+    await userEvent.click(screen.getByRole("button", { name: "편지지" }));
+    expect(screen.getByText("어떤 편지지를 쓸까요?")).toBeInTheDocument();
+
+    scrollIntoView.mockClear();
+    await userEvent.click(screen.getByRole("button", { name: "컬러 도트 편지지" }));
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "start", behavior: "smooth" });
+    expect(screen.getByRole("button", { name: "컬러 도트 편지지" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "다음" }));
+    expect(onNext).toHaveBeenCalledWith(expect.objectContaining({ paperStyle: "colorDot" }));
   });
 
   it("시트를 닫았다 다시 열면 빈 편지로 시작한다", async () => {
@@ -195,6 +220,112 @@ describe("LetterWriteSheet", () => {
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 
+  describe("사진", () => {
+    const openPhotoMode = async () => {
+      await userEvent.click(screen.getByRole("button", { name: "나만의 편지 만들기" }));
+      await userEvent.click(screen.getByRole("button", { name: "사진 추가" }));
+    };
+    const addPhoto = async (container: HTMLElement) => {
+      await userEvent.upload(
+        container.querySelector("input[type=file]")!,
+        new File(["x"], "a.png", { type: "image/png" }),
+      );
+      await screen.findByAltText("선택한 사진");
+    };
+
+    beforeEach(() => {
+      URL.createObjectURL = vi.fn(() => "blob:photo");
+      URL.revokeObjectURL = vi.fn();
+      global.createImageBitmap = vi
+        .fn()
+        .mockResolvedValue({ close: vi.fn() }) as unknown as typeof createImageBitmap;
+    });
+
+    it("사진 추가 툴을 고르면 툴 영역이 사라지고 사진 슬롯만 활성화되며 빈 아이콘 슬롯은 숨겨진다", async () => {
+      renderSheet();
+
+      await openPhotoMode();
+
+      expect(screen.queryByText("어떤 툴을 추가할까요?")).not.toBeInTheDocument();
+      const photoSlot = screen.getByRole("button", { name: "사진 선택" });
+      expect(photoSlot).toBeEnabled();
+      expect(photoSlot).toHaveClass("border-solid");
+      for (const slot of screen.getAllByRole("button", { name: /아이콘 선택/, hidden: true })) {
+        expect(slot.parentElement).toHaveClass("invisible");
+      }
+    });
+
+    it("사진을 추가하면 삭제 버튼이 생기고, 누르면 사진이 지워져 다시 고를 수 있다", async () => {
+      const { container } = renderSheet();
+      await openPhotoMode();
+      await addPhoto(container);
+
+      await userEvent.click(screen.getByRole("button", { name: "사진 삭제" }));
+
+      expect(screen.queryByAltText("선택한 사진")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "사진 선택" })).toBeEnabled();
+    });
+
+    it("사진이 추가되면 숨겨졌던 아이콘 슬롯이 다시 보이고, 사진을 지우면 다시 숨겨진다", async () => {
+      const { container } = renderSheet();
+      await openPhotoMode();
+      const iconSlots = () => screen.getAllByRole("button", { name: /아이콘 선택/, hidden: true });
+
+      await addPhoto(container);
+      for (const slot of iconSlots()) expect(slot.parentElement).not.toHaveClass("invisible");
+
+      await userEvent.click(screen.getByRole("button", { name: "사진 삭제" }));
+      for (const slot of iconSlots()) expect(slot.parentElement).toHaveClass("invisible");
+    });
+
+    it("사진이 있을 때 툴 영역에서 사진 추가를 다시 고르면 사진이 지워지고 활성화된 빈 슬롯이 보인다", async () => {
+      const { container } = renderSheet();
+      await openPhotoMode();
+      await addPhoto(container);
+      await userEvent.click(screen.getByRole("button", { name: "나만의 편지 만들기" }));
+
+      await userEvent.click(screen.getByRole("button", { name: "사진 추가" }));
+
+      expect(screen.queryByAltText("선택한 사진")).not.toBeInTheDocument();
+      const photoSlot = screen.getByRole("button", { name: "사진 선택" });
+      expect(photoSlot).toBeEnabled();
+      expect(photoSlot).toHaveClass("border-solid");
+    });
+
+    it("사진이 있을 때 스티커 툴을 고르면 사진이 숨겨지지 않고 그대로 남는다", async () => {
+      const { container } = renderSheet();
+      await openPhotoMode();
+      await addPhoto(container);
+      await userEvent.click(screen.getByRole("button", { name: "나만의 편지 만들기" }));
+
+      await userEvent.click(screen.getByRole("button", { name: "스티커" }));
+
+      expect(screen.getByAltText("선택한 사진").closest(".invisible")).toBeNull();
+    });
+
+    it("사진을 넣고 다음을 누르면 photo가 전달된다", async () => {
+      const onNext = vi.fn();
+      const { container } = renderSheet({ onNext });
+      await openPhotoMode();
+      await addPhoto(container);
+      typeLetter("안녕");
+
+      await userEvent.click(screen.getByRole("button", { name: "다음" }));
+
+      expect(onNext).toHaveBeenCalledWith(expect.objectContaining({ photo: expect.any(File) }));
+    });
+
+    it("플러스 버튼으로 툴 영역을 다시 열면 사진 슬롯 강조가 풀린다", async () => {
+      renderSheet();
+      await openPhotoMode();
+
+      await userEvent.click(screen.getByRole("button", { name: "나만의 편지 만들기" }));
+
+      expect(screen.getByText("어떤 툴을 추가할까요?")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "사진 선택" })).toBeDisabled();
+    });
+  });
+
   describe("스티커", () => {
     const openStickerSheet = async () => {
       await userEvent.click(screen.getByRole("button", { name: "나만의 편지 만들기" }));
@@ -204,13 +335,17 @@ describe("LetterWriteSheet", () => {
 
     it("스티커 툴을 고르면 스티커 시트가 열리고 사진 슬롯이 숨겨진다", async () => {
       renderSheet();
-      expect(screen.getByRole("button", { name: "사진 선택" })).not.toHaveClass("invisible");
+      expect(screen.getByRole("button", { name: "사진 선택" }).parentElement).not.toHaveClass(
+        "invisible",
+      );
 
       await openStickerSheet();
 
       expect(screen.getByText("아이콘을 편지지에 붙여보세요")).toBeInTheDocument();
       expect(screen.queryByText("어떤 툴을 추가할까요?")).not.toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "사진 선택" })).toHaveClass("invisible");
+      expect(screen.getByRole("button", { name: "사진 선택" }).parentElement).toHaveClass(
+        "invisible",
+      );
     });
 
     it("편지 작성 화면에서는 사진 슬롯을 누를 수 없다", () => {
@@ -287,7 +422,9 @@ describe("LetterWriteSheet", () => {
       await userEvent.click(screen.getAllByRole("button", { name: "닫기" }).at(-1)!);
 
       expect(screen.getByText("어떤 툴을 추가할까요?")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "사진 선택" })).not.toHaveClass("invisible");
+      expect(screen.getByRole("button", { name: "사진 선택" }).parentElement).not.toHaveClass(
+        "invisible",
+      );
       expect(screen.getAllByRole("button", { name: /아이콘 삭제/ })).toHaveLength(1);
     });
 

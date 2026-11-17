@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 
 import Image, { type StaticImageData } from "next/image";
 
@@ -28,6 +28,10 @@ type AssetSlotProps =
       src?: string | StaticImageData;
       // 사진을 고를 수 있는 상태일 때만 눌리게 한다
       disabled?: boolean;
+      // 사진을 붙일 자리로 안내할 때 비어 있는 슬롯을 실선 테두리로 강조한다
+      active?: boolean;
+      // 사진이 있을 때만 우측 상단에 삭제 버튼이 생긴다
+      onRemove?: () => void;
       onImageChange?: (file: File) => void;
       allowedTypes?: string[];
       maxSizeBytes?: number;
@@ -81,55 +85,61 @@ function IconSlot({
 function PhotoSlot({
   src,
   disabled = false,
+  active = false,
+  onRemove,
   onImageChange,
   allowedTypes,
   maxSizeBytes,
   className,
 }: Extract<AssetSlotProps, { type: "photo" }>) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { errorText, handleFileChange } = useImageFileSelect({
     allowedTypes,
     maxSizeBytes,
-    onSelect: file => {
-      setPreviewUrl(URL.createObjectURL(file));
-      onImageChange?.(file);
-    },
+    onSelect: file => onImageChange?.(file),
   });
 
-  useEffect(() => {
-    if (!previewUrl) return;
-    return () => URL.revokeObjectURL(previewUrl);
-  }, [previewUrl]);
-
-  const imageSrc = previewUrl ?? src;
+  // 미리보기 URL은 부모가 만들어 src로 내려준다(생성·해제도 부모 몫)
+  const imageSrc = src;
 
   return (
     <>
-      <button
-        type="button"
-        aria-label="사진 선택"
-        disabled={disabled}
-        onClick={() => inputRef.current?.click()}
-        className={cn(
-          "relative flex size-[120px] items-center justify-center overflow-hidden rounded-lg",
-          !disabled && "cursor-pointer",
-          !imageSrc && EMPTY_SLOT_CLASS,
-          className,
-        )}>
-        {imageSrc ? (
-          <Image
-            src={imageSrc}
-            alt="선택한 사진"
-            fill
-            sizes="120px"
-            unoptimized={typeof imageSrc === "string"}
-            className="object-cover"
-          />
-        ) : (
-          <IconPlus aria-hidden className="text-semantic-icon-default size-7" />
+      {/* 삭제 버튼이 슬롯 버튼 안에 중첩되지 않도록 둘을 형제로 두고, 위치·회전은 이 래퍼가 가진다 */}
+      <div className={cn("relative size-[120px]", className)}>
+        <button
+          type="button"
+          aria-label="사진 선택"
+          // 사진이 있으면 다시 눌러도 선택창이 열리지 않는다(바꾸려면 삭제 후 다시 추가)
+          disabled={disabled || !!imageSrc}
+          onClick={() => inputRef.current?.click()}
+          className={cn(
+            "relative flex size-full items-center justify-center overflow-hidden rounded-lg",
+            !disabled && !imageSrc && "cursor-pointer",
+            !imageSrc && (active ? ACTIVE_SLOT_CLASS : EMPTY_SLOT_CLASS),
+          )}>
+          {imageSrc ? (
+            <Image
+              src={imageSrc}
+              alt="선택한 사진"
+              fill
+              sizes="120px"
+              unoptimized={typeof imageSrc === "string"}
+              className="object-cover"
+            />
+          ) : (
+            <IconPlus aria-hidden className="text-semantic-icon-default size-7" />
+          )}
+        </button>
+        {imageSrc && onRemove && (
+          <button
+            type="button"
+            aria-label="사진 삭제"
+            onClick={onRemove}
+            className="absolute -top-[6.2px] -right-[9.7px] size-5 cursor-pointer before:absolute before:-inset-2.5 before:content-['']">
+            <IconRemove aria-hidden className="size-full" />
+          </button>
         )}
-      </button>
+      </div>
       <input
         ref={inputRef}
         type="file"

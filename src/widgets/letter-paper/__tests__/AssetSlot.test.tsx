@@ -90,7 +90,8 @@ describe("AssetSlot", () => {
       render(<AssetSlot type="photo" />);
 
       const button = screen.getByRole("button", { name: "사진 선택" });
-      expect(button).toHaveClass("size-[120px]", "border-dashed");
+      expect(button.parentElement).toHaveClass("size-[120px]");
+      expect(button).toHaveClass("border-dashed");
       expect(screen.queryByAltText("선택한 사진")).not.toBeInTheDocument();
     });
 
@@ -114,48 +115,45 @@ describe("AssetSlot", () => {
       expect(screen.getByRole("button", { name: "사진 선택" })).not.toHaveClass("border-dashed");
     });
 
-    it("사진을 선택하면 미리보기를 보여주고 테두리를 없애며 onImageChange를 호출한다", async () => {
+    it("사진을 선택하면 onImageChange를 호출하고, src는 부모가 내려주기 전까지 비어 있다", async () => {
       const onImageChange = vi.fn();
       const { container } = render(<AssetSlot type="photo" onImageChange={onImageChange} />);
       const file = new File(["x"], "a.png", { type: "image/png" });
 
       await userEvent.upload(container.querySelector("input[type=file]")!, file);
 
-      await waitFor(() => expect(screen.getByAltText("선택한 사진")).toBeInTheDocument());
-      expect(screen.getByRole("button", { name: "사진 선택" })).not.toHaveClass("border");
-      expect(onImageChange).toHaveBeenCalledWith(file);
+      await waitFor(() => expect(onImageChange).toHaveBeenCalledWith(file));
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
+      expect(screen.queryByAltText("선택한 사진")).not.toBeInTheDocument();
     });
 
-    it("사진을 선택한 뒤에도 다시 눌러 파일 선택창을 열 수 있다", async () => {
-      const { container } = render(<AssetSlot type="photo" />);
+    it("active이면 비어 있는 슬롯을 실선 테두리로 강조한다", () => {
+      render(<AssetSlot type="photo" active />);
+
+      const button = screen.getByRole("button", { name: "사진 선택" });
+      expect(button).toHaveClass("border-solid", "border-[1.5px]");
+      expect(button).not.toHaveClass("border-dashed");
+    });
+
+    it("사진이 있으면 눌러도 파일 선택창이 열리지 않는다", async () => {
+      const { container } = render(<AssetSlot type="photo" src="/cat.jpg" active />);
       const input = container.querySelector("input[type=file]") as HTMLInputElement;
-      await userEvent.upload(input, new File(["x"], "a.png", { type: "image/png" }));
       const clickSpy = vi.spyOn(input, "click");
 
       await userEvent.click(screen.getByRole("button", { name: "사진 선택" }));
 
-      expect(clickSpy).toHaveBeenCalled();
+      expect(clickSpy).not.toHaveBeenCalled();
     });
 
-    it("사진을 교체하면 이전 미리보기 URL을 해제한다", async () => {
-      const { container } = render(<AssetSlot type="photo" />);
+    it("사진이 있고 onRemove가 있을 때만 삭제 버튼이 보이고, 누르면 onRemove를 호출한다", async () => {
+      const onRemove = vi.fn();
+      const { rerender } = render(<AssetSlot type="photo" onRemove={onRemove} />);
+      expect(screen.queryByRole("button", { name: "사진 삭제" })).not.toBeInTheDocument();
 
-      await uploadInto(container, new File(["x"], "a.png", { type: "image/png" }));
-      await waitFor(() => expect(screen.getByAltText("선택한 사진")).toBeInTheDocument());
-      await uploadInto(container, new File(["y"], "b.png", { type: "image/png" }));
+      rerender(<AssetSlot type="photo" src="/cat.jpg" onRemove={onRemove} />);
+      await userEvent.click(screen.getByRole("button", { name: "사진 삭제" }));
 
-      await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview-1"));
-      expect(URL.revokeObjectURL).not.toHaveBeenCalledWith("blob:preview-2");
-    });
-
-    it("언마운트하면 마지막 미리보기 URL을 해제한다", async () => {
-      const { container, unmount } = render(<AssetSlot type="photo" />);
-      await uploadInto(container, new File(["x"], "a.png", { type: "image/png" }));
-      await waitFor(() => expect(screen.getByAltText("선택한 사진")).toBeInTheDocument());
-
-      unmount();
-
-      expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview-1");
+      expect(onRemove).toHaveBeenCalledTimes(1);
     });
 
     it("allowedTypes에 없는 형식이면 onImageChange 없이 에러 토스트를 보여준다", async () => {
