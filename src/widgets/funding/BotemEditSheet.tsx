@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 
 import BottomCTA from "@/components/BottomCTA";
@@ -49,60 +49,64 @@ export default function BotemEditSheet({
     }
   }
 
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (canSubmit) onSubmit(trimmedName, password);
+  };
+
   return (
     <OpenSheet open={open} title="내 보탬 찾기" onClose={onClose} className={className}>
-      <div className="flex w-full flex-col gap-3">
-        <motion.div
-          initial={{ opacity: 0, y: 32 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={TITLE_TRANSITION}
-          className="w-full">
-          <Title type="a2z" title={"보탤 때 입력한\n이름과 비밀번호 4자리를\n입력해주세요"} />
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={FIELD_TRANSITION}
-          // 입력 영역이 다 나타난 뒤에 포커스해야 모션 중 키보드가 올라와 레이아웃이 흔들리지 않는다
-          onAnimationComplete={() => nameRef.current?.focus({ preventScroll: true })}
-          onFocus={() => setIsTyping(true)}
-          onBlur={() => setIsTyping(false)}
-          className="flex w-full flex-col gap-3">
-          <TextField
-            ref={nameRef}
-            label="이름"
-            placeholder="보탤 때 입력한 이름 입력"
-            autoComplete="off"
-            enterKeyHint="next"
-            value={name}
-            onChange={event => setName(event.target.value)}
-            onClear={() => setName("")}
-          />
-          <TextField
-            label="비밀번호 4자리"
-            placeholder="보탤 때 입력한 비밀번호 4자리"
-            type="password"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="off"
-            enterKeyHint="done"
-            maxLength={NUMBER_FIELD_LENGTH}
-            value={password}
-            onChange={event => setPassword(event.target.value.replace(/\D/g, ""))}
-            onClear={() => setPassword("")}
-          />
-        </motion.div>
-      </div>
-      {/* 키보드가 올라온 터치 기기에서는 CTA가 키보드 위에 떠 입력을 가리므로 숨긴다 */}
-      <BottomCTA className={cn(isTyping && "pointer-coarse:hidden")}>
-        <Button
-          color="brand"
-          size="xlarge"
-          disabled={!canSubmit}
-          onClick={() => onSubmit(trimmedName, password)}>
-          확인
-        </Button>
-      </BottomCTA>
+      {/* form은 Enter 제출만 담당하므로 contents로 레이아웃에 영향을 주지 않는다 */}
+      <form onSubmit={handleSubmit} className="contents">
+        <div className="flex w-full flex-col gap-3">
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={TITLE_TRANSITION}
+            className="w-full">
+            <Title type="a2z" title={"보탤 때 입력한\n이름과 비밀번호 4자리를\n입력해주세요"} />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={FIELD_TRANSITION}
+            // 입력 영역이 다 나타난 뒤에 포커스해야 모션 중 키보드가 올라와 레이아웃이 흔들리지 않는다
+            onAnimationComplete={() => nameRef.current?.focus({ preventScroll: true })}
+            onFocus={() => setIsTyping(true)}
+            onBlur={() => setIsTyping(false)}
+            className="flex w-full flex-col gap-3">
+            <TextField
+              ref={nameRef}
+              label="이름"
+              placeholder="보탤 때 입력한 이름 입력"
+              autoComplete="off"
+              enterKeyHint="next"
+              value={name}
+              onChange={event => setName(event.target.value)}
+              onClear={() => setName("")}
+            />
+            <TextField
+              label="비밀번호 4자리"
+              placeholder="보탤 때 입력한 비밀번호 4자리"
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="off"
+              enterKeyHint="done"
+              maxLength={NUMBER_FIELD_LENGTH}
+              value={password}
+              onChange={event => setPassword(event.target.value.replace(/\D/g, ""))}
+              onClear={() => setPassword("")}
+            />
+          </motion.div>
+        </div>
+        {/* 키보드가 올라온 터치 기기에서는 CTA가 키보드 위에 떠 입력을 가리므로 숨긴다 */}
+        <BottomCTA className={cn(isTyping && "pointer-coarse:hidden")}>
+          <Button color="brand" size="xlarge" type="submit" disabled={!canSubmit}>
+            확인
+          </Button>
+        </BottomCTA>
+      </form>
     </OpenSheet>
   );
 }

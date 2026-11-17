@@ -93,6 +93,28 @@ describe("BotemEditSheet", () => {
     expect(onSubmit).toHaveBeenCalledWith("민수", "1234");
   });
 
+  it("비밀번호 입력란에서 Enter를 눌러도 제출된다", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<Harness onSubmit={onSubmit} />);
+
+    await user.type(getName(), "민수");
+    await user.type(getPassword(), "1234{Enter}");
+
+    expect(onSubmit).toHaveBeenCalledWith("민수", "1234");
+  });
+
+  it("입력이 덜 찼으면 Enter를 눌러도 제출되지 않는다", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<Harness onSubmit={onSubmit} />);
+
+    await user.type(getName(), "민수");
+    await user.type(getPassword(), "12{Enter}");
+
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it("닫았다 다시 열면 입력이 비워진다", async () => {
     const user = userEvent.setup();
     render(<Harness closeOnSubmit />);
