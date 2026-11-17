@@ -40,6 +40,9 @@ export type LetterWriteValues = {
   color: Color;
   // 녹음을 완료했을 때만 있다
   voice?: LetterVoice;
+  // 스티커를 붙였을 때만 있다
+  largeSticker?: Sticker;
+  smallSticker?: Sticker;
 };
 
 type LetterWriteSheetProps = {
@@ -180,11 +183,12 @@ export default function LetterWriteSheet({
             onSenderClick={isLoggedIn ? undefined : handleSenderClick}
             largeIcon={largeSticker && <largeSticker.Icon aria-hidden className="size-full" />}
             smallIcon={smallSticker && <smallSticker.Icon aria-hidden className="size-full" />}
-            onLargeIconClick={() =>
-              stickerOpen && selectedSticker && setLargeSticker(selectedSticker)
+            // 스티커 시트가 열려 있을 때만 슬롯이 눌리게 한다(닫혀 있으면 슬롯 버튼이 disabled)
+            onLargeIconClick={
+              stickerOpen ? () => selectedSticker && setLargeSticker(selectedSticker) : undefined
             }
-            onSmallIconClick={() =>
-              stickerOpen && selectedSticker && setSmallSticker(selectedSticker)
+            onSmallIconClick={
+              stickerOpen ? () => selectedSticker && setSmallSticker(selectedSticker) : undefined
             }
             onLargeIconRemove={() => setLargeSticker(null)}
             onSmallIconRemove={() => setSmallSticker(null)}
@@ -261,7 +265,16 @@ export default function LetterWriteSheet({
               color="neutral"
               size="xlarge"
               disabled={!canNext || recorder.status === "recording"}
-              onClick={() => onNext?.({ text, name, color, ...(voice && { voice }) })}>
+              onClick={() =>
+                onNext?.({
+                  text,
+                  name,
+                  color,
+                  ...(voice && { voice }),
+                  ...(largeSticker && { largeSticker }),
+                  ...(smallSticker && { smallSticker }),
+                })
+              }>
               다음
             </Button>
           </motion.div>

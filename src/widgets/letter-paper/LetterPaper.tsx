@@ -156,6 +156,7 @@ export default function LetterPaper({
         <AssetSlot
           type="icon"
           asset={largeIcon}
+          label="큰 아이콘"
           onClick={onLargeIconClick}
           onRemove={onLargeIconRemove}
           active={iconSlotsActive}
@@ -164,6 +165,7 @@ export default function LetterPaper({
         <AssetSlot
           type="icon"
           asset={smallIcon}
+          label="작은 아이콘"
           onClick={onSmallIconClick}
           onRemove={onSmallIconRemove}
           active={iconSlotsActive}

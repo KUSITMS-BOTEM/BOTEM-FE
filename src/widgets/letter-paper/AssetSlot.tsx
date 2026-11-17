@@ -19,6 +19,8 @@ type AssetSlotProps =
       onRemove?: () => void;
       // 스티커를 붙일 자리로 안내할 때 비어 있는 슬롯을 실선 테두리로 강조한다
       active?: boolean;
+      // 슬롯이 둘 이상일 때 스크린리더가 구분하도록 접근 가능한 이름 앞에 붙인다
+      label?: string;
       className?: string;
     }
   | {
@@ -45,6 +47,7 @@ function IconSlot({
   onClick,
   onRemove,
   active = false,
+  label = "아이콘",
   className,
 }: Extract<AssetSlotProps, { type: "icon" }>) {
   return (
@@ -52,7 +55,8 @@ function IconSlot({
     <div className={cn("relative size-[50px]", className)}>
       <button
         type="button"
-        aria-label="아이콘 선택"
+        aria-label={`${label} 선택`}
+        disabled={!onClick}
         onClick={onClick}
         className={cn(
           "flex size-full items-center justify-center overflow-hidden rounded-lg",
@@ -64,7 +68,7 @@ function IconSlot({
       {asset && onRemove && (
         <button
           type="button"
-          aria-label="아이콘 삭제"
+          aria-label={`${label} 삭제`}
           onClick={onRemove}
           className="absolute -top-[6.2px] -right-[9.7px] size-5 cursor-pointer before:absolute before:-inset-2.5 before:content-['']">
           <IconRemove aria-hidden className="size-full" />

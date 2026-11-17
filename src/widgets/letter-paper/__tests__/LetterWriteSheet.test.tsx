@@ -200,7 +200,7 @@ describe("LetterWriteSheet", () => {
       await userEvent.click(screen.getByRole("button", { name: "나만의 편지 만들기" }));
       await userEvent.click(screen.getByRole("button", { name: "스티커" }));
     };
-    const slots = () => screen.getAllByRole("button", { name: "아이콘 선택" });
+    const slots = () => screen.getAllByRole("button", { name: /아이콘 선택/ });
 
     it("스티커 툴을 고르면 스티커 시트가 열리고 사진 슬롯이 숨겨진다", async () => {
       renderSheet();
@@ -226,7 +226,7 @@ describe("LetterWriteSheet", () => {
       await userEvent.click(screen.getByRole("button", { name: "스티커 1" }));
       await userEvent.click(slots()[0]);
 
-      expect(screen.getAllByRole("button", { name: "아이콘 삭제" })).toHaveLength(1);
+      expect(screen.getAllByRole("button", { name: /아이콘 삭제/ })).toHaveLength(1);
     });
 
     it("스티커를 고르지 않고 슬롯을 누르면 아무것도 붙지 않는다", async () => {
@@ -235,7 +235,36 @@ describe("LetterWriteSheet", () => {
 
       await userEvent.click(slots()[0]);
 
-      expect(screen.queryByRole("button", { name: "아이콘 삭제" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /아이콘 삭제/ })).not.toBeInTheDocument();
+    });
+
+    it("스티커 시트가 닫혀 있으면 슬롯 버튼은 비활성화된다", () => {
+      renderSheet();
+
+      slots().forEach(slot => expect(slot).toBeDisabled());
+    });
+
+    it("큰 슬롯과 작은 슬롯은 접근 가능한 이름으로 구분된다", () => {
+      renderSheet();
+
+      expect(screen.getByRole("button", { name: "큰 아이콘 선택" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "작은 아이콘 선택" })).toBeInTheDocument();
+    });
+
+    it("붙인 스티커가 onNext에 담긴다", async () => {
+      const onNext = vi.fn();
+      renderSheet({ onNext });
+      typeLetter("생일 축하해");
+      await openStickerSheet();
+      await userEvent.click(screen.getByRole("button", { name: "스티커 1" }));
+      await userEvent.click(screen.getByRole("button", { name: "큰 아이콘 선택" }));
+
+      await userEvent.click(screen.getByRole("button", { name: "다음" }));
+
+      expect(onNext).toHaveBeenCalledWith(
+        expect.objectContaining({ largeSticker: expect.objectContaining({ id: "sticker-1" }) }),
+      );
+      expect(onNext.mock.calls[0][0]).not.toHaveProperty("smallSticker");
     });
 
     it("삭제 버튼을 누르면 붙인 스티커가 지워진다", async () => {
@@ -244,9 +273,9 @@ describe("LetterWriteSheet", () => {
       await userEvent.click(screen.getByRole("button", { name: "스티커 1" }));
       await userEvent.click(slots()[1]);
 
-      await userEvent.click(screen.getByRole("button", { name: "아이콘 삭제" }));
+      await userEvent.click(screen.getByRole("button", { name: /아이콘 삭제/ }));
 
-      expect(screen.queryByRole("button", { name: "아이콘 삭제" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /아이콘 삭제/ })).not.toBeInTheDocument();
     });
 
     it("스티커 시트를 닫으면 툴 선택으로 돌아가고 붙인 스티커는 남는다", async () => {
@@ -259,7 +288,7 @@ describe("LetterWriteSheet", () => {
 
       expect(screen.getByText("어떤 툴을 추가할까요?")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "사진 선택" })).not.toHaveClass("invisible");
-      expect(screen.getAllByRole("button", { name: "아이콘 삭제" })).toHaveLength(1);
+      expect(screen.getAllByRole("button", { name: /아이콘 삭제/ })).toHaveLength(1);
     });
 
     it("시트를 닫았다 다시 열면 붙인 스티커가 없다", async () => {
@@ -274,7 +303,7 @@ describe("LetterWriteSheet", () => {
       rerender(<LetterWriteSheet open onClose={vi.fn()} recipientName="지유" isLoggedIn />);
 
       await screen.findByRole("button", { name: "다음" });
-      expect(screen.queryByRole("button", { name: "아이콘 삭제" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /아이콘 삭제/ })).not.toBeInTheDocument();
     });
   });
 
