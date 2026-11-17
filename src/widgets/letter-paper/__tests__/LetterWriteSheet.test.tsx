@@ -262,6 +262,21 @@ describe("LetterWriteSheet", () => {
       );
     });
 
+    it("녹음을 완료한 뒤 녹음 툴을 다시 고르면 이전 녹음 없이 처음 상태로 시작한다", async () => {
+      renderSheet();
+      await openRecordSheet();
+      await userEvent.click(screen.getByRole("button", { name: "녹음 시작" }));
+      await userEvent.click(await screen.findByRole("button", { name: "녹음 중지" }));
+      await userEvent.click(screen.getByRole("button", { name: "녹음 완료" }));
+
+      await openRecordSheet();
+
+      expect(screen.getByText("탭으로 녹음 시작")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "재녹음" })).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: "녹음 시작" }));
+      expect(await screen.findByRole("button", { name: "녹음 중지" })).toBeInTheDocument();
+    });
+
     it("녹음 영역을 닫으면 녹음을 버리고 음성 메시지가 생기지 않는다", async () => {
       renderSheet();
 

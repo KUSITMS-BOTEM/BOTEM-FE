@@ -117,6 +117,12 @@ export default function LetterWriteSheet({
     setTooltipDismissed(true);
   };
 
+  // 이전 녹음·자막·타이머가 남아 있어도 항상 처음 상태에서 시작한다
+  const openRecord = () => {
+    recorder.reset();
+    setRecordOpen(true);
+  };
+
   // 녹음 중이던 내용은 버리고 닫는다
   const closeRecord = () => {
     recorder.reset();
@@ -197,10 +203,7 @@ export default function LetterWriteSheet({
                   onClose={closeRecord}
                 />
               ) : (
-                <LetterToolSheet
-                  onClose={() => setToolOpen(false)}
-                  onSelectRecord={() => setRecordOpen(true)}
-                />
+                <LetterToolSheet onClose={() => setToolOpen(false)} onSelectRecord={openRecord} />
               )}
             </div>
           )}
