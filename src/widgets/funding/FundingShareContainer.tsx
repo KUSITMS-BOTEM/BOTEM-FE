@@ -5,6 +5,7 @@ import { useState } from "react";
 import Header from "@/components/Header";
 import ProfileBox from "@/components/ProfileBox";
 import Tooltip from "@/components/Tooltip";
+import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
 import BotemPopup from "@/widgets/funding/BotemPopup";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
 import FundingMessage from "@/widgets/funding/FundingMessage";
@@ -55,6 +56,7 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
   const [isContributeOpen, setIsContributeOpen] = useState(false);
   const [isLetterOpen, setIsLetterOpen] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [contributeAmount, setContributeAmount] = useState(0);
   const closePopup = () => setIsPopupOpen(false);
   const remainingAmount = funding.targetAmount - funding.currentAmount;
@@ -109,13 +111,18 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
         isClosed={remainingAmount <= 0}
         onClose={closePopup}
         onUnconfirmedClick={noop}
-        onEditClick={noop}
+        onEditClick={() => {
+          closePopup();
+          setIsEditOpen(true);
+        }}
         onMessageClick={noop}
         onContributeClick={() => {
           closePopup();
           setIsContributeOpen(true);
         }}
       />
+      {/* TODO: 이름·비밀번호 확인(onSubmit) 뒤 동작은 보탬 수정 API가 정해지면 연결한다 */}
+      <BotemEditSheet open={isEditOpen} onClose={() => setIsEditOpen(false)} onSubmit={noop} />
       {/* 앞 단계 시트는 열어 둔 채 위에 다음 시트를 띄워(금액 → 편지 → 비밀번호), 이전을 누르면 직전 시트로 돌아온다 */}
       <FundingContributeSheet
         open={isContributeOpen}
