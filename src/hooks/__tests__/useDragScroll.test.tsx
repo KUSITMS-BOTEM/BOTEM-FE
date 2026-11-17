@@ -53,6 +53,34 @@ describe("useDragScroll", () => {
     expect(onItemClick).toHaveBeenCalledTimes(1);
   });
 
+  it("보조 버튼으로 끈 뒤에도 다음 클릭은 억제되지 않는다", () => {
+    const onItemClick = vi.fn();
+    render(<Harness onItemClick={onItemClick} />);
+    const list = screen.getByTestId("list");
+    const button = screen.getByRole("button", { name: "항목" });
+
+    fireEvent.pointerDown(list, { ...mouse(100), button: 1 });
+    fireEvent.pointerMove(list, mouse(60));
+    fireEvent.pointerUp(list, mouse(60));
+    fireEvent.click(button);
+
+    expect(list.scrollLeft).toBe(0);
+    expect(onItemClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("취소된 드래그 뒤에도 다음 클릭은 억제되지 않는다", () => {
+    const onItemClick = vi.fn();
+    render(<Harness onItemClick={onItemClick} />);
+    const button = screen.getByRole("button", { name: "항목" });
+
+    fireEvent.pointerDown(button, mouse(0));
+    fireEvent.pointerMove(button, mouse(20));
+    fireEvent.pointerCancel(button, mouse(20));
+    fireEvent.click(button);
+
+    expect(onItemClick).toHaveBeenCalledTimes(1);
+  });
+
   it("임계값 이하로만 움직이면 단순 클릭으로 처리한다", () => {
     const onItemClick = vi.fn();
     render(<Harness onItemClick={onItemClick} />);
