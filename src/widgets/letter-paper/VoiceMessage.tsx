@@ -3,8 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/utils/cn";
 import { LETTER_ACCENT_BG_CLASS, type Color } from "@/constants/color";
 import IconRecord from "@/assets/icons/multicolor/ico-record.svg?react";
-
-const WAVEFORM_BAR_HEIGHTS = ["h-2", "h-3.5", "h-[22px]", "h-[18px]", "h-2"];
+import WaveformBars from "@/widgets/letter-paper/WaveformBars";
 
 type VoiceMessageProps = {
   color?: Color;
@@ -68,18 +67,10 @@ export default function VoiceMessage({ color = "pink", audio, className }: Voice
           <IconRecord aria-hidden />
         </div>
       )}
-      <div aria-hidden className="flex shrink-0 items-center gap-0.5">
-        {WAVEFORM_BAR_HEIGHTS.map((height, index) => (
-          <span
-            key={index}
-            className={cn(
-              "w-[5px] rounded-[48px] transition-colors duration-300",
-              height,
-              isPlaying ? "bg-black" : LETTER_ACCENT_BG_CLASS[color],
-            )}
-          />
-        ))}
-      </div>
+      <WaveformBars
+        active={isPlaying}
+        barClassName={isPlaying ? "bg-black" : LETTER_ACCENT_BG_CLASS[color]}
+      />
     </div>
   );
 }

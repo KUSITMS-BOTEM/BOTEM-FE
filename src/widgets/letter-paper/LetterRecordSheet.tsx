@@ -8,6 +8,7 @@ import IconClose from "@/assets/icons/icon-close.svg?react";
 import LiveCaption from "@/widgets/letter-paper/LiveCaption";
 import RecordButton from "@/widgets/letter-paper/RecordButton";
 import RecordDoneButton from "@/widgets/letter-paper/RecordDoneButton";
+import WaveformBars from "@/widgets/letter-paper/WaveformBars";
 
 type LetterRecordSheetProps = {
   status: VoiceRecorderStatus;
@@ -15,13 +16,13 @@ type LetterRecordSheetProps = {
   color: Color;
   transcript: string;
   interim: string;
+  isSpeaking?: boolean;
   onStart: () => void;
   onStop: () => void;
   onDone: () => void;
   onClose: () => void;
 };
 
-const WAVEFORM_BAR_HEIGHTS = ["h-2", "h-3.5", "h-[22px]", "h-[18px]", "h-2"];
 const ERROR_MESSAGE: Record<VoiceRecorderError, string> = {
   unsupported: "이 브라우저에서는 녹음할 수 없어요",
   denied: "마이크 권한을 허용해 주세요",
@@ -35,6 +36,7 @@ export default function LetterRecordSheet({
   color,
   transcript,
   interim,
+  isSpeaking = false,
   onStart,
   onStop,
   onDone,
@@ -102,18 +104,10 @@ export default function LetterRecordSheet({
           </div>
         ) : (
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2">
-            <div aria-hidden className="flex items-center gap-0.5">
-              {WAVEFORM_BAR_HEIGHTS.map((height, index) => (
-                <span
-                  key={index}
-                  className={cn(
-                    "w-[5px] rounded-full",
-                    height,
-                    isRecording ? "bg-semantic-fill-neutral" : "bg-semantic-icon-primary",
-                  )}
-                />
-              ))}
-            </div>
+            <WaveformBars
+              active={isRecording && isSpeaking}
+              barClassName={isRecording ? "bg-semantic-fill-neutral" : "bg-semantic-icon-primary"}
+            />
             <RecordButton
               color={color}
               isRecording={isRecording}

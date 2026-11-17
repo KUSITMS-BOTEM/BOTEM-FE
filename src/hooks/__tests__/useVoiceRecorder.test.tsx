@@ -101,6 +101,45 @@ describe("useVoiceRecorder", () => {
     expect(result.current.interim).toBe("그래서 내가");
   });
 
+  it("음성 인식 결과가 오는 동안만 isSpeaking이고 잠시 끊기면 false가 된다", async () => {
+    const { result } = await startRecording();
+    expect(result.current.isSpeaking).toBe(false);
+
+    act(() =>
+      MockRecognition.instance?.onresult?.(speechEvent([{ transcript: "안녕", isFinal: false }])),
+    );
+    expect(result.current.isSpeaking).toBe(true);
+
+    act(() => vi.advanceTimersByTime(800));
+    expect(result.current.isSpeaking).toBe(false);
+  });
+
+  it("재녹음을 눌러도 마이크가 준비되기 전까지는 이전 자막과 파일을 유지한다", async () => {
+    const { result } = await startRecording();
+    act(() =>
+      MockRecognition.instance?.onresult?.(speechEvent([{ transcript: "안녕", isFinal: true }])),
+    );
+    act(() => result.current.stop());
+    expect(result.current.status).toBe("done");
+
+    let resolveStream!: (stream: unknown) => void;
+    getUserMedia.mockReturnValueOnce(new Promise(resolve => (resolveStream = resolve)));
+    let pending!: Promise<void>;
+    act(() => {
+      pending = result.current.start();
+    });
+
+    expect(result.current.status).toBe("done");
+    expect(result.current.transcript).toBe("안녕");
+
+    await act(async () => {
+      resolveStream({ getTracks: () => [{ stop: trackStop }] });
+      await pending;
+    });
+    expect(result.current.status).toBe("recording");
+    expect(result.current.transcript).toBe("");
+  });
+
   it("침묵으로 인식이 끝나도 녹음 중이면 다시 시작한다", async () => {
     await startRecording();
     const recognition = MockRecognition.instance!;

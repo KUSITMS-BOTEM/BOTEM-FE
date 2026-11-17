@@ -50,6 +50,7 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
   const [transcript, setTranscript] = useState("");
   const [interim, setInterim] = useState("");
   const [blob, setBlob] = useState<Blob | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(maxSeconds);
   // 서버 렌더에서는 true로 두어 하이드레이션 불일치를 피한다
   const supported = useSyncExternalStore(subscribeNothing, isSupported, () => true);
@@ -60,9 +61,15 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
   const chunksRef = useRef<Blob[]>([]);
   const finalTextRef = useRef("");
   const timerRef = useRef<number | undefined>(undefined);
+  const speakingTimerRef = useRef<number | undefined>(undefined);
   const keepListeningRef = useRef(false);
   // 마이크 권한을 기다리는 동안 reset·언마운트되면 그 시작을 무효로 만든다
   const startTokenRef = useRef(0);
+
+  const clearSpeaking = () => {
+    window.clearTimeout(speakingTimerRef.current);
+    setIsSpeaking(false);
+  };
 
   const stopTracks = () => {
     streamRef.current?.getTracks().forEach(track => track.stop());
@@ -73,6 +80,7 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
   const discard = useCallback(() => {
     startTokenRef.current += 1;
     window.clearInterval(timerRef.current);
+    clearSpeaking();
     keepListeningRef.current = false;
     const recognition = recognitionRef.current;
     if (recognition) {
@@ -116,10 +124,6 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
     discard();
     const token = startTokenRef.current;
     setDenied(false);
-    setBlob(null);
-    setTranscript("");
-    setInterim("");
-    setRemainingSeconds(maxSeconds);
     finalTextRef.current = "";
     chunksRef.current = [];
 
@@ -135,6 +139,11 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
       return;
     }
     streamRef.current = stream;
+    // 마이크 권한·초기화를 기다리는 동안 done 화면이 비어 보이지 않도록 스트림을 받은 뒤에 비운다
+    setBlob(null);
+    setTranscript("");
+    setInterim("");
+    setRemainingSeconds(maxSeconds);
 
     const recorder = new MediaRecorder(stream);
     recorder.ondataavailable = event => {
@@ -143,6 +152,7 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
     recorder.onstop = () => {
       setBlob(new Blob(chunksRef.current, { type: recorder.mimeType }));
       setInterim("");
+      clearSpeaking();
       setStatus("done");
       stopTracks();
     };
@@ -160,6 +170,10 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
       }
       setTranscript(finalTextRef.current.trim());
       setInterim(interimText.trim());
+      // 결과가 이어지는 동안만 true — 잠시 결과가 끊기면 말을 멈춘 것으로 본다
+      setIsSpeaking(true);
+      window.clearTimeout(speakingTimerRef.current);
+      speakingTimerRef.current = window.setTimeout(() => setIsSpeaking(false), 800);
     };
     // 브라우저는 침묵이 이어지면 인식을 스스로 끝내므로 녹음 중이면 다시 시작한다
     recognition.onend = () => {
@@ -185,5 +199,16 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
 
   const error: VoiceRecorderError | null = !supported ? "unsupported" : denied ? "denied" : null;
 
-  return { status, error, transcript, interim, blob, remainingSeconds, start, stop, reset };
+  return {
+    status,
+    error,
+    transcript,
+    interim,
+    isSpeaking,
+    blob,
+    remainingSeconds,
+    start,
+    stop,
+    reset,
+  };
 }

@@ -188,6 +188,7 @@ export default function LetterWriteSheet({
               color={color}
               transcript={recorder.transcript}
               interim={recorder.interim}
+              isSpeaking={recorder.isSpeaking}
               onStart={recorder.start}
               onStop={recorder.stop}
               onDone={handleRecordDone}
