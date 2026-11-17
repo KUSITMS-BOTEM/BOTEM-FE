@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { useRouter } from "next/navigation";
+
 import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
 import ProfileBox from "@/components/ProfileBox";
@@ -52,6 +54,7 @@ const MOCK_FUNDING = {
 const noop = () => {};
 
 export default function FundingShareContainer({ fundingId }: FundingShareContainerProps) {
+  const router = useRouter();
   const funding = MOCK_FUNDING;
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isContributeOpen, setIsContributeOpen] = useState(false);
@@ -161,7 +164,7 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
         onExit={requestExit}
         onNext={() => setIsPasswordOpen(true)}
       />
-      {/* TODO: 비밀번호 시트의 완료(onComplete)는 보탬 제출 API가 정해지면 연결한다 */}
+      {/* TODO: 보탬 제출 API가 정해지면 제출 성공 뒤에 이동하도록 바꾼다. replace라 뒤로가기로 보태기 플로우에 돌아오지 않는다 */}
       <FundingPasswordSheet
         open={isPasswordOpen}
         hostName={funding.hostName}
@@ -169,7 +172,7 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
         account={funding.account}
         onClose={requestExit}
         onPrev={() => setIsPasswordOpen(false)}
-        onComplete={noop}
+        onComplete={() => router.replace(`/share/${fundingId}/complete`)}
       />
       <Dialog
         kind="confirm"

@@ -3,6 +3,9 @@ import userEvent from "@testing-library/user-event";
 
 import FundingShareContainer from "@/widgets/funding/FundingShareContainer";
 
+const replaceMock = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: replaceMock }) }));
+
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element
@@ -101,6 +104,20 @@ describe("FundingShareContainer", () => {
 
     const heading = await screen.findByRole("heading", { level: 1, name: /지유의 계좌로/ });
     expect(heading).toHaveTextContent("50,000원");
+  });
+
+  it("송금 안내 시트에서 완료하기를 누르면 완료 페이지로 replace 이동한다", async () => {
+    const user = userEvent.setup();
+    render(<FundingShareContainer fundingId="1" />);
+    await goToPasswordSheet(user);
+    await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
+    await user.click(screen.getByRole("button", { name: "보태러 가기" }));
+    await screen.findByRole("heading", { level: 1, name: /지유의 계좌로/ });
+
+    await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
+    await clickTopmost(user, "완료하기");
+
+    expect(replaceMock).toHaveBeenCalledWith("/share/1/complete");
   });
 
   describe("보태기 플로우 나가기", () => {
