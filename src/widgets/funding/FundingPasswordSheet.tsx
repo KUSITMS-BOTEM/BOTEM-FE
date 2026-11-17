@@ -62,10 +62,10 @@ export default function FundingPasswordSheet({
 
   // 마지막 자리가 채워진 모습을 잠깐 보여준 뒤 키패드를 내린다
   useEffect(() => {
-    if (!isFilled) return;
+    if (!isFilled || !isTyping) return;
     const timer = setTimeout(() => inputRef.current?.blur(), KEYPAD_HIDE_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [isFilled]);
+  }, [isFilled, isTyping]);
 
   return (
     <>

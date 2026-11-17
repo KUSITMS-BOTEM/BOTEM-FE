@@ -65,6 +65,7 @@ export default function NumberFieldGroup({
         autoComplete="off"
         maxLength={NUMBER_FIELD_LENGTH}
         aria-label={label}
+        aria-required="true"
         value={value}
         onChange={event => onChange(event.target.value.replace(/\D/g, ""))}
         onFocus={event => {
