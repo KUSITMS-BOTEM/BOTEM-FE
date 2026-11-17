@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
 import { cn } from "@/utils/cn";
@@ -17,6 +18,9 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+const gaId =
+  process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? process.env.NEXT_PUBLIC_GA_ID : undefined;
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -50,6 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </MswProvider>
         </div>
       </body>
+      {gaId && <GoogleAnalytics gaId={gaId} />}
     </html>
   );
 }
