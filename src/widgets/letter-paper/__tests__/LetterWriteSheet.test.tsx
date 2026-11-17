@@ -17,7 +17,24 @@ const typeLetter = (value: string) => {
   fireEvent.input(letterInput());
 };
 
+const scrollIntoView = vi.fn();
+
 describe("LetterWriteSheet", () => {
+  // jsdom에는 scrollIntoView가 없다
+  beforeEach(() => {
+    scrollIntoView.mockClear();
+    Element.prototype.scrollIntoView = scrollIntoView;
+  });
+
+  it("툴 영역을 열면 화면에 보이도록 가장 가까운 위치로 스크롤한다", async () => {
+    renderSheet();
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: "나만의 편지 만들기" }));
+
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest", behavior: "smooth" });
+  });
+
   it("수신자 이름이 들어간 제목과 안내 문구를 보여준다", () => {
     renderSheet();
 
@@ -176,5 +193,98 @@ describe("LetterWriteSheet", () => {
     await userEvent.click(screen.getAllByRole("button", { name: "닫기" }).at(-1)!);
     expect(screen.queryByText("어떤 툴을 추가할까요?")).not.toBeInTheDocument();
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  describe("음성 녹음", () => {
+    class MockRecorder {
+      state = "inactive";
+      mimeType = "audio/webm";
+      ondataavailable: ((event: { data: Blob }) => void) | null = null;
+      onstop: (() => void) | null = null;
+      start() {
+        this.state = "recording";
+      }
+      stop() {
+        this.state = "inactive";
+        this.ondataavailable?.({ data: new Blob(["voice"]) });
+        this.onstop?.();
+      }
+    }
+    class MockRecognition {
+      onresult: ((event: unknown) => void) | null = null;
+      onend: (() => void) | null = null;
+      start() {}
+      stop() {}
+      abort() {}
+    }
+
+    beforeEach(() => {
+      vi.stubGlobal("MediaRecorder", MockRecorder);
+      vi.stubGlobal("webkitSpeechRecognition", MockRecognition);
+      Object.defineProperty(navigator, "mediaDevices", {
+        value: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [] }) },
+        configurable: true,
+      });
+    });
+    afterEach(() => vi.unstubAllGlobals());
+
+    const openRecordSheet = async () => {
+      await userEvent.click(screen.getByRole("button", { name: "나만의 편지 만들기" }));
+      await userEvent.click(screen.getByRole("button", { name: "녹음" }));
+    };
+
+    it("녹음 툴을 고르면 툴 선택 영역이 녹음 영역으로 바뀐다", async () => {
+      renderSheet();
+
+      await openRecordSheet();
+
+      expect(screen.queryByText("어떤 툴을 추가할까요?")).not.toBeInTheDocument();
+      expect(screen.getByText("탭으로 녹음 시작")).toBeInTheDocument();
+    });
+
+    it("녹음을 완료하면 편지지에 음성 메시지가 나타나고 onNext에 녹음 파일이 담긴다", async () => {
+      const onNext = vi.fn();
+      renderSheet({ onNext });
+      typeLetter("생일 축하해");
+      expect(screen.queryByRole("group", { name: "음성 메시지" })).not.toBeInTheDocument();
+
+      await openRecordSheet();
+      await userEvent.click(screen.getByRole("button", { name: "녹음 시작" }));
+      await userEvent.click(await screen.findByRole("button", { name: "녹음 중지" }));
+      await userEvent.click(screen.getByRole("button", { name: "녹음 완료" }));
+
+      expect(screen.getByRole("group", { name: "음성 메시지" })).toBeInTheDocument();
+      expect(screen.queryByText("탭으로 녹음 시작")).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole("button", { name: "다음" }));
+      expect(onNext).toHaveBeenCalledWith(
+        expect.objectContaining({ voice: { blob: expect.any(Blob), transcript: "" } }),
+      );
+    });
+
+    it("녹음을 완료한 뒤 녹음 툴을 다시 고르면 이전 녹음 없이 처음 상태로 시작한다", async () => {
+      renderSheet();
+      await openRecordSheet();
+      await userEvent.click(screen.getByRole("button", { name: "녹음 시작" }));
+      await userEvent.click(await screen.findByRole("button", { name: "녹음 중지" }));
+      await userEvent.click(screen.getByRole("button", { name: "녹음 완료" }));
+
+      await openRecordSheet();
+
+      expect(screen.getByText("탭으로 녹음 시작")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "재녹음" })).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: "녹음 시작" }));
+      expect(await screen.findByRole("button", { name: "녹음 중지" })).toBeInTheDocument();
+    });
+
+    it("녹음 영역을 닫으면 녹음을 버리고 음성 메시지가 생기지 않는다", async () => {
+      renderSheet();
+
+      await openRecordSheet();
+      await userEvent.click(screen.getAllByRole("button", { name: "닫기" }).at(-1)!);
+
+      expect(screen.queryByText("탭으로 녹음 시작")).not.toBeInTheDocument();
+      expect(screen.queryByRole("group", { name: "음성 메시지" })).not.toBeInTheDocument();
+    });
   });
 });
