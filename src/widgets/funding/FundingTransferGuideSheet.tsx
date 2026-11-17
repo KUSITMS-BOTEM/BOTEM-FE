@@ -25,7 +25,7 @@ type FundingTransferGuideSheetProps = {
   amount: number;
   account: FundingTransferAccount;
   onClose: () => void;
-  onComplete: () => void;
+  onComplete: () => void | Promise<unknown>;
   className?: string;
 };
 
@@ -93,11 +93,15 @@ export default function FundingTransferGuideSheet({
     showCopyResult(result);
   };
 
-  // 연타·부모가 닫기 전 재클릭으로 onComplete가 두 번 불리지 않게 동기 잠금을 건다
-  const handleComplete = () => {
+  // 연타·부모가 닫기 전 재클릭으로 onComplete가 두 번 불리지 않게 동기 잠금을 건다. 실패(reject·throw)하면 다시 누를 수 있게 푼다
+  const handleComplete = async () => {
     if (completeLockRef.current) return;
     completeLockRef.current = true;
-    onComplete();
+    try {
+      await onComplete();
+    } catch {
+      completeLockRef.current = false;
+    }
   };
 
   return (

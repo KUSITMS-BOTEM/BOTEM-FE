@@ -71,13 +71,14 @@ export default function LetterPaper({
 }: LetterPaperProps) {
   const size = forceSmallText ? "small" : getLetterTextSize(text);
   const SenderTag = onSenderClick ? "button" : "div";
+  // 슬롯에는 input·div가 들어가므로 p 안에 넣지 않는다
+  const BodyTag = textSlot ? "div" : "p";
   const dotColorClass = LETTER_PAPER_DOT_COLOR_CLASS[style]?.[color];
 
   return (
     <div
       className={cn(
-        "border-semantic-border-inverted relative flex h-[338px] w-[320px] flex-col justify-between overflow-clip rounded-[28px] border shadow-[0_10px_30px_-4px_rgba(26,26,46,0.08)]",
-        "p-5",
+        "border-semantic-border-inverted relative flex h-[338px] w-[320px] flex-col justify-between overflow-clip rounded-[28px] border p-5 shadow-[0_10px_30px_-4px_rgba(26,26,46,0.08)]",
         LETTER_PAPER_BG_CLASS[style][color],
         className,
       )}>
@@ -92,66 +93,60 @@ export default function LetterPaper({
           />
         </div>
       )}
-      <>
-        <p
+      <BodyTag
+        className={cn(
+          "relative shrink-0 overflow-hidden [letter-spacing:var(--letter-spacing-default)] break-words whitespace-pre-wrap",
+          TEXT_SIZE_CLASS[size],
+          textTopInset && "pt-12",
+          LETTER_PAPER_TEXT_CLASS[style][color],
+        )}>
+        {/* 슬롯을 비껴가는 계단형 영역 (좌상단 기준 px, Figma 슬롯 bbox 기준) */}
+        <span
+          aria-hidden
+          className={cn("float-right h-[257px]", textTopInset && "-mt-12", LETTER_SLOT_SHAPE_CLASS)}
+        />
+        {textSlot ?? text}
+      </BodyTag>
+      <div className="relative flex items-center justify-between">
+        {hasVoiceMessage && <VoiceMessage color={color} />}
+        <SenderTag
+          {...(onSenderClick
+            ? {
+                type: "button",
+                onClick: onSenderClick,
+                // 누르는 순간 입력란이 포커스를 잃어 먼저 사라지지 않게 한다
+                onMouseDown: (event: MouseEvent) => event.preventDefault(),
+              }
+            : {})}
           className={cn(
-            "relative shrink-0 overflow-hidden [letter-spacing:var(--letter-spacing-default)] break-words whitespace-pre-wrap",
-            TEXT_SIZE_CLASS[size],
-            textTopInset && "pt-12",
-            LETTER_PAPER_TEXT_CLASS[style][color],
+            "ml-auto flex items-center gap-1.5 [font:var(--semantic-subtext-medium-strong)]",
+            onSenderClick && "cursor-pointer",
+            LETTER_PAPER_FROM_TEXT_CLASS[style][color],
           )}>
-          {/* 슬롯을 비껴가는 계단형 영역 (좌상단 기준 px, Figma 슬롯 bbox 기준) */}
-          <span
-            aria-hidden
-            className={cn(
-              "float-right h-[257px]",
-              textTopInset && "-mt-12",
-              LETTER_SLOT_SHAPE_CLASS,
-            )}
-          />
-          {textSlot ?? text}
-        </p>
-        <div className="relative flex items-center justify-between">
-          {hasVoiceMessage && <VoiceMessage color={color} />}
-          <SenderTag
-            {...(onSenderClick
-              ? {
-                  type: "button",
-                  onClick: onSenderClick,
-                  // 누르는 순간 입력란이 포커스를 잃어 먼저 사라지지 않게 한다
-                  onMouseDown: (event: MouseEvent) => event.preventDefault(),
-                }
-              : {})}
-            className={cn(
-              "ml-auto flex items-center gap-1.5 [font:var(--semantic-subtext-medium-strong)]",
-              onSenderClick && "cursor-pointer",
-              LETTER_PAPER_FROM_TEXT_CLASS[style][color],
-            )}>
-            <Profile color={color} showIconButton={false} className="size-5" />
-            <span>From. {senderName}</span>
-          </SenderTag>
-        </div>
-        <div inert={slotsInert} className="pointer-events-none absolute -inset-px">
-          <AssetSlot
-            type="photo"
-            src={photoSrc}
-            onImageChange={onPhotoChange}
-            className="pointer-events-auto absolute top-[136px] left-[188.84px] origin-top-left rotate-[22deg]"
-          />
-          <AssetSlot
-            type="icon"
-            asset={largeIcon}
-            onClick={onLargeIconClick}
-            className="pointer-events-auto absolute top-[214.14px] left-[130px] origin-top-left -rotate-[17.77deg]"
-          />
-          <AssetSlot
-            type="icon"
-            asset={smallIcon}
-            onClick={onSmallIconClick}
-            className="pointer-events-auto absolute top-[160.03px] left-[270.14px] size-[34px] origin-top-left -rotate-[11.45deg]"
-          />
-        </div>
-      </>
+          <Profile color={color} showIconButton={false} className="size-5" />
+          <span>From. {senderName}</span>
+        </SenderTag>
+      </div>
+      <div inert={slotsInert} className="pointer-events-none absolute -inset-px">
+        <AssetSlot
+          type="photo"
+          src={photoSrc}
+          onImageChange={onPhotoChange}
+          className="pointer-events-auto absolute top-[136px] left-[188.84px] origin-top-left rotate-[22deg]"
+        />
+        <AssetSlot
+          type="icon"
+          asset={largeIcon}
+          onClick={onLargeIconClick}
+          className="pointer-events-auto absolute top-[214.14px] left-[130px] origin-top-left -rotate-[17.77deg]"
+        />
+        <AssetSlot
+          type="icon"
+          asset={smallIcon}
+          onClick={onSmallIconClick}
+          className="pointer-events-auto absolute top-[160.03px] left-[270.14px] size-[34px] origin-top-left -rotate-[11.45deg]"
+        />
+      </div>
     </div>
   );
 }
