@@ -9,7 +9,8 @@ export function useDragScroll<T extends HTMLElement>() {
   const hasDragged = useRef(false);
 
   const onPointerDown = (event: PointerEvent<T>) => {
-    if (event.pointerType !== "mouse" || !ref.current) return;
+    // 보조 버튼은 click 대신 auxclick을 내보내 hasDragged가 초기화되지 않으므로 드래그로 인정하지 않는다
+    if (event.pointerType !== "mouse" || event.button !== 0 || !ref.current) return;
     dragStart.current = { x: event.clientX, scrollLeft: ref.current.scrollLeft };
     hasDragged.current = false;
   };
@@ -31,6 +32,12 @@ export function useDragScroll<T extends HTMLElement>() {
     dragStart.current = null;
   };
 
+  // 취소된 드래그는 후속 click이 오지 않아 억제 상태가 남는다
+  const onPointerCancel = (event: PointerEvent<T>) => {
+    onPointerUp(event);
+    hasDragged.current = false;
+  };
+
   // 드래그 끝에 손을 뗀 지점의 자식에서 click이 발생해 의도치 않게 선택되는 것을 막는다. 억제 직후 바로 리셋해야 키보드·터치 클릭까지 막히지 않는다
   const onClickCapture = (event: MouseEvent<T>) => {
     if (!hasDragged.current) return;
@@ -45,7 +52,7 @@ export function useDragScroll<T extends HTMLElement>() {
     onPointerMove,
     onPointerUp,
     onPointerLeave: onPointerUp,
-    onPointerCancel: onPointerUp,
+    onPointerCancel,
     onClickCapture,
   };
 }
