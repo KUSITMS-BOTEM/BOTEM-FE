@@ -10,6 +10,7 @@ import ToolSticker from "@/assets/icons/multicolor/tool-sheet-sticker.svg?react"
 
 type LetterToolSheetProps = {
   onClose: () => void;
+  onSelectRecord?: () => void;
 };
 
 // 툴마다 기울기와 회전 후 차지하는 칸 크기가 Figma에 따로 정해져 있다
@@ -40,7 +41,7 @@ const TOOLS = [
   },
 ];
 
-export default function LetterToolSheet({ onClose }: LetterToolSheetProps) {
+export default function LetterToolSheet({ onClose, onSelectRecord }: LetterToolSheetProps) {
   return (
     <div className="w-full px-4 pt-1">
       <div className="bg-semantic-fill-default/70 flex h-[168px] flex-col gap-2 overflow-clip rounded-2xl px-4 pt-3 pb-4 shadow-[0_4px_16px_var(--color-semantic-shadow-weak)]">
@@ -61,16 +62,18 @@ export default function LetterToolSheet({ onClose }: LetterToolSheetProps) {
             <li
               key={label}
               className={cn("flex shrink-0 cursor-pointer items-center justify-center", boxClass)}>
-              <div
+              <button
+                type="button"
+                onClick={label === "녹음" ? onSelectRecord : undefined}
                 className={cn(
-                  "flex w-[61px] flex-none flex-col items-center justify-center gap-2 py-[7px]",
+                  "flex w-[61px] flex-none cursor-pointer flex-col items-center justify-center gap-2 py-[7px]",
                   tiltClass,
                 )}>
                 <Icon aria-hidden className="size-8 shrink-0" />
                 <span className="text-semantic-text-strong text-center [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-x-small)]">
                   {label}
                 </span>
-              </div>
+              </button>
             </li>
           ))}
         </ul>

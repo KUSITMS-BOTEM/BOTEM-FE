@@ -1,6 +1,6 @@
 "use client";
 
-import { type FocusEvent, useState } from "react";
+import { type FocusEvent, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 import BottomCTA from "@/components/BottomCTA";
@@ -8,9 +8,11 @@ import Button from "@/components/Button";
 import OpenSheet from "@/components/OpenSheet";
 import Title from "@/components/Title";
 import type { Color } from "@/constants/color";
+import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { cn } from "@/utils/cn";
 import { withVocativeParticle } from "@/utils/withSubjectParticle";
 import ScaledLetterPaper from "@/widgets/letter-paper/ScaledLetterPaper";
+import LetterRecordSheet from "@/widgets/letter-paper/LetterRecordSheet";
 import LetterToolSheet from "@/widgets/letter-paper/LetterToolSheet";
 import LetterWriteBody from "@/widgets/letter-paper/LetterWriteBody";
 import PaletteArea from "@/widgets/letter-paper/PaletteArea";
@@ -24,11 +26,18 @@ const CONTENT_TRANSITION = { delay: 0.4, duration: 0.4, ease: EASE_STANDARD };
 const CTA_CLEARANCE_CLASS = "pb-[calc(6rem+env(safe-area-inset-bottom))]";
 const TEXT_ENTRY_SELECTOR = "input, [contenteditable]";
 
+export type LetterVoice = {
+  blob: Blob;
+  transcript: string;
+};
+
 export type LetterWriteValues = {
   text: string;
   // 비로그인일 때만 입력받는다
   name: string;
   color: Color;
+  // 녹음을 완료했을 때만 있다
+  voice?: LetterVoice;
 };
 
 type LetterWriteSheetProps = {
@@ -51,6 +60,10 @@ export default function LetterWriteSheet({
   const [shrunk, setShrunk] = useState(false);
   const [color, setColor] = useState<Color>("orange");
   const [toolOpen, setToolOpen] = useState(false);
+  const [recordOpen, setRecordOpen] = useState(false);
+  const [voice, setVoice] = useState<LetterVoice | null>(null);
+  const recorder = useVoiceRecorder();
+  const toolAreaRef = useRef<HTMLDivElement>(null);
   // 툴 영역을 한 번 연 뒤에는 안내 말풍선을 다시 보여주지 않는다
   const [tooltipDismissed, setTooltipDismissed] = useState(false);
   // iOS는 키보드 열림·닫힘 이벤트가 없어 필드의 focus·blur를 키보드가 올라온 시점으로 본다
@@ -58,6 +71,11 @@ export default function LetterWriteSheet({
   // 비로그인 이름 입력란은 이름을 적고 포커스를 벗어나면 접히고, From 영역을 누르면 다시 열린다
   const [nameOpen, setNameOpen] = useState(true);
   const [nameReopened, setNameReopened] = useState(false);
+
+  // 짧은 화면에서 툴 영역이 하단 CTA에 가려지면 스크롤을 내리고, 이미 보이면 그대로 둔다(nearest)
+  useEffect(() => {
+    if (toolOpen) toolAreaRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [toolOpen, recordOpen]);
 
   const canNext = text.trim() !== "" && (isLoggedIn || name.trim() !== "");
 
@@ -85,6 +103,8 @@ export default function LetterWriteSheet({
     setName("");
     setColor("orange");
     setToolOpen(false);
+    closeRecord();
+    setVoice(null);
     setTooltipDismissed(false);
     setIsTyping(false);
     setNameOpen(true);
@@ -95,6 +115,24 @@ export default function LetterWriteSheet({
   const handleAddClick = () => {
     setToolOpen(true);
     setTooltipDismissed(true);
+  };
+
+  // 이전 녹음·자막·타이머가 남아 있어도 항상 처음 상태에서 시작한다
+  const openRecord = () => {
+    recorder.reset();
+    setRecordOpen(true);
+  };
+
+  // 녹음 중이던 내용은 버리고 닫는다
+  const closeRecord = () => {
+    recorder.reset();
+    setRecordOpen(false);
+  };
+
+  const handleRecordDone = () => {
+    if (recorder.blob) setVoice({ blob: recorder.blob, transcript: recorder.transcript });
+    closeRecord();
+    setToolOpen(false);
   };
 
   return (
@@ -121,6 +159,8 @@ export default function LetterWriteSheet({
             text={text}
             senderName={name}
             forceSmallText={shrunk}
+            hasVoiceMessage={voice !== null}
+            voiceAudio={voice?.blob}
             textTopInset={!isLoggedIn && nameOpen}
             onSenderClick={isLoggedIn ? undefined : handleSenderClick}
             textSlot={
@@ -147,7 +187,26 @@ export default function LetterWriteSheet({
             tooltip={!tooltipDismissed}
             className="-mx-5 w-[calc(100%+2.5rem)]"
           />
-          {toolOpen && <LetterToolSheet onClose={() => setToolOpen(false)} />}
+          {toolOpen && (
+            <div ref={toolAreaRef} className="w-full scroll-mb-24">
+              {recordOpen ? (
+                <LetterRecordSheet
+                  status={recorder.status}
+                  error={recorder.error}
+                  color={color}
+                  transcript={recorder.transcript}
+                  interim={recorder.interim}
+                  isSpeaking={recorder.isSpeaking}
+                  onStart={recorder.start}
+                  onStop={recorder.stop}
+                  onDone={handleRecordDone}
+                  onClose={closeRecord}
+                />
+              ) : (
+                <LetterToolSheet onClose={() => setToolOpen(false)} onSelectRecord={openRecord} />
+              )}
+            </div>
+          )}
         </motion.div>
         <BottomCTA className={cn(isTyping && "pointer-coarse:hidden")}>
           <motion.div
@@ -161,8 +220,8 @@ export default function LetterWriteSheet({
             <Button
               color="neutral"
               size="xlarge"
-              disabled={!canNext}
-              onClick={() => onNext?.({ text, name, color })}>
+              disabled={!canNext || recorder.status === "recording"}
+              onClick={() => onNext?.({ text, name, color, ...(voice && { voice }) })}>
               다음
             </Button>
           </motion.div>

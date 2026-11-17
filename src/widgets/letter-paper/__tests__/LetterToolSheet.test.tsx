@@ -16,6 +16,15 @@ describe("LetterToolSheet", () => {
     ]);
   });
 
+  it("녹음 툴을 누르면 onSelectRecord가 호출된다", async () => {
+    const onSelectRecord = vi.fn();
+    render(<LetterToolSheet onClose={vi.fn()} onSelectRecord={onSelectRecord} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "녹음" }));
+
+    expect(onSelectRecord).toHaveBeenCalledTimes(1);
+  });
+
   it("닫기 버튼을 누르면 onClose가 호출된다", async () => {
     const onClose = vi.fn();
     render(<LetterToolSheet onClose={onClose} />);
