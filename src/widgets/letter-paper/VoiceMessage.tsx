@@ -16,9 +16,13 @@ export default function VoiceMessage({ color = "pink", audio, className }: Voice
   const [isPlaying, setIsPlaying] = useState(false);
   const playerRef = useRef<HTMLAudioElement | null>(null);
 
+  const urlRef = useRef<string | null>(null);
+
   const stop = () => {
     playerRef.current?.pause();
     playerRef.current = null;
+    if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+    urlRef.current = null;
     setIsPlaying(false);
   };
 
@@ -31,12 +35,12 @@ export default function VoiceMessage({ color = "pink", audio, className }: Voice
     const url = URL.createObjectURL(audio);
     const player = new Audio(url);
     const release = () => {
-      URL.revokeObjectURL(url);
       if (playerRef.current === player) stop();
     };
     player.onended = release;
     player.onerror = release;
     playerRef.current = player;
+    urlRef.current = url;
     setIsPlaying(true);
     player.play().catch(release);
   };

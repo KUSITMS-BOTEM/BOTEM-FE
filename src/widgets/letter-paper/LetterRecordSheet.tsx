@@ -26,6 +26,7 @@ type LetterRecordSheetProps = {
 const ERROR_MESSAGE: Record<VoiceRecorderError, string> = {
   unsupported: "이 브라우저에서는 녹음할 수 없어요",
   denied: "마이크 권한을 허용해 주세요",
+  unavailable: "마이크를 사용할 수 없어요. 연결을 확인해 주세요",
 };
 const HEADER_TEXT_CLASS =
   "text-semantic-text-strong min-w-0 flex-1 [letter-spacing:var(--letter-spacing-default)]";
@@ -69,6 +70,8 @@ export default function LetterRecordSheet({
           )}
           {status === "idle" && (
             <p
+              key={error ?? "guide"}
+              role={error ? "alert" : undefined}
               className={cn(
                 HEADER_TEXT_CLASS,
                 "whitespace-nowrap [font:var(--semantic-label-medium)]",

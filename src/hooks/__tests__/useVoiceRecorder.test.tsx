@@ -28,6 +28,7 @@ class MockRecognition {
   interimResults = false;
   onresult: ((event: unknown) => void) | null = null;
   onend: (() => void) | null = null;
+  onerror: ((event: { error: string }) => void) | null = null;
   start = vi.fn();
   stop = vi.fn();
   abort = vi.fn();
@@ -150,6 +151,44 @@ describe("useVoiceRecorder", () => {
     expect(recognition.start).toHaveBeenCalledTimes(2);
   });
 
+  it("인식이 권한·네트워크 오류로 끝나면 다시 시작하지 않고 녹음은 이어간다", async () => {
+    const { result } = await startRecording();
+    const recognition = MockRecognition.instance!;
+
+    act(() => {
+      recognition.onerror?.({ error: "not-allowed" });
+      recognition.onend?.();
+    });
+
+    expect(recognition.start).toHaveBeenCalledTimes(1);
+    expect(result.current.status).toBe("recording");
+  });
+
+  it("침묵(no-speech) 오류 뒤에는 계속 다시 시작한다", async () => {
+    await startRecording();
+    const recognition = MockRecognition.instance!;
+
+    act(() => {
+      recognition.onerror?.({ error: "no-speech" });
+      recognition.onend?.();
+    });
+
+    expect(recognition.start).toHaveBeenCalledTimes(2);
+  });
+
+  it("인식 재시작이 throw해도 앱이 깨지지 않고 더 이상 재시작하지 않는다", async () => {
+    await startRecording();
+    const recognition = MockRecognition.instance!;
+    recognition.start.mockImplementation(() => {
+      throw new DOMException("already started", "InvalidStateError");
+    });
+
+    act(() => recognition.onend?.());
+    act(() => recognition.onend?.());
+
+    expect(recognition.start).toHaveBeenCalledTimes(2);
+  });
+
   it("30초가 지나면 자동으로 정지한다", async () => {
     const { result } = await startRecording();
 
@@ -172,6 +211,32 @@ describe("useVoiceRecorder", () => {
 
     expect(result.current.error).toBe("denied");
     expect(result.current.status).toBe("idle");
+  });
+
+  it("마이크 장치가 없거나 점유 중이면 denied가 아니라 unavailable 에러다", async () => {
+    getUserMedia.mockRejectedValue(new DOMException("no device", "NotFoundError"));
+
+    const { result } = await startRecording();
+
+    expect(result.current.error).toBe("unavailable");
+    expect(result.current.status).toBe("idle");
+  });
+
+  it("MediaRecorder 생성이 throw하면 마이크를 놓고 unavailable 에러로 남는다", async () => {
+    vi.stubGlobal(
+      "MediaRecorder",
+      class {
+        constructor() {
+          throw new DOMException("codec", "NotSupportedError");
+        }
+      },
+    );
+
+    const { result } = await startRecording();
+
+    expect(result.current.error).toBe("unavailable");
+    expect(result.current.status).toBe("idle");
+    expect(trackStop).toHaveBeenCalled();
   });
 
   it("음성 인식을 지원하지 않으면 unsupported 에러이고 시작해도 아무 일도 없다", async () => {

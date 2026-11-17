@@ -72,6 +72,19 @@ describe("VoiceMessage", () => {
       getBars(container).forEach(bar => expect(bar).toHaveClass("bg-base-pink-500"));
     });
 
+    it("수동으로 정지하거나 언마운트하면 object URL을 해제한다", async () => {
+      const { unmount } = render(<VoiceMessage audio={audio} />);
+
+      await userEvent.click(screen.getByRole("button", { name: "음성 메시지 재생" }));
+      await userEvent.click(screen.getByRole("button", { name: "음성 메시지 정지" }));
+      expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:x");
+
+      await userEvent.click(screen.getByRole("button", { name: "음성 메시지 재생" }));
+      unmount();
+      expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2);
+    });
+
     it("재생이 끝나면 원래 색으로 돌아온다", async () => {
       render(<VoiceMessage audio={audio} />);
 

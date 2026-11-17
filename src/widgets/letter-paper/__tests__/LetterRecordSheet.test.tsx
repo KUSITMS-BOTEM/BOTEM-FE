@@ -74,8 +74,14 @@ describe("LetterRecordSheet", () => {
   it("마이크 권한을 거부했으면 안내 문구를 보이고 다시 시도할 수 있다", () => {
     renderSheet({ error: "denied" });
 
-    expect(screen.getByText("마이크 권한을 허용해 주세요")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("마이크 권한을 허용해 주세요");
     expect(screen.getByRole("button", { name: "녹음 시작" })).toBeEnabled();
+  });
+
+  it("마이크를 사용할 수 없으면 권한 안내와 다른 문구를 alert로 보인다", () => {
+    renderSheet({ error: "unavailable" });
+
+    expect(screen.getByRole("alert")).toHaveTextContent("마이크를 사용할 수 없어요");
   });
 
   it("닫기 버튼을 누르면 onClose가 호출된다", async () => {
