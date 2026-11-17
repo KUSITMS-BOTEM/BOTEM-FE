@@ -27,6 +27,8 @@ function FundingPasswordSheetDemo() {
       <FundingPasswordSheet
         open={open}
         hostName="지유"
+        amount={50000}
+        account={{ bank: "TOSS_BANK", accountHolder: "김지유", accountNumber: "1000-1234-5678" }}
         onClose={() => setOpen(false)}
         onPrev={() => setOpen(false)}
         onComplete={() => setOpen(false)}
