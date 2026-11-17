@@ -44,6 +44,16 @@ describe("Profile", () => {
     expect(container.querySelector("svg")).not.toBeInTheDocument();
   });
 
+  it("alt를 넘기지 않으면 '프로필 이미지'이고, 넘기면 그 값을 쓴다", () => {
+    const { container, rerender } = render(
+      <Profile imageUrl="https://example.com/a.png" showIconButton={false} />,
+    );
+    expect(container.querySelector("img")).toHaveAttribute("alt", "프로필 이미지");
+
+    rerender(<Profile imageUrl="https://example.com/a.png" alt="" showIconButton={false} />);
+    expect(container.querySelector("img")).toHaveAttribute("alt", "");
+  });
+
   it("showIconButton 기본값(true)이면 아이콘 버튼과 숨겨진 파일 input이 렌더된다", () => {
     const { container } = render(<Profile />);
 
@@ -56,6 +66,20 @@ describe("Profile", () => {
 
     expect(screen.queryByRole("button", { name: "프로필 이미지 선택" })).not.toBeInTheDocument();
     expect(container.querySelector('input[type="file"]')).not.toBeInTheDocument();
+  });
+
+  it("isUploading이면 저장 중 상태를 알리고 이미지 선택 버튼을 비활성화한다", () => {
+    render(<Profile isUploading />);
+
+    expect(screen.getByRole("status", { name: "프로필 이미지 저장 중" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "프로필 이미지 선택" })).toBeDisabled();
+  });
+
+  it("isUploading이 아니면 저장 중 표시가 없고 이미지 선택 버튼이 활성이다", () => {
+    render(<Profile />);
+
+    expect(screen.queryByRole("status", { name: "프로필 이미지 저장 중" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "프로필 이미지 선택" })).toBeEnabled();
   });
 
   it("아이콘 버튼을 클릭하면 숨겨진 파일 input의 클릭이 트리거된다", async () => {

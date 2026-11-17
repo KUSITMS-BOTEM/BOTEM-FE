@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { AnimatePresence, motion, MotionConfig, type Transition } from "framer-motion";
 import { cn } from "@/utils/cn";
 import Button from "@/components/Button";
 import SheetHeader from "@/components/SheetHeader";
@@ -19,6 +19,8 @@ type BottomSheetButtons = {
   upper?: ReactNode;
 };
 
+export type BottomSheetEnterTransition = { dim: Transition; sheet: Transition };
+
 type BottomSheetProps = {
   open: boolean;
   title: string;
@@ -26,6 +28,7 @@ type BottomSheetProps = {
   headerType?: "title" | "handle";
   buttons?: BottomSheetButtons;
   toast?: ReactNode;
+  enterTransition?: BottomSheetEnterTransition;
   onClose: () => void;
   children: ReactNode;
   className?: string;
@@ -34,6 +37,10 @@ type BottomSheetProps = {
 // Figma Motion·바텀시트(P7) 디자인팀 노트: 진입 = 딤 450ms ease.standard, 50ms 지연 뒤 시트 spring bounce 0.25·550ms / 퇴장 = 딤·시트 동시 300ms ease.exit
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
 const EASE_EXIT = [0.3, 0, 1, 1] as const;
+const DEFAULT_ENTER_TRANSITION: BottomSheetEnterTransition = {
+  dim: { duration: 0.45, ease: EASE_STANDARD },
+  sheet: { delay: 0.05, type: "spring", bounce: 0.25, duration: 0.55 },
+};
 // 시트 박스 자체를 24px 더 길게 만들고 그만큼 화면 아래로 내려(-bottom-6) 바운스 시 바닥에 틈이 보이지 않게 한다.
 // Tailwind가 클래스명을 정적으로 스캔하므로 두 값을 완전한 리터럴 문자열로 각각 써야 한다(템플릿 리터럴 조립 금지).
 // max는 풀스크린 취급 — safe-area만 피하고 상단까지 꽉 채우며, 상단 모서리도 둥글게 하지 않는다.
@@ -50,6 +57,7 @@ export default function BottomSheet({
   headerType = "title",
   buttons,
   toast,
+  enterTransition = DEFAULT_ENTER_TRANSITION,
   onClose,
   children,
   className,
@@ -109,7 +117,7 @@ export default function BottomSheet({
                 aria-hidden
                 className="bg-semantic-background-dim fixed inset-0"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1, transition: { duration: 0.45, ease: EASE_STANDARD } }}
+                animate={{ opacity: 1, transition: enterTransition.dim }}
                 exit={{ opacity: 0, transition: { duration: 0.3, ease: EASE_EXIT } }}
                 onClick={onClose}
               />
@@ -122,10 +130,7 @@ export default function BottomSheet({
                   className,
                 )}
                 initial={{ y: "100%" }}
-                animate={{
-                  y: 0,
-                  transition: { delay: 0.05, type: "spring", bounce: 0.25, duration: 0.55 },
-                }}
+                animate={{ y: 0, transition: enterTransition.sheet }}
                 exit={{ y: "100%", transition: { duration: 0.3, ease: EASE_EXIT } }}>
                 <SheetHeader
                   title={title}

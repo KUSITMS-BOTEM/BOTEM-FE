@@ -1,7 +1,21 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MotionGlobalConfig, useReducedMotion } from "framer-motion";
 
 import FundingCard from "@/widgets/home/FundingCard";
+
+vi.mock("framer-motion", async importOriginal => ({
+  ...(await importOriginal<typeof import("framer-motion")>()),
+  useReducedMotion: vi.fn(),
+}));
+
+beforeEach(() => {
+  vi.mocked(useReducedMotion).mockReturnValue(false);
+});
+
+afterEach(() => {
+  MotionGlobalConfig.skipAnimations = false;
+});
 
 const baseProps = {
   title: "민지 생일 펀딩",
@@ -56,16 +70,26 @@ describe("FundingCard", () => {
 
   it("default 타입에서 participants가 있으면 프로필과 '+N'을 표시한다", () => {
     render(
-      <FundingCard {...baseProps} participants={["orange", "lime"]} extraParticipantCount={3} />,
+      <FundingCard
+        {...baseProps}
+        participants={[{ color: "orange" }, { color: "lime" }]}
+        extraParticipantCount={3}
+      />,
     );
 
     expect(screen.getByText("+3")).toBeInTheDocument();
   });
 
-  it("default 타입에서 participants가 빈 배열이면 프로필 영역이 없다", () => {
+  it("default 타입에서 participants가 빈 배열이어도 추가 인원이 있으면 '+N'을 표시한다", () => {
     render(<FundingCard {...baseProps} participants={[]} extraParticipantCount={3} />);
 
-    expect(screen.queryByText("+3")).not.toBeInTheDocument();
+    expect(screen.getByText("+3")).toBeInTheDocument();
+  });
+
+  it("default 타입에서 participants가 빈 배열이고 추가 인원도 0이면 프로필 영역이 없다", () => {
+    render(<FundingCard {...baseProps} participants={[]} extraParticipantCount={0} />);
+
+    expect(screen.queryByText(/^\+\d+$/)).not.toBeInTheDocument();
   });
 
   it("default 타입에서 pendingCount가 양수면 '확인대기 N' 배지를 표시한다", () => {
@@ -86,38 +110,38 @@ describe("FundingCard", () => {
     expect(screen.queryByText(/펑/)).not.toBeInTheDocument();
   });
 
-  it("notification 타입이면 확인대기 건수 안내 문구를 표시한다", () => {
+  it("notification 타입이면 확인 대기 건수 안내 라벨을 표시한다", () => {
     render(<FundingCard {...baseProps} type="notification" pendingCount={3} />);
 
-    expect(
-      screen.getByText(
-        (_, el) =>
-          el?.tagName === "P" && el.textContent === "확인대기 3건을\n확인하고 펑 터트려봐요!",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText("확인 대기 3건을 확인하고 터트려보아요!")).toBeInTheDocument();
   });
 
-  it("open 타입이면 '펑! 터트려볼까요?' 문구를 표시한다", () => {
+  it("complete 타입이면 '전부 다 모였어요. 펑! 터트려볼까요?' 라벨을 표시한다", () => {
+    render(<FundingCard {...baseProps} type="complete" />);
+
+    expect(screen.getByText("전부 다 모였어요. 펑! 터트려볼까요?")).toBeInTheDocument();
+  });
+
+  it("open 타입이면 '기간이 만료되었어요.' 라벨을 표시하고 선물 커버 문구는 없다", () => {
     render(<FundingCard {...baseProps} type="open" />);
 
-    expect(
-      screen.getByText((_, el) => el?.tagName === "P" && el.textContent === "펑!\n터트려볼까요?"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("기간이 만료되었어요.")).toBeInTheDocument();
+    expect(screen.queryByText(/펑/)).not.toBeInTheDocument();
   });
 
-  it("notification 타입에서는 프로필과 배지를 표시하지 않는다", () => {
+  it("notification 타입에서도 프로필 '+4'와 '확인대기 3' 배지를 표시한다", () => {
     render(
       <FundingCard
         {...baseProps}
         type="notification"
         pendingCount={3}
-        participants={["orange"]}
+        participants={[{ color: "orange" }]}
         extraParticipantCount={4}
       />,
     );
 
-    expect(screen.queryByText("+4")).not.toBeInTheDocument();
-    expect(screen.queryByText("확인대기 3")).not.toBeInTheDocument();
+    expect(screen.getByText("+4")).toBeInTheDocument();
+    expect(screen.getByText("확인대기 3")).toBeInTheDocument();
   });
 
   it("open 타입에서는 프로필과 배지를 표시하지 않는다", () => {
@@ -126,7 +150,7 @@ describe("FundingCard", () => {
         {...baseProps}
         type="open"
         pendingCount={3}
-        participants={["orange"]}
+        participants={[{ color: "orange" }]}
         extraParticipantCount={4}
       />,
     );
@@ -168,5 +192,89 @@ describe("FundingCard onClick", () => {
     render(<FundingCard {...baseProps} />);
 
     expect(screen.queryByRole("button", { name: "민지 생일 펀딩" })).not.toBeInTheDocument();
+  });
+});
+
+describe("FundingCard 효과 타입 탭 동작", () => {
+  const tapName = { name: "민지 생일 펀딩" };
+
+  it("카드 버튼의 접근 가능한 설명이 라벨 문구다", () => {
+    render(<FundingCard {...baseProps} type="complete" onClick={vi.fn()} />);
+
+    expect(screen.getByRole("button", tapName)).toHaveAccessibleDescription(
+      "전부 다 모였어요. 펑! 터트려볼까요?",
+    );
+  });
+
+  it("notification 카드를 탭하면 onClick을 즉시 호출한다", async () => {
+    const onClick = vi.fn();
+    render(<FundingCard {...baseProps} type="notification" pendingCount={3} onClick={onClick} />);
+
+    await userEvent.click(screen.getByRole("button", tapName));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("complete 카드를 탭한 직후에는 onClick을 호출하지 않고, 터지는 연출이 끝난 뒤 호출한다", async () => {
+    const onClick = vi.fn();
+    MotionGlobalConfig.skipAnimations = true;
+    render(<FundingCard {...baseProps} type="complete" onClick={onClick} />);
+
+    fireEvent.click(screen.getByRole("button", tapName));
+    expect(onClick).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(onClick).toHaveBeenCalledTimes(1));
+  });
+
+  it("open 카드를 탭한 직후에는 onClick을 호출하지 않고, 눌림·페이드가 끝난 뒤 호출한다", async () => {
+    const onClick = vi.fn();
+    MotionGlobalConfig.skipAnimations = true;
+    render(<FundingCard {...baseProps} type="open" onClick={onClick} />);
+
+    fireEvent.click(screen.getByRole("button", tapName));
+    expect(onClick).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(onClick).toHaveBeenCalledTimes(1));
+  });
+
+  it("open 카드도 모션 줄이기 설정이면 탭 즉시 onClick을 호출한다", async () => {
+    vi.mocked(useReducedMotion).mockReturnValue(true);
+    const onClick = vi.fn();
+    render(<FundingCard {...baseProps} type="open" onClick={onClick} />);
+
+    await userEvent.click(screen.getByRole("button", tapName));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("open 카드 버튼의 접근 가능한 설명이 만료 안내 문구다", () => {
+    render(<FundingCard {...baseProps} type="open" onClick={vi.fn()} />);
+
+    expect(screen.getByRole("button", tapName)).toHaveAccessibleDescription("기간이 만료되었어요.");
+  });
+
+  it("complete 카드도 모션 줄이기 설정이면 탭 즉시 onClick을 호출한다", async () => {
+    vi.mocked(useReducedMotion).mockReturnValue(true);
+    const onClick = vi.fn();
+    render(<FundingCard {...baseProps} type="complete" onClick={onClick} />);
+
+    await userEvent.click(screen.getByRole("button", tapName));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("터지는 연출 중에 연타해도 onClick은 한 번만 호출한다", async () => {
+    const onClick = vi.fn();
+    MotionGlobalConfig.skipAnimations = true;
+    render(<FundingCard {...baseProps} type="complete" onClick={onClick} />);
+
+    const button = screen.getByRole("button", tapName);
+    fireEvent.click(button);
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    await waitFor(() => expect(onClick).toHaveBeenCalledTimes(1));
+    await new Promise(resolve => setTimeout(resolve, 100));
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });

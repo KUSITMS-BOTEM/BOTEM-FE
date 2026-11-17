@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker";
 import { delay, http, HttpResponse } from "msw";
 
 import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
@@ -18,6 +19,19 @@ const MOCK_HOME_SCENARIO = "CLOSED_EMPTY" as MockHomeScenario;
 
 const [product1, product2, product3, product4] = MOCK_RECOMMENDED_PRODUCTS;
 
+// 프로필 이미지가 있는 회원과 없는 회원·비회원(null)이 섞이도록 둔다
+const MOCK_PARTICIPANT_PREVIEWS = [
+  {
+    participantName: "민지",
+    profileImageUrl: faker.image.urlPicsumPhotos({ width: 48, height: 48, blur: 0 }),
+  },
+  { participantName: "서준", profileImageUrl: null },
+  {
+    participantName: "하린",
+    profileImageUrl: faker.image.urlPicsumPhotos({ width: 48, height: 48, blur: 0 }),
+  },
+];
+
 const MOCK_FUNDING_CARDS = [
   {
     fundingId: 12,
@@ -25,6 +39,9 @@ const MOCK_FUNDING_CARDS = [
     fundingType: "BIRTHDAY",
     productName: product1.name,
     productImageUrl: product1.imageUrl,
+    targetAmount: product1.price,
+    participantCount: 5,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS,
     remainingDays: null,
     confirmedPercentage: 80,
     pendingPercentage: 20,
@@ -36,6 +53,9 @@ const MOCK_FUNDING_CARDS = [
     fundingType: "BIRTHDAY",
     productName: product2.name,
     productImageUrl: product2.imageUrl,
+    targetAmount: product2.price,
+    participantCount: 4,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS,
     remainingDays: null,
     confirmedPercentage: 100,
     pendingPercentage: 0,
@@ -47,6 +67,9 @@ const MOCK_FUNDING_CARDS = [
     fundingType: "BIRTHDAY",
     productName: product1.name,
     productImageUrl: product1.imageUrl,
+    targetAmount: product1.price,
+    participantCount: 0,
+    participantPreviews: [],
     remainingDays: null,
     confirmedPercentage: 0,
     pendingPercentage: 0,
@@ -58,6 +81,9 @@ const MOCK_FUNDING_CARDS = [
     fundingType: "SURPRISE",
     productName: product3.name,
     productImageUrl: product3.imageUrl,
+    targetAmount: product3.price,
+    participantCount: 2,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS.slice(0, 2),
     remainingDays: 7,
     confirmedPercentage: 35,
     pendingPercentage: 15,
@@ -69,6 +95,9 @@ const MOCK_FUNDING_CARDS = [
     fundingType: "BIRTHDAY",
     productName: product4.name,
     productImageUrl: product4.imageUrl,
+    targetAmount: product4.price,
+    participantCount: 1,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS.slice(1, 2),
     remainingDays: 21,
     confirmedPercentage: 10,
     pendingPercentage: 0,

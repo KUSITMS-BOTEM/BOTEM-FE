@@ -3,7 +3,7 @@ import GiftAnimation from "@/components/effects/GiftAnimation";
 import type { FundingCardType } from "@/widgets/home/FundingCard";
 
 type FundingCardGiftCoverProps = {
-  type: Exclude<FundingCardType, "default">;
+  type: Extract<FundingCardType, "notification" | "open">;
   pendingCount: number;
   productImageUrl: string;
   animateGift: boolean;

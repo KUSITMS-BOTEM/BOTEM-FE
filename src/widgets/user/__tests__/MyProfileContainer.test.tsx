@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useWithdrawMutation } from "@/hooks/mutations/user/useWithdrawMutation";
@@ -14,6 +14,12 @@ const withdraw = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back, replace, push }) }));
 vi.mock("@/hooks/mutations/user/useWithdrawMutation");
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
+vi.mock("@/hooks/mutations/user/useUpdateMyProfileMutation", () => ({
+  useUpdateMyProfileMutation: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+vi.mock("@/hooks/mutations/user/useUploadProfileImageMutation", () => ({
+  useUploadProfileImageMutation: () => ({ mutate: vi.fn() }),
+}));
 vi.mock("@/widgets/user/ConnectedAccountBottomSheet", () => ({
   default: ({ open, email }: { open: boolean; email: string | null }) =>
     open ? <div>연결된 계정 시트 {email}</div> : null,
@@ -21,6 +27,7 @@ vi.mock("@/widgets/user/ConnectedAccountBottomSheet", () => ({
 
 const PROFILE: MyProfile = {
   nickname: "지유",
+  name: null,
   profileImageUrl: null,
   birthday: "10-13",
   wishProfileUrl: "https://botem.site/@jiyu",
@@ -94,12 +101,12 @@ describe("MyProfileContainer", () => {
     expect(screen.getByText("연결된 계정 시트 jiyu@kakao.com")).toBeInTheDocument();
   });
 
-  it("뒤로 가기를 누르면 이전 페이지로 돌아간다", async () => {
+  it("뒤로 가기를 누르면 닫히는 슬라이드가 끝난 뒤 이전 페이지로 돌아간다", async () => {
     render(<MyProfileContainer />);
 
     await userEvent.click(screen.getByRole("button", { name: "뒤로 가기" }));
 
-    expect(back).toHaveBeenCalled();
+    await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
   });
 
   it("회원 탈퇴에 성공하면 랜딩으로 이동한다", async () => {

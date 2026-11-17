@@ -1,9 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
-import ProfileBox from "@/widgets/home/ProfileBox";
+import ProfileBox from "@/components/ProfileBox";
+import SampleProduct from "@/assets/images/samples/sample-product.png";
 
 const meta = {
-  title: "Widgets/Main/ProfileBox",
+  title: "Components/ProfileBox",
   component: ProfileBox,
   parameters: {
     layout: "centered",
@@ -17,12 +18,12 @@ const meta = {
     ),
   ],
   argTypes: {
-    profiles: { control: "check", options: ["orange", "lime", "pink"] },
+    profiles: { control: "object" },
     extraCount: { control: { type: "number", min: 0 } },
     notification: { control: "boolean" },
   },
   args: {
-    profiles: ["orange"],
+    profiles: [{ color: "orange" }],
     extraCount: 99,
     notification: false,
   },
@@ -38,9 +39,20 @@ export const Notification: Story = {
 };
 
 export const ThreeProfiles: Story = {
-  args: { profiles: ["orange", "lime", "pink"] },
+  args: { profiles: [{ color: "orange" }, { color: "lime" }, { color: "pink" }] },
 };
 
 export const WithoutExtraCount: Story = {
-  args: { profiles: ["orange", "lime"], extraCount: 0 },
+  args: { profiles: [{ color: "orange" }, { color: "lime" }], extraCount: 0 },
+};
+
+// 프로필 이미지가 없는 참여자는 색 아이콘으로 대체된다
+export const WithProfileImages: Story = {
+  args: {
+    profiles: [
+      { color: "orange", imageUrl: SampleProduct.src },
+      { color: "lime" },
+      { color: "pink", imageUrl: SampleProduct.src },
+    ],
+  },
 };

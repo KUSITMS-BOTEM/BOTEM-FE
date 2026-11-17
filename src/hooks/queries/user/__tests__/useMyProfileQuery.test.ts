@@ -15,6 +15,7 @@ vi.mock("@/apis/user/userService", () => ({
 
 const mockProfile: MyProfile = {
   nickname: "보탬이",
+  name: null,
   profileImageUrl: "https://example.com/profile.png",
   birthday: "01-01",
   wishProfileUrl: "https://example.com/wish",

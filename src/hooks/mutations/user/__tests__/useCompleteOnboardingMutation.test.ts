@@ -6,6 +6,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { userService } from "@/apis/user/userService";
 import { useCompleteOnboardingMutation } from "@/hooks/mutations/user/useCompleteOnboardingMutation";
 import { DEFAULT_ERROR_MESSAGE, ERROR_MESSAGES } from "@/constants/errorMessages";
+import { queryClient as appQueryClient } from "@/lib/queryClient";
 import { ApiError } from "@/types/api";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { setSignupFlow } from "@/utils/auth/signupFlowStorage";
@@ -59,6 +60,19 @@ describe("useCompleteOnboardingMutation", () => {
     expect(sessionStorage.getItem("signupFlow")).toBeNull();
     expect(consumeWishPromptPending()).toBe(true);
     expect(replace).toHaveBeenCalledWith("/home");
+  });
+
+  it("성공 시 온보딩 전에 캐시된 내 프로필을 무효화해 다시 조회되게 한다", async () => {
+    vi.mocked(userService.completeOnboarding).mockResolvedValue(null);
+    appQueryClient.setQueryData(["users", "me", "profile"], { nickname: "지유", name: null });
+    const { result } = renderHook(() => useCompleteOnboardingMutation(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate(body);
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(appQueryClient.getQueryState(["users", "me", "profile"])?.isInvalidated).toBe(true);
   });
 
   it("userService.completeOnboarding이 실패하면 에러 Dialog를 띄우고, 확인을 누른 뒤에야 /로 이동한다", async () => {

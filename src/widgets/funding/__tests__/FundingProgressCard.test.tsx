@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 
 import { getFundingCardColor } from "@/utils/funding/getFundingCardColor";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
@@ -88,6 +89,67 @@ describe("FundingProgressCard", () => {
 
       expect(screen.getByText("마감")).toBeInTheDocument();
       expect(screen.getByText(/D-7$/)).toBeInTheDocument();
+    });
+  });
+
+  describe("가로 폭 실측과 스켈레톤", () => {
+    const SKELETON = "skeleton-shimmer";
+    let width = 0;
+
+    beforeEach(() => {
+      width = 0;
+      vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(() => width);
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+    });
+
+    it("실측 전(서버 렌더)에는 스켈레톤을 보여주고 카드는 숨긴다", () => {
+      const html = renderToString(<FundingProgressCard {...BASE} />);
+
+      expect(html).toContain(SKELETON);
+      expect(html).toContain("display:none");
+    });
+
+    it("마운트되어 폭을 실측하면 스켈레톤이 사라지고 폭에 맞춰 카드를 확대한다", () => {
+      width = 640;
+      const { container } = render(<FundingProgressCard {...BASE} />);
+
+      expect(container.innerHTML).not.toContain(SKELETON);
+      expect(getCard()).toHaveStyle({ transform: "scale(2)" });
+    });
+
+    it("폭을 실측할 수 없으면(0) 배율 1로 카드를 보여준다", () => {
+      render(<FundingProgressCard {...BASE} />);
+
+      expect(getCard()).toHaveStyle({ transform: "scale(1)" });
+    });
+
+    it("부모 폭이 바뀌면 배율을 다시 계산하고, 언마운트하면 관찰을 멈춘다", () => {
+      let notify = () => {};
+      const disconnect = vi.fn();
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          constructor(callback: () => void) {
+            notify = callback;
+          }
+          observe() {}
+          disconnect = disconnect;
+        },
+      );
+      width = 320;
+      const { unmount } = render(<FundingProgressCard {...BASE} />);
+      expect(getCard()).toHaveStyle({ transform: "scale(1)" });
+
+      width = 480;
+      act(() => notify());
+      expect(getCard()).toHaveStyle({ transform: "scale(1.5)" });
+
+      unmount();
+      expect(disconnect).toHaveBeenCalled();
     });
   });
 });
