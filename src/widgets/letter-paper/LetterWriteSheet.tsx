@@ -16,6 +16,8 @@ import LetterRecordSheet from "@/widgets/letter-paper/LetterRecordSheet";
 import LetterToolSheet from "@/widgets/letter-paper/LetterToolSheet";
 import LetterWriteBody from "@/widgets/letter-paper/LetterWriteBody";
 import PaletteArea from "@/widgets/letter-paper/PaletteArea";
+import StickerSheet from "@/widgets/letter-paper/StickerSheet";
+import { STICKERS, type Sticker } from "@/widgets/letter-paper/stickers";
 
 // 시트가 이미 떠 있는 상태에서 빈 화면 → Title → 입력 영역 순서로 나타난다 (FundingInfoStep 모션 기준)
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
@@ -38,6 +40,9 @@ export type LetterWriteValues = {
   color: Color;
   // 녹음을 완료했을 때만 있다
   voice?: LetterVoice;
+  // 스티커를 붙였을 때만 있다
+  largeSticker?: Sticker;
+  smallSticker?: Sticker;
 };
 
 type LetterWriteSheetProps = {
@@ -66,6 +71,10 @@ export default function LetterWriteSheet({
   const [toolOpen, setToolOpen] = useState(false);
   const [recordOpen, setRecordOpen] = useState(false);
   const [voice, setVoice] = useState<LetterVoice | null>(null);
+  const [stickerOpen, setStickerOpen] = useState(false);
+  const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
+  const [largeSticker, setLargeSticker] = useState<Sticker | null>(null);
+  const [smallSticker, setSmallSticker] = useState<Sticker | null>(null);
   const recorder = useVoiceRecorder();
   const toolAreaRef = useRef<HTMLDivElement>(null);
   // 툴 영역을 한 번 연 뒤에는 안내 말풍선을 다시 보여주지 않는다
@@ -79,7 +88,7 @@ export default function LetterWriteSheet({
   // 짧은 화면에서 툴 영역이 하단 CTA에 가려지면 스크롤을 내리고, 이미 보이면 그대로 둔다(nearest)
   useEffect(() => {
     if (toolOpen) toolAreaRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [toolOpen, recordOpen]);
+  }, [toolOpen, recordOpen, stickerOpen]);
 
   const canNext = text.trim() !== "" && (isLoggedIn || name.trim() !== "");
 
@@ -109,6 +118,9 @@ export default function LetterWriteSheet({
     setToolOpen(false);
     closeRecord();
     setVoice(null);
+    closeSticker();
+    setLargeSticker(null);
+    setSmallSticker(null);
     setTooltipDismissed(false);
     setIsTyping(false);
     setNameOpen(true);
@@ -131,6 +143,12 @@ export default function LetterWriteSheet({
   const closeRecord = () => {
     recorder.reset();
     setRecordOpen(false);
+  };
+
+  // 시트를 닫으면 고르던 스티커 선택은 풀고, 이미 붙인 스티커는 유지한다
+  const closeSticker = () => {
+    setStickerOpen(false);
+    setSelectedSticker(null);
   };
 
   const handleRecordDone = () => {
@@ -167,6 +185,21 @@ export default function LetterWriteSheet({
             voiceAudio={voice?.blob}
             textTopInset={!isLoggedIn && nameOpen}
             onSenderClick={isLoggedIn ? undefined : handleSenderClick}
+            largeIcon={largeSticker && <largeSticker.Icon aria-hidden className="size-full" />}
+            smallIcon={smallSticker && <smallSticker.Icon aria-hidden className="size-full" />}
+            // 스티커 시트가 열려 있을 때만 슬롯이 눌리게 한다(닫혀 있으면 슬롯 버튼이 disabled)
+            onLargeIconClick={
+              stickerOpen ? () => selectedSticker && setLargeSticker(selectedSticker) : undefined
+            }
+            onSmallIconClick={
+              stickerOpen ? () => selectedSticker && setSmallSticker(selectedSticker) : undefined
+            }
+            onLargeIconRemove={() => setLargeSticker(null)}
+            onSmallIconRemove={() => setSmallSticker(null)}
+            iconSlotsActive={stickerOpen}
+            hidePhotoSlot={stickerOpen}
+            // 사진 툴이 붙기 전까지 사진 슬롯은 눌리지 않는다
+            photoSlotDisabled
             textSlot={
               <LetterWriteBody
                 text={text}
@@ -206,8 +239,19 @@ export default function LetterWriteSheet({
                   onDone={handleRecordDone}
                   onClose={closeRecord}
                 />
+              ) : stickerOpen ? (
+                <StickerSheet
+                  stickers={STICKERS}
+                  selectedId={selectedSticker?.id ?? null}
+                  onSelect={setSelectedSticker}
+                  onClose={closeSticker}
+                />
               ) : (
-                <LetterToolSheet onClose={() => setToolOpen(false)} onSelectRecord={openRecord} />
+                <LetterToolSheet
+                  onClose={() => setToolOpen(false)}
+                  onSelectRecord={openRecord}
+                  onSelectSticker={() => setStickerOpen(true)}
+                />
               )}
             </div>
           )}
@@ -225,7 +269,16 @@ export default function LetterWriteSheet({
               color="neutral"
               size="xlarge"
               disabled={!canNext || recorder.status === "recording"}
-              onClick={() => onNext?.({ text, name, color, ...(voice && { voice }) })}>
+              onClick={() =>
+                onNext?.({
+                  text,
+                  name,
+                  color,
+                  ...(voice && { voice }),
+                  ...(largeSticker && { largeSticker }),
+                  ...(smallSticker && { smallSticker }),
+                })
+              }>
               다음
             </Button>
           </motion.div>

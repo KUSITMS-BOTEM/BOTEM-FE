@@ -9,8 +9,48 @@ describe("AssetSlot", () => {
       render(<AssetSlot type="icon" />);
 
       const button = screen.getByRole("button", { name: "아이콘 선택" });
-      expect(button).toHaveClass("size-[50px]", "border", "border-dashed");
+      expect(button.parentElement).toHaveClass("size-[50px]");
+      expect(button).toHaveClass("border", "border-dashed");
       expect(button.querySelector("svg")).toBeInTheDocument();
+    });
+
+    it("active이면 비어 있는 슬롯을 실선 테두리로 강조한다", () => {
+      render(<AssetSlot type="icon" active />);
+
+      const button = screen.getByRole("button", { name: "아이콘 선택" });
+      expect(button).toHaveClass("border-solid", "border-[1.5px]");
+      expect(button).not.toHaveClass("border-dashed");
+    });
+
+    it("asset이 있으면 active여도 테두리를 그리지 않는다", () => {
+      render(<AssetSlot type="icon" active asset={<span />} />);
+
+      expect(screen.getByRole("button", { name: "아이콘 선택" })).not.toHaveClass("border-solid");
+    });
+
+    it("asset과 onRemove가 있으면 삭제 버튼을 보여주고 누르면 onRemove만 호출된다", async () => {
+      const onClick = vi.fn();
+      const onRemove = vi.fn();
+      render(<AssetSlot type="icon" asset={<span />} onClick={onClick} onRemove={onRemove} />);
+
+      await userEvent.click(screen.getByRole("button", { name: "아이콘 삭제" }));
+
+      expect(onRemove).toHaveBeenCalledTimes(1);
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it("active일 때만 pointer 커서를 보여준다", () => {
+      const { rerender } = render(<AssetSlot type="icon" />);
+      expect(screen.getByRole("button", { name: "아이콘 선택" })).not.toHaveClass("cursor-pointer");
+
+      rerender(<AssetSlot type="icon" active />);
+      expect(screen.getByRole("button", { name: "아이콘 선택" })).toHaveClass("cursor-pointer");
+    });
+
+    it("asset이 없으면 onRemove가 있어도 삭제 버튼이 없다", () => {
+      render(<AssetSlot type="icon" onRemove={vi.fn()} />);
+
+      expect(screen.queryByRole("button", { name: "아이콘 삭제" })).not.toBeInTheDocument();
     });
 
     it("asset이 있으면 테두리를 없애고 asset만 보여준다", () => {
@@ -52,6 +92,19 @@ describe("AssetSlot", () => {
       const button = screen.getByRole("button", { name: "사진 선택" });
       expect(button).toHaveClass("size-[120px]", "border-dashed");
       expect(screen.queryByAltText("선택한 사진")).not.toBeInTheDocument();
+    });
+
+    it("disabled이면 눌러도 파일 선택창이 열리지 않고 pointer 커서가 없다", async () => {
+      const { container } = render(<AssetSlot type="photo" disabled />);
+      const input = container.querySelector("input[type=file]") as HTMLInputElement;
+      const clickSpy = vi.spyOn(input, "click");
+      const button = screen.getByRole("button", { name: "사진 선택" });
+
+      await userEvent.click(button);
+
+      expect(button).toBeDisabled();
+      expect(button).not.toHaveClass("cursor-pointer");
+      expect(clickSpy).not.toHaveBeenCalled();
     });
 
     it("src가 있으면 선택 없이도 사진을 보여주고 테두리를 없앤다", () => {

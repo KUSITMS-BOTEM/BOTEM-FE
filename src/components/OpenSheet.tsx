@@ -59,6 +59,8 @@ export default function OpenSheet({
     const dialog = dialogRef.current;
     if (!dialog) return;
     const handleCancel = (event: Event) => {
+      // 내부 <input type="file">에서 파일 선택을 취소해도 cancel이 버블링돼 올라오므로, dialog 자신의 cancel(Esc)만 처리한다
+      if (event.target !== dialog) return;
       event.preventDefault();
       onClose();
     };
