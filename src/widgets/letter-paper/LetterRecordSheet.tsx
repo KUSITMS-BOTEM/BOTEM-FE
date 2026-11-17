@@ -58,14 +58,24 @@ export default function LetterRecordSheet({
             />
           )}
           {isDone && (
-            <div className="max-h-[88px] min-w-0 flex-1 overflow-y-auto">
-              <p
-                className={cn(
-                  "[letter-spacing:var(--letter-spacing-default)] break-words whitespace-pre-wrap [font:var(--semantic-label-small)]",
-                  transcript ? "text-semantic-text-strong" : "text-semantic-text-quaternary",
-                )}>
-                {transcript || "자막을 만들지 못했어요"}
-              </p>
+            <div className="min-w-0 flex-1">
+              <div className="max-h-[88px] overflow-y-auto">
+                <p
+                  className={cn(
+                    "[letter-spacing:var(--letter-spacing-default)] break-words whitespace-pre-wrap [font:var(--semantic-label-small)]",
+                    transcript ? "text-semantic-text-strong" : "text-semantic-text-quaternary",
+                  )}>
+                  {transcript || "자막을 만들지 못했어요"}
+                </p>
+              </div>
+              {/* 재녹음 시작이 실패해도 done에 머물므로 오류를 여기서도 알린다. 긴 자막에 가려지지 않게 스크롤 밖에 둔다 */}
+              {error && (
+                <p
+                  role="alert"
+                  className="text-semantic-text-quaternary mt-1 [font:var(--semantic-label-x-small)]">
+                  {ERROR_MESSAGE[error]}
+                </p>
+              )}
             </div>
           )}
           {status === "idle" && (

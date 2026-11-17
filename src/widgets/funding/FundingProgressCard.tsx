@@ -1,6 +1,7 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 
 import Badge from "@/components/Badge";
 import { cn } from "@/utils/cn";
@@ -68,6 +69,9 @@ const FILL =
 // Tailwind의 w-80(320px)과 같은 값. 확대 배율의 기준 폭이다
 const CARD_DESIGN_WIDTH = 320;
 
+// Figma: 카드가 나타난 뒤 약 1초에 1.06배로 커졌다가 1.4초쯤 원래 크기로 돌아온다
+const STATUS_POP_TRANSITION = { delay: 1, duration: 0.4, ease: "easeInOut" } as const;
+
 type FundingProgressCardProps = {
   /** 색상을 고정하는 키라서 제목처럼 바뀌는 값이 아닌 펀딩 고유 id를 넘긴다 */
   fundingId: number | string;
@@ -77,6 +81,10 @@ type FundingProgressCardProps = {
   deadline: string;
   currentAmount: number;
   targetAmount: number;
+  /** true면 문구·달성률·목표 금액 묶음이 한 번 커졌다 돌아온다 (보태기 완료 페이지 연출) */
+  popStatus?: boolean;
+  /** 카드와 같은 배율로 커지는 320×401 좌표계 위에 얹는 요소 (예: 우측 상단 뱃지) */
+  children?: ReactNode;
   className?: string;
 };
 
@@ -87,6 +95,8 @@ export default function FundingProgressCard({
   deadline,
   currentAmount,
   targetAmount,
+  popStatus = false,
+  children,
   className,
 }: FundingProgressCardProps) {
   const color: FundingCardColor = currentAmount === 0 ? "disabled" : getFundingCardColor(fundingId);
@@ -146,7 +156,10 @@ export default function FundingProgressCard({
             productName={productName}
             deadline={deadline}
           />
-          <div className="flex w-full flex-col items-start gap-2 px-3 pt-1 pb-2">
+          <motion.div
+            animate={popStatus ? { scale: [1, 1.06, 1] } : undefined}
+            transition={STATUS_POP_TRANSITION}
+            className="flex w-full origin-bottom-left flex-col items-start gap-2 px-3 pt-1 pb-2">
             {closedLabel && <Badge label={closedLabel} />}
             <p className="px-0.5 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-title-x-small-weak)]">
               {getFundingProgressMessage(percent)}
@@ -165,8 +178,9 @@ export default function FundingProgressCard({
                 목표가 {targetAmount.toLocaleString("ko-KR")}원
               </p>
             </div>
-          </div>
+          </motion.div>
         </div>
+        {children}
       </section>
     </div>
   );
