@@ -220,7 +220,7 @@ export default function LetterWriteSheet({
             <Button
               color="neutral"
               size="xlarge"
-              disabled={!canNext}
+              disabled={!canNext || recorder.status === "recording"}
               onClick={() => onNext?.({ text, name, color, ...(voice && { voice }) })}>
               다음
             </Button>

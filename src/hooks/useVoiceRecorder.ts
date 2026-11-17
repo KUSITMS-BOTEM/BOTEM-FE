@@ -94,6 +94,8 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
     const recorder = recorderRef.current;
     if (recorder) {
       recorder.onstop = null;
+      // 중지된 녹음의 마지막 dataavailable이 다음 녹음의 chunksRef에 섞이지 않게 한다
+      recorder.ondataavailable = null;
       if (recorder.state !== "inactive") recorder.stop();
     }
     recorderRef.current = null;
@@ -159,6 +161,10 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
         if (event.data.size > 0) chunksRef.current.push(event.data);
       };
       recorder.onstop = () => {
+        // 트랙 종료·녹음 오류처럼 stop() 없이 끝나는 경로에서도 타이머와 인식을 정리한다
+        window.clearInterval(timerRef.current);
+        keepListeningRef.current = false;
+        recognitionRef.current?.stop();
         setBlob(new Blob(chunksRef.current, { type: recorder.mimeType }));
         setInterim("");
         clearSpeaking();
@@ -208,6 +214,7 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
     } catch {
       // 코덱 미지원 등으로 시작에 실패하면 잡아 둔 마이크를 놓는다
       discard();
+      setStatus("idle");
       setMicError("unavailable");
       return;
     }
