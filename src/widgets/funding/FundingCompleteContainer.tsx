@@ -30,9 +30,9 @@ const MOCK_COMPLETE = {
   targetAmount: 123456789,
 };
 
-// Figma 12.2초 타임라인(한 번만 재생): 진행률 장면 → 2.3초에 자랑 장면으로 전환 → 4.55초에 공유 버튼 등장
-const SHARE_SCENE_AT_MS = 2294;
-const CTA_AT_MS = 4554;
+// Figma 12.2초 타임라인(한 번만 재생): 진행률 장면 → 2.3초에 자랑 장면으로 전환 → 공유 버튼은 전환 2.26초 뒤에 등장
+const SHARE_SCENE_AT_MS = 2300;
+const CTA_AT_MS = 4560;
 const TOAST_DURATION_MS = 2000;
 
 const EASE: Easing = [0.87, 0, 0.13, 1];
@@ -132,7 +132,8 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
           </AnimatePresence>
         </div>
         <div className="relative mt-5.5 grid">
-          <AnimatePresence initial={false}>
+          {/* initial={false}를 주면 처음부터 있던 자식(진행률 카드·뱃지)의 등장 모션이 전부 꺼진다 */}
+          <AnimatePresence>
             {!isShareScene && (
               <motion.div
                 key="progress-card"
@@ -145,41 +146,42 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
                   deadline={funding.deadline}
                   currentAmount={funding.currentAmount}
                   targetAmount={funding.targetAmount}
-                />
-                <div className="absolute top-[20.3px] right-[56.4px] translate-x-1/2 -translate-y-1/2 rotate-15">
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.2, rotate: -18 }}
-                    animate={{
-                      opacity: 1,
-                      scaleX: [0.2, 1.25, 0.9, 1],
-                      scaleY: [0.2, 0.85, 1.12, 1],
-                      rotate: [-18, 6, 0],
-                    }}
-                    exit={{ opacity: 0, transition: { duration: 0.25, ease: EASE } }}
-                    transition={{
-                      delay: 0.976,
-                      opacity: { delay: 0.976, duration: 0.164, ease: "linear" },
-                      scaleX: {
+                  popStatus>
+                  <div className="absolute top-[20.3px] right-[56.4px] translate-x-1/2 -translate-y-1/2 rotate-15">
+                    <motion.div
+                      initial={{ opacity: 0, scaleX: 0.2, scaleY: 0.2, rotate: -18 }}
+                      animate={{
+                        opacity: 1,
+                        scaleX: [0.2, 1.25, 0.9, 1],
+                        scaleY: [0.2, 0.85, 1.12, 1],
+                        rotate: [-18, 6, 0],
+                      }}
+                      exit={{ opacity: 0, transition: { duration: 0.25, ease: EASE } }}
+                      transition={{
                         delay: 0.976,
-                        duration: 0.494,
-                        times: [0, 0.502, 0.747, 1],
-                        ease: EASE,
-                      },
-                      scaleY: {
-                        delay: 0.976,
-                        duration: 0.494,
-                        times: [0, 0.502, 0.747, 1],
-                        ease: EASE,
-                      },
-                      rotate: { delay: 0.976, duration: 0.494, times: [0, 0.502, 1], ease: EASE },
-                    }}
-                    className="bg-semantic-fill-neutral text-semantic-text-on-fill flex items-center gap-1 rounded-full px-5 py-2.5 [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap drop-shadow-[0_8px_10px_rgb(0_0_0/0.22)]">
-                    <span className="[font:var(--semantic-title-x-small)]">
-                      +{funding.risePercent}%
-                    </span>
-                    <span className="[font:var(--semantic-label-small)]">올랐어요</span>
-                  </motion.div>
-                </div>
+                        opacity: { delay: 0.976, duration: 0.164, ease: "linear" },
+                        scaleX: {
+                          delay: 0.976,
+                          duration: 0.494,
+                          times: [0, 0.502, 0.747, 1],
+                          ease: EASE,
+                        },
+                        scaleY: {
+                          delay: 0.976,
+                          duration: 0.494,
+                          times: [0, 0.502, 0.747, 1],
+                          ease: EASE,
+                        },
+                        rotate: { delay: 0.976, duration: 0.494, times: [0, 0.502, 1], ease: EASE },
+                      }}
+                      className="bg-semantic-fill-neutral text-semantic-text-on-fill flex items-center gap-1 rounded-full px-5 py-2.5 [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap drop-shadow-[0_8px_10px_rgb(0_0_0/0.22)]">
+                      <span className="[font:var(--semantic-title-x-small)]">
+                        +{funding.risePercent}%
+                      </span>
+                      <span className="[font:var(--semantic-label-small)]">올랐어요</span>
+                    </motion.div>
+                  </div>
+                </FundingProgressCard>
               </motion.div>
             )}
             {isShareScene && (
