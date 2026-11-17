@@ -8,7 +8,9 @@ import Tooltip from "@/components/Tooltip";
 import BotemPopup from "@/widgets/funding/BotemPopup";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
 import FundingMessage from "@/widgets/funding/FundingMessage";
+import FundingPasswordSheet from "@/widgets/funding/FundingPasswordSheet";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
+import type { FundingTransferAccount } from "@/widgets/funding/FundingTransferGuideSheet";
 import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
 import SampleProduct from "@/assets/images/samples/sample-product.png";
 import IconShare from "@/assets/icons/icon-share.svg?react";
@@ -37,6 +39,11 @@ const MOCK_FUNDING = {
     { id: 1, name: "민수", contributedAt: "2026-11-10T09:00:00" },
     { id: 2, name: "서연", contributedAt: "2026-11-12T18:30:00" },
   ],
+  account: {
+    bank: "TOSS_BANK",
+    accountHolder: "김지유",
+    accountNumber: "1000-1234-5678",
+  } satisfies FundingTransferAccount,
 };
 
 // TODO: 공유·더보기 동작은 디자인이 정해지면 연결한다
@@ -47,6 +54,8 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isContributeOpen, setIsContributeOpen] = useState(false);
   const [isLetterOpen, setIsLetterOpen] = useState(false);
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [contributeAmount, setContributeAmount] = useState(0);
   const closePopup = () => setIsPopupOpen(false);
   const remainingAmount = funding.targetAmount - funding.currentAmount;
 
@@ -107,21 +116,34 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
           setIsContributeOpen(true);
         }}
       />
-      {/* 금액 시트는 열어 둔 채 위에 편지 시트를 띄워, 편지 시트의 이전을 누르면 금액 시트로 돌아온다 */}
+      {/* 앞 단계 시트는 열어 둔 채 위에 다음 시트를 띄워(금액 → 편지 → 비밀번호), 이전을 누르면 직전 시트로 돌아온다 */}
       <FundingContributeSheet
         open={isContributeOpen}
         hostName={funding.hostName}
         maxAmount={remainingAmount}
         onClose={() => setIsContributeOpen(false)}
-        onNext={() => setIsLetterOpen(true)}
+        onNext={amount => {
+          setContributeAmount(amount);
+          setIsLetterOpen(true);
+        }}
       />
-      {/* TODO: 쿠키가 httpOnly라 로그인 여부를 클라이언트에서 못 읽어 비회원(false)으로 둔다. 결제 단계가 정해지면 onNext를 연결한다 */}
+      {/* TODO: 쿠키가 httpOnly라 로그인 여부를 클라이언트에서 못 읽어 비회원(false)으로 둔다. 편지 내용(values)은 보탬 제출 API가 정해지면 넘긴다 */}
       <LetterWriteSheet
         open={isLetterOpen}
         recipientName={funding.hostName}
         isLoggedIn={false}
         onClose={() => setIsLetterOpen(false)}
-        onNext={noop}
+        onNext={() => setIsPasswordOpen(true)}
+      />
+      {/* TODO: 비밀번호 시트의 완료(onComplete)는 보탬 제출 API가 정해지면 연결한다 */}
+      <FundingPasswordSheet
+        open={isPasswordOpen}
+        hostName={funding.hostName}
+        amount={contributeAmount}
+        account={funding.account}
+        onClose={() => setIsPasswordOpen(false)}
+        onPrev={() => setIsPasswordOpen(false)}
+        onComplete={noop}
       />
     </main>
   );
