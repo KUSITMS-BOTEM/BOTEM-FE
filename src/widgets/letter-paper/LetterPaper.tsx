@@ -95,7 +95,7 @@ export default function LetterPaper({
         </div>
       )}
       <>
-        <p
+        <div
           className={cn(
             "relative shrink-0 overflow-hidden [letter-spacing:var(--letter-spacing-default)] break-words whitespace-pre-wrap",
             TEXT_SIZE_CLASS[size],
@@ -112,7 +112,7 @@ export default function LetterPaper({
             )}
           />
           {textSlot ?? text}
-        </p>
+        </div>
         <div className="relative flex items-center justify-between">
           {hasVoiceMessage && <VoiceMessage color={color} audio={voiceAudio} />}
           <SenderTag
