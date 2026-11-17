@@ -4,7 +4,8 @@ import type { Color } from "@/constants/color";
 
 type FriendListItemProps = {
   name: string;
-  wishCount: number;
+  // 없으면 이름만 표시한다 (친구 프로필 상단)
+  wishCount?: number;
   imageUrl?: string;
   profileColor?: Color;
   birthdayText?: string;
@@ -32,7 +33,7 @@ export default function FriendListItem({
         />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5 [letter-spacing:var(--letter-spacing-default)]">
           <p className="text-semantic-text-primary truncate [font:var(--semantic-label-large)]">
-            {name} · 위시 {wishCount}개
+            {wishCount === undefined ? name : `${name} · 위시 ${wishCount}개`}
           </p>
           {birthdayText && (
             <p className="text-semantic-text-secondary truncate [font:var(--semantic-subtext-large)]">

@@ -67,7 +67,10 @@ export default function PaletteArea({
           role="tooltip"
           className="bg-semantic-border-inverted text-semantic-text-primary absolute right-7 bottom-full rounded-lg px-3 py-2 whitespace-nowrap [font:var(--semantic-label-x-small-weak)]">
           나만의 편지를 만들어 볼까요?
-          <TooltipTail aria-hidden className="absolute top-[29px] right-[11px] rotate-90" />
+          <TooltipTail
+            aria-hidden
+            className="text-semantic-border-inverted absolute top-[29px] right-[11px] rotate-90"
+          />
         </div>
       )}
     </div>
