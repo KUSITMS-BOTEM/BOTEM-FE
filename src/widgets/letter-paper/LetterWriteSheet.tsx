@@ -94,6 +94,12 @@ export default function LetterWriteSheet({
   const [nameOpen, setNameOpen] = useState(true);
   const [nameReopened, setNameReopened] = useState(false);
 
+  // 사진 검증 콜백은 선택 시점의 클로저를 쥐고 있어 open prop 대신 ref로 최신 값을 읽는다
+  const openRef = useRef(open);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+
   const toolOpen = activeTool !== null && activeTool !== "photo";
   const stickerOpen = activeTool === "sticker";
   const photoOpen = activeTool === "photo";
@@ -231,7 +237,10 @@ export default function LetterWriteSheet({
             photoSlotDisabled={!photoOpen}
             photoSlotActive={photoOpen}
             hideEmptyIconSlots={photoOpen && !photo}
-            onPhotoChange={file => setPhoto({ file, url: URL.createObjectURL(file) })}
+            // 검증 중 시트를 닫았다면 초기화된 편지에 사진이 되살아나지 않게 버린다
+            onPhotoChange={file => {
+              if (openRef.current) setPhoto({ file, url: URL.createObjectURL(file) });
+            }}
             onPhotoRemove={() => setPhoto(null)}
             textSlot={
               <LetterWriteBody
