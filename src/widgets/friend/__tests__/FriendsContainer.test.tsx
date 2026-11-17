@@ -83,4 +83,14 @@ describe("FriendsContainer", () => {
     expect(screen.getAllByText("가 · 위시 1개")).toHaveLength(1);
     expect(screen.getByText("나 · 위시 1개")).toBeInTheDocument();
   });
+
+  it("친구 아이템을 누르면 해당 친구 프로필(/friends/{userId})로 이동하는 링크다", () => {
+    const upcoming = friend(2, "민지", 3);
+    const other = friend(6, "하린", null);
+    mockData({ totalCount: 2, upcomingBirthdayFriends: [upcoming], friends: [upcoming, other] });
+    render(<FriendsContainer />);
+
+    expect(screen.getByRole("link", { name: /민지/ })).toHaveAttribute("href", "/friends/2");
+    expect(screen.getByRole("link", { name: /하린/ })).toHaveAttribute("href", "/friends/6");
+  });
 });
