@@ -148,6 +148,7 @@ export default function LetterWriteSheet({
             senderName={name}
             forceSmallText={shrunk}
             hasVoiceMessage={voice !== null}
+            voiceAudio={voice?.blob}
             textTopInset={!isLoggedIn && nameOpen}
             onSenderClick={isLoggedIn ? undefined : handleSenderClick}
             textSlot={

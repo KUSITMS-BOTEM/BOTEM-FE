@@ -1,4 +1,5 @@
-import { render } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import VoiceMessage from "@/widgets/letter-paper/VoiceMessage";
 import type { Color } from "@/constants/color";
@@ -32,6 +33,53 @@ describe("VoiceMessage", () => {
 
     const heights = ["h-2", "h-3.5", "h-[22px]", "h-[18px]", "h-2"];
     getBars(container).forEach((bar, index) => expect(bar).toHaveClass(heights[index]));
+  });
+
+  describe("audio 재생", () => {
+    const players: { pause: ReturnType<typeof vi.fn>; onended?: () => void }[] = [];
+
+    beforeEach(() => {
+      players.length = 0;
+      URL.createObjectURL = vi.fn(() => "blob:x");
+      URL.revokeObjectURL = vi.fn();
+      vi.stubGlobal(
+        "Audio",
+        vi.fn(function () {
+          const player = { pause: vi.fn(), play: vi.fn(() => Promise.resolve()) } as never;
+          players.push(player);
+          return player;
+        }),
+      );
+    });
+
+    afterEach(() => vi.unstubAllGlobals());
+
+    const audio = new Blob(["a"], { type: "audio/webm" });
+
+    it("버튼을 누르면 배경이 팔레트 색·파형이 검은색으로 바뀌고, 다시 누르면 원래대로 돌아온다", async () => {
+      const { container } = render(<VoiceMessage color="pink" audio={audio} />);
+
+      await userEvent.click(screen.getByRole("button", { name: "음성 메시지 재생" }));
+      const stopButton = screen.getByRole("button", { name: "음성 메시지 정지" });
+      expect(stopButton).toHaveClass("bg-base-pink-500");
+      getBars(container).forEach(bar => expect(bar).toHaveClass("bg-black"));
+
+      await userEvent.click(stopButton);
+      expect(players[0].pause).toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "음성 메시지 재생" })).toHaveClass(
+        "bg-semantic-fill-neutral",
+      );
+      getBars(container).forEach(bar => expect(bar).toHaveClass("bg-base-pink-500"));
+    });
+
+    it("재생이 끝나면 원래 색으로 돌아온다", async () => {
+      render(<VoiceMessage audio={audio} />);
+
+      await userEvent.click(screen.getByRole("button", { name: "음성 메시지 재생" }));
+      act(() => players[0].onended?.());
+
+      expect(screen.getByRole("button", { name: "음성 메시지 재생" })).toBeInTheDocument();
+    });
   });
 
   it("className을 넘기면 루트에 병합되고 기본 클래스는 유지된다", () => {

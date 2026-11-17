@@ -229,14 +229,14 @@ describe("LetterWriteSheet", () => {
       const onNext = vi.fn();
       renderSheet({ onNext });
       typeLetter("생일 축하해");
-      expect(screen.queryByRole("img", { name: "음성 메시지" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("group", { name: "음성 메시지" })).not.toBeInTheDocument();
 
       await openRecordSheet();
       await userEvent.click(screen.getByRole("button", { name: "녹음 시작" }));
       await userEvent.click(await screen.findByRole("button", { name: "녹음 중지" }));
       await userEvent.click(screen.getByRole("button", { name: "녹음 완료" }));
 
-      expect(screen.getByRole("img", { name: "음성 메시지" })).toBeInTheDocument();
+      expect(screen.getByRole("group", { name: "음성 메시지" })).toBeInTheDocument();
       expect(screen.queryByText("탭으로 녹음 시작")).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByRole("button", { name: "다음" }));
@@ -252,7 +252,7 @@ describe("LetterWriteSheet", () => {
       await userEvent.click(screen.getAllByRole("button", { name: "닫기" }).at(-1)!);
 
       expect(screen.queryByText("탭으로 녹음 시작")).not.toBeInTheDocument();
-      expect(screen.queryByRole("img", { name: "음성 메시지" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("group", { name: "음성 메시지" })).not.toBeInTheDocument();
     });
   });
 });

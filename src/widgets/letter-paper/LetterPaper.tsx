@@ -22,6 +22,7 @@ export type LetterPaperProps = {
   text: string;
   senderName: string;
   hasVoiceMessage?: boolean;
+  voiceAudio?: Blob;
   photoSrc?: string | StaticImageData;
   largeIcon?: ReactNode;
   smallIcon?: ReactNode;
@@ -56,6 +57,7 @@ export default function LetterPaper({
   text,
   senderName,
   hasVoiceMessage = false,
+  voiceAudio,
   photoSrc,
   largeIcon,
   smallIcon,
@@ -112,7 +114,7 @@ export default function LetterPaper({
           {textSlot ?? text}
         </p>
         <div className="relative flex items-center justify-between">
-          {hasVoiceMessage && <VoiceMessage color={color} />}
+          {hasVoiceMessage && <VoiceMessage color={color} audio={voiceAudio} />}
           <SenderTag
             {...(onSenderClick
               ? {
