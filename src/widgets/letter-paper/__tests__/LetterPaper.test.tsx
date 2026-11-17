@@ -85,6 +85,6 @@ describe("LetterPaper", () => {
     render(<LetterPaper text="안녕" senderName="민지" />);
 
     expect(screen.getByRole("button", { name: "사진 선택" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "아이콘 선택" })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: /아이콘 선택/ })).toHaveLength(2);
   });
 });

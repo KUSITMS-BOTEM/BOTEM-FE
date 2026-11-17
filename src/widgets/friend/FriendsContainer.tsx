@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import Button from "@/components/Button";
@@ -59,7 +60,9 @@ export default function FriendsContainer() {
                 <section className="flex w-full flex-col">
                   <ListHeader title="곧 생일인 친구" as="h3" />
                   {visibleUpcoming.map(friend => (
-                    <FriendListItem key={friend.userId} {...toFriendItemProps(friend, true)} />
+                    <Link key={friend.userId} href={`/friends/${friend.userId}`} className="block">
+                      <FriendListItem {...toFriendItemProps(friend, true)} />
+                    </Link>
                   ))}
                   {upcoming.length > COLLAPSED_COUNT && (
                     <Button
@@ -76,7 +79,9 @@ export default function FriendsContainer() {
             )}
             <section className="flex w-full flex-col gap-0.5">
               {others.map(friend => (
-                <FriendListItem key={friend.userId} {...toFriendItemProps(friend)} />
+                <Link key={friend.userId} href={`/friends/${friend.userId}`} className="block">
+                  <FriendListItem {...toFriendItemProps(friend)} />
+                </Link>
               ))}
             </section>
           </div>

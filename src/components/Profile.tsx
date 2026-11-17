@@ -89,8 +89,9 @@ export default function Profile({
   const displayUrl = previewUrl ?? imageUrl;
 
   return (
-    <div className={cn("relative size-[68px]", className)} aria-busy={isUploading}>
-      <div className="relative size-full overflow-hidden rounded-full">
+    // button 안에도 들어갈 수 있도록(From 영역) div 대신 span을 쓴다
+    <span className={cn("relative block size-[68px]", className)} aria-busy={isUploading}>
+      <span className="relative block size-full overflow-hidden rounded-full">
         {displayUrl && !imageLoadError ? (
           <Image
             src={displayUrl}
@@ -104,14 +105,14 @@ export default function Profile({
           <Fallback className="size-full" />
         )}
         {isUploading && (
-          <div
+          <span
             role="status"
             aria-label="프로필 이미지 저장 중"
             className="bg-semantic-background-dim absolute inset-0 flex items-center justify-center">
             <LoadingAnimation size="small" color="white" />
-          </div>
+          </span>
         )}
-      </div>
+      </span>
       {showIconButton && (
         <>
           <IconButton
@@ -133,6 +134,6 @@ export default function Profile({
         </>
       )}
       <ToastMessage show={errorText !== null} text={errorText ?? ""} state={false} />
-    </div>
+    </span>
   );
 }

@@ -28,6 +28,19 @@ export type LetterPaperProps = {
   smallIcon?: ReactNode;
   onLargeIconClick?: () => void;
   onSmallIconClick?: () => void;
+  onLargeIconRemove?: () => void;
+  onSmallIconRemove?: () => void;
+  // 아이콘 슬롯을 붙일 자리로 강조한다(편지 작성 화면에서 스티커 시트가 열려 있을 때)
+  iconSlotsActive?: boolean;
+  // 사진 슬롯을 보이지 않게 한다. 선택한 사진은 유지된다
+  hidePhotoSlot?: boolean;
+  // 사진 슬롯을 눌러도 파일 선택창이 열리지 않게 한다
+  photoSlotDisabled?: boolean;
+  // 사진 슬롯을 붙일 자리로 강조한다(편지 작성 화면에서 사진 추가 툴을 골랐을 때)
+  photoSlotActive?: boolean;
+  onPhotoRemove?: () => void;
+  // 스티커가 없는 아이콘 슬롯을 보이지 않게 한다. 붙인 스티커는 유지된다
+  hideEmptyIconSlots?: boolean;
   onPhotoChange?: (file: File) => void;
   slotsInert?: boolean;
   // 있으면 text 대신 본문 영역에 이 내용을 넣는다(편지 작성 화면의 입력 영역). 줄 수·글씨 크기·슬롯 회피는 그대로 적용된다
@@ -63,6 +76,14 @@ export default function LetterPaper({
   smallIcon,
   onLargeIconClick,
   onSmallIconClick,
+  onLargeIconRemove,
+  onSmallIconRemove,
+  iconSlotsActive = false,
+  hidePhotoSlot = false,
+  photoSlotDisabled = false,
+  photoSlotActive = false,
+  onPhotoRemove,
+  hideEmptyIconSlots = false,
   onPhotoChange,
   slotsInert = false,
   textSlot,
@@ -133,20 +154,38 @@ export default function LetterPaper({
         <AssetSlot
           type="photo"
           src={photoSrc}
+          disabled={photoSlotDisabled}
+          active={photoSlotActive}
+          onRemove={onPhotoRemove}
           onImageChange={onPhotoChange}
-          className="pointer-events-auto absolute top-[136px] left-[188.84px] origin-top-left rotate-[22deg]"
+          className={cn(
+            "pointer-events-auto absolute top-[136px] left-[188.84px] origin-top-left rotate-[22deg]",
+            hidePhotoSlot && "invisible",
+          )}
         />
         <AssetSlot
           type="icon"
           asset={largeIcon}
+          label="큰 아이콘"
           onClick={onLargeIconClick}
-          className="pointer-events-auto absolute top-[214.14px] left-[130px] origin-top-left -rotate-[17.77deg]"
+          onRemove={onLargeIconRemove}
+          active={iconSlotsActive}
+          className={cn(
+            "pointer-events-auto absolute top-[214.14px] left-[130px] origin-top-left -rotate-[17.77deg]",
+            hideEmptyIconSlots && !largeIcon && "invisible",
+          )}
         />
         <AssetSlot
           type="icon"
           asset={smallIcon}
+          label="작은 아이콘"
           onClick={onSmallIconClick}
-          className="pointer-events-auto absolute top-[160.03px] left-[270.14px] size-[34px] origin-top-left -rotate-[11.45deg]"
+          onRemove={onSmallIconRemove}
+          active={iconSlotsActive}
+          className={cn(
+            "pointer-events-auto absolute top-[150px] left-[248px] size-[34px] origin-top-left -rotate-[11.45deg]",
+            hideEmptyIconSlots && !smallIcon && "invisible",
+          )}
         />
       </div>
     </div>
