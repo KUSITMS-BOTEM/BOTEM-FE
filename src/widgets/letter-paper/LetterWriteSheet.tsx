@@ -43,6 +43,8 @@ export type LetterWriteValues = {
   // 스티커를 붙였을 때만 있다
   largeSticker?: Sticker;
   smallSticker?: Sticker;
+  // 사진을 추가했을 때만 있다
+  photo?: File;
 };
 
 type LetterWriteSheetProps = {
@@ -75,6 +77,8 @@ export default function LetterWriteSheet({
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
   const [largeSticker, setLargeSticker] = useState<Sticker | null>(null);
   const [smallSticker, setSmallSticker] = useState<Sticker | null>(null);
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [photo, setPhoto] = useState<{ file: File; url: string } | null>(null);
   const recorder = useVoiceRecorder();
   const toolAreaRef = useRef<HTMLDivElement>(null);
   // 툴 영역을 한 번 연 뒤에는 안내 말풍선을 다시 보여주지 않는다
@@ -84,6 +88,11 @@ export default function LetterWriteSheet({
   // 비로그인 이름 입력란은 이름을 적고 포커스를 벗어나면 접히고, From 영역을 누르면 다시 열린다
   const [nameOpen, setNameOpen] = useState(true);
   const [nameReopened, setNameReopened] = useState(false);
+
+  useEffect(() => {
+    if (!photo) return;
+    return () => URL.revokeObjectURL(photo.url);
+  }, [photo]);
 
   // 짧은 화면에서 툴 영역이 하단 CTA에 가려지면 스크롤을 내리고, 이미 보이면 그대로 둔다(nearest)
   useEffect(() => {
@@ -121,6 +130,8 @@ export default function LetterWriteSheet({
     closeSticker();
     setLargeSticker(null);
     setSmallSticker(null);
+    setPhotoOpen(false);
+    setPhoto(null);
     setTooltipDismissed(false);
     setIsTyping(false);
     setNameOpen(true);
@@ -129,6 +140,7 @@ export default function LetterWriteSheet({
   };
 
   const handleAddClick = () => {
+    setPhotoOpen(false);
     setToolOpen(true);
     setTooltipDismissed(true);
   };
@@ -149,6 +161,12 @@ export default function LetterWriteSheet({
   const closeSticker = () => {
     setStickerOpen(false);
     setSelectedSticker(null);
+  };
+
+  // 툴 영역을 접고 사진 슬롯만 강조한다. 다시 툴을 열면(+ 버튼) 강조가 풀린다
+  const openPhoto = () => {
+    setToolOpen(false);
+    setPhotoOpen(true);
   };
 
   const handleRecordDone = () => {
@@ -198,8 +216,13 @@ export default function LetterWriteSheet({
             onSmallIconRemove={() => setSmallSticker(null)}
             iconSlotsActive={stickerOpen}
             hidePhotoSlot={stickerOpen}
-            // 사진 툴이 붙기 전까지 사진 슬롯은 눌리지 않는다
-            photoSlotDisabled
+            photoSrc={photo?.url}
+            // 사진 툴을 골랐을 때만 슬롯이 눌린다
+            photoSlotDisabled={!photoOpen}
+            photoSlotActive={photoOpen}
+            hideEmptyIconSlots={photoOpen}
+            onPhotoChange={file => setPhoto({ file, url: URL.createObjectURL(file) })}
+            onPhotoRemove={() => setPhoto(null)}
             textSlot={
               <LetterWriteBody
                 text={text}
@@ -251,6 +274,7 @@ export default function LetterWriteSheet({
                   onClose={() => setToolOpen(false)}
                   onSelectRecord={openRecord}
                   onSelectSticker={() => setStickerOpen(true)}
+                  onSelectPhoto={openPhoto}
                 />
               )}
             </div>
@@ -277,6 +301,7 @@ export default function LetterWriteSheet({
                   ...(voice && { voice }),
                   ...(largeSticker && { largeSticker }),
                   ...(smallSticker && { smallSticker }),
+                  ...(photo && { photo: photo.file }),
                 })
               }>
               다음

@@ -90,7 +90,8 @@ describe("AssetSlot", () => {
       render(<AssetSlot type="photo" />);
 
       const button = screen.getByRole("button", { name: "사진 선택" });
-      expect(button).toHaveClass("size-[120px]", "border-dashed");
+      expect(button.parentElement).toHaveClass("size-[120px]");
+      expect(button).toHaveClass("border-dashed");
       expect(screen.queryByAltText("선택한 사진")).not.toBeInTheDocument();
     });
 
@@ -126,15 +127,37 @@ describe("AssetSlot", () => {
       expect(onImageChange).toHaveBeenCalledWith(file);
     });
 
-    it("사진을 선택한 뒤에도 다시 눌러 파일 선택창을 열 수 있다", async () => {
-      const { container } = render(<AssetSlot type="photo" />);
+    it("active이면 비어 있는 슬롯을 실선 테두리로 강조한다", () => {
+      render(<AssetSlot type="photo" active />);
+
+      const button = screen.getByRole("button", { name: "사진 선택" });
+      expect(button).toHaveClass("border-solid", "border-[1.5px]");
+      expect(button).not.toHaveClass("border-dashed");
+    });
+
+    it("사진이 있으면 눌러도 파일 선택창이 열리지 않는다", async () => {
+      const { container } = render(<AssetSlot type="photo" active />);
       const input = container.querySelector("input[type=file]") as HTMLInputElement;
       await userEvent.upload(input, new File(["x"], "a.png", { type: "image/png" }));
+      await screen.findByAltText("선택한 사진");
       const clickSpy = vi.spyOn(input, "click");
 
       await userEvent.click(screen.getByRole("button", { name: "사진 선택" }));
 
-      expect(clickSpy).toHaveBeenCalled();
+      expect(clickSpy).not.toHaveBeenCalled();
+    });
+
+    it("사진이 있고 onRemove가 있으면 삭제 버튼이 사진을 지우고 onRemove를 호출한다", async () => {
+      const onRemove = vi.fn();
+      const { container } = render(<AssetSlot type="photo" onRemove={onRemove} />);
+      expect(screen.queryByRole("button", { name: "사진 삭제" })).not.toBeInTheDocument();
+      await uploadInto(container, new File(["x"], "a.png", { type: "image/png" }));
+      await screen.findByAltText("선택한 사진");
+
+      await userEvent.click(screen.getByRole("button", { name: "사진 삭제" }));
+
+      expect(onRemove).toHaveBeenCalledTimes(1);
+      expect(screen.queryByAltText("선택한 사진")).not.toBeInTheDocument();
     });
 
     it("사진을 교체하면 이전 미리보기 URL을 해제한다", async () => {
