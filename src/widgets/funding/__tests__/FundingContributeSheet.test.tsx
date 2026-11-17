@@ -130,6 +130,12 @@ describe("FundingContributeSheet", () => {
   });
 
   describe("키보드 대응", () => {
+    it("시트가 나타나고 모션이 끝나도 입력에 자동으로 포커스되지 않는다", async () => {
+      render(<Harness />);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      expect(getInput()).not.toHaveFocus();
+    });
+
     it("입력에 포커스가 있으면 터치 기기에서 CTA를 숨기고, 벗어나면 다시 보인다", async () => {
       const user = userEvent.setup();
       render(<Harness />);

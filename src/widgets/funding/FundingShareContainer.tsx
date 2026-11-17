@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 
+import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
 import ProfileBox from "@/components/ProfileBox";
 import Tooltip from "@/components/Tooltip";
+import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
 import BotemPopup from "@/widgets/funding/BotemPopup";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
 import FundingMessage from "@/widgets/funding/FundingMessage";
@@ -55,8 +57,23 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
   const [isContributeOpen, setIsContributeOpen] = useState(false);
   const [isLetterOpen, setIsLetterOpen] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [contributeAmount, setContributeAmount] = useState(0);
+  const [isExitOpen, setIsExitOpen] = useState(false);
+  // 올리면 금액·편지 시트가 새로 마운트되어 입력값이 모두 초기화된다
+  const [flowKey, setFlowKey] = useState(0);
   const closePopup = () => setIsPopupOpen(false);
+  const requestExit = () => setIsExitOpen(true);
+
+  // 보태기 플로우에서 입력한 값을 모두 버리고 열려 있는 시트를 닫는다
+  const handleExitConfirm = () => {
+    setIsExitOpen(false);
+    setIsContributeOpen(false);
+    setIsLetterOpen(false);
+    setIsPasswordOpen(false);
+    setContributeAmount(0);
+    setFlowKey(key => key + 1);
+  };
   const remainingAmount = funding.targetAmount - funding.currentAmount;
 
   return (
@@ -109,19 +126,26 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
         isClosed={remainingAmount <= 0}
         onClose={closePopup}
         onUnconfirmedClick={noop}
-        onEditClick={noop}
+        onEditClick={() => {
+          closePopup();
+          setIsEditOpen(true);
+        }}
         onMessageClick={noop}
         onContributeClick={() => {
           closePopup();
           setIsContributeOpen(true);
         }}
       />
+      {/* TODO: 이름·비밀번호 확인(onSubmit) 뒤 동작은 보탬 수정 API가 정해지면 연결한다 */}
+      <BotemEditSheet open={isEditOpen} onClose={() => setIsEditOpen(false)} onSubmit={noop} />
       {/* 앞 단계 시트는 열어 둔 채 위에 다음 시트를 띄워(금액 → 편지 → 비밀번호), 이전을 누르면 직전 시트로 돌아온다 */}
       <FundingContributeSheet
+        key={`contribute-${flowKey}`}
         open={isContributeOpen}
         hostName={funding.hostName}
         maxAmount={remainingAmount}
         onClose={() => setIsContributeOpen(false)}
+        onExit={requestExit}
         onNext={amount => {
           setContributeAmount(amount);
           setIsLetterOpen(true);
@@ -129,10 +153,12 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
       />
       {/* TODO: 쿠키가 httpOnly라 로그인 여부를 클라이언트에서 못 읽어 비회원(false)으로 둔다. 편지 내용(values)은 보탬 제출 API가 정해지면 넘긴다 */}
       <LetterWriteSheet
+        key={`letter-${flowKey}`}
         open={isLetterOpen}
         recipientName={funding.hostName}
         isLoggedIn={false}
         onClose={() => setIsLetterOpen(false)}
+        onExit={requestExit}
         onNext={() => setIsPasswordOpen(true)}
       />
       {/* TODO: 비밀번호 시트의 완료(onComplete)는 보탬 제출 API가 정해지면 연결한다 */}
@@ -141,9 +167,17 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
         hostName={funding.hostName}
         amount={contributeAmount}
         account={funding.account}
-        onClose={() => setIsPasswordOpen(false)}
+        onClose={requestExit}
         onPrev={() => setIsPasswordOpen(false)}
         onComplete={noop}
+      />
+      <Dialog
+        kind="confirm"
+        open={isExitOpen}
+        title={`${funding.hostName}에게\n보태기를 그만둘까요?`}
+        confirmColor="neutral"
+        onCancel={() => setIsExitOpen(false)}
+        onConfirm={handleExitConfirm}
       />
     </main>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 
 import BottomCTA from "@/components/BottomCTA";
@@ -30,6 +30,8 @@ type FundingContributeSheetProps = {
   // 이 금액을 넘으면 다음 버튼을 막는다 (목표 금액 - 현재 모인 금액)
   maxAmount: number;
   onClose: () => void;
+  // 우측 상단 X·ESC에서 호출된다. 입력값은 지우지 않고 부모가 나가기 확인을 받게 한다
+  onExit?: () => void;
   onNext: (amount: number) => void;
   className?: string;
 };
@@ -39,6 +41,7 @@ export default function FundingContributeSheet({
   hostName,
   maxAmount,
   onClose,
+  onExit,
   onNext,
   className,
 }: FundingContributeSheetProps) {
@@ -47,7 +50,6 @@ export default function FundingContributeSheet({
   const [touched, setTouched] = useState(false);
   // iOS는 키보드 열림·닫힘 이벤트가 없어 input의 focus·blur를 키보드가 올라온 시점으로 본다
   const [isTyping, setIsTyping] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const isOverMax = amount > maxAmount;
   const isEmpty = touched && amount <= 0;
 
@@ -63,7 +65,7 @@ export default function FundingContributeSheet({
     <OpenSheet
       open={open}
       title={`${hostName}에게 보태기`}
-      onClose={handleClose}
+      onClose={onExit ?? handleClose}
       className={className}
       overlay={
         <ToastMessage
@@ -85,13 +87,10 @@ export default function FundingContributeSheet({
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={FIELD_TRANSITION}
-          // 입력 영역이 다 나타난 뒤에 포커스해야 모션 중 키보드가 올라와 레이아웃이 흔들리지 않는다
-          onAnimationComplete={() => inputRef.current?.focus({ preventScroll: true })}
           onFocus={() => setIsTyping(true)}
           onBlur={() => setIsTyping(false)}
           className="w-full">
           <Combobox
-            ref={inputRef}
             label="보탬 금액"
             suffix="원"
             placeholder="입력해주세요"
