@@ -13,6 +13,7 @@ type LetterToolSheetProps = {
   onSelectRecord?: () => void;
   onSelectSticker?: () => void;
   onSelectPhoto?: () => void;
+  onSelectLetter?: () => void;
 };
 
 // 툴마다 기울기와 회전 후 차지하는 칸 크기가 Figma에 따로 정해져 있다
@@ -48,11 +49,13 @@ export default function LetterToolSheet({
   onSelectRecord,
   onSelectSticker,
   onSelectPhoto,
+  onSelectLetter,
 }: LetterToolSheetProps) {
   const handlers: Record<string, (() => void) | undefined> = {
     녹음: onSelectRecord,
     스티커: onSelectSticker,
     "사진 추가": onSelectPhoto,
+    편지지: onSelectLetter,
   };
 
   return (

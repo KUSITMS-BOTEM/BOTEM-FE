@@ -8,11 +8,13 @@ import Button from "@/components/Button";
 import OpenSheet from "@/components/OpenSheet";
 import Title from "@/components/Title";
 import type { Color } from "@/constants/color";
+import type { LetterPaperStyle } from "@/constants/letterPaperStyle";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { cn } from "@/utils/cn";
 import { withVocativeParticle } from "@/utils/withSubjectParticle";
 import ScaledLetterPaper from "@/widgets/letter-paper/ScaledLetterPaper";
 import LetterRecordSheet from "@/widgets/letter-paper/LetterRecordSheet";
+import LetterPaperSheet from "@/widgets/letter-paper/LetterPaperSheet";
 import LetterToolSheet from "@/widgets/letter-paper/LetterToolSheet";
 import LetterWriteBody from "@/widgets/letter-paper/LetterWriteBody";
 import PaletteArea from "@/widgets/letter-paper/PaletteArea";
@@ -38,6 +40,7 @@ export type LetterWriteValues = {
   // 비로그인일 때만 입력받는다
   name: string;
   color: Color;
+  paperStyle: LetterPaperStyle;
   // 녹음을 완료했을 때만 있다
   voice?: LetterVoice;
   // 스티커를 붙였을 때만 있다
@@ -79,8 +82,11 @@ export default function LetterWriteSheet({
   const [smallSticker, setSmallSticker] = useState<Sticker | null>(null);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [photo, setPhoto] = useState<{ file: File; url: string } | null>(null);
+  const [paperOpen, setPaperOpen] = useState(false);
+  const [paperStyle, setPaperStyle] = useState<LetterPaperStyle>("vividSolid");
   const recorder = useVoiceRecorder();
   const toolAreaRef = useRef<HTMLDivElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
   // 툴 영역을 한 번 연 뒤에는 안내 말풍선을 다시 보여주지 않는다
   const [tooltipDismissed, setTooltipDismissed] = useState(false);
   // iOS는 키보드 열림·닫힘 이벤트가 없어 필드의 focus·blur를 키보드가 올라온 시점으로 본다
@@ -97,7 +103,7 @@ export default function LetterWriteSheet({
   // 짧은 화면에서 툴 영역이 하단 CTA에 가려지면 스크롤을 내리고, 이미 보이면 그대로 둔다(nearest)
   useEffect(() => {
     if (toolOpen) toolAreaRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [toolOpen, recordOpen, stickerOpen]);
+  }, [toolOpen, recordOpen, stickerOpen, paperOpen]);
 
   const canNext = text.trim() !== "" && (isLoggedIn || name.trim() !== "");
 
@@ -124,6 +130,8 @@ export default function LetterWriteSheet({
     setShrunk(false);
     setName("");
     setColor("orange");
+    setPaperStyle("vividSolid");
+    setPaperOpen(false);
     setToolOpen(false);
     closeRecord();
     setVoice(null);
@@ -179,6 +187,7 @@ export default function LetterWriteSheet({
   return (
     <OpenSheet open={open} title="" onClose={onExit ?? handleClose} hideScrollbar>
       <div
+        ref={topRef}
         onFocus={handleFocus}
         onBlur={() => setIsTyping(false)}
         className={cn("flex w-full flex-col", CTA_CLEARANCE_CLASS)}>
@@ -195,7 +204,7 @@ export default function LetterWriteSheet({
           transition={CONTENT_TRANSITION}
           className="flex w-full flex-col items-center gap-1">
           <ScaledLetterPaper
-            style="vividSolid"
+            style={paperStyle}
             color={color}
             text={text}
             senderName={name}
@@ -270,9 +279,21 @@ export default function LetterWriteSheet({
                   onSelect={setSelectedSticker}
                   onClose={closeSticker}
                 />
+              ) : paperOpen ? (
+                <LetterPaperSheet
+                  color={color}
+                  selectedStyle={paperStyle}
+                  onSelect={style => {
+                    setPaperStyle(style);
+                    // 시트가 편지지 아래에 있어 짧은 화면에서는 바뀐 편지지가 가려진다
+                    topRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+                  }}
+                  onClose={() => setPaperOpen(false)}
+                />
               ) : (
                 <LetterToolSheet
                   onClose={() => setToolOpen(false)}
+                  onSelectLetter={() => setPaperOpen(true)}
                   onSelectRecord={openRecord}
                   onSelectSticker={() => setStickerOpen(true)}
                   onSelectPhoto={openPhoto}
@@ -299,6 +320,7 @@ export default function LetterWriteSheet({
                   text,
                   name,
                   color,
+                  paperStyle,
                   ...(voice && { voice }),
                   ...(largeSticker && { largeSticker }),
                   ...(smallSticker && { smallSticker }),

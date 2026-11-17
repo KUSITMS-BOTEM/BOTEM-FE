@@ -139,7 +139,32 @@ describe("LetterWriteSheet", () => {
     await userEvent.click(screen.getByRole("button", { name: "파랑" }));
     await userEvent.click(screen.getByRole("button", { name: "다음" }));
 
-    expect(onNext).toHaveBeenCalledWith({ text: "생일 축하해", name: "민수", color: "blue" });
+    expect(onNext).toHaveBeenCalledWith({
+      text: "생일 축하해",
+      name: "민수",
+      color: "blue",
+      paperStyle: "vividSolid",
+    });
+  });
+
+  it("편지지 툴에서 style을 고르면 선택 표시가 되고 onNext에 담긴다", async () => {
+    const onNext = vi.fn();
+    renderSheet({ onNext });
+    typeLetter("생일 축하해");
+    await userEvent.click(screen.getByRole("button", { name: "나만의 편지 만들기" }));
+    await userEvent.click(screen.getByRole("button", { name: "편지지" }));
+    expect(screen.getByText("어떤 편지지를 쓸까요?")).toBeInTheDocument();
+
+    scrollIntoView.mockClear();
+    await userEvent.click(screen.getByRole("button", { name: "컬러 도트 편지지" }));
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "start", behavior: "smooth" });
+    expect(screen.getByRole("button", { name: "컬러 도트 편지지" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "다음" }));
+    expect(onNext).toHaveBeenCalledWith(expect.objectContaining({ paperStyle: "colorDot" }));
   });
 
   it("시트를 닫았다 다시 열면 빈 편지로 시작한다", async () => {
