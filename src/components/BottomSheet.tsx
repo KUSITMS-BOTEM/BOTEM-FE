@@ -26,6 +26,7 @@ type BottomSheetProps = {
   title: string;
   height: "auto" | "max";
   headerType?: "title" | "handle";
+  showHandleClose?: boolean;
   buttons?: BottomSheetButtons;
   toast?: ReactNode;
   enterTransition?: BottomSheetEnterTransition;
@@ -34,18 +35,13 @@ type BottomSheetProps = {
   className?: string;
 };
 
-// Figma Motion·바텀시트(P7) 디자인팀 노트: 진입 = 딤 450ms ease.standard, 50ms 지연 뒤 시트 spring bounce 0.25·550ms / 퇴장 = 딤·시트 동시 300ms ease.exit
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
 const EASE_EXIT = [0.3, 0, 1, 1] as const;
 const DEFAULT_ENTER_TRANSITION: BottomSheetEnterTransition = {
   dim: { duration: 0.45, ease: EASE_STANDARD },
   sheet: { delay: 0.05, type: "spring", bounce: 0.25, duration: 0.55 },
 };
-// 시트 박스 자체를 24px 더 길게 만들고 그만큼 화면 아래로 내려(-bottom-6) 바운스 시 바닥에 틈이 보이지 않게 한다.
-// Tailwind가 클래스명을 정적으로 스캔하므로 두 값을 완전한 리터럴 문자열로 각각 써야 한다(템플릿 리터럴 조립 금지).
-// max는 풀스크린 취급 — safe-area만 피하고 상단까지 꽉 채우며, 상단 모서리도 둥글게 하지 않는다.
-// -bottom-6(24px)만큼 내려가는 걸 상쇄하기 위해 높이에 24px을 더해 상단이 safe-area 바로 아래에 오게 한다.
-// auto는 카드형이라 상단에 56px(safe-area + 32px) 여백을 남기고 radius를 유지한다.
+
 const SHEET_HEIGHT_MAX = "h-[calc(100dvh_-_env(safe-area-inset-top)_+_24px)]";
 const SHEET_HEIGHT_AUTO =
   "rounded-t-xxx-large max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_32px)]";
@@ -183,7 +179,6 @@ export default function BottomSheet({
                     </>
                   )}
                 </div>
-                {/* -bottom-6 오프셋은 height와 무관하게 시트 하단을 뷰포트보다 24px 아래에 고정하므로, 버튼 영역이 가려지지 않도록 두 모드 모두에서 여백을 채워준다 */}
                 <div aria-hidden className="bg-semantic-fill-default h-6 w-full shrink-0" />
               </motion.div>
             </>

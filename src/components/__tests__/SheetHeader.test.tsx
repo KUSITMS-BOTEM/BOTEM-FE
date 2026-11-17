@@ -35,6 +35,22 @@ describe("SheetHeader", () => {
     expect(screen.getByRole("button", { name: "닫기" })).toBeInTheDocument();
   });
 
+  it("handle 타입은 기본으로 닫기 버튼이 없다", () => {
+    render(<SheetHeader title="타이틀" type="handle" onClose={vi.fn()} />);
+
+    expect(screen.queryByRole("button", { name: "닫기" })).not.toBeInTheDocument();
+  });
+
+  it("handle 타입에 showHandleClose를 주면 닫기 버튼으로 onClose를 호출한다", async () => {
+    const handleClose = vi.fn();
+    const user = userEvent.setup();
+    render(<SheetHeader title="타이틀" type="handle" showHandleClose onClose={handleClose} />);
+
+    await user.click(screen.getByRole("button", { name: "닫기" }));
+
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
   it("showHandle을 생략하면 드래그 핸들이 보인다", () => {
     const { container } = render(<SheetHeader title="타이틀" onClose={vi.fn()} />);
 

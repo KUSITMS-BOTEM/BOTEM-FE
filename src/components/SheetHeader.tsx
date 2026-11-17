@@ -11,7 +11,7 @@ type SheetHeaderProps = {
   showHandle?: boolean;
   closeType?: "close" | "back";
   type?: "title" | "handle";
-  // 닫기 버튼 왼쪽에 놓이는 액션(예: 공유)
+  showHandleClose?: boolean;
   rightAction?: ReactNode;
   className?: string;
 };
@@ -23,6 +23,7 @@ export default function SheetHeader({
   showHandle = true,
   closeType = "close",
   type = "title",
+  showHandleClose = false,
   rightAction,
   className,
 }: SheetHeaderProps) {
@@ -30,10 +31,19 @@ export default function SheetHeader({
     return (
       <div
         className={cn(
-          "from-semantic-background-default to-semantic-background-default/0 flex h-16 w-full shrink-0 flex-col items-center bg-gradient-to-b py-2 backdrop-blur-[2px]",
+          "from-semantic-background-default to-semantic-background-default/0 relative flex h-16 w-full shrink-0 flex-col items-center bg-gradient-to-b py-2 backdrop-blur-[2px]",
           className,
         )}>
         <div className="bg-semantic-border-default h-1.5 w-[46px] shrink-0 rounded-full" />
+        {showHandleClose && (
+          <IconButton
+            size="large"
+            icon={<IconClose />}
+            aria-label="닫기"
+            onClick={onClose}
+            className="absolute top-2 right-[11px]"
+          />
+        )}
       </div>
     );
   }
@@ -55,10 +65,7 @@ export default function SheetHeader({
           {title}
         </p>
       </div>
-      {rightAction && (
-        // 닫기 버튼(right 11px + 36px)과 4px 간격
-        <div className="absolute top-2 right-[51px]">{rightAction}</div>
-      )}
+      {rightAction && <div className="absolute top-2 right-[51px]">{rightAction}</div>}
       {closeType === "back" ? (
         <IconButton
           size="xlarge"
