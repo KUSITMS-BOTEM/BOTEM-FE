@@ -72,6 +72,22 @@ describe("OpenSheet", () => {
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
+  it("내부 파일 입력에서 선택을 취소해 cancel이 버블링돼 올라와도 닫히지 않는다", () => {
+    const handleClose = vi.fn();
+    render(
+      <OpenSheet open title="타이틀" onClose={handleClose}>
+        <input type="file" aria-label="파일" />
+      </OpenSheet>,
+    );
+
+    fireEvent(
+      screen.getByLabelText("파일"),
+      new Event("cancel", { bubbles: true, cancelable: true }),
+    );
+
+    expect(handleClose).not.toHaveBeenCalled();
+  });
+
   it("open이 false로 바뀌면 exit 애니메이션 종료 후 dialog.close()가 호출되고 onClose는 추가 호출되지 않는다", async () => {
     const handleClose = vi.fn();
     const { container, rerender } = render(
