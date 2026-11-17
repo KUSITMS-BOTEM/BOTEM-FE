@@ -35,6 +35,8 @@ export type LetterVoice = {
   transcript: string;
 };
 
+type ActiveTool = null | "menu" | "record" | "sticker" | "paper" | "photo";
+
 export type LetterWriteValues = {
   text: string;
   // 비로그인일 때만 입력받는다
@@ -73,16 +75,13 @@ export default function LetterWriteSheet({
   const [name, setName] = useState("");
   const [shrunk, setShrunk] = useState(false);
   const [color, setColor] = useState<Color>("orange");
-  const [toolOpen, setToolOpen] = useState(false);
-  const [recordOpen, setRecordOpen] = useState(false);
+  // 툴은 한 번에 하나만 열린다. photo는 툴 영역을 접고 사진 슬롯만 강조하는 상태다
+  const [activeTool, setActiveTool] = useState<ActiveTool>(null);
   const [voice, setVoice] = useState<LetterVoice | null>(null);
-  const [stickerOpen, setStickerOpen] = useState(false);
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
   const [largeSticker, setLargeSticker] = useState<Sticker | null>(null);
   const [smallSticker, setSmallSticker] = useState<Sticker | null>(null);
-  const [photoOpen, setPhotoOpen] = useState(false);
   const [photo, setPhoto] = useState<{ file: File; url: string } | null>(null);
-  const [paperOpen, setPaperOpen] = useState(false);
   const [paperStyle, setPaperStyle] = useState<LetterPaperStyle>("vividSolid");
   const recorder = useVoiceRecorder();
   const toolAreaRef = useRef<HTMLDivElement>(null);
@@ -95,6 +94,10 @@ export default function LetterWriteSheet({
   const [nameOpen, setNameOpen] = useState(true);
   const [nameReopened, setNameReopened] = useState(false);
 
+  const toolOpen = activeTool !== null && activeTool !== "photo";
+  const stickerOpen = activeTool === "sticker";
+  const photoOpen = activeTool === "photo";
+
   useEffect(() => {
     if (!photo) return;
     return () => URL.revokeObjectURL(photo.url);
@@ -103,7 +106,7 @@ export default function LetterWriteSheet({
   // 짧은 화면에서 툴 영역이 하단 CTA에 가려지면 스크롤을 내리고, 이미 보이면 그대로 둔다(nearest)
   useEffect(() => {
     if (toolOpen) toolAreaRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [toolOpen, recordOpen, stickerOpen, paperOpen]);
+  }, [activeTool, toolOpen]);
 
   const canNext = text.trim() !== "" && (isLoggedIn || name.trim() !== "");
 
@@ -131,14 +134,12 @@ export default function LetterWriteSheet({
     setName("");
     setColor("orange");
     setPaperStyle("vividSolid");
-    setPaperOpen(false);
-    setToolOpen(false);
-    closeRecord();
+    recorder.reset();
     setVoice(null);
-    closeSticker();
+    setSelectedSticker(null);
     setLargeSticker(null);
     setSmallSticker(null);
-    setPhotoOpen(false);
+    setActiveTool(null);
     setPhoto(null);
     setTooltipDismissed(false);
     setIsTyping(false);
@@ -147,41 +148,40 @@ export default function LetterWriteSheet({
     onClose();
   };
 
+  // 이미 열린 툴은 유지하고, 닫혀 있거나 사진 강조 상태면 툴 목록을 연다
   const handleAddClick = () => {
-    setPhotoOpen(false);
-    setToolOpen(true);
+    setActiveTool(tool => (tool && tool !== "photo" ? tool : "menu"));
     setTooltipDismissed(true);
   };
 
   // 이전 녹음·자막·타이머가 남아 있어도 항상 처음 상태에서 시작한다
   const openRecord = () => {
     recorder.reset();
-    setRecordOpen(true);
+    setActiveTool("record");
   };
 
-  // 녹음 중이던 내용은 버리고 닫는다
+  // 녹음 중이던 내용은 버리고 툴 목록으로 돌아간다
   const closeRecord = () => {
     recorder.reset();
-    setRecordOpen(false);
+    setActiveTool("menu");
   };
 
   // 시트를 닫으면 고르던 스티커 선택은 풀고, 이미 붙인 스티커는 유지한다
   const closeSticker = () => {
-    setStickerOpen(false);
     setSelectedSticker(null);
+    setActiveTool("menu");
   };
 
   // 툴 영역을 접고 사진 슬롯만 강조한다. 이미 사진이 있으면 지우고 빈 슬롯에서 다시 시작한다. 다시 툴을 열면(+ 버튼) 강조가 풀린다
   const openPhoto = () => {
     setPhoto(null);
-    setToolOpen(false);
-    setPhotoOpen(true);
+    setActiveTool("photo");
   };
 
   const handleRecordDone = () => {
     if (recorder.blob) setVoice({ blob: recorder.blob, transcript: recorder.transcript });
-    closeRecord();
-    setToolOpen(false);
+    recorder.reset();
+    setActiveTool(null);
   };
 
   return (
@@ -259,7 +259,7 @@ export default function LetterWriteSheet({
           />
           {toolOpen && (
             <div ref={toolAreaRef} className="w-full scroll-mb-24">
-              {recordOpen ? (
+              {activeTool === "record" ? (
                 <LetterRecordSheet
                   status={recorder.status}
                   error={recorder.error}
@@ -279,7 +279,7 @@ export default function LetterWriteSheet({
                   onSelect={setSelectedSticker}
                   onClose={closeSticker}
                 />
-              ) : paperOpen ? (
+              ) : activeTool === "paper" ? (
                 <LetterPaperSheet
                   color={color}
                   selectedStyle={paperStyle}
@@ -288,14 +288,14 @@ export default function LetterWriteSheet({
                     // 시트가 편지지 아래에 있어 짧은 화면에서는 바뀐 편지지가 가려진다
                     topRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
                   }}
-                  onClose={() => setPaperOpen(false)}
+                  onClose={() => setActiveTool("menu")}
                 />
               ) : (
                 <LetterToolSheet
-                  onClose={() => setToolOpen(false)}
-                  onSelectLetter={() => setPaperOpen(true)}
+                  onClose={() => setActiveTool(null)}
+                  onSelectLetter={() => setActiveTool("paper")}
                   onSelectRecord={openRecord}
-                  onSelectSticker={() => setStickerOpen(true)}
+                  onSelectSticker={() => setActiveTool("sticker")}
                   onSelectPhoto={openPhoto}
                 />
               )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 
 import Image, { type StaticImageData } from "next/image";
 
@@ -93,29 +93,14 @@ function PhotoSlot({
   className,
 }: Extract<AssetSlotProps, { type: "photo" }>) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { errorText, handleFileChange } = useImageFileSelect({
     allowedTypes,
     maxSizeBytes,
-    onSelect: file => {
-      setPreviewUrl(URL.createObjectURL(file));
-      onImageChange?.(file);
-    },
+    onSelect: file => onImageChange?.(file),
   });
 
-  // 부모가 src를 비우면(사진 삭제·교체) 직접 고른 미리보기도 함께 버린다
-  const [prevSrc, setPrevSrc] = useState(src);
-  if (src !== prevSrc) {
-    setPrevSrc(src);
-    if (!src) setPreviewUrl(null);
-  }
-
-  useEffect(() => {
-    if (!previewUrl) return;
-    return () => URL.revokeObjectURL(previewUrl);
-  }, [previewUrl]);
-
-  const imageSrc = previewUrl ?? src;
+  // 미리보기 URL은 부모가 만들어 src로 내려준다(생성·해제도 부모 몫)
+  const imageSrc = src;
 
   return (
     <>
@@ -149,10 +134,7 @@ function PhotoSlot({
           <button
             type="button"
             aria-label="사진 삭제"
-            onClick={() => {
-              setPreviewUrl(null);
-              onRemove();
-            }}
+            onClick={onRemove}
             className="absolute -top-[6.2px] -right-[9.7px] size-5 cursor-pointer before:absolute before:-inset-2.5 before:content-['']">
             <IconRemove aria-hidden className="size-full" />
           </button>
