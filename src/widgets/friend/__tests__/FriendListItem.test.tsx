@@ -57,4 +57,11 @@ describe("FriendListItem", () => {
 
     expect(screen.getByText(label)).toBeInTheDocument();
   });
+
+  it("wishCount가 없으면 위시 개수 없이 이름만 표시한다", () => {
+    render(<FriendListItem name="지유" birthdayText="생일 10월 24일" />);
+
+    expect(screen.getByText("지유")).toBeInTheDocument();
+    expect(screen.queryByText(/위시/)).not.toBeInTheDocument();
+  });
 });

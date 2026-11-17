@@ -32,4 +32,8 @@ describe("toFriendItemProps", () => {
   it("같은 userId면 항상 같은 프로필 색을 쓴다", () => {
     expect(toFriendItemProps(base).profileColor).toBe(toFriendItemProps({ ...base }).profileColor);
   });
+
+  it("withDday여도 생일 정보가 없으면(null) D-day 문구가 없다", () => {
+    expect(toFriendItemProps({ ...base, birthdayDday: null }, true).dDayText).toBeUndefined();
+  });
 });
