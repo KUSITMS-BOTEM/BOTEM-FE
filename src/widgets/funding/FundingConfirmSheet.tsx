@@ -5,14 +5,14 @@ import List from "@/components/List";
 import ListHeader from "@/components/ListHeader";
 import Title from "@/components/Title";
 import { BANKS } from "@/constants/bank";
-import type { WishResponse } from "@/types/wish/wish";
+import type { FundingWish } from "@/types/funding/funding";
 import { formatDeadlineShort } from "@/utils/funding/formatDeadline";
 import type { FundingAccountValues } from "@/widgets/funding/FundingAccountStep";
 import type { FundingInfoValues } from "@/widgets/funding/FundingInfoStep";
 
 type FundingConfirmSheetProps = {
   open: boolean;
-  wish: WishResponse;
+  wish: FundingWish;
   info: FundingInfoValues;
   account: FundingAccountValues;
   onClose: () => void;

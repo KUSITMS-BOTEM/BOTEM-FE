@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import Dialog from "@/components/Dialog";
 import OpenSheet from "@/components/OpenSheet";
-import type { WishResponse } from "@/types/wish/wish";
+import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
 import FundingAccountStep, {
   type FundingAccountValues,
@@ -16,6 +16,8 @@ import FundingWishSelectStep from "@/widgets/funding/FundingWishSelectStep";
 type FundingOpenSheetProps = {
   open: boolean;
   onClose: () => void;
+  // 있으면 위시 선택 단계를 건너뛰고 이 상품으로 펀딩 정보부터 시작한다 (친구 위시 서프라이즈)
+  initialWish?: FundingWish;
   className?: string;
 };
 
@@ -23,8 +25,13 @@ type Step = "info" | "account";
 
 const STEP_TITLE: Record<Step, string> = { info: "펀딩 정보", account: "계좌 정보" };
 
-export default function FundingOpenSheet({ open, onClose, className }: FundingOpenSheetProps) {
-  const [selectedWish, setSelectedWish] = useState<WishResponse | null>(null);
+export default function FundingOpenSheet({
+  open,
+  onClose,
+  initialWish,
+  className,
+}: FundingOpenSheetProps) {
+  const [selectedWish, setSelectedWish] = useState<FundingWish | null>(initialWish ?? null);
   const [step, setStep] = useState<Step>("info");
   // 계좌 단계는 처음 진입할 때 마운트해 대표 계좌 조회와 등장 모션이 그때 시작되게 한다
   const [accountVisited, setAccountVisited] = useState(false);
@@ -38,9 +45,9 @@ export default function FundingOpenSheet({ open, onClose, className }: FundingOp
   // 수정 완료 때마다 올려, 숨겨 둔 입력 단계를 수정값으로 다시 채워 마운트한다
   const [syncVersion, setSyncVersion] = useState(0);
 
-  // 시트를 닫으면 다음에 열 때 위시 선택부터 다시 시작한다
+  // 시트를 닫으면 다음에 열 때 위시 선택(initialWish가 있으면 펀딩 정보)부터 다시 시작한다
   const handleClose = () => {
-    setSelectedWish(null);
+    setSelectedWish(initialWish ?? null);
     setStep("info");
     setAccountVisited(false);
     setInfo(null);
@@ -51,7 +58,7 @@ export default function FundingOpenSheet({ open, onClose, className }: FundingOp
     onClose();
   };
 
-  // 위시를 고른 뒤에는 입력한 정보가 사라지므로 확인을 받고, 고르기 전에는 바로 닫는다
+  // 입력 단계(위시를 골랐거나 initialWish로 시작)에서는 입력한 정보가 사라지므로 확인을 받고, 위시 선택 단계에서는 바로 닫는다
   const handleRequestClose = () => (selectedWish ? setLeaveOpen(true) : handleClose());
 
   const handleLeave = () => {
