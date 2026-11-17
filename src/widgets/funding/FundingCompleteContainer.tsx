@@ -9,6 +9,7 @@ import Button from "@/components/Button";
 import Header from "@/components/Header";
 import ToastMessage from "@/components/ToastMessage";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
+import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import FundingBragCard from "@/widgets/funding/FundingBragCard";
 import FundingCompleteConfetti from "@/widgets/funding/FundingCompleteConfetti";
 import FundingCompleteTitle from "@/widgets/funding/FundingCompleteTitle";
@@ -62,6 +63,9 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
   }, [reduceMotion]);
 
   useEffect(() => () => clearTimeout(toastTimerRef.current), []);
+
+  // 완료 페이지를 떠나면 보태기 플로우의 비밀번호 등 입력값을 메모리에서 지운다
+  useEffect(() => () => useFundingContributionStore.getState().reset(), []);
 
   const showToast = (result: "success" | "fail") => {
     setToast(result);

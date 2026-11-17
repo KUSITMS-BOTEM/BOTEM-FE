@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useReducedMotion } from "framer-motion";
 
+import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import FundingCompleteContainer from "@/widgets/funding/FundingCompleteContainer";
 
 const replaceMock = vi.fn();
@@ -28,6 +29,17 @@ vi.mock("@/widgets/funding/FundingCompleteConfetti", () => ({
 }));
 
 const SHARE_BUTTON = { name: "공유하기" };
+
+describe("FundingCompleteContainer 입력값 정리", () => {
+  it("완료 페이지를 떠나면 보태기 플로우 입력값이 초기화된다", () => {
+    useFundingContributionStore.getState().setPassword("1234");
+    const { unmount } = render(<FundingCompleteContainer fundingId="1" />);
+
+    unmount();
+
+    expect(useFundingContributionStore.getState().password).toBe("");
+  });
+});
 
 describe("FundingCompleteContainer", () => {
   afterEach(() => {

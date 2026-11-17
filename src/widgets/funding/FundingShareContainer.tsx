@@ -8,6 +8,7 @@ import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
 import ProfileBox from "@/components/ProfileBox";
 import Tooltip from "@/components/Tooltip";
+import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
 import BotemPopup from "@/widgets/funding/BotemPopup";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
@@ -61,7 +62,8 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
   const [isLetterOpen, setIsLetterOpen] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [contributeAmount, setContributeAmount] = useState(0);
+  const contributeAmount = useFundingContributionStore(state => state.amount);
+  const { setAmount, setLetter, setPassword, reset } = useFundingContributionStore.getState();
   const [isExitOpen, setIsExitOpen] = useState(false);
   // 올리면 금액·편지 시트가 새로 마운트되어 입력값이 모두 초기화된다
   const [flowKey, setFlowKey] = useState(0);
@@ -74,7 +76,7 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
     setIsContributeOpen(false);
     setIsLetterOpen(false);
     setIsPasswordOpen(false);
-    setContributeAmount(0);
+    reset();
     setFlowKey(key => key + 1);
   };
   const remainingAmount = funding.targetAmount - funding.currentAmount;
@@ -136,6 +138,8 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
         onMessageClick={noop}
         onContributeClick={() => {
           closePopup();
+          // 뒤로가기 등으로 플로우를 중간에 떠나 남은 값이 있으면 비우고 시작한다
+          reset();
           setIsContributeOpen(true);
         }}
       />
@@ -150,11 +154,11 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
         onClose={() => setIsContributeOpen(false)}
         onExit={requestExit}
         onNext={amount => {
-          setContributeAmount(amount);
+          setAmount(amount);
           setIsLetterOpen(true);
         }}
       />
-      {/* TODO: 쿠키가 httpOnly라 로그인 여부를 클라이언트에서 못 읽어 비회원(false)으로 둔다. 편지 내용(values)은 보탬 제출 API가 정해지면 넘긴다 */}
+      {/* TODO: 쿠키가 httpOnly라 로그인 여부를 클라이언트에서 못 읽어 비회원(false)으로 둔다 */}
       <LetterWriteSheet
         key={`letter-${flowKey}`}
         open={isLetterOpen}
@@ -162,9 +166,12 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
         isLoggedIn={false}
         onClose={() => setIsLetterOpen(false)}
         onExit={requestExit}
-        onNext={() => setIsPasswordOpen(true)}
+        onNext={values => {
+          setLetter(values);
+          setIsPasswordOpen(true);
+        }}
       />
-      {/* TODO: 보탬 제출 API가 정해지면 제출 성공 뒤에 이동하도록 바꾼다. replace라 뒤로가기로 보태기 플로우에 돌아오지 않는다 */}
+      {/* TODO(API): 보탬 제출 API가 정해지면 여기서 스토어의 amount·letter·password를 보내고, 성공 뒤에 이동하도록 바꾼다. replace라 뒤로가기로 보태기 플로우에 돌아오지 않는다 */}
       <FundingPasswordSheet
         open={isPasswordOpen}
         hostName={funding.hostName}
@@ -172,7 +179,10 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
         account={funding.account}
         onClose={requestExit}
         onPrev={() => setIsPasswordOpen(false)}
-        onComplete={() => router.replace(`/share/${fundingId}/complete`)}
+        onComplete={password => {
+          setPassword(password);
+          router.replace(`/share/${fundingId}/complete`);
+        }}
       />
       <Dialog
         kind="confirm"

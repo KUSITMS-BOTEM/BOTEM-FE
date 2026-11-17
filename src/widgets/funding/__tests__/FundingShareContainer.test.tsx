@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import FundingShareContainer from "@/widgets/funding/FundingShareContainer";
 
 const replaceMock = vi.fn();
@@ -44,6 +45,8 @@ const goToPasswordSheet = async (user: ReturnType<typeof userEvent.setup>) => {
 };
 
 describe("FundingShareContainer", () => {
+  afterEach(() => useFundingContributionStore.getState().reset());
+
   it("펀딩 제목과 '나도 보태볼까요?' 버튼을 보여준다", () => {
     render(<FundingShareContainer fundingId="1" />);
 
@@ -120,6 +123,24 @@ describe("FundingShareContainer", () => {
     expect(replaceMock).toHaveBeenCalledWith("/share/1/complete");
   });
 
+  it("완료하기를 누르면 금액·편지·비밀번호가 스토어에 모두 담겨 있다", async () => {
+    const user = userEvent.setup();
+    render(<FundingShareContainer fundingId="1" />);
+    await goToPasswordSheet(user);
+    await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
+    await user.click(screen.getByRole("button", { name: "보태러 가기" }));
+    await screen.findByRole("heading", { level: 1, name: /지유의 계좌로/ });
+
+    await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
+    await clickTopmost(user, "완료하기");
+
+    expect(useFundingContributionStore.getState()).toMatchObject({
+      amount: 50000,
+      letter: { text: "생일 축하해!", name: "민수" },
+      password: "1234",
+    });
+  });
+
   describe("보태기 플로우 나가기", () => {
     const openExitDialog = async (user: ReturnType<typeof userEvent.setup>) => {
       await clickTopmost(user, "닫기");
@@ -165,6 +186,23 @@ describe("FundingShareContainer", () => {
       await user.click(screen.getByRole("button", { name: /나도 지유님께 보태볼까요\?/ }));
       await user.click(screen.getByRole("button", { name: "보태기" }));
       expect(await screen.findByRole("textbox", { name: "보탬 금액" })).toHaveValue("");
+    });
+
+    it("예를 누르면 스토어에 쌓인 입력값이 초기화된다", async () => {
+      const user = userEvent.setup();
+      render(<FundingShareContainer fundingId="1" />);
+      await goToPasswordSheet(user);
+      await screen.findByLabelText("비밀번호 4자리");
+      expect(useFundingContributionStore.getState().amount).toBe(50000);
+
+      await user.click(screen.getAllByRole("button", { name: "닫기", hidden: true }).at(-1)!);
+      await user.click(await screen.findByRole("button", { name: "예" }));
+
+      expect(useFundingContributionStore.getState()).toMatchObject({
+        amount: 0,
+        letter: null,
+        password: "",
+      });
     });
   });
 });
