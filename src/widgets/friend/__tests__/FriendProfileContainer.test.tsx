@@ -35,7 +35,16 @@ const profile = (overrides: Partial<FriendProfileResponse> = {}): FriendProfileR
   birthday: "10-24",
   birthdayDday: 3,
   fundings: [funding],
-  wishes: [{ wishId: 1, productName: "모자", productImageUrl: null, price: 429000 }],
+  wishes: [
+    {
+      wishId: 1,
+      productName: "모자",
+      productImageUrl: null,
+      price: 429000,
+      sellerName: "쿠팡",
+      productUrl: "https://link.coupang.com/a/example",
+    },
+  ],
   ...overrides,
 });
 
@@ -104,6 +113,18 @@ describe("FriendProfileContainer", () => {
       expect(screen.queryByText(/아직 위시가 없어요/) !== null).toBe(showsEmpty);
     },
   );
+
+  it("서프라이즈 열기 → 위시 선택하기를 누르면 그 위시로 펀딩 정보 단계가 열린다", async () => {
+    mockQuery({ data: profile() });
+    const user = userEvent.setup();
+    render(<FriendProfileContainer friendId="5" />);
+
+    await user.click(screen.getByRole("button", { name: /서프라이즈 열기/ }));
+    await user.click(await screen.findByRole("button", { name: "모자 선택하기" }));
+
+    expect(await screen.findByText("펀딩 정보")).toBeInTheDocument();
+    expect(screen.getByText("목표 금액은 얼마인가요?")).toBeInTheDocument();
+  });
 
   it("뒤로가기 버튼을 누르면 router.back을 호출한다", async () => {
     mockQuery({ data: profile() });
