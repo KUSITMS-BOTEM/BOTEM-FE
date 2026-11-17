@@ -103,6 +103,13 @@ function PhotoSlot({
     },
   });
 
+  // 부모가 src를 비우면(사진 삭제·교체) 직접 고른 미리보기도 함께 버린다
+  const [prevSrc, setPrevSrc] = useState(src);
+  if (src !== prevSrc) {
+    setPrevSrc(src);
+    if (!src) setPreviewUrl(null);
+  }
+
   useEffect(() => {
     if (!previewUrl) return;
     return () => URL.revokeObjectURL(previewUrl);

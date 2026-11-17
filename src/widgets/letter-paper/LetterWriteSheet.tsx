@@ -163,8 +163,9 @@ export default function LetterWriteSheet({
     setSelectedSticker(null);
   };
 
-  // 툴 영역을 접고 사진 슬롯만 강조한다. 다시 툴을 열면(+ 버튼) 강조가 풀린다
+  // 툴 영역을 접고 사진 슬롯만 강조한다. 이미 사진이 있으면 지우고 빈 슬롯에서 다시 시작한다. 다시 툴을 열면(+ 버튼) 강조가 풀린다
   const openPhoto = () => {
+    setPhoto(null);
     setToolOpen(false);
     setPhotoOpen(true);
   };
@@ -220,7 +221,7 @@ export default function LetterWriteSheet({
             // 사진 툴을 골랐을 때만 슬롯이 눌린다
             photoSlotDisabled={!photoOpen}
             photoSlotActive={photoOpen}
-            hideEmptyIconSlots={photoOpen}
+            hideEmptyIconSlots={photoOpen && !photo}
             onPhotoChange={file => setPhoto({ file, url: URL.createObjectURL(file) })}
             onPhotoRemove={() => setPhoto(null)}
             textSlot={

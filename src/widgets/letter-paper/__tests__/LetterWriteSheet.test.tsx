@@ -241,6 +241,32 @@ describe("LetterWriteSheet", () => {
       expect(screen.getByRole("button", { name: "사진 선택" })).toBeEnabled();
     });
 
+    it("사진이 추가되면 숨겨졌던 아이콘 슬롯이 다시 보이고, 사진을 지우면 다시 숨겨진다", async () => {
+      const { container } = renderSheet();
+      await openPhotoMode();
+      const iconSlots = () => screen.getAllByRole("button", { name: /아이콘 선택/, hidden: true });
+
+      await addPhoto(container);
+      for (const slot of iconSlots()) expect(slot.parentElement).not.toHaveClass("invisible");
+
+      await userEvent.click(screen.getByRole("button", { name: "사진 삭제" }));
+      for (const slot of iconSlots()) expect(slot.parentElement).toHaveClass("invisible");
+    });
+
+    it("사진이 있을 때 툴 영역에서 사진 추가를 다시 고르면 사진이 지워지고 활성화된 빈 슬롯이 보인다", async () => {
+      const { container } = renderSheet();
+      await openPhotoMode();
+      await addPhoto(container);
+      await userEvent.click(screen.getByRole("button", { name: "나만의 편지 만들기" }));
+
+      await userEvent.click(screen.getByRole("button", { name: "사진 추가" }));
+
+      expect(screen.queryByAltText("선택한 사진")).not.toBeInTheDocument();
+      const photoSlot = screen.getByRole("button", { name: "사진 선택" });
+      expect(photoSlot).toBeEnabled();
+      expect(photoSlot).toHaveClass("border-solid");
+    });
+
     it("사진을 넣고 다음을 누르면 photo가 전달된다", async () => {
       const onNext = vi.fn();
       const { container } = renderSheet({ onNext });
