@@ -66,6 +66,14 @@ export default function LetterRecordSheet({
                 )}>
                 {transcript || "자막을 만들지 못했어요"}
               </p>
+              {/* 재녹음 시작이 실패해도 done에 머물므로 오류를 여기서도 알린다 */}
+              {error && (
+                <p
+                  role="alert"
+                  className="text-semantic-text-quaternary mt-1 [font:var(--semantic-label-x-small)]">
+                  {ERROR_MESSAGE[error]}
+                </p>
+              )}
             </div>
           )}
           {status === "idle" && (
