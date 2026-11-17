@@ -191,8 +191,12 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
             {isShareScene && (
               <motion.div
                 key="brag-card"
-                initial={{ opacity: 0, scale: 0.94 }}
-                animate={{ opacity: 1, scale: [0.94, 1.027, 0.991, 1] }}
+                initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
+                animate={
+                  reduceMotion
+                    ? { opacity: 1, scale: 1 }
+                    : { opacity: 1, scale: [0.94, 1.027, 0.991, 1] }
+                }
                 transition={{
                   opacity: { duration: 0.55, ease: "linear" },
                   scale: {

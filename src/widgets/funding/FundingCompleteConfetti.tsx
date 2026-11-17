@@ -80,14 +80,14 @@ export default function FundingCompleteConfetti() {
           <motion.div
             key={index}
             initial={{ x: cx, y: cy, opacity: 0 }}
-            animate={{ x: cx + dx, y: [cy, ...FALL_DISTANCE.map(d => cy + d)], opacity: 1 }}
+            animate={{ x: cx + dx, y: [cy, ...FALL_DISTANCE.map(d => cy + d)], opacity: [1, 1, 0] }}
             transition={{
               delay,
               duration,
               x: { delay, duration, ease: SWAY_EASE },
               y: { delay, duration, times: [0, FIRST_LEG_RATIO, 1], ease: FALL_EASE },
-              // 낙하가 시작되는 순간 나타난다
-              opacity: { delay, duration: 0 },
+              // 낙하가 시작되는 순간 나타나고, 낙하가 끝나면 사라져 화면에 남지 않는다
+              opacity: { delay, duration, times: [0, 0.9, 1], ease: "linear" },
             }}
             className="absolute top-0 left-0">
             <motion.div
