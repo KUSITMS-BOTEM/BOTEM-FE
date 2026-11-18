@@ -22,15 +22,26 @@ describe("WishRequestCompleteContainer", () => {
     expect(screen.queryByRole("button", { name: "닫기" })).not.toBeInTheDocument();
   });
 
-  it("닫기 버튼을 누르면 /home으로 이동한다", async () => {
+  it("스토리지 접근이 차단되면 /wish/request로 돌려보낸다", () => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new DOMException("blocked", "SecurityError");
+    });
+    render(<WishRequestCompleteContainer />);
+    expect(replace).toHaveBeenCalledWith("/wish/request");
+    vi.restoreAllMocks();
+  });
+
+  it("닫기 버튼을 누르면 /home으로 이동하고 플래그를 지운다", async () => {
     render(<WishRequestCompleteContainer />);
     await userEvent.click(screen.getByRole("button", { name: "닫기" }));
     expect(replace).toHaveBeenCalledWith("/home");
+    expect(sessionStorage.getItem("wishRequestSent")).toBeNull();
   });
 
-  it("위시 상품 둘러보기를 누르면 /wish/recommended로 이동한다", async () => {
+  it("위시 상품 둘러보기를 누르면 /wish/recommended로 이동하고 플래그를 지운다", async () => {
     render(<WishRequestCompleteContainer />);
     await userEvent.click(screen.getByRole("button", { name: "위시 상품 둘러보기" }));
     expect(push).toHaveBeenCalledWith("/wish/recommended");
+    expect(sessionStorage.getItem("wishRequestSent")).toBeNull();
   });
 });

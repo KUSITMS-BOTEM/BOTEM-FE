@@ -22,7 +22,7 @@ export default function ErrorView({ onRetry, onClose }: ErrorViewProps) {
           잠시 문제가 생겼어요
         </h1>
         <p className="text-semantic-text-tertiary text-[14px] leading-[1.4] font-medium">
-          요청을 마치지 못했어요. 입력한 내용은 그대로 있어요.
+          요청을 마치지 못했어요.
           <br />
           잠시 후 다시 시도해 주세요
         </p>

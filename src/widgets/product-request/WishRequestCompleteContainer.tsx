@@ -21,9 +21,26 @@ export default function WishRequestCompleteContainer() {
   const router = useRouter();
   const isAllowed = useSyncExternalStore(
     () => () => {},
-    () => sessionStorage.getItem(WISH_REQUEST_SENT_KEY) !== null,
+    () => {
+      try {
+        return sessionStorage.getItem(WISH_REQUEST_SENT_KEY) !== null;
+      } catch {
+        // 스토리지 접근이 차단되면 허용하지 않고 입력 화면으로 돌려보낸다
+        return false;
+      }
+    },
     () => false,
   );
+
+  // 완료 화면을 떠날 때 플래그를 지워 같은 탭에서 URL로 다시 들어와도 보이지 않게 한다
+  const leave = (navigate: () => void) => {
+    try {
+      sessionStorage.removeItem(WISH_REQUEST_SENT_KEY);
+    } catch {
+      // 지우지 못해도 이동은 막지 않는다
+    }
+    navigate();
+  };
 
   // 요청을 보내지 않고 URL로 직접 들어온 경우 입력 화면으로 돌려보낸다
   useEffect(() => {
@@ -37,7 +54,11 @@ export default function WishRequestCompleteContainer() {
       <Header
         title=""
         rightItems={[
-          { icon: <IconClose />, ariaLabel: "닫기", onClick: () => router.replace("/home") },
+          {
+            icon: <IconClose />,
+            ariaLabel: "닫기",
+            onClick: () => leave(() => router.replace("/home")),
+          },
         ]}
       />
       <main className="flex flex-1 flex-col gap-2 px-5">
@@ -57,7 +78,10 @@ export default function WishRequestCompleteContainer() {
             기다리는동안 다른 상품을 둘러볼까요?
           </p>
         }>
-        <Button color="brand" size="xlarge" onClick={() => router.push("/wish/recommended")}>
+        <Button
+          color="brand"
+          size="xlarge"
+          onClick={() => leave(() => router.push("/wish/recommended"))}>
           위시 상품 둘러보기
         </Button>
       </BottomCTA>
