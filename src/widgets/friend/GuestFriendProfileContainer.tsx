@@ -84,7 +84,7 @@ export default function GuestFriendProfileContainer({ userId }: GuestFriendProfi
         <BottomCTA
           type="kakao"
           label={hasWish ? "카카오로 3초 만에 보기" : "카카오로 시작하기"}
-          onClick={() => handleKakaoLoginClick(mutate, `/friends/${userId}`)}
+          onClick={() => handleKakaoLoginClick(mutate, `/friends/${encodeURIComponent(userId)}`)}
         />
       )}
     </div>
