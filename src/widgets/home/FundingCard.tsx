@@ -14,7 +14,7 @@ export type FundingCardType = "default" | "notification" | "complete" | "open";
 
 const FX_LABEL: Partial<Record<FundingCardType, (pendingCount: number) => string>> = {
   notification: count => `확인 대기 ${count}건을 확인하고 터트려보아요!`,
-  complete: () => "전부 다 모였어요. 펑! 터트려볼까요?",
+  complete: () => "다 모였어요. 팡! 열어볼까요?",
   open: () => "기간이 만료되었어요.",
 };
 

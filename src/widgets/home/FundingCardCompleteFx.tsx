@@ -31,11 +31,8 @@ type FundingCardCompleteFxProps = {
   children: ReactNode;
 };
 
-const HOLO_TINT =
-  "bg-[linear-gradient(128.8deg,var(--color-base-pink-100)_14.29%,var(--color-base-lime-100)_39.29%,var(--color-base-green-100)_60.71%,var(--color-base-blue-100)_85.71%)]";
-
 const HOLO_BAND_FILL =
-  "bg-[linear-gradient(90deg,transparent_0%,color-mix(in_srgb,var(--color-base-pink-200)_55%,transparent)_20%,color-mix(in_srgb,var(--color-base-lime-200)_60%,transparent)_40%,color-mix(in_srgb,var(--color-semantic-fill-default)_90%,transparent)_55%,color-mix(in_srgb,var(--color-base-green-200)_55%,transparent)_70%,color-mix(in_srgb,var(--color-base-blue-200)_50%,transparent)_85%,transparent_100%)]";
+  "bg-[linear-gradient(90deg,transparent_0%,color-mix(in_srgb,var(--color-semantic-fill-default)_35%,transparent)_30%,color-mix(in_srgb,var(--color-semantic-fill-default)_90%,transparent)_50%,color-mix(in_srgb,var(--color-semantic-fill-default)_35%,transparent)_70%,transparent_100%)]";
 
 export default function FundingCardCompleteFx({
   label,
@@ -64,7 +61,7 @@ export default function FundingCardCompleteFx({
         className="relative w-full">
         {children}
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-clip rounded-3xl">
-          <div className={cn(HOLO_TINT, "absolute inset-0 opacity-6 mix-blend-multiply")} />
+          <div className="bg-semantic-fill-default absolute inset-0 opacity-6" />
           <div className="absolute -top-[150.5px] -left-[322px] flex h-[699px] w-[404px] items-center justify-center">
             <div className="-rotate-25">
               <motion.div

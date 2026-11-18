@@ -1,6 +1,6 @@
 const LOGIN_RETURN_PATH_KEY = "loginReturnPath";
 
-// "//evil.com"·"/\\evil.com"(브라우저가 \를 /로 취급)처럼 외부로 나가는 경로를 막고 앱 내부 절대 경로만 허용한다
+// "//evil.com"·"/\evil.com"(브라우저가 \를 /로 해석)은 외부로 나가므로 앱 내부 절대 경로만 허용한다
 const isInternalPath = (path: string) =>
   path.startsWith("/") && !path.startsWith("//") && !path.includes("\\");
 
