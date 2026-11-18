@@ -5,6 +5,8 @@ import Image, { type StaticImageData } from "next/image";
 import { cn } from "@/utils/cn";
 import Asset from "@/components/Asset";
 import ListText from "@/components/ListText";
+import IconLock from "@/assets/icons/icon-lock.svg?react";
+import LockedThumbnail from "@/assets/images/locked-thumbnail.png";
 
 type ListType = "product" | "default";
 
@@ -13,6 +15,7 @@ type ListProps = {
   leading?: ReactNode;
   thumbnailSrc?: string | StaticImageData;
   thumbnailAlt?: string;
+  thumbnailLocked?: boolean;
   title: string;
   description?: string;
   caption?: string;
@@ -28,6 +31,7 @@ export default function List({
   leading,
   thumbnailSrc,
   thumbnailAlt = "",
+  thumbnailLocked = false,
   title,
   description,
   caption,
@@ -39,7 +43,9 @@ export default function List({
 }: ListProps) {
   const isProduct = type === "product";
   const [failedSrc, setFailedSrc] = useState<string | StaticImageData>();
-  const showThumbnail = thumbnailSrc && thumbnailSrc !== failedSrc;
+  // 잠긴 썸네일은 실제 상품 대신 Figma 샘플 이미지를 블러 뒤에 깔아 질감을 낸다
+  const imageSrc = thumbnailSrc ?? (thumbnailLocked ? LockedThumbnail : undefined);
+  const showThumbnail = imageSrc && imageSrc !== failedSrc;
   const rootClassName = cn("flex w-full items-center gap-3 py-3", className);
 
   const content = (
@@ -49,14 +55,23 @@ export default function List({
           <div className="border-semantic-border-weak bg-semantic-fill-neutral-weak rounded-large relative size-14 shrink-0 overflow-hidden border">
             {showThumbnail && (
               <Image
-                src={thumbnailSrc}
+                src={imageSrc}
                 alt={thumbnailAlt}
                 fill
                 sizes="56px"
                 unoptimized
                 className="object-cover"
-                onError={() => setFailedSrc(thumbnailSrc)}
+                onError={() => setFailedSrc(imageSrc)}
               />
+            )}
+            {thumbnailLocked && (
+              <span className="bg-semantic-background-default/70 absolute inset-0 flex items-center justify-center backdrop-blur-lg">
+                <Asset
+                  icon={<IconLock aria-hidden />}
+                  size="xsmall"
+                  className="text-semantic-icon-primary"
+                />
+              </span>
             )}
           </div>
         ) : (

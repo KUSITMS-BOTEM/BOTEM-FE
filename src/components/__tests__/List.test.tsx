@@ -17,6 +17,16 @@ describe("List", () => {
     expect(screen.getByTestId("leading")).toBeInTheDocument();
   });
 
+  it("type=product에 thumbnailLocked면 썸네일 위에 자물쇠 아이콘을 올리고, 아니면 올리지 않는다", () => {
+    const { container, rerender } = render(<List type="product" title="타이틀" thumbnailLocked />);
+
+    expect(container.querySelector("svg")).toBeInTheDocument();
+
+    rerender(<List type="product" title="타이틀" />);
+
+    expect(container.querySelector("svg")).not.toBeInTheDocument();
+  });
+
   it("type=product에 thumbnailSrc가 없으면 이미지를 렌더하지 않는다", () => {
     const { container } = render(<List type="product" title="타이틀" />);
 

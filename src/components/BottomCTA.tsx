@@ -9,11 +9,13 @@ type DefaultButtonAreaProps = {
   children: ReactNode;
   direction?: "horizontal" | "vertical";
   onClick?: never;
+  label?: never;
 };
 
 type KakaoButtonAreaProps = {
   type: "kakao";
   onClick: () => void;
+  label?: string;
   children?: never;
   direction?: never;
 };
@@ -54,7 +56,7 @@ export default function BottomCTA({ upper, lower, className, ...props }: BottomC
               <span aria-hidden className="relative z-10 flex size-5 justify-center pt-1">
                 <LogoKakao />
               </span>
-              <span className="relative z-10">카카오로 이용하기</span>
+              <span className="relative z-10">{props.label ?? "카카오로 이용하기"}</span>
             </button>
           ) : (
             props.children

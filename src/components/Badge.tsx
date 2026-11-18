@@ -1,4 +1,4 @@
-import { type HTMLAttributes } from "react";
+import { type HTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/utils/cn";
 
 type BadgeSize = "small" | "medium";
@@ -10,6 +10,7 @@ type BadgeColorProps =
 type BadgeOwnProps = BadgeColorProps & {
   size?: BadgeSize;
   label: string;
+  icon?: ReactNode;
 };
 
 type BadgeProps = BadgeOwnProps &
@@ -38,6 +39,7 @@ export default function Badge({
   variant = "fill",
   size = "small",
   label,
+  icon,
   className,
   ...props
 }: BadgeProps) {
@@ -46,13 +48,14 @@ export default function Badge({
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-lg px-2 py-1 whitespace-nowrap",
+        "inline-flex shrink-0 items-center justify-center gap-0.5 rounded-lg px-2 py-1 whitespace-nowrap",
         "[letter-spacing:var(--letter-spacing-default)]",
         TONE_STYLE[tone],
         SIZE_STYLE[size],
         className,
       )}
       {...props}>
+      {icon}
       {label}
     </span>
   );
