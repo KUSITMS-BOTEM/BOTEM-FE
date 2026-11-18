@@ -12,13 +12,27 @@ import IconPlus from "@/assets/icons/icon-plus.svg?react";
 type AddImageProps = {
   value: File | null;
   onChange: (file: File) => void;
+  label?: string;
+  allowedTypes?: string[];
+  maxSizeBytes?: number;
   className?: string;
 };
 
-export default function AddImage({ value, onChange, className }: AddImageProps) {
+export default function AddImage({
+  value,
+  onChange,
+  label = "상품 이미지",
+  allowedTypes,
+  maxSizeBytes,
+  className,
+}: AddImageProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const { errorText, handleFileChange } = useImageFileSelect({ onSelect: onChange });
+  const { errorText, handleFileChange } = useImageFileSelect({
+    allowedTypes,
+    maxSizeBytes,
+    onSelect: onChange,
+  });
 
   useEffect(() => {
     if (!value) return;
@@ -40,11 +54,11 @@ export default function AddImage({ value, onChange, className }: AddImageProps) 
           className,
         )}>
         <p className="text-semantic-text-tertiary [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-small-weak)]">
-          상품 이미지
+          {label}
         </p>
         <button
           type="button"
-          aria-label="상품 이미지 선택"
+          aria-label={`${label} 선택`}
           onClick={() => inputRef.current?.click()}
           className="border-semantic-border-primary border-medium relative size-36 shrink-0 cursor-pointer overflow-hidden rounded-3xl border-dashed">
           {previewUrl ? (
@@ -58,7 +72,7 @@ export default function AddImage({ value, onChange, className }: AddImageProps) 
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept={allowedTypes?.join(",") ?? "image/*"}
           className="sr-only"
           onChange={handleFileChange}
         />
