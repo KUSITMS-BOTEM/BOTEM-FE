@@ -1,6 +1,7 @@
 import type { FunctionComponent, SVGProps } from "react";
 
 import StickerCake from "@/assets/icons/multicolor/sticker-cake.svg?react";
+import StickerCrown from "@/assets/icons/multicolor/sticker-crown.svg?react";
 import StickerGift from "@/assets/icons/multicolor/sticker-gift.svg?react";
 import StickerHbd from "@/assets/icons/multicolor/sticker-hbd.svg?react";
 import StickerHeart from "@/assets/icons/multicolor/sticker-heart.svg?react";
@@ -24,4 +25,5 @@ export const STICKERS: Sticker[] = [
   { id: "thumbs-up", label: "엄지 척", Icon: StickerThumbsUp },
   { id: "smile", label: "웃는 얼굴", Icon: StickerSmile },
   { id: "hbd", label: "생일 축하", Icon: StickerHbd },
+  { id: "crown", label: "왕관", Icon: StickerCrown },
 ];

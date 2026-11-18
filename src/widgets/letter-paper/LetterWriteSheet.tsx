@@ -416,6 +416,7 @@ export default function LetterWriteSheet({
                 />
               ) : (
                 <LetterToolSheet
+                  color={color}
                   onClose={() => setActiveTool(null)}
                   onSelectLetter={() => setActiveTool("paper")}
                   onSelectRecord={openRecord}

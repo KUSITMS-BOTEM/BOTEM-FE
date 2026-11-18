@@ -5,7 +5,7 @@ import LetterToolSheet from "@/widgets/letter-paper/LetterToolSheet";
 
 describe("LetterToolSheet", () => {
   it("제목과 툴 4종이 보인다", () => {
-    render(<LetterToolSheet onClose={vi.fn()} />);
+    render(<LetterToolSheet color="orange" onClose={vi.fn()} />);
 
     expect(screen.getByText("어떤 툴을 추가할까요?")).toBeInTheDocument();
     expect(screen.getAllByRole("listitem").map(item => item.textContent)).toEqual([
@@ -18,7 +18,7 @@ describe("LetterToolSheet", () => {
 
   it("녹음 툴을 누르면 onSelectRecord가 호출된다", async () => {
     const onSelectRecord = vi.fn();
-    render(<LetterToolSheet onClose={vi.fn()} onSelectRecord={onSelectRecord} />);
+    render(<LetterToolSheet color="orange" onClose={vi.fn()} onSelectRecord={onSelectRecord} />);
 
     await userEvent.click(screen.getByRole("button", { name: "녹음" }));
 
@@ -27,7 +27,7 @@ describe("LetterToolSheet", () => {
 
   it("스티커 툴을 누르면 onSelectSticker가 호출된다", async () => {
     const onSelectSticker = vi.fn();
-    render(<LetterToolSheet onClose={vi.fn()} onSelectSticker={onSelectSticker} />);
+    render(<LetterToolSheet color="orange" onClose={vi.fn()} onSelectSticker={onSelectSticker} />);
 
     await userEvent.click(screen.getByRole("button", { name: "스티커" }));
 
@@ -36,7 +36,7 @@ describe("LetterToolSheet", () => {
 
   it("편지지 툴을 누르면 onSelectLetter가 호출된다", async () => {
     const onSelectLetter = vi.fn();
-    render(<LetterToolSheet onClose={vi.fn()} onSelectLetter={onSelectLetter} />);
+    render(<LetterToolSheet color="orange" onClose={vi.fn()} onSelectLetter={onSelectLetter} />);
 
     await userEvent.click(screen.getByRole("button", { name: "편지지" }));
 
@@ -45,7 +45,7 @@ describe("LetterToolSheet", () => {
 
   it("닫기 버튼을 누르면 onClose가 호출된다", async () => {
     const onClose = vi.fn();
-    render(<LetterToolSheet onClose={onClose} />);
+    render(<LetterToolSheet color="orange" onClose={onClose} />);
 
     await userEvent.click(screen.getByRole("button", { name: "닫기" }));
 

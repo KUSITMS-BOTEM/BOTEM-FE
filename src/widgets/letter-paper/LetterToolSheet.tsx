@@ -1,14 +1,13 @@
 "use client";
 
 import IconButton from "@/components/IconButton";
+import type { Color } from "@/constants/color";
 import { cn } from "@/utils/cn";
 import IconClose from "@/assets/icons/icon-close.svg?react";
-import ToolLetter from "@/assets/icons/multicolor/tool-sheet-letter.svg?react";
-import ToolPhoto from "@/assets/icons/multicolor/tool-sheet-photo.svg?react";
-import ToolRecord from "@/assets/icons/multicolor/tool-sheet-record.svg?react";
-import ToolSticker from "@/assets/icons/multicolor/tool-sheet-sticker.svg?react";
+import LetterTool, { type LetterToolType } from "@/widgets/letter-paper/LetterTool";
 
 type LetterToolSheetProps = {
+  color: Color;
   onClose: () => void;
   onSelectRecord?: () => void;
   onSelectSticker?: () => void;
@@ -16,45 +15,20 @@ type LetterToolSheetProps = {
   onSelectLetter?: () => void;
 };
 
-// 툴마다 기울기와 회전 후 차지하는 칸 크기가 Figma에 따로 정해져 있다
+// 툴마다 회전 후 차지하는 칸 크기가 Figma에 따로 정해져 있다
 const TOOLS: {
-  label: string;
+  type: LetterToolType;
   handler: "onSelectRecord" | "onSelectSticker" | "onSelectPhoto" | "onSelectLetter";
-  Icon: typeof ToolRecord;
   boxClass: string;
-  tiltClass: string;
 }[] = [
-  {
-    label: "녹음",
-    handler: "onSelectRecord",
-    Icon: ToolRecord,
-    boxClass: "h-[81.956px] w-[73.158px]",
-    tiltClass: "-rotate-[10.56deg]",
-  },
-  {
-    label: "스티커",
-    handler: "onSelectSticker",
-    Icon: ToolSticker,
-    boxClass: "h-[82.576px] w-[73.95px]",
-    tiltClass: "rotate-[11.32deg]",
-  },
-  {
-    label: "사진 추가",
-    handler: "onSelectPhoto",
-    Icon: ToolPhoto,
-    boxClass: "h-[75.753px] w-[65.479px]",
-    tiltClass: "-rotate-[3.67deg]",
-  },
-  {
-    label: "편지지",
-    handler: "onSelectLetter",
-    Icon: ToolLetter,
-    boxClass: "h-[86.473px] w-[79.091px]",
-    tiltClass: "rotate-[16.67deg]",
-  },
+  { type: "record", handler: "onSelectRecord", boxClass: "h-[81.956px] w-[73.158px]" },
+  { type: "sticker", handler: "onSelectSticker", boxClass: "h-[82.576px] w-[73.95px]" },
+  { type: "photo", handler: "onSelectPhoto", boxClass: "h-[75.753px] w-[65.479px]" },
+  { type: "letter", handler: "onSelectLetter", boxClass: "h-[86.473px] w-[79.091px]" },
 ];
 
 export default function LetterToolSheet({
+  color,
   onClose,
   onSelectRecord,
   onSelectSticker,
@@ -69,7 +43,7 @@ export default function LetterToolSheet({
   };
 
   return (
-    <div className="w-full px-4 pt-1">
+    <div className="w-full pt-1">
       <div className="bg-semantic-fill-default/70 flex h-[168px] flex-col gap-2 overflow-clip rounded-2xl px-4 pt-3 pb-4 shadow-[0_4px_16px_var(--color-semantic-shadow-weak)]">
         <div className="flex items-start gap-2">
           <p className="text-semantic-text-strong min-w-0 flex-1 [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-medium)]">
@@ -84,21 +58,14 @@ export default function LetterToolSheet({
           />
         </div>
         <ul className="flex min-h-0 flex-1 items-center justify-center px-2.5">
-          {TOOLS.map(({ label, handler, Icon, boxClass, tiltClass }) => (
-            <li key={label} className={cn("flex shrink-0 items-center justify-center", boxClass)}>
-              <button
-                type="button"
-                disabled={!handlers[handler]}
+          {TOOLS.map(({ type, handler, boxClass }) => (
+            <li key={type} className={cn("flex shrink-0 items-center justify-center", boxClass)}>
+              <LetterTool
+                type={type}
+                color={color}
                 onClick={handlers[handler]}
-                className={cn(
-                  "flex w-[61px] flex-none cursor-pointer flex-col items-center justify-center gap-2 py-[7px] disabled:cursor-default",
-                  tiltClass,
-                )}>
-                <Icon aria-hidden className="size-8 shrink-0" />
-                <span className="text-semantic-text-strong text-center [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-x-small)]">
-                  {label}
-                </span>
-              </button>
+                className={handlers[handler] ? "cursor-pointer" : undefined}
+              />
             </li>
           ))}
         </ul>
