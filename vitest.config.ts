@@ -41,6 +41,8 @@ export default defineConfig({
           environment: "jsdom",
           globals: true,
           setupFiles: ["./vitest.setup.ts"],
+          // CI에는 .env가 없어 BASE_URL이 빈 문자열이면 상대 URL로 Request 생성이 실패해 MSW까지 가지 않는다. 로컬·CI를 같은 값으로 고정
+          env: { NEXT_PUBLIC_API_BASE_URL: "http://localhost" },
           // 전체를 병렬로 돌리면 부하로 느려진 테스트가 기본 5초를 넘겨 번갈아 실패한다. 근본 해결은 docs/todos/unit_test_parallel_flaky.md
           testTimeout: 15000,
           include: ["src/**/__tests__/**/*.test.{ts,tsx}"],
