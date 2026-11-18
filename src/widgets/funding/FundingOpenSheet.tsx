@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { useRouter } from "next/navigation";
+
 import Dialog from "@/components/Dialog";
 import OpenSheet from "@/components/OpenSheet";
 import type { FundingWish } from "@/types/funding/funding";
@@ -11,7 +13,9 @@ import FundingAccountStep, {
 } from "@/widgets/funding/FundingAccountStep";
 import FundingConfirmSheet from "@/widgets/funding/FundingConfirmSheet";
 import FundingInfoStep, { type FundingInfoValues } from "@/widgets/funding/FundingInfoStep";
-import FundingOpenCompleteSheet from "@/widgets/funding/FundingOpenCompleteSheet";
+import FundingOpenCompleteSheet, {
+  MOCK_FUNDING_ID,
+} from "@/widgets/funding/FundingOpenCompleteSheet";
 import FundingWishSelectStep from "@/widgets/funding/FundingWishSelectStep";
 
 type FundingOpenSheetProps = {
@@ -21,6 +25,8 @@ type FundingOpenSheetProps = {
   initialWish?: FundingWish;
   // 서프라이즈 대상 친구 이름. 있으면 펀딩 열기를 확정한 뒤 개설 완료 화면을 보여준다
   recipientName?: string;
+  // 서프라이즈 대상 친구 id. 개설 완료 뒤 이동하는 펀딩 상세에서 뒤로가기 대상이 된다
+  recipientId?: string;
   className?: string;
 };
 
@@ -33,8 +39,10 @@ export default function FundingOpenSheet({
   onClose,
   initialWish,
   recipientName,
+  recipientId,
   className,
 }: FundingOpenSheetProps) {
+  const router = useRouter();
   const [selectedWish, setSelectedWish] = useState<FundingWish | null>(initialWish ?? null);
   const [step, setStep] = useState<Step>("info");
   // 계좌 단계는 처음 진입할 때 마운트해 대표 계좌 조회와 등장 모션이 그때 시작되게 한다
@@ -66,6 +74,12 @@ export default function FundingOpenSheet({
 
   // 입력 단계(위시를 골랐거나 initialWish로 시작)에서는 입력한 정보가 사라지므로 확인을 받고, 위시 선택 단계에서는 바로 닫는다
   const handleRequestClose = () => (selectedWish ? setLeaveOpen(true) : handleClose());
+
+  // 시트를 닫지 않고 이동만 한다. 이동이 끝나 이 화면이 언마운트될 때 함께 사라져 뒤 화면이 비치지 않는다
+  const handleCompleteClose = () => {
+    const query = recipientId ? `?friendId=${encodeURIComponent(recipientId)}` : "";
+    router.push(`/funding/${MOCK_FUNDING_ID}${query}`);
+  };
 
   const handleLeave = () => {
     setLeaveOpen(false);
@@ -176,7 +190,7 @@ export default function FundingOpenSheet({
               recipientName={recipientName}
               wish={selectedWish}
               info={info}
-              onClose={handleClose}
+              onClose={handleCompleteClose}
               className={className}
             />
           )}

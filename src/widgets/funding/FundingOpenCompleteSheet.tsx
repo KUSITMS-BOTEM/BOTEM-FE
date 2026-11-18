@@ -26,7 +26,7 @@ type FundingOpenCompleteSheetProps = {
 };
 
 // TODO(API): 펀딩 생성 API 응답의 fundingId로 교체한다
-const MOCK_FUNDING_ID = "1";
+export const MOCK_FUNDING_ID = "1";
 
 export default function FundingOpenCompleteSheet({
   open,
@@ -50,7 +50,6 @@ export default function FundingOpenCompleteSheet({
     });
 
   return (
-    // TODO: X 버튼을 누르면 이동할 페이지가 정해지면 onClose에 연결한다
     <OpenSheet
       open={open}
       title={isSurprise ? "" : "공유 카드 다시 받기"}

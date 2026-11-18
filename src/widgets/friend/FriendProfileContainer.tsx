@@ -87,6 +87,7 @@ export default function FriendProfileContainer({ friendId }: FriendProfileContai
           open={fundingSheetOpen}
           initialWish={toFundingWish(surpriseWish)}
           recipientName={data?.name}
+          recipientId={friendId}
           onClose={() => setFundingSheetOpen(false)}
         />
       )}

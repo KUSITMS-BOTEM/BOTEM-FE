@@ -59,6 +59,7 @@ export default function FriendWishDetailContainer({
         open={fundingSheetOpen}
         initialWish={fundingWish}
         recipientName={data.name}
+        recipientId={friendId}
         onClose={() => setFundingSheetOpen(false)}
       />
     </div>

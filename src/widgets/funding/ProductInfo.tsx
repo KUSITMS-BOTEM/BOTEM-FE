@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import IconLock from "@/assets/icons/icon-lock.svg?react";
 import { cn } from "@/utils/cn";
 import { formatDeadlineShort } from "@/utils/funding/formatDeadline";
 import { getDDayLabel } from "@/utils/funding/getDDayLabel";
@@ -9,6 +10,8 @@ type ProductInfoProps = {
   productName: string;
   /** "YYYY-MM-DD" */
   deadline: string;
+  /** 서프라이즈 펀딩이라 마감일 옆에 자물쇠를 보여준다 */
+  locked?: boolean;
   className?: string;
 };
 
@@ -16,6 +19,7 @@ export default function ProductInfo({
   productImageUrl,
   productName,
   deadline,
+  locked = false,
   className,
 }: ProductInfoProps) {
   // 날짜 형식이 틀리면 빈 문자열이라 구분자(·)를 붙이지 않는다
@@ -40,10 +44,13 @@ export default function ProductInfo({
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-[1.755px]">
         <p className="truncate [font:var(--semantic-label-small)]">{productName}</p>
-        <p className="truncate [font:var(--semantic-body-x-small)]">
-          마감 {formatDeadlineShort(deadline)}
-          {dDay && ` · ${dDay}`}
-        </p>
+        <div className="flex items-center gap-0.5">
+          <p className="truncate [font:var(--semantic-body-x-small)]">
+            마감 {formatDeadlineShort(deadline)}
+            {dDay && ` · ${dDay}`}
+          </p>
+          {locked && <IconLock aria-hidden className="size-4 shrink-0 [&_path]:fill-white" />}
+        </div>
       </div>
     </div>
   );

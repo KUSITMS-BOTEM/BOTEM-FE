@@ -28,6 +28,7 @@ export const config = {
     "/my/:path*",
     "/rolling-paper/:path*",
     "/friends/:path*",
+    "/funding/:path*",
     "/share/profile/:userId",
   ],
 };

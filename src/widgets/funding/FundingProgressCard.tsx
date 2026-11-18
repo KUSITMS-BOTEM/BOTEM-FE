@@ -83,6 +83,8 @@ type FundingProgressCardProps = {
   targetAmount: number;
   /** true면 문구·달성률·목표 금액 묶음이 한 번 커졌다 돌아온다 (보태기 완료 페이지 연출) */
   popStatus?: boolean;
+  /** 서프라이즈 펀딩이면 마감일 옆에 자물쇠를 보여준다 */
+  locked?: boolean;
   /** 카드와 같은 배율로 커지는 320×401 좌표계 위에 얹는 요소 (예: 우측 상단 뱃지) */
   children?: ReactNode;
   className?: string;
@@ -96,6 +98,7 @@ export default function FundingProgressCard({
   currentAmount,
   targetAmount,
   popStatus = false,
+  locked = false,
   children,
   className,
 }: FundingProgressCardProps) {
@@ -155,6 +158,7 @@ export default function FundingProgressCard({
             productImageUrl={productImageUrl}
             productName={productName}
             deadline={deadline}
+            locked={locked}
           />
           <motion.div
             animate={popStatus ? { scale: [1, 1.06, 1] } : undefined}
