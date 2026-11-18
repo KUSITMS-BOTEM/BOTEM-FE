@@ -30,7 +30,8 @@ type FundingContributeSheetProps = {
   // 이 금액을 넘으면 다음 버튼을 막는다 (목표 금액 - 현재 모인 금액)
   maxAmount: number;
   onClose: () => void;
-  // 우측 상단 X·ESC에서 호출된다. 입력값은 지우지 않고 부모가 나가기 확인을 받게 한다
+  // 우측 상단 X·ESC에서 호출된다. 입력값은 지우지 않고 부모가 나가기 확인을 받게 한다.
+  // 넘기면 handleClose(입력 초기화 + onClose)가 호출되지 않으므로, 초기화는 부모가 key로 재마운트해 맡는다
   onExit?: () => void;
   onNext: (amount: number) => void;
   className?: string;

@@ -67,15 +67,15 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
   // 마이크 권한을 기다리는 동안 reset·언마운트되면 그 시작을 무효로 만든다
   const startTokenRef = useRef(0);
 
-  const clearSpeaking = () => {
+  const clearSpeaking = useCallback(() => {
     window.clearTimeout(speakingTimerRef.current);
     setIsSpeaking(false);
-  };
+  }, []);
 
-  const stopTracks = () => {
+  const stopTracks = useCallback(() => {
     streamRef.current?.getTracks().forEach(track => track.stop());
     streamRef.current = null;
-  };
+  }, []);
 
   // 결과를 남기지 않고 녹음·인식을 모두 끊는다
   const discard = useCallback(() => {
@@ -99,9 +99,8 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
       if (recorder.state !== "inactive") recorder.stop();
     }
     recorderRef.current = null;
-    streamRef.current?.getTracks().forEach(track => track.stop());
-    streamRef.current = null;
-  }, []);
+    stopTracks();
+  }, [clearSpeaking, stopTracks]);
 
   // 정지하면 인식 중이던 마지막 문장까지 받은 뒤 recorder의 onstop에서 완료로 넘어간다
   const stop = useCallback(() => {
@@ -226,7 +225,7 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
       setRemainingSeconds(left);
       if (left <= 0) stop();
     }, 1000);
-  }, [supported, maxSeconds, discard, stop]);
+  }, [supported, maxSeconds, discard, stop, clearSpeaking, stopTracks]);
 
   useEffect(() => discard, [discard]);
 
