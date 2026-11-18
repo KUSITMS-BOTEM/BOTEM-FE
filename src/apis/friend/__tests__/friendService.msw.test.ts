@@ -25,6 +25,16 @@ describe("friendHandlers - GET /api/friends", () => {
     expect(data.friends).toHaveLength(6);
     expect(data.upcomingBirthdayFriends).toHaveLength(4);
   });
+
+  it("곧 생일인 친구 중 민지는 펀딩 중, 서준은 서프라이즈 펀딩 중으로 응답한다", async () => {
+    const response = await fetch(BASE_URL);
+    const { data } = (await response.json()) as { data: FriendListResponse };
+    const statusOf = (name: string) =>
+      data.upcomingBirthdayFriends.find(friend => friend.name === name)?.fundingStatus;
+
+    expect(statusOf("민지")).toBe("FUNDING");
+    expect(statusOf("서준")).toBe("SURPRISE_FUNDING");
+  });
 });
 
 describe("friendHandlers - GET /api/friends/:friendId", () => {

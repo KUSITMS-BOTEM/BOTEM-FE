@@ -17,6 +17,7 @@ const upcoming: FriendResponse[] = [
     birthday: "11-16",
     birthdayDday: 3,
     wishCount: 3,
+    fundingStatus: "FUNDING",
   },
   {
     userId: 3,
@@ -25,6 +26,7 @@ const upcoming: FriendResponse[] = [
     birthday: "11-20",
     birthdayDday: 7,
     wishCount: 6,
+    fundingStatus: "SURPRISE_FUNDING",
   },
   {
     userId: 4,

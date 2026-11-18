@@ -1,3 +1,5 @@
+import { type ReactNode } from "react";
+
 import Badge from "@/components/Badge";
 import Profile from "@/components/Profile";
 import type { Color } from "@/constants/color";
@@ -10,7 +12,7 @@ type FriendListItemProps = {
   profileColor?: Color;
   birthdayText?: string;
   dDayText?: string;
-  badge?: { label: string; color: "neutral" | "brand" };
+  badge?: { label: string; color: "neutral" | "brand"; icon?: ReactNode };
 };
 
 export default function FriendListItem({

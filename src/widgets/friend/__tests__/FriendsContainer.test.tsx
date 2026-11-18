@@ -39,6 +39,33 @@ describe("FriendsContainer", () => {
     expect(back).toHaveBeenCalledTimes(1);
   });
 
+  it("불러오는 중이면 친구 목록 스켈레톤을 보여준다", () => {
+    useFriendsQuery.mockReturnValue({ data: undefined, isPending: true });
+    render(<FriendsContainer />);
+
+    expect(screen.getByLabelText("친구 목록 불러오는 중")).toBeInTheDocument();
+  });
+
+  it("펀딩 상태에 따라 「펀딩 중」·「서프라이즈 펀딩중」 배지를 보여준다", () => {
+    const a = { ...friend(1, "가", 3), fundingStatus: "FUNDING" as const };
+    const b = { ...friend(2, "나", 5), fundingStatus: "SURPRISE_FUNDING" as const };
+    mockData({ totalCount: 2, upcomingBirthdayFriends: [a, b], friends: [a, b] });
+    render(<FriendsContainer />);
+
+    expect(screen.getByText("펀딩 중")).toBeInTheDocument();
+    expect(screen.getByText("서프라이즈 펀딩중")).toBeInTheDocument();
+  });
+
+  it("펀딩 상태가 없거나 NONE이면 배지를 보여주지 않는다", () => {
+    const a = friend(1, "가", 3);
+    const b = { ...friend(2, "나", null), fundingStatus: "NONE" as const };
+    mockData({ totalCount: 2, upcomingBirthdayFriends: [a], friends: [a, b] });
+    render(<FriendsContainer />);
+
+    expect(screen.queryByText("펀딩 중")).not.toBeInTheDocument();
+    expect(screen.queryByText("서프라이즈 펀딩중")).not.toBeInTheDocument();
+  });
+
   it("60일 이내 친구가 없으면 '곧 생일인 친구'와 전체보기를 숨긴다", () => {
     const a = friend(1, "가나", null);
     mockData({ totalCount: 1, upcomingBirthdayFriends: [], friends: [a] });

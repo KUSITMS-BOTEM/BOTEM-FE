@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ComponentProps, useState } from "react";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,17 +10,35 @@ import Header from "@/components/Header";
 import List from "@/components/List";
 import ListHeader from "@/components/ListHeader";
 import { useFriendsQuery } from "@/hooks/queries/friend/useFriendsQuery";
+import type { FriendFundingStatus, FriendResponse } from "@/types/friend/friend";
 import { toFriendItemProps } from "@/utils/friend/toFriendItemProps";
 import FriendListItem from "@/widgets/friend/FriendListItem";
+import FriendsSkeleton from "@/widgets/friend/skeleton/FriendsSkeleton";
 import IconDown from "@/assets/icons/icon-down.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconUp from "@/assets/icons/icon-up.svg?react";
+import IconSurprise from "@/assets/icons/multicolor/icon-surprise.svg?react";
 
 const COLLAPSED_COUNT = 2;
 
+const FUNDING_BADGE: Record<FriendFundingStatus, ComponentProps<typeof FriendListItem>["badge"]> = {
+  NONE: undefined,
+  FUNDING: { label: "펀딩 중", color: "neutral" },
+  SURPRISE_FUNDING: {
+    label: "서프라이즈 펀딩중",
+    color: "brand",
+    icon: <IconSurprise aria-hidden className="shrink-0" />,
+  },
+};
+
+const toFriendListItemProps = (friend: FriendResponse, withDday = false) => ({
+  ...toFriendItemProps(friend, withDday),
+  badge: FUNDING_BADGE[friend.fundingStatus ?? "NONE"],
+});
+
 export default function FriendsContainer() {
   const router = useRouter();
-  const { data, isError, refetch } = useFriendsQuery();
+  const { data, isPending, isError, refetch } = useFriendsQuery();
   const [expanded, setExpanded] = useState(false);
 
   const upcoming = data?.upcomingBirthdayFriends ?? [];
@@ -44,6 +62,7 @@ export default function FriendsContainer() {
             </Button>
           }
         />
+        {isPending && <FriendsSkeleton />}
         {isError && (
           <div className="flex w-full flex-col items-center gap-3 py-10">
             <p>친구 목록을 불러오지 못했어요.</p>
@@ -61,7 +80,7 @@ export default function FriendsContainer() {
                   <ListHeader title="곧 생일인 친구" as="h3" />
                   {visibleUpcoming.map(friend => (
                     <Link key={friend.userId} href={`/friends/${friend.userId}`} className="block">
-                      <FriendListItem {...toFriendItemProps(friend, true)} />
+                      <FriendListItem {...toFriendListItemProps(friend, true)} />
                     </Link>
                   ))}
                   {upcoming.length > COLLAPSED_COUNT && (
@@ -80,7 +99,7 @@ export default function FriendsContainer() {
             <section className="flex w-full flex-col gap-0.5">
               {others.map(friend => (
                 <Link key={friend.userId} href={`/friends/${friend.userId}`} className="block">
-                  <FriendListItem {...toFriendItemProps(friend)} />
+                  <FriendListItem {...toFriendListItemProps(friend)} />
                 </Link>
               ))}
             </section>
