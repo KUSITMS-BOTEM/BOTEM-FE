@@ -20,4 +20,10 @@ describe("HomeFundingView", () => {
     expect(screen.getByText("작은 보탬들이 차곡차곡 쌓이고 있어요")).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "2개 중 1번째" })).toHaveTextContent("펀딩1");
   });
+
+  it("banner를 넘기면 함께 렌더한다", () => {
+    render(<HomeFundingView cards={[makeCard(1)]} banner={<div>인증 배너</div>} />);
+
+    expect(screen.getByText("인증 배너")).toBeInTheDocument();
+  });
 });

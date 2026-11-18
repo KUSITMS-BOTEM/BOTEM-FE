@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -20,9 +20,10 @@ const REVEAL_PREFETCH_TIMEOUT_MS = 1500;
 type HomeFundingTabProps = {
   onAddWish: () => void;
   onOpenFunding?: () => void;
+  banner?: ReactNode;
 };
 
-export default function HomeFundingTab({ onAddWish, onOpenFunding }: HomeFundingTabProps) {
+export default function HomeFundingTab({ onAddWish, onOpenFunding, banner }: HomeFundingTabProps) {
   const { data: profile } = useMyProfileQuery();
   const fundingsQuery = useHomeFundingsQuery();
   const fundingCards = fundingsQuery.data?.fundingCards;
@@ -71,7 +72,7 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding }: HomeFunding
     });
     return (
       <>
-        <HomeFundingView cards={cards} />
+        <HomeFundingView cards={cards} banner={banner} />
         <PendingContributionBottomSheet
           open={isSheetOpen}
           fundingId={sheetFundingId}
@@ -84,12 +85,13 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding }: HomeFunding
 
   const noFunding = noFundingQuery.data;
   if (!noFunding) return null;
-  if (noFunding.state === "EMPTY") return <HomeEmptyView onAddWish={onAddWish} />;
+  if (noFunding.state === "EMPTY") return <HomeEmptyView onAddWish={onAddWish} banner={banner} />;
   return (
     <HomeWishRecommendation
       nickname={noFunding.nickname}
       wishes={noFunding.wishes.content}
       onOpenFunding={onOpenFunding}
+      banner={banner}
     />
   );
 }

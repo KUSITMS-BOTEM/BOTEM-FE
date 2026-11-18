@@ -23,6 +23,9 @@ vi.mock("@/widgets/home/HomeFundingTab", () => ({
     </button>
   ),
 }));
+vi.mock("@/widgets/home/GiftVerificationBannerLayer", () => ({
+  default: ({ children }: { children: (cardBanner: null) => React.ReactNode }) => children(null),
+}));
 vi.mock("@/widgets/home/HomeWishTab", () => ({ default: () => <div>위시 탭 내용</div> }));
 vi.mock("@/widgets/user/MyMenuSheet", () => ({
   default: ({ open }: { open: boolean }) => (open ? <div>메뉴 시트</div> : null),

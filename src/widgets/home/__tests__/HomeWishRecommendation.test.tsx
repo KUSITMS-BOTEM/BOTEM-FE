@@ -49,4 +49,16 @@ describe("HomeWishRecommendation", () => {
 
     expect(onOpenFunding).toHaveBeenCalledTimes(1);
   });
+
+  it("banner를 넘기면 함께 렌더한다", () => {
+    render(
+      <HomeWishRecommendation
+        nickname="지유"
+        wishes={[makeWish(1)]}
+        banner={<div>인증 배너</div>}
+      />,
+    );
+
+    expect(screen.getByText("인증 배너")).toBeInTheDocument();
+  });
 });
