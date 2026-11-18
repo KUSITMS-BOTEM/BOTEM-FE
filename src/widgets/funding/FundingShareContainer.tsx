@@ -87,7 +87,8 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
   };
   const remainingAmount = funding.targetAmount - funding.currentAmount;
   // 금액 달성(마감)·기간 마감 모두 닫힌 펀딩이다
-  const isClosed = getClosedLabel(funding) !== null;
+  const closedLabel = getClosedLabel(funding);
+  const isClosed = closedLabel !== null;
 
   if (isClosed && funding.hasGiftProof) {
     return (
@@ -132,9 +133,11 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
           onClick={() => setIsPopupOpen(true)}
           className="flex cursor-pointer items-center gap-2 self-end">
           <Tooltip>
-            {isClosed
-              ? "마감일까지 메시지로 보탤까요?"
-              : `나도 ${funding.hostName}님께 보태볼까요?`}
+            {closedLabel === "기간 마감"
+              ? "축하 메시지만 보낼 수 있어요!"
+              : isClosed
+                ? "마감일까지 메시지로 보탤까요?"
+                : `나도 ${funding.hostName}님께 보태볼까요?`}
           </Tooltip>
           <ProfileBox
             profiles={funding.participants.map(color => ({ color }))}

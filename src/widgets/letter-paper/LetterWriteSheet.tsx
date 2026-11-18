@@ -73,8 +73,6 @@ type LetterWriteSheetProps = {
 
 const TOAST_DURATION_MS = 2000;
 
-const toPhotoState = (file?: File) => (file ? { file, url: URL.createObjectURL(file) } : null);
-
 export default function LetterWriteSheet({
   open,
   onClose,
@@ -102,9 +100,8 @@ export default function LetterWriteSheet({
   const [smallSticker, setSmallSticker] = useState<Sticker | null>(
     initialValues?.smallSticker ?? null,
   );
-  const [photo, setPhoto] = useState<{ file: File; url: string } | null>(() =>
-    toPhotoState(initialValues?.photo),
-  );
+  const [photo, setPhoto] = useState<File | null>(initialValues?.photo ?? null);
+  const [photoPreview, setPhotoPreview] = useState<{ file: File; url: string }>();
   const [paperStyle, setPaperStyle] = useState<LetterPaperStyle>(
     initialValues?.paperStyle ?? "vividSolid",
   );
@@ -136,13 +133,25 @@ export default function LetterWriteSheet({
     bodyKeyRef.current = bodyKey;
   }, [bodyKey]);
 
+  // 사진이 바뀐 직후 effect가 새 URL을 만들기 전까지는 이전 사진의 URL을 쓰지 않는다
+  const photoUrl = photoPreview?.file === photo ? photoPreview?.url : undefined;
+
   const toolOpen = activeTool !== null && activeTool !== "photo";
   const stickerOpen = activeTool === "sticker";
   const photoOpen = activeTool === "photo";
 
+  // URL을 effect 안에서 만들어야 StrictMode의 mount→cleanup→mount에서도 revoke된 URL이 남지 않는다
   useEffect(() => {
     if (!photo) return;
-    return () => URL.revokeObjectURL(photo.url);
+    const url = URL.createObjectURL(photo);
+    // 외부 리소스(object URL)의 수명과 state를 맞추는 동기화라 effect 안 setState가 불가피하다
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPhotoPreview({ file: photo, url });
+    return () => {
+      URL.revokeObjectURL(url);
+      // 해제된 URL이 남아 같은 File로 되돌렸을 때 재사용되지 않게 비운다
+      setPhotoPreview(undefined);
+    };
   }, [photo]);
 
   // 짧은 화면에서 툴 영역이 하단 CTA에 가려지면 스크롤을 내리고, 이미 보이면 그대로 둔다(nearest)
@@ -167,7 +176,7 @@ export default function LetterWriteSheet({
       voice?.blob !== initialValues.voice?.blob ||
       largeSticker?.id !== initialValues.largeSticker?.id ||
       smallSticker?.id !== initialValues.smallSticker?.id ||
-      photo?.file !== initialValues.photo);
+      (photo ?? undefined) !== initialValues.photo);
   const canSave = isDirty && text.trim() !== "" && recorder.status !== "recording";
 
   // 편지지에 포커스가 가 입력을 시작하면 안내 말풍선은 더 보여주지 않는다
@@ -200,7 +209,7 @@ export default function LetterWriteSheet({
     setLargeSticker(values?.largeSticker ?? null);
     setSmallSticker(values?.smallSticker ?? null);
     setActiveTool(null);
-    setPhoto(toPhotoState(values?.photo));
+    setPhoto(values?.photo ?? null);
     setBodyKey(key => key + 1);
   };
 
@@ -240,7 +249,7 @@ export default function LetterWriteSheet({
     ...(voice && { voice }),
     ...(largeSticker && { largeSticker }),
     ...(smallSticker && { smallSticker }),
-    ...(photo && { photo: photo.file }),
+    ...(photo && { photo }),
   });
 
   // 이미 열린 툴은 유지하고, 닫혀 있거나 사진 강조 상태면 툴 목록을 연다
@@ -345,15 +354,14 @@ export default function LetterWriteSheet({
             onSmallIconRemove={() => setSmallSticker(null)}
             iconSlotsActive={stickerOpen}
             hidePhotoSlot={stickerOpen && !photo}
-            photoSrc={photo?.url}
+            photoSrc={photoUrl}
             // 사진 툴을 골랐을 때만 슬롯이 눌린다
             photoSlotDisabled={!photoOpen}
             photoSlotActive={photoOpen}
             hideEmptyIconSlots={photoOpen && !photo}
             // 검증 중 시트를 닫았다면 초기화된 편지에 사진이 되살아나지 않게 버린다
             onPhotoChange={file => {
-              if (openRef.current && bodyKey === bodyKeyRef.current)
-                setPhoto({ file, url: URL.createObjectURL(file) });
+              if (openRef.current && bodyKey === bodyKeyRef.current) setPhoto(file);
             }}
             onPhotoRemove={() => setPhoto(null)}
             textSlot={
@@ -416,6 +424,7 @@ export default function LetterWriteSheet({
                 />
               ) : (
                 <LetterToolSheet
+                  color={color}
                   onClose={() => setActiveTool(null)}
                   onSelectLetter={() => setActiveTool("paper")}
                   onSelectRecord={openRecord}

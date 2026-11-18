@@ -14,6 +14,7 @@ import FundingBragCard from "@/widgets/funding/FundingBragCard";
 import FundingCompleteConfetti from "@/widgets/funding/FundingCompleteConfetti";
 import FundingCompleteTitle from "@/widgets/funding/FundingCompleteTitle";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
+import FundingRiseBubble from "@/widgets/funding/FundingRiseBubble";
 import SampleProduct from "@/assets/images/samples/sample-product.png";
 import IconClose from "@/assets/icons/icon-close.svg?react";
 import IconShare from "@/assets/icons/icon-share.svg?react";
@@ -153,47 +154,7 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
                   currentAmount={funding.currentAmount}
                   targetAmount={funding.targetAmount}
                   popStatus>
-                  {!isMessageOnly && (
-                    <div className="absolute top-[20.3px] right-[56.4px] translate-x-1/2 -translate-y-1/2 rotate-15">
-                      <motion.div
-                        initial={{ opacity: 0, scaleX: 0.2, scaleY: 0.2, rotate: -18 }}
-                        animate={{
-                          opacity: 1,
-                          scaleX: [0.2, 1.25, 0.9, 1],
-                          scaleY: [0.2, 0.85, 1.12, 1],
-                          rotate: [-18, 6, 0],
-                        }}
-                        exit={{ opacity: 0, transition: { duration: 0.25, ease: EASE } }}
-                        transition={{
-                          delay: 0.976,
-                          opacity: { delay: 0.976, duration: 0.164, ease: "linear" },
-                          scaleX: {
-                            delay: 0.976,
-                            duration: 0.494,
-                            times: [0, 0.502, 0.747, 1],
-                            ease: EASE,
-                          },
-                          scaleY: {
-                            delay: 0.976,
-                            duration: 0.494,
-                            times: [0, 0.502, 0.747, 1],
-                            ease: EASE,
-                          },
-                          rotate: {
-                            delay: 0.976,
-                            duration: 0.494,
-                            times: [0, 0.502, 1],
-                            ease: EASE,
-                          },
-                        }}
-                        className="bg-semantic-fill-neutral text-semantic-text-on-fill flex items-center gap-1 rounded-full px-5 py-2.5 [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap drop-shadow-[0_8px_10px_rgb(0_0_0/0.22)]">
-                        <span className="[font:var(--semantic-title-x-small)]">
-                          +{funding.risePercent}%
-                        </span>
-                        <span className="[font:var(--semantic-label-small)]">올랐어요</span>
-                      </motion.div>
-                    </div>
-                  )}
+                  {!isMessageOnly && <FundingRiseBubble risePercent={funding.risePercent} />}
                 </FundingProgressCard>
               </motion.div>
             )}

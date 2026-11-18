@@ -59,7 +59,7 @@ describe("FundingShareContainer", () => {
     try {
       render(<FundingShareContainer fundingId="1" />);
 
-      fireEvent.click(screen.getByRole("button", { name: /마감일까지 메시지로 보탤까요\?/ }));
+      fireEvent.click(screen.getByRole("button", { name: /축하 메시지만 보낼 수 있어요!/ }));
 
       expect(screen.getByRole("button", { name: "보태기" })).toBeDisabled();
       expect(screen.getByRole("button", { name: "메세지 보태기" })).toBeEnabled();
@@ -73,7 +73,7 @@ describe("FundingShareContainer", () => {
     try {
       const user = userEvent.setup();
       render(<FundingShareContainer fundingId="1" />);
-      await user.click(screen.getByRole("button", { name: /마감일까지 메시지로 보탤까요\?/ }));
+      await user.click(screen.getByRole("button", { name: /축하 메시지만 보낼 수 있어요!/ }));
       await user.click(screen.getByRole("button", { name: "메세지 보태기" }));
 
       const letter = await screen.findByRole("textbox", { name: "편지 내용" });

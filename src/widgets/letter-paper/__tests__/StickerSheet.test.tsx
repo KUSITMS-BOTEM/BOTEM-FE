@@ -17,11 +17,11 @@ function renderSheet(props: Partial<React.ComponentProps<typeof StickerSheet>> =
 }
 
 describe("StickerSheet", () => {
-  it("안내 문구와 스티커 8개를 보여준다", () => {
+  it("안내 문구와 스티커 9개를 보여준다", () => {
     renderSheet();
 
     expect(screen.getByText("아이콘을 편지지에 붙여보세요")).toBeInTheDocument();
-    expect(screen.getAllByRole("listitem")).toHaveLength(8);
+    expect(screen.getAllByRole("listitem")).toHaveLength(9);
   });
 
   it("스티커를 누르면 해당 스티커로 onSelect가 호출된다", async () => {
