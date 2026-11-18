@@ -13,13 +13,14 @@ import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { WISH_REQUEST_SENT_KEY } from "@/constants/wishRequest";
 import { useRequestProductMutation } from "@/hooks/mutations/product-request/useRequestProductMutation";
 import { ApiError } from "@/types/api";
 import { canSubmitWishRequest } from "@/utils/product-request/canSubmitWishRequest";
 import { isCoupangProductUrl } from "@/utils/product-request/isCoupangProductUrl";
 
 const TOAST_DURATION_MS = 2500;
-const INVALID_LINK_MESSAGE = "링크 형식이 잘못됐어요";
+const INVALID_LINK_MESSAGE = "잘못된 형식의 링크예요";
 
 export default function WishRequestContainer() {
   const router = useRouter();
@@ -27,6 +28,9 @@ export default function WishRequestContainer() {
   const [productUrl, setProductUrl] = useState("");
   const [productName, setProductName] = useState("");
   const [toastText, setToastText] = useState<string | null>(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  // 제출 이후에는 값에서 에러를 계산해, 링크를 고치면 자동으로 풀린다
+  const isUrlInvalid = hasSubmitted && productUrl.trim() !== "" && !isCoupangProductUrl(productUrl);
   // isPending은 비동기로 갱신돼 빠른 더블클릭을 막지 못하므로 ref로 동기 잠금
   const isSubmitting = useRef(false);
 
@@ -38,16 +42,17 @@ export default function WishRequestContainer() {
 
   const handleSubmit = () => {
     if (isSubmitting.current) return;
-    if (!isCoupangProductUrl(productUrl)) {
-      setToastText(INVALID_LINK_MESSAGE);
-      return;
-    }
+    setHasSubmitted(true);
+    if (!isCoupangProductUrl(productUrl)) return;
     isSubmitting.current = true;
     requestProduct(
       { productUrl: productUrl.trim(), productName: productName.trim() || null },
       {
-        // 성공 시 이동할 전용 페이지가 있지만 디자인이 아직 나오지 않아 만들지 못했다 — 임시로 /wish/recommended로 이동한다
-        onSuccess: () => router.push("/wish/recommended"),
+        // 뒤로가기로 입력 폼에 돌아와 같은 요청을 다시 보내지 않도록 히스토리를 교체한다
+        onSuccess: () => {
+          sessionStorage.setItem(WISH_REQUEST_SENT_KEY, "1");
+          router.replace("/wish/request/complete");
+        },
         // inline 코드는 전역 Dialog가 띄우지 않으므로 여기서 Toast로 보여준다
         onError: error => {
           if (error instanceof ApiError && ERROR_MESSAGES[error.code]?.action === "inline") {
@@ -81,6 +86,8 @@ export default function WishRequestContainer() {
             required
             autoComplete="off"
             value={productUrl}
+            error={isUrlInvalid}
+            helperText={isUrlInvalid ? INVALID_LINK_MESSAGE : undefined}
             onChange={event => setProductUrl(event.target.value)}
           />
           <TextField
@@ -92,7 +99,7 @@ export default function WishRequestContainer() {
           />
           <ToastMessage show={toastText !== null} text={toastText ?? ""} state={false} />
         </div>
-        <CoupangMoveGuide className="mt-[15px]" />
+        <CoupangMoveGuide className="mt-6" />
       </div>
       <BottomCTA
         lower={
@@ -103,7 +110,7 @@ export default function WishRequestContainer() {
         <Button
           color="brand"
           size="xlarge"
-          disabled={!canSubmitWishRequest({ productUrl }) || isPending}
+          disabled={!canSubmitWishRequest({ productUrl }) || isUrlInvalid || isPending}
           onClick={handleSubmit}>
           요청 보내기
         </Button>
