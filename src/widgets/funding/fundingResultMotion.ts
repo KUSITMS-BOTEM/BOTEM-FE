@@ -279,6 +279,7 @@ export function confettiTracks({ shape, at, x, y, rotate }: ConfettiPiece) {
     ),
     opacity: track(
       [
+        [0, 0],
         [0, 1],
         [FADE_START, 1],
         [FALL_END, 0],

@@ -7,6 +7,7 @@ import Button from "@/components/Button";
 import Header from "@/components/Header";
 import List from "@/components/List";
 import TextButton from "@/components/TextButton";
+import { getFundingResultCopy } from "@/utils/funding/fundingResultCopy";
 import { isValidUrl } from "@/utils/isValidUrl";
 import FundingResultCelebration from "@/widgets/funding/FundingResultCelebration";
 import type { ResultContributor } from "@/widgets/funding/FundingResultFriendDot";
@@ -32,24 +33,6 @@ type FundingResultViewProps = {
   onExtend: () => void;
 };
 
-const formatWon = (amount: number) => `${amount.toLocaleString("ko-KR")}원`;
-
-function getCopy({ goalAchieved, collectedAmount, productPrice, giftChanged }: FundingResult) {
-  const amount = formatWon(collectedAmount);
-  if (goalAchieved) {
-    return {
-      title: `${amount}이\n모두 모였어요\n선물을 사러갈까요?`,
-      productTitle: formatWon(productPrice),
-      productDescription: "나의 위시 상품",
-    };
-  }
-  return {
-    title: `${amount}이\n모였어요\n어떻게 할까요?`,
-    productTitle: `차액 ${formatWon(productPrice - collectedAmount)}만\n보태면 구매할 수 있어요`,
-    productDescription: giftChanged ? "변경한 선물" : "기존 선물",
-  };
-}
-
 export default function FundingResultView({
   result,
   reduceMotion,
@@ -58,7 +41,7 @@ export default function FundingResultView({
   onChangeGift,
   onExtend,
 }: FundingResultViewProps) {
-  const copy = getCopy(result);
+  const copy = getFundingResultCopy(result);
   const image =
     typeof result.productImage === "string" && !isValidUrl(result.productImage)
       ? undefined

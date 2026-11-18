@@ -25,7 +25,7 @@ export default function FundingResultCelebration({
 
   return (
     <div aria-hidden className="flex h-50 w-full justify-center overflow-x-clip">
-      <div className="relative h-full w-[333px]">
+      <div className="relative h-full w-[333px] shrink-0">
         {!reduceMotion && (
           <>
             {CONFETTI_PIECES.map((piece, index) => (

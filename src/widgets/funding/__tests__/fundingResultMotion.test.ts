@@ -104,6 +104,14 @@ describe("confettiTracks", () => {
     expect(x.transition.delay).toBe(2.5);
   });
 
+  it("버스트 전에는 투명하고 버스트 순간 보인 뒤 끝에서 사라진다", () => {
+    const { opacity } = confettiTracks(piece("strip"));
+
+    expect(opacity.values).toEqual([0, 1, 1, 0]);
+    expect(opacity.transition.times?.slice(0, 2)).toEqual([0, 0]);
+    expect(opacity.transition.delay).toBe(2.5);
+  });
+
   it("긴 리본(streamer)만 scaleY 트랙을 가진다", () => {
     expect(confettiTracks(piece("streamer")).scaleY?.values).toEqual([0.4, 1.2, 0.6, 1]);
     expect(confettiTracks(piece("strip")).scaleY).toBeUndefined();
