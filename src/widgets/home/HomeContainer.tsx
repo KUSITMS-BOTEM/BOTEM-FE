@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -28,12 +28,27 @@ const FLOATING_MENU_ITEMS: MenuDropdownItem[] = [
 // 마감된 펀딩 수 API 명세가 나오기 전까지 쓰는 임시값
 const TEMP_CLOSED_FUNDING_COUNT = 0;
 
-export default function HomeContainer() {
+type HomeContainerProps = {
+  autoOpenFunding?: boolean;
+};
+
+export default function HomeContainer({ autoOpenFunding = false }: HomeContainerProps) {
   useHomeWishesQuery();
   const { data: homeFundings } = useHomeFundingsQuery();
   const [segment, setSegment] = useState<SegmentValue>("funding");
   const router = useRouter();
   const [fundingSheetOpen, setFundingSheetOpen] = useState(false);
+
+  // 공유 화면의 "나도 만들기"(/home?open=funding)로 들어오면 한 번 열고 쿼리를 지운다
+  const [autoOpenHandled, setAutoOpenHandled] = useState(false);
+  const shouldAutoOpen = autoOpenFunding && !!homeFundings && !autoOpenHandled;
+  if (shouldAutoOpen) {
+    setAutoOpenHandled(true);
+    if (homeFundings.canOpenFunding) setFundingSheetOpen(true);
+  }
+  useEffect(() => {
+    if (autoOpenHandled) router.replace("/home", { scroll: false });
+  }, [autoOpenHandled, router]);
 
   const goToRecommendedWish = () => router.push(RECOMMENDED_WISH_PATH);
   const openFundingSheet = () => {

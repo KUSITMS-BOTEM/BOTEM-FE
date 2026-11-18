@@ -13,6 +13,7 @@ import { getClosedLabel } from "@/utils/funding/fundingProgress";
 import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
 import BotemPopup from "@/widgets/funding/BotemPopup";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
+import FundingGiftProofView from "@/widgets/funding/FundingGiftProofView";
 import FundingMessage from "@/widgets/funding/FundingMessage";
 import FundingPasswordSheet from "@/widgets/funding/FundingPasswordSheet";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
@@ -36,6 +37,8 @@ const MOCK_FUNDING = {
   productName: "소니 WH-1000XM5",
   productImageUrl: SampleProduct.src,
   deadline: "2026-12-31",
+  // TODO(API): 개설자가 선물 인증 사진을 올렸는지 서버 값으로 교체한다 (true면 마감 후 인증 화면)
+  hasGiftProof: false,
   currentAmount: 74074074,
   targetAmount: 123456789,
   participants: ["orange", "blue", "pink"] as const,
@@ -95,6 +98,15 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
   const remainingAmount = funding.targetAmount - funding.currentAmount;
   // 금액 달성(마감)·기간 마감 모두 닫힌 펀딩이다
   const isClosed = getClosedLabel(funding) !== null;
+
+  if (funding.hasGiftProof) {
+    return (
+      <FundingGiftProofView
+        contributorCount={funding.friends.length}
+        productName={funding.productName}
+      />
+    );
+  }
 
   return (
     <main className="flex min-h-dvh flex-col">
