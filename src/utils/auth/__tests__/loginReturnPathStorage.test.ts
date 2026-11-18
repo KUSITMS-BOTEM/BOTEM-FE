@@ -23,7 +23,7 @@ describe("loginReturnPathStorage", () => {
     expect(consumeLoginReturnPath()).toBeNull();
   });
 
-  it.each(["https://evil.com", "//evil.com", "friends/5"])(
+  it.each(["https://evil.com", "//evil.com", "/\\evil.com", "friends/5"])(
     "앱 내부 절대 경로가 아닌 %s는 저장하지 않는다",
     path => {
       setLoginReturnPath(path);
