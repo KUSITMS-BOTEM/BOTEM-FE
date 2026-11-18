@@ -183,7 +183,7 @@ export default function LetterPaper({
           onRemove={onSmallIconRemove}
           active={iconSlotsActive}
           className={cn(
-            "pointer-events-auto absolute top-[150px] left-[248px] size-[34px] origin-top-left -rotate-[11.45deg]",
+            "pointer-events-auto absolute top-[160.03px] left-[270.14px] size-[34px] origin-top-left -rotate-[11.45deg]",
             hideEmptyIconSlots && !smallIcon && "invisible",
           )}
         />
