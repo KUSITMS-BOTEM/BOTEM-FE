@@ -70,6 +70,13 @@ describe("BottomCTA", () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
+  it('type="kakao"에 label을 넘기면 기본 문구 대신 그 문구를 보여준다', () => {
+    render(<BottomCTA type="kakao" label="카카오로 시작하기" onClick={() => {}} />);
+
+    expect(screen.getByRole("button", { name: "카카오로 시작하기" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "카카오로 이용하기" })).not.toBeInTheDocument();
+  });
+
   it('type="kakao" 버튼은 type이 button이라 폼 안에서 submit하지 않는다', () => {
     render(<BottomCTA type="kakao" onClick={() => {}} />);
 

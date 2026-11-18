@@ -5,6 +5,7 @@ import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { useAuthStore } from "@/store/authStore";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { consumeKakaoOauthState } from "@/utils/auth/kakaoOauthState";
+import { consumeLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 import { setSignupFlow } from "@/utils/auth/signupFlowStorage";
 
 type KakaoLoginMutate = ReturnType<typeof useKakaoLoginMutation>["mutate"];
@@ -43,7 +44,7 @@ export const handleKakaoCallback = (
           router.replace("/auth/profile-check");
           return;
         }
-        router.replace("/home");
+        router.replace(consumeLoginReturnPath() ?? "/home");
       },
       onError: () => redirectToLandingAfterFailure(router),
     },

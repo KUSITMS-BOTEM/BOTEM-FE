@@ -89,8 +89,8 @@ describe("MyMenuSheet", () => {
     expect(screen.getByText("지유")).toBeInTheDocument();
     expect(screen.getByText("생일 10월 13일")).toBeInTheDocument();
     expect(screen.getByText("8명")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "3개" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "토스뱅크" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /마감된 펀딩.*3개/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /대표 계좌.*토스뱅크/ })).toBeInTheDocument();
   });
 
   it("친구 목록을 불러오는 동안 친구 수 자리에 스켈레톤을 보여준다", () => {
@@ -124,13 +124,13 @@ describe("MyMenuSheet", () => {
     expect(screen.queryByText("토스뱅크")).not.toBeInTheDocument();
   });
 
-  it("마감된 펀딩·대표 계좌 버튼은 각 시트를 연다", async () => {
+  it("마감된 펀딩·대표 계좌 행을 누르면 각 시트를 연다", async () => {
     renderSheet();
 
-    await userEvent.click(screen.getByRole("button", { name: "3개" }));
+    await userEvent.click(screen.getByText("마감된 펀딩"));
     expect(screen.getByText("마감된 펀딩 시트")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "토스뱅크" }));
+    await userEvent.click(screen.getByText("대표 계좌"));
     expect(screen.getByText("대표 계좌 시트")).toBeInTheDocument();
   });
 

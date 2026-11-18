@@ -10,6 +10,13 @@ describe("Badge", () => {
     expect(screen.getByText("뱃지").tagName).toBe("SPAN");
   });
 
+  it("icon을 넘기면 label 앞에 함께 렌더한다", () => {
+    render(<Badge label="뱃지" icon={<svg data-testid="badge-icon" />} />);
+
+    const badge = screen.getByText("뱃지");
+    expect(badge.firstElementChild).toBe(screen.getByTestId("badge-icon"));
+  });
+
   it("props를 생략하면 neutral·fill·small 스타일이 적용된다", () => {
     render(<Badge label="뱃지" />);
     const badge = screen.getByText("뱃지");

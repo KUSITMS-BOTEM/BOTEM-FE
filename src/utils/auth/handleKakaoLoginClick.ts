@@ -1,13 +1,16 @@
 import type { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
 import { setKakaoOauthState } from "@/utils/auth/kakaoOauthState";
+import { clearLoginReturnPath, setLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 import { clearSignupFlow } from "@/utils/auth/signupFlowStorage";
 
 type LoginUriMutate = ReturnType<typeof useKakaoLoginUriMutation>["mutate"];
 
 const KAKAO_AUTH_HOST = "kauth.kakao.com";
 
-export const handleKakaoLoginClick = (mutate: LoginUriMutate) => {
+export const handleKakaoLoginClick = (mutate: LoginUriMutate, returnPath?: string) => {
   clearSignupFlow();
+  if (returnPath) setLoginReturnPath(returnPath);
+  else clearLoginReturnPath();
 
   mutate(`${window.location.origin}/auth/callback`, {
     onSuccess: data => {

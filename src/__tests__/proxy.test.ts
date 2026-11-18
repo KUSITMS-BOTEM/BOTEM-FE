@@ -40,4 +40,22 @@ describe("proxy", () => {
 
     expect(response.headers.get("location")).toBeNull();
   });
+
+  it("비로그인 상태로 공유받은 친구 프로필에 접근하면 리다이렉트하지 않는다", () => {
+    const request = new NextRequest("http://localhost/share/profile/5");
+
+    const response = proxy(request);
+
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("로그인 상태로 공유받은 친구 프로필에 접근하면 친구 프로필 화면으로 리다이렉트한다", () => {
+    const request = new NextRequest("http://localhost/share/profile/5", {
+      headers: { cookie: "isLoggedIn=true" },
+    });
+
+    const response = proxy(request);
+
+    expect(response.headers.get("location")).toBe("http://localhost/friends/5");
+  });
 });

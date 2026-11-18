@@ -25,6 +25,16 @@ describe("friendHandlers - GET /api/friends", () => {
     expect(data.friends).toHaveLength(6);
     expect(data.upcomingBirthdayFriends).toHaveLength(4);
   });
+
+  it("곧 생일인 친구 중 민지는 펀딩 중, 서준은 서프라이즈 펀딩 중으로 응답한다", async () => {
+    const response = await fetch(BASE_URL);
+    const { data } = (await response.json()) as { data: FriendListResponse };
+    const statusOf = (name: string) =>
+      data.upcomingBirthdayFriends.find(friend => friend.name === name)?.fundingStatus;
+
+    expect(statusOf("민지")).toBe("FUNDING");
+    expect(statusOf("서준")).toBe("SURPRISE_FUNDING");
+  });
 });
 
 describe("friendHandlers - GET /api/friends/:friendId", () => {
@@ -58,5 +68,27 @@ describe("friendHandlers - GET /api/friends/:friendId", () => {
 
     expect(status).toBe(404);
     expect(body).toMatchObject({ success: false, data: null, error: { code: "FRIEND_NOT_FOUND" } });
+  });
+});
+
+describe("friendHandlers - GET /api/friends/:userId/public", () => {
+  const getPublicProfile = async (userId: number) => {
+    const response = await fetch(`${BASE_URL}/${userId}/public`);
+    return { status: response.status, body: await response.json() };
+  };
+
+  it("위시 목록 없이 위시 개수만 응답한다", async () => {
+    const { body } = await getPublicProfile(2);
+
+    expect(body.data.wishCount).toBe(2);
+    expect(body.data).not.toHaveProperty("wishes");
+    expect(body.data.fundings).toHaveLength(5);
+  });
+
+  it("목록에 없는 사용자는 404와 USER_NOT_FOUND 에러를 응답한다", async () => {
+    const { status, body } = await getPublicProfile(999);
+
+    expect(status).toBe(404);
+    expect(body).toMatchObject({ success: false, data: null, error: { code: "USER_NOT_FOUND" } });
   });
 });
