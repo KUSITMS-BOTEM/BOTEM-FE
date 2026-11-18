@@ -11,16 +11,17 @@ import StickerThumbsUp from "@/assets/icons/multicolor/sticker-thumbs-up.svg?rea
 
 export type Sticker = {
   id: string;
+  label: string;
   Icon: FunctionComponent<SVGProps<SVGSVGElement>>;
 };
 
 export const STICKERS: Sticker[] = [
-  { id: "heart", Icon: StickerHeart },
-  { id: "party-popper", Icon: StickerPartyPopper },
-  { id: "gift", Icon: StickerGift },
-  { id: "sparkles", Icon: StickerSparkles },
-  { id: "cake", Icon: StickerCake },
-  { id: "thumbs-up", Icon: StickerThumbsUp },
-  { id: "smile", Icon: StickerSmile },
-  { id: "hbd", Icon: StickerHbd },
+  { id: "heart", label: "하트", Icon: StickerHeart },
+  { id: "party-popper", label: "파티 폭죽", Icon: StickerPartyPopper },
+  { id: "gift", label: "선물", Icon: StickerGift },
+  { id: "sparkles", label: "반짝이", Icon: StickerSparkles },
+  { id: "cake", label: "케이크", Icon: StickerCake },
+  { id: "thumbs-up", label: "엄지 척", Icon: StickerThumbsUp },
+  { id: "smile", label: "웃는 얼굴", Icon: StickerSmile },
+  { id: "hbd", label: "생일 축하", Icon: StickerHbd },
 ];

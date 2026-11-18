@@ -10,7 +10,7 @@ import ProfileBox from "@/components/ProfileBox";
 import Tooltip from "@/components/Tooltip";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import { getClosedLabel } from "@/utils/funding/fundingProgress";
-import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
+import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
 import BotemPopup from "@/widgets/funding/BotemPopup";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
 import FundingGiftProofView from "@/widgets/funding/FundingGiftProofView";
@@ -18,7 +18,7 @@ import FundingMessage from "@/widgets/funding/FundingMessage";
 import FundingPasswordSheet from "@/widgets/funding/FundingPasswordSheet";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
 import type { FundingTransferAccount } from "@/widgets/funding/FundingTransferGuideSheet";
-import LetterWriteSheet, { type LetterWriteValues } from "@/widgets/letter-paper/LetterWriteSheet";
+import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
 import SampleProduct from "@/assets/images/samples/sample-product.png";
 import IconShare from "@/assets/icons/icon-share.svg?react";
 import IconDotVertical from "@/assets/icons/icon-dotvertical.svg?react";
@@ -55,14 +55,6 @@ const MOCK_FUNDING = {
   } satisfies FundingTransferAccount,
 };
 
-// TODO(API): 보탬 수정 조회 API가 나오면 이름·비밀번호로 찾은 내 편지로 교체한다
-const MOCK_MY_LETTER = {
-  text: "지유야 생일 축하해!\n올해도 같이 많이 웃자",
-  name: "민지",
-  color: "lime",
-  paperStyle: "vividSolid",
-} satisfies LetterWriteValues;
-
 // TODO: 공유·더보기 동작은 디자인이 정해지면 연결한다
 const noop = () => {};
 
@@ -74,8 +66,6 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
   const [isLetterOpen, setIsLetterOpen] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isEditLetterOpen, setIsEditLetterOpen] = useState(false);
-  const [isEditSavedOpen, setIsEditSavedOpen] = useState(false);
   const contributeAmount = useFundingContributionStore(state => state.amount);
   const { setAmount, setLetter, setPassword, reset } = useFundingContributionStore.getState();
   const [isExitOpen, setIsExitOpen] = useState(false);
@@ -99,7 +89,7 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
   // 금액 달성(마감)·기간 마감 모두 닫힌 펀딩이다
   const isClosed = getClosedLabel(funding) !== null;
 
-  if (funding.hasGiftProof) {
+  if (isClosed && funding.hasGiftProof) {
     return (
       <FundingGiftProofView
         contributorCount={funding.friends.length}
@@ -180,31 +170,10 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
           setIsContributeOpen(true);
         }}
       />
-      {/* TODO(API): 이름·비밀번호 확인(onSubmit) 뒤 동작은 보탬 수정 API가 정해지면 연결한다. 일치하는 보탬이 없으면(없는 이름·비밀번호) Toast나 Dialog로 안내하고 시트는 닫지 않아 재입력할 수 있게 한다 */}
-      <BotemEditSheet
+      <BotemEditFlow
         open={isEditOpen}
-        onClose={() => setIsEditOpen(false)}
-        onSubmit={() => setIsEditLetterOpen(true)}
-      />
-      {/* TODO(API): 저장(onSave)은 보탬 수정 API가 정해지면 연결하고, 성공했을 때만 완료 안내를 띄운다 */}
-      <LetterWriteSheet
-        open={isEditLetterOpen}
         recipientName={funding.hostName}
-        isLoggedIn={false}
-        initialValues={MOCK_MY_LETTER}
-        onClose={() => setIsEditLetterOpen(false)}
-        onSave={() => setIsEditSavedOpen(true)}
-      />
-      {/* 확인을 누르면 수정 시트를 모두 닫아 처음 진입했던 화면으로 돌아간다 */}
-      <Dialog
-        kind="alert"
-        open={isEditSavedOpen}
-        title="보탬을 수정했어요"
-        onConfirm={() => {
-          setIsEditSavedOpen(false);
-          setIsEditLetterOpen(false);
-          setIsEditOpen(false);
-        }}
+        onClose={() => setIsEditOpen(false)}
       />
       {/* 앞 단계 시트는 열어 둔 채 위에 다음 시트를 띄워(금액 → 편지 → 비밀번호), 이전을 누르면 직전 시트로 돌아온다 */}
       <FundingContributeSheet

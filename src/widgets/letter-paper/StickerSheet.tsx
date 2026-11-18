@@ -47,11 +47,11 @@ export default function StickerSheet({
             "grid cursor-grab touch-pan-x auto-cols-[40px] grid-flow-col grid-rows-[repeat(2,40px)] content-start gap-[14px] overflow-x-auto overflow-y-hidden pt-1 pb-3.5 active:cursor-grabbing",
             "[&::-webkit-scrollbar-thumb]:bg-semantic-text-quaternary/50 [&::-webkit-scrollbar]:h-[3px] [&::-webkit-scrollbar-thumb]:rounded-[2px] [&::-webkit-scrollbar-track]:bg-transparent",
           )}>
-          {stickers.map((sticker, index) => (
+          {stickers.map(sticker => (
             <li key={sticker.id} className="size-10">
               <button
                 type="button"
-                aria-label={`스티커 ${index + 1}`}
+                aria-label={sticker.label}
                 aria-pressed={sticker.id === selectedId}
                 onClick={() => onSelect(sticker)}
                 className={cn(

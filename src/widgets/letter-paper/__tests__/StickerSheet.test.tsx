@@ -28,7 +28,7 @@ describe("StickerSheet", () => {
     const onSelect = vi.fn();
     renderSheet({ onSelect });
 
-    await userEvent.click(screen.getByRole("button", { name: "스티커 3" }));
+    await userEvent.click(screen.getByRole("button", { name: STICKERS[2].label }));
 
     expect(onSelect).toHaveBeenCalledWith(STICKERS[2]);
   });
@@ -36,11 +36,11 @@ describe("StickerSheet", () => {
   it("선택된 스티커만 pressed 상태이다", () => {
     renderSheet({ selectedId: STICKERS[1].id });
 
-    expect(screen.getByRole("button", { name: "스티커 2" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: STICKERS[1].label })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    expect(screen.getByRole("button", { name: "스티커 1" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: STICKERS[0].label })).toHaveAttribute(
       "aria-pressed",
       "false",
     );
@@ -49,7 +49,7 @@ describe("StickerSheet", () => {
   it("마우스로 목록을 끌면 스티커가 선택되지 않고 단순 클릭은 선택된다", () => {
     const onSelect = vi.fn();
     renderSheet({ onSelect });
-    const sticker = screen.getByRole("button", { name: "스티커 1" });
+    const sticker = screen.getByRole("button", { name: STICKERS[0].label });
 
     fireEvent.pointerDown(sticker, { pointerType: "mouse", clientX: 0 });
     fireEvent.pointerMove(sticker, { pointerType: "mouse", clientX: 30 });
