@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { motion, MotionConfig } from "framer-motion";
 
 import IconButton from "@/components/IconButton";
@@ -12,14 +14,20 @@ type GiftVerificationCardBannerProps = {
   count: number;
   onVerify: () => void;
   onClose: () => void;
+  onShown?: () => void;
 };
 
 export default function GiftVerificationCardBanner({
   count,
   onVerify,
   onClose,
+  onShown,
 }: GiftVerificationCardBannerProps) {
   const { slot, card } = CARD_BANNER_MOTION;
+
+  useEffect(() => {
+    onShown?.();
+  }, [onShown]);
 
   return (
     <MotionConfig reducedMotion="user">

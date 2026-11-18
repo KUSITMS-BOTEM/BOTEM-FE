@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { giftVerificationService } from "@/apis/gift-verification/giftVerificationService";
+import { giftVerificationBannerQueryKey } from "@/hooks/queries/home/useGiftVerificationBannerQuery";
 import { giftVerificationTargetsQueryKey } from "@/hooks/queries/home/useGiftVerificationTargetsQuery";
 
 type CompleteGiftVerificationVariables = {
@@ -36,12 +37,14 @@ export const useCompleteGiftVerificationMutation = () => {
       });
     },
     onSuccess: () => {
-      // 배너(…/banner)와 목록이 같은 prefix라 함께 갱신된다. 인증 화면이 목록을 구독 중이라 지금 다시 받으면
-      // 대상이 사라져 홈 이동 전에 "인증할 선물이 없어요"가 깜빡이므로, 오래됨 표시만 하고 홈 진입 때 다시 받는다
+      // 인증 화면이 목록을 구독 중이라 지금 다시 받으면 대상이 사라져 홈 이동 전에 "인증할 선물이 없어요"가 깜빡이므로,
+      // 목록(배너도 같은 prefix)은 오래됨 표시만 하고 홈 진입 때 다시 받는다
       queryClient.invalidateQueries({
         queryKey: giftVerificationTargetsQueryKey,
         refetchType: "none",
       });
+      // 업로드 중 닫기로 홈에 먼저 와 있으면 배너가 이미 떠 있으므로 그때만 바로 다시 받는다 (인증 화면은 배너를 구독하지 않는다)
+      queryClient.invalidateQueries({ queryKey: giftVerificationBannerQueryKey });
       queryClient.invalidateQueries({ queryKey: ["home", "fundings"] });
     },
   });

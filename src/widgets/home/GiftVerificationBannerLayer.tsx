@@ -25,9 +25,8 @@ export default function GiftVerificationBannerLayer({
   const router = useRouter();
   const { data } = useGiftVerificationBannerQuery();
   const pendingCount = data?.visible ? data.pendingCount : 0;
-  const { visible, dismiss } = useGiftVerificationBannerSession({
+  const { visible, dismiss, markCardShown } = useGiftVerificationBannerSession({
     hasPending: pendingCount > 0,
-    variant,
   });
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -37,7 +36,9 @@ export default function GiftVerificationBannerLayer({
     <div className="relative w-full">
       {visible && variant === "pinned" && <GiftVerificationPinnedBanner {...bannerProps} />}
       {children(
-        visible && variant === "card" ? <GiftVerificationCardBanner {...bannerProps} /> : null,
+        visible && variant === "card" ? (
+          <GiftVerificationCardBanner {...bannerProps} onShown={markCardShown} />
+        ) : null,
       )}
       <GiftVerificationBottomSheet
         open={sheetOpen}

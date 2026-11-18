@@ -27,4 +27,18 @@ describe("GiftVerificationCardBanner", () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it("마운트되면 onShown을 한 번 호출한다", () => {
+    const onShown = vi.fn();
+    render(
+      <GiftVerificationCardBanner
+        count={3}
+        onVerify={vi.fn()}
+        onClose={vi.fn()}
+        onShown={onShown}
+      />,
+    );
+
+    expect(onShown).toHaveBeenCalledTimes(1);
+  });
 });

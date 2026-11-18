@@ -7,6 +7,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
 import type { GiftVerificationBannerVariant } from "@/hooks/useGiftVerificationBannerSession";
+import { hasShownGiftVerificationCardBanner } from "@/utils/home/giftVerificationBannerStorage";
 import GiftVerificationBannerLayer from "@/widgets/home/GiftVerificationBannerLayer";
 
 const push = vi.fn();
@@ -34,15 +35,18 @@ const mockBanner = (data: { visible: boolean; pendingCount: number }) => {
   );
 };
 
-const renderLayer = (variant: GiftVerificationBannerVariant = "card") => {
+const renderLayer = (
+  variant: GiftVerificationBannerVariant = "card",
+  children: (cardBanner: ReactNode) => ReactNode = cardBanner => (
+    <div data-testid="home">{cardBanner}</div>
+  ),
+) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
 
   return render(
-    <GiftVerificationBannerLayer variant={variant}>
-      {cardBanner => <div data-testid="home">{cardBanner}</div>}
-    </GiftVerificationBannerLayer>,
+    <GiftVerificationBannerLayer variant={variant}>{children}</GiftVerificationBannerLayer>,
     { wrapper },
   );
 };
@@ -63,6 +67,25 @@ describe("GiftVerificationBannerLayer", () => {
     renderLayer();
 
     expect(await screen.findByRole("button", { name: "인증하러 가기" })).toBeInTheDocument();
+  });
+
+  it("카드형 배너가 그려지면 이번 세션에 본 것으로 기록한다", async () => {
+    mockBanner({ visible: true, pendingCount: 2 });
+
+    renderLayer();
+
+    await screen.findByRole("button", { name: "인증하러 가기" });
+    expect(hasShownGiftVerificationCardBanner()).toBe(true);
+  });
+
+  it("홈이 로딩·오류라 카드를 그리지 않으면 본 것으로 기록하지 않는다", async () => {
+    mockBanner({ visible: true, pendingCount: 2 });
+
+    renderLayer("card", () => <div data-testid="home-loading" />);
+
+    // 배너 응답이 처리될 시간을 준 뒤에도 기록이 없어야 한다
+    await new Promise(resolve => setTimeout(resolve, 100));
+    expect(hasShownGiftVerificationCardBanner()).toBe(false);
   });
 
   it("variant가 pinned면 고정형 배너를 보여준다", async () => {

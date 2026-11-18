@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import {
   dismissGiftVerificationBanner,
@@ -18,27 +18,17 @@ export function useGiftVerificationBannerVariant(): GiftVerificationBannerVarian
   return variant;
 }
 
-export function useGiftVerificationBannerSession({
-  hasPending,
-  variant,
-}: {
-  hasPending: boolean;
-  variant: GiftVerificationBannerVariant;
-}) {
+export function useGiftVerificationBannerSession({ hasPending }: { hasPending: boolean }) {
   const [dismissed, setDismissed] = useState(
     () => typeof window !== "undefined" && isGiftVerificationBannerDismissed(),
   );
   const visible = hasPending && !dismissed;
-
-  // 인증 대기가 실제로 보였을 때만 "본 것"으로 기록해야 대기가 생긴 첫 진입에 카드형이 뜬다
-  useEffect(() => {
-    if (visible && variant === "card") markGiftVerificationCardBannerShown();
-  }, [visible, variant]);
 
   const dismiss = () => {
     dismissGiftVerificationBanner();
     setDismissed(true);
   };
 
-  return { visible, dismiss };
+  // 홈 조회가 로딩·실패면 카드가 그려지지 않으므로, 카드가 실제로 마운트됐을 때만 "본 것"으로 기록한다
+  return { visible, dismiss, markCardShown: markGiftVerificationCardBannerShown };
 }

@@ -112,7 +112,7 @@ describe("useCompleteGiftVerificationMutation", () => {
     expect(giftVerificationService.complete).not.toHaveBeenCalled();
   });
 
-  it("성공하면 인증 목록·배너를 다시 받지 않고 오래됨 표시만 해 인증 화면에서 대상이 사라지지 않게 한다", async () => {
+  it("성공하면 인증 목록은 다시 받지 않고 오래됨 표시만 해 인증 화면에서 대상이 사라지지 않게 한다", async () => {
     vi.mocked(giftVerificationService.createImageUploadUrl).mockResolvedValue(uploadUrlResult);
     vi.mocked(giftVerificationService.uploadImage).mockResolvedValue(undefined);
     vi.mocked(giftVerificationService.complete).mockResolvedValue(null);
@@ -137,5 +137,29 @@ describe("useCompleteGiftVerificationMutation", () => {
     expect(targetsFn).toHaveBeenCalledTimes(1);
     expect(queryClient.getQueryState(giftVerificationTargetsQueryKey)?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(giftVerificationBannerQueryKey)?.isInvalidated).toBe(true);
+  });
+
+  it("성공 시 홈에 배너가 떠 있으면(업로드 중 닫기로 먼저 돌아온 경우) 배너를 바로 다시 받는다", async () => {
+    vi.mocked(giftVerificationService.createImageUploadUrl).mockResolvedValue(uploadUrlResult);
+    vi.mocked(giftVerificationService.uploadImage).mockResolvedValue(undefined);
+    vi.mocked(giftVerificationService.complete).mockResolvedValue(null);
+    const queryClient = new QueryClient();
+    const bannerFn = vi.fn().mockResolvedValue({ visible: true, pendingCount: 1 });
+    await queryClient.fetchQuery({ queryKey: giftVerificationBannerQueryKey, queryFn: bannerFn });
+    // 홈처럼 배너를 구독 중인(active) 상태를 만든다
+    const unsubscribe = new QueryObserver(queryClient, {
+      queryKey: giftVerificationBannerQueryKey,
+      queryFn: bannerFn,
+      staleTime: Infinity,
+    }).subscribe(() => {});
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children);
+    const { result } = renderHook(() => useCompleteGiftVerificationMutation(), { wrapper });
+
+    result.current.mutate(variables);
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(bannerFn).toHaveBeenCalledTimes(2));
+    unsubscribe();
   });
 });

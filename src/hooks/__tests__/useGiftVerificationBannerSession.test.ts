@@ -50,37 +50,29 @@ describe("useGiftVerificationBannerVariant", () => {
 });
 
 describe("useGiftVerificationBannerSession", () => {
-  it("카드형이고 인증 대기가 있으면 보이며 표시 기록을 남긴다", () => {
-    const { result } = renderHook(() =>
-      useGiftVerificationBannerSession({ hasPending: true, variant: "card" }),
-    );
+  it("인증 대기가 있으면 보이지만, 카드가 그려지기 전이라 표시 기록은 남기지 않는다", () => {
+    const { result } = renderHook(() => useGiftVerificationBannerSession({ hasPending: true }));
 
     expect(result.current.visible).toBe(true);
+    expect(hasShownGiftVerificationCardBanner()).toBe(false);
+  });
+
+  it("markCardShown을 호출하면 표시 기록을 남긴다", () => {
+    const { result } = renderHook(() => useGiftVerificationBannerSession({ hasPending: true }));
+
+    act(() => result.current.markCardShown());
+
     expect(hasShownGiftVerificationCardBanner()).toBe(true);
   });
 
-  it("고정형이면 표시 기록을 새로 남기지 않는다", () => {
-    const { result } = renderHook(() =>
-      useGiftVerificationBannerSession({ hasPending: true, variant: "pinned" }),
-    );
-
-    expect(result.current.visible).toBe(true);
-    expect(hasShownGiftVerificationCardBanner()).toBe(false);
-  });
-
-  it("인증 대기가 없으면 보이지 않고 표시 기록도 남기지 않는다", () => {
-    const { result } = renderHook(() =>
-      useGiftVerificationBannerSession({ hasPending: false, variant: "card" }),
-    );
+  it("인증 대기가 없으면 보이지 않는다", () => {
+    const { result } = renderHook(() => useGiftVerificationBannerSession({ hasPending: false }));
 
     expect(result.current.visible).toBe(false);
-    expect(hasShownGiftVerificationCardBanner()).toBe(false);
   });
 
   it("dismiss를 호출하면 보이지 않는다", () => {
-    const { result } = renderHook(() =>
-      useGiftVerificationBannerSession({ hasPending: true, variant: "card" }),
-    );
+    const { result } = renderHook(() => useGiftVerificationBannerSession({ hasPending: true }));
 
     act(() => result.current.dismiss());
 
@@ -90,9 +82,7 @@ describe("useGiftVerificationBannerSession", () => {
   it("이번 세션에 닫았다면 다시 마운트돼도 보이지 않는다", () => {
     dismissGiftVerificationBanner();
 
-    const { result } = renderHook(() =>
-      useGiftVerificationBannerSession({ hasPending: true, variant: "pinned" }),
-    );
+    const { result } = renderHook(() => useGiftVerificationBannerSession({ hasPending: true }));
 
     expect(result.current.visible).toBe(false);
   });

@@ -46,7 +46,8 @@ export default function FundingGiftVerifyContainer() {
         </div>
       );
     }
-    if (isError) {
+    // 받아둔 목록이 있으면 백그라운드 재조회 실패로 작성 중인 사진·메시지를 날리지 않는다
+    if (isError && !data) {
       return (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
           <p className="text-semantic-text-secondary [font:var(--semantic-subtext-large)]">

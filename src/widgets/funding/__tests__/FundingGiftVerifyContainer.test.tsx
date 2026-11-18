@@ -82,6 +82,15 @@ describe("FundingGiftVerifyContainer", () => {
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
+  it("받아둔 목록이 있으면 다시 불러오기에 실패해도 작성 화면을 유지한다", () => {
+    mockQuery({ targets: [target], isError: true });
+
+    render(<FundingGiftVerifyContainer />);
+
+    expect(screen.getByRole("button", { name: "선물 도착 인증 보내기" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "다시 시도" })).not.toBeInTheDocument();
+  });
+
   it("해당 fundingId의 인증 대상이 없으면 '홈으로 가기'로 /home에 replace한다", async () => {
     mockQuery({ targets: [{ ...target, fundingId: 99 }] });
     render(<FundingGiftVerifyContainer />);
