@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 
 import { userService } from "@/apis/user/userService";
 import { queryClient, showErrorDialogThen } from "@/lib/queryClient";
+import { consumeLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 import { clearSignupFlow } from "@/utils/auth/signupFlowStorage";
 import { markWishPromptPending } from "@/utils/wish/wishPromptStorage";
 
@@ -21,7 +22,7 @@ export const useCompleteOnboardingMutation = () => {
       clearSignupFlow();
       // 보류: 온보딩 직후 home에서 보여줄 화면이 미정이라 플래그만 켜두고 현재는 읽는 곳이 없다
       markWishPromptPending();
-      router.replace("/home");
+      router.replace(consumeLoginReturnPath() ?? "/home");
     },
     onError: error => {
       queryClient.removeQueries({ queryKey: ["users", "me"] });

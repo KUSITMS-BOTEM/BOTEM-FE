@@ -20,7 +20,8 @@ vi.mock("@/hooks/mutations/auth/useKakaoLoginUriMutation", () => ({
   useKakaoLoginUriMutation: () => ({ mutate }),
 }));
 vi.mock("@/utils/auth/handleKakaoLoginClick", () => ({
-  handleKakaoLoginClick: (fn: unknown) => handleKakaoLoginClick(fn),
+  handleKakaoLoginClick: (fn: unknown, returnPath?: string) =>
+    handleKakaoLoginClick(fn, returnPath),
 }));
 
 const funding: FriendFundingResponse = {
@@ -118,12 +119,12 @@ describe("GuestFriendProfileContainer", () => {
     expect(screen.queryByText("로그인 없이 바로 보탤 수 있어요")).not.toBeInTheDocument();
   });
 
-  it("카카오 버튼을 누르면 카카오 로그인을 시작한다", async () => {
+  it("카카오 버튼을 누르면 로그인 후 이 친구 프로필로 돌아오도록 카카오 로그인을 시작한다", async () => {
     mockQuery({ data: profile() });
     render(<GuestFriendProfileContainer userId="5" />);
 
     await userEvent.click(screen.getByRole("button", { name: /카카오로 3초 만에 보기/ }));
 
-    expect(handleKakaoLoginClick).toHaveBeenCalledWith(mutate);
+    expect(handleKakaoLoginClick).toHaveBeenCalledWith(mutate, "/friends/5");
   });
 });

@@ -9,6 +9,7 @@ import { DEFAULT_ERROR_MESSAGE, ERROR_MESSAGES } from "@/constants/errorMessages
 import { queryClient as appQueryClient } from "@/lib/queryClient";
 import { ApiError } from "@/types/api";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
+import { setLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 import { setSignupFlow } from "@/utils/auth/signupFlowStorage";
 import { consumeWishPromptPending } from "@/utils/wish/wishPromptStorage";
 import type { RegisterOnboardingRequest } from "@/types/user/onboarding";
@@ -60,6 +61,19 @@ describe("useCompleteOnboardingMutation", () => {
     expect(sessionStorage.getItem("signupFlow")).toBeNull();
     expect(consumeWishPromptPending()).toBe(true);
     expect(replace).toHaveBeenCalledWith("/home");
+  });
+
+  it("성공 시 로그인 전에 저장한 복귀 경로가 있으면 /home 대신 그 경로로 이동한다", async () => {
+    vi.mocked(userService.completeOnboarding).mockResolvedValue(null);
+    setLoginReturnPath("/friends/5");
+    const { result } = renderHook(() => useCompleteOnboardingMutation(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate(body);
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(replace).toHaveBeenCalledWith("/friends/5");
   });
 
   it("성공 시 온보딩 전에 캐시된 내 프로필을 무효화해 다시 조회되게 한다", async () => {
