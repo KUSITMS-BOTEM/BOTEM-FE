@@ -2,8 +2,6 @@ import type { ComponentProps } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http, HttpResponse } from "msw";
-import { setupServer } from "msw/node";
 
 import FundingOpenCompleteSheet from "@/widgets/funding/FundingOpenCompleteSheet";
 
@@ -14,28 +12,14 @@ vi.mock("next/image", () => ({
   ),
 }));
 
-const profile = (name: string | null) => ({
-  nickname: "지유",
-  name,
-  profileImageUrl: "",
-  birthday: "10-13",
-  wishProfileUrl: "https://botem.site/@x",
-  kakaoConnected: true,
-  email: null,
-  joinedAt: "2026-11-10",
-});
+let profileName: string | null = null;
+vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
+  useMyProfileQuery: () => ({ data: { name: profileName } }),
+}));
 
-const server = setupServer();
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
-
-const mockProfile = (name: string | null) =>
-  server.use(
-    http.get("*/api/users/me/profile", () =>
-      HttpResponse.json({ success: true, data: profile(name), error: null }),
-    ),
-  );
+const mockProfile = (name: string | null) => {
+  profileName = name;
+};
 
 const wish = {
   productName: "소니 WH-1000XM5",
@@ -72,19 +56,18 @@ describe("FundingOpenCompleteSheet", () => {
     expect(screen.getByText("쉿! 민지님에겐 비밀! 위시 알림도 몰래 켰어요")).toBeInTheDocument();
   });
 
-  it("내 프로필 name이 없으면 카드에 내가 여는으로 보여준다", async () => {
+  it("내 프로필 name이 없으면 카드에 내가 여는으로 보여준다", () => {
     mockProfile(null);
     renderSheet();
 
-    expect(await screen.findByText("내가 여는")).toBeInTheDocument();
+    expect(screen.getByText("내가 여는")).toBeInTheDocument();
   });
 
-  it("내 프로필 name이 있으면 그 이름을 카드에 보여준다", async () => {
+  it("내 프로필 name이 있으면 그 이름을 카드에 보여준다", () => {
     mockProfile("이정민");
     renderSheet();
 
-    // CI 병렬 부하에서 프로필 응답이 기본 1초를 넘길 수 있어 여유를 둔다
-    expect(await screen.findByText("이정민가 여는", {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(screen.getByText("이정민가 여는")).toBeInTheDocument();
   });
 
   describe("공유하기", () => {
