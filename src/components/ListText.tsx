@@ -2,6 +2,7 @@ import { cn } from "@/utils/cn";
 
 type ListTextType = "default" | "price";
 type ListTextAlign = "left" | "right";
+type ListTextSize = "medium" | "small";
 
 type ListTextProps = {
   title: string;
@@ -10,12 +11,18 @@ type ListTextProps = {
   titleUp?: boolean;
   type?: ListTextType;
   align?: ListTextAlign;
+  size?: ListTextSize;
   className?: string;
 };
 
 const TITLE_FONT: Record<ListTextType, string> = {
   default: "[font:var(--semantic-label-medium)]",
   price: "[font:var(--semantic-label-large)]",
+};
+
+const DESCRIPTION_FONT: Record<ListTextSize, string> = {
+  medium: "[font:var(--semantic-subtext-large)]",
+  small: "[font:var(--semantic-subtext-medium)]",
 };
 
 export default function ListText({
@@ -25,11 +32,21 @@ export default function ListText({
   titleUp = false,
   type = "default",
   align = "left",
+  size = "medium",
   className,
 }: ListTextProps) {
-  const titleNode = <p className={cn("text-semantic-text-primary", TITLE_FONT[type])}>{title}</p>;
+  const isSmall = size === "small";
+  const titleNode = (
+    <p
+      className={cn(
+        "text-semantic-text-primary",
+        isSmall ? "whitespace-pre-line [font:var(--semantic-label-small)]" : TITLE_FONT[type],
+      )}>
+      {title}
+    </p>
+  );
   const descriptionNode = description && (
-    <p className="text-semantic-text-secondary whitespace-pre-line [font:var(--semantic-subtext-large)]">
+    <p className={cn("text-semantic-text-secondary whitespace-pre-line", DESCRIPTION_FONT[size])}>
       {description}
     </p>
   );
@@ -42,7 +59,7 @@ export default function ListText({
       className={cn(
         "flex min-w-0 flex-col gap-0.5 [letter-spacing:var(--letter-spacing-default)]",
         "[&>p]:overflow-hidden [&>p]:text-ellipsis",
-        !titleUp && "[&>p:first-child]:whitespace-nowrap",
+        !titleUp && !isSmall && "[&>p:first-child]:whitespace-nowrap",
         align === "right" && "text-right",
         className,
       )}>
