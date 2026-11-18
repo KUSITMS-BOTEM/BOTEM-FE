@@ -53,18 +53,28 @@ export default function ProductDetailView({
 
   return (
     <div className="flex flex-col">
-      <div className="relative aspect-square w-full shrink-0">
-        <Image src={productImageUrl} alt={productName} fill unoptimized className="object-cover" />
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-linear-to-b from-black/0 from-[84.444%] to-black/20 to-[160.69%]"
-        />
-        <Header
-          title="위시 상품"
-          leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: onBack }}
-          rightItems={rightItems}
-          className={`fixed inset-x-0 top-0 z-10 mx-auto w-full ${APP_MAX_WIDTH_CLASS} pt-[env(safe-area-inset-top)]`}
-        />
+      <Header
+        title="위시 상품"
+        leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: onBack }}
+        rightItems={rightItems}
+        className={`fixed inset-x-0 top-0 z-10 mx-auto w-full ${APP_MAX_WIDTH_CLASS} pt-[env(safe-area-inset-top)]`}
+      />
+      {/* fixed 헤더(64px + safe area)가 차지하던 자리를 비워 사진이 헤더 아래에서 시작하게 한다 */}
+      <div aria-hidden className="h-[calc(64px+env(safe-area-inset-top))] shrink-0" />
+      <div className="px-5">
+        <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-3xl">
+          <Image
+            src={productImageUrl}
+            alt={productName}
+            fill
+            unoptimized
+            className="object-cover"
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-linear-to-b from-black/0 from-[84.444%] to-black/20 to-[160.69%]"
+          />
+        </div>
       </div>
       <div className="flex flex-col gap-3 px-5 pt-5">
         <div className="flex w-full flex-col gap-2">
