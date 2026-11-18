@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import Button from "@/components/Button";
 import ListHeader from "@/components/ListHeader";
@@ -13,15 +13,17 @@ const COLLAPSED_COUNT = 2;
 
 type FriendFundingSectionProps = {
   fundings: FriendFundingResponse[];
+  notice?: ReactNode;
 };
 
-export default function FriendFundingSection({ fundings }: FriendFundingSectionProps) {
+export default function FriendFundingSection({ fundings, notice }: FriendFundingSectionProps) {
   const [expanded, setExpanded] = useState(false);
   const visibleFundings = expanded ? fundings : fundings.slice(0, COLLAPSED_COUNT);
 
   return (
     <section className="flex w-full flex-col gap-2">
       <ListHeader title={`진행중인 펀딩 ${fundings.length}개`} />
+      {notice}
       <ul className="flex w-full flex-col gap-2">
         {visibleFundings.map(funding => (
           <li key={funding.fundingId}>

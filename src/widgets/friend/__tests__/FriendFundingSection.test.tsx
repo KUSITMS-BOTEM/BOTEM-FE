@@ -27,6 +27,14 @@ describe("FriendFundingSection", () => {
     expect(screen.getByRole("heading", { name: "진행중인 펀딩 1개" })).toBeInTheDocument();
   });
 
+  it("notice를 넘기면 제목 아래에 보여준다", () => {
+    render(<FriendFundingSection fundings={fundings(1)} notice={<p>안내 문구</p>} />);
+
+    const heading = screen.getByRole("heading", { name: "진행중인 펀딩 1개" });
+    const notice = screen.getByText("안내 문구");
+    expect(heading.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("펀딩이 2개 이하면 모두 보여주고 전체보기 버튼은 없다", () => {
     render(<FriendFundingSection fundings={fundings(2)} />);
 

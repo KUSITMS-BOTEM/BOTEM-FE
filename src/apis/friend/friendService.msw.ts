@@ -144,4 +144,35 @@ export const friendHandlers = [
       error: null,
     });
   }),
+  // 비로그인 공개 프로필 — 친구 프로필과 같은 케이스 배정을 쓰고 위시는 개수만 내려준다
+  http.get("*/api/friends/:userId/public", async ({ params }) => {
+    await delay(500);
+    const userId = Number(params.userId);
+    const friend = [...upcoming, ...others].find(item => item.userId === userId);
+    const profileCase = PROFILE_CASES[userId];
+    if (!friend || !profileCase) {
+      return HttpResponse.json(
+        {
+          success: false,
+          data: null,
+          error: { code: "USER_NOT_FOUND", message: "사용자를 찾을 수 없습니다." },
+        },
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        userId: friend.userId,
+        name: friend.name,
+        profileImageUrl: friend.profileImageUrl,
+        birthday: friend.birthday,
+        birthdayDday: friend.birthdayDday,
+        fundings: createFundings(friend.name, profileCase.fundingCount),
+        wishCount: profileCase.wishCount,
+      },
+      error: null,
+    });
+  }),
 ];

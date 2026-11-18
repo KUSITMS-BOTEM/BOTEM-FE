@@ -70,3 +70,25 @@ describe("friendHandlers - GET /api/friends/:friendId", () => {
     expect(body).toMatchObject({ success: false, data: null, error: { code: "FRIEND_NOT_FOUND" } });
   });
 });
+
+describe("friendHandlers - GET /api/friends/:userId/public", () => {
+  const getPublicProfile = async (userId: number) => {
+    const response = await fetch(`${BASE_URL}/${userId}/public`);
+    return { status: response.status, body: await response.json() };
+  };
+
+  it("위시 목록 없이 위시 개수만 응답한다", async () => {
+    const { body } = await getPublicProfile(2);
+
+    expect(body.data.wishCount).toBe(2);
+    expect(body.data).not.toHaveProperty("wishes");
+    expect(body.data.fundings).toHaveLength(5);
+  });
+
+  it("목록에 없는 사용자는 404와 USER_NOT_FOUND 에러를 응답한다", async () => {
+    const { status, body } = await getPublicProfile(999);
+
+    expect(status).toBe(404);
+    expect(body).toMatchObject({ success: false, data: null, error: { code: "USER_NOT_FOUND" } });
+  });
+});

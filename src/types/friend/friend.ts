@@ -40,6 +40,11 @@ export type FriendWishResponse = {
   productUrl: string;
 };
 
+// 비로그인 공개 프로필은 위시 내용을 숨기고 개수만 받는다 (TODO(API): BE 스펙 확정 후 필드 맞추기)
+export type GuestFriendProfileResponse = Omit<FriendProfileResponse, "wishes"> & {
+  wishCount: number;
+};
+
 export type FriendProfileResponse = {
   userId: number;
   name: string;
