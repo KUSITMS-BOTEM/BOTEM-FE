@@ -78,6 +78,7 @@ export default function FundingOpenSheet({
   // 시트를 닫지 않고 이동만 한다. 이동이 끝나 이 화면이 언마운트될 때 함께 사라져 뒤 화면이 비치지 않는다
   const handleCompleteClose = () => {
     const query = recipientId ? `?friendId=${encodeURIComponent(recipientId)}` : "";
+    // TODO(API): 펀딩 생성 API 응답의 fundingId로 교체한다 (지금은 목 ID라 모든 펀딩이 같은 링크로 간다)
     router.push(`/funding/${MOCK_FUNDING_ID}${query}`);
   };
 

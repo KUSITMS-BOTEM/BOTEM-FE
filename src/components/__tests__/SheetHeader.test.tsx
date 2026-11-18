@@ -48,6 +48,26 @@ describe("SheetHeader", () => {
     expect(screen.getByRole("button", { name: "되돌리기" }).parentElement).toHaveClass("right-5");
   });
 
+  it("closeType이 close-left면 좌측에 닫기 버튼을 두고 rightAction은 우측 끝에 둔다", async () => {
+    const handleClose = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <SheetHeader
+        title=""
+        closeType="close-left"
+        onClose={handleClose}
+        rightAction={<button type="button">저장</button>}
+      />,
+    );
+
+    const close = screen.getByRole("button", { name: "닫기" });
+    expect(close).toHaveClass("left-2.5");
+    expect(screen.queryByRole("button", { name: "뒤로 가기" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "저장" }).parentElement).toHaveClass("right-5");
+    await user.click(close);
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
   it("handle 타입은 기본으로 닫기 버튼이 없다", () => {
     render(<SheetHeader title="타이틀" type="handle" onClose={vi.fn()} />);
 

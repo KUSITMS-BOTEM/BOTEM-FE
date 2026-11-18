@@ -39,6 +39,7 @@ type SurpriseReadySheetProps = {
 };
 
 // 서프라이즈가 마감되면 개설자에게 보이는 "선물 준비 완료" 화면
+// TODO: 아직 스토리·테스트에서만 쓰인다. 마감 후 개설자 진입점(홈 카드 등)이 정해지면 연결한다
 export default function SurpriseReadySheet({
   open,
   fundingId,
@@ -81,6 +82,7 @@ export default function SurpriseReadySheet({
     <OpenSheet
       open={open}
       title=""
+      ariaLabel="선물 준비 완료"
       closeType="close-left"
       onClose={onClose}
       headerAction={

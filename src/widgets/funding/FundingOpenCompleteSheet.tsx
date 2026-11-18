@@ -15,6 +15,7 @@ import type { FundingInfoValues } from "@/widgets/funding/FundingInfoStep";
 type FundingOpenCompleteSheetProps = {
   open: boolean;
   // surprise: 친구 몰래 연 직후 안내 / funding: 펀딩 상세에서 공유 카드를 다시 받을 때
+  // TODO: "funding" variant는 일반 펀딩 개설 플로우에 연결할 때 사용한다. 아직 스토리·테스트에서만 쓰이고 라우트·위젯에는 연결돼 있지 않다
   variant: "surprise" | "funding";
   recipientName: string;
   wish: FundingWish;
@@ -53,6 +54,7 @@ export default function FundingOpenCompleteSheet({
     <OpenSheet
       open={open}
       title={isSurprise ? "" : "공유 카드 다시 받기"}
+      ariaLabel="서프라이즈 시작"
       onClose={onClose}
       className={className}>
       {isSurprise && (

@@ -200,7 +200,7 @@ export default function FundingDetailView({
           setIsContributeOpen(true);
         }}
       />
-      {/* TODO(API): 처리 결과가 서버에 반영되면 팝업의 확인 대기 건수도 갱신해야 한다 */}
+      {/* TODO(API): 실제 API 연결 시 입금 처리 결과를 서버에 반영하고, 팝업의 확인 대기 건수(unconfirmedCount)와 프로필 알림 점도 그 값으로 갱신한다. 지금은 funding.deposits.length로 고정이라 처리 후에도 줄지 않는다 */}
       <DepositConfirmSheet
         open={isDepositOpen}
         deposits={funding.deposits}

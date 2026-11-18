@@ -15,7 +15,11 @@ vi.mock("@/hooks/queries/payout-account/usePayoutAccountsQuery", () => ({
   usePayoutAccountsQuery: vi.fn(() => ({ data: [] })),
 }));
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
+  useMyProfileQuery: () => ({ data: { name: "지유" } }),
+}));
 
 // jsdom 정적 이미지 처리와 dialog 미구현 API를 단순 대체한다
 vi.mock("next/image", () => ({
@@ -54,18 +58,33 @@ const mockWishes = () =>
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useWishesQuery>);
 
-function Harness({ initialWish }: { initialWish?: FundingWish }) {
+function Harness({
+  initialWish,
+  recipientName,
+  recipientId,
+}: {
+  initialWish?: FundingWish;
+  recipientName?: string;
+  recipientId?: string;
+}) {
   const [open, setOpen] = useState(true);
   return (
     <>
       <button onClick={() => setOpen(true)}>열기</button>
-      <FundingOpenSheet open={open} onClose={() => setOpen(false)} initialWish={initialWish} />
+      <FundingOpenSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        initialWish={initialWish}
+        recipientName={recipientName}
+        recipientId={recipientId}
+      />
     </>
   );
 }
 
 describe("FundingOpenSheet", () => {
   beforeEach(mockWishes);
+  beforeEach(() => push.mockClear());
   beforeEach(() => {
     mockPointer("coarse");
     vi.useFakeTimers({ toFake: ["Date"] });
@@ -198,8 +217,8 @@ describe("FundingOpenSheet", () => {
   });
 
   describe("펀딩 정보 → 계좌 정보 단계", () => {
-    const goToAccountStep = async () => {
-      render(<Harness />);
+    const goToAccountStep = async (recipient?: { recipientName: string; recipientId: string }) => {
+      render(<Harness {...recipient} />);
       await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
       // 필드 모션이 끝나면 자동 포커스가 걸려 타이핑 도중 포커스를 가져가므로, 먼저 포커스가 옮겨올 때까지 기다린다
       const amount = await screen.findByLabelText("목표 금액");
@@ -234,11 +253,11 @@ describe("FundingOpenSheet", () => {
     });
 
     describe("펀딩 열기 확인 시트", () => {
-      const openConfirm = async () => {
+      const openConfirm = async (recipient?: { recipientName: string; recipientId: string }) => {
         vi.mocked(usePayoutAccountsQuery).mockReturnValue({
           data: [{ accountNumber: "100159014821", bank: "TOSS_BANK", isDefault: true }],
         } as unknown as ReturnType<typeof usePayoutAccountsQuery>);
-        await goToAccountStep();
+        await goToAccountStep(recipient);
         await userEvent.click(await screen.findByRole("button", { name: /대표 계좌 사용하기/ }));
         await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
         await screen.findByText("이대로 펀딩을 열까요?");
@@ -261,6 +280,30 @@ describe("FundingOpenSheet", () => {
         expect(confirmSheet().getByText("목표 1,000원 · 마감 12월 25일")).toBeInTheDocument();
         expect(confirmSheet().getByText("생일 선물")).toBeInTheDocument();
         expect(confirmSheet().getByText("100159014821")).toBeInTheDocument();
+      });
+
+      it("recipientName이 있으면 확인 시트에서 펀딩 열기 뒤 개설 완료 화면을 열고, 닫으면 friendId를 달고 상세로 이동한다", async () => {
+        await openConfirm({ recipientName: "민지", recipientId: "7" });
+
+        await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
+        expect(await screen.findByText("서프라이즈가 시작됐어요!")).toBeInTheDocument();
+        expect(push).not.toHaveBeenCalled();
+
+        const completeSheet = screen
+          .getByText("서프라이즈가 시작됐어요!")
+          .closest("dialog") as HTMLElement;
+        await userEvent.click(within(completeSheet).getByRole("button", { name: "닫기" }));
+
+        expect(push).toHaveBeenCalledWith("/funding/1?friendId=7");
+      });
+
+      it("recipientName이 없으면 확인 시트에서 펀딩 열기를 눌러도 개설 완료 화면을 열지 않는다", async () => {
+        await openConfirm();
+
+        await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
+
+        expect(screen.queryByText("서프라이즈가 시작됐어요!")).not.toBeInTheDocument();
+        expect(push).not.toHaveBeenCalled();
       });
 
       it("펀딩 정보를 변경하면 확인 시트에 수정된 값이 반영된다", async () => {

@@ -22,6 +22,7 @@ export default function FundingDetailContainer({
   friendId,
 }: FundingDetailContainerProps) {
   const router = useRouter();
+  // TODO(API): 지금은 쿼리 friendId만으로 개설자로 판정해 URL을 직접 붙이면 개설자·잠금 우회가 된다. 펀딩 조회 API가 생기면 서버가 내려주는 viewer 역할로 교체한다
   // 개설 직후 이동만 friendId를 달고 들어오므로 그때만 개설자로 본다
   const role: ViewerRole = friendId ? "host" : MOCK_VIEWER_ROLE;
 
