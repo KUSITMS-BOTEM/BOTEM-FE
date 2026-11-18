@@ -92,28 +92,28 @@ describe("FundingCard", () => {
     expect(screen.queryByText(/^\+\d+$/)).not.toBeInTheDocument();
   });
 
-  it("default 타입에서 pendingCount가 양수면 '확인대기 N' 배지를 표시한다", () => {
+  it("default 타입에서 pendingCount가 양수면 '확인 대기 N' 배지를 표시한다", () => {
     render(<FundingCard {...baseProps} pendingCount={2} />);
 
-    expect(screen.getByText("확인대기 2")).toBeInTheDocument();
+    expect(screen.getByText("확인 대기 2")).toBeInTheDocument();
   });
 
   it("default 타입에서 pendingCount가 0이면 배지를 숨긴다", () => {
     render(<FundingCard {...baseProps} pendingCount={0} />);
 
-    expect(screen.queryByText(/확인대기/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/확인 대기/)).not.toBeInTheDocument();
   });
 
   it("default 타입에서는 선물 커버 문구가 없다", () => {
     render(<FundingCard {...baseProps} pendingCount={2} />);
 
-    expect(screen.queryByText(/펑/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/팡/)).not.toBeInTheDocument();
   });
 
   it("notification 타입이면 확인 대기 건수 안내 라벨을 표시한다", () => {
     render(<FundingCard {...baseProps} type="notification" pendingCount={3} />);
 
-    expect(screen.getByText("확인 대기 3건을 확인하고 터트려보아요!")).toBeInTheDocument();
+    expect(screen.getByText("확인 대기 3건을 확인하면 열어볼 수 있어요")).toBeInTheDocument();
   });
 
   it("complete 타입이면 '다 모였어요. 팡! 열어볼까요?' 라벨을 표시한다", () => {
@@ -126,10 +126,10 @@ describe("FundingCard", () => {
     render(<FundingCard {...baseProps} type="open" />);
 
     expect(screen.getByText("기간이 만료되었어요.")).toBeInTheDocument();
-    expect(screen.queryByText(/펑/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/팡/)).not.toBeInTheDocument();
   });
 
-  it("notification 타입에서도 프로필 '+4'와 '확인대기 3' 배지를 표시한다", () => {
+  it("notification 타입에서도 프로필 '+4'와 '확인 대기 3' 배지를 표시한다", () => {
     render(
       <FundingCard
         {...baseProps}
@@ -141,7 +141,7 @@ describe("FundingCard", () => {
     );
 
     expect(screen.getByText("+4")).toBeInTheDocument();
-    expect(screen.getByText("확인대기 3")).toBeInTheDocument();
+    expect(screen.getByText("확인 대기 3")).toBeInTheDocument();
   });
 
   it("open 타입에서는 프로필과 배지를 표시하지 않는다", () => {
@@ -156,7 +156,7 @@ describe("FundingCard", () => {
     );
 
     expect(screen.queryByText("+4")).not.toBeInTheDocument();
-    expect(screen.queryByText("확인대기 3")).not.toBeInTheDocument();
+    expect(screen.queryByText("확인 대기 3")).not.toBeInTheDocument();
   });
 
   it("isSurprise가 true면 '서프라이즈 펀딩' 아이콘을 표시한다", () => {

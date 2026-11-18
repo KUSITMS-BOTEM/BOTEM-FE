@@ -13,7 +13,7 @@ import IconLock from "@/assets/icons/icon-lock.svg?react";
 export type FundingCardType = "default" | "notification" | "complete" | "open";
 
 const FX_LABEL: Partial<Record<FundingCardType, (pendingCount: number) => string>> = {
-  notification: count => `확인 대기 ${count}건을 확인하고 터트려보아요!`,
+  notification: count => `확인 대기 ${count}건을 확인하면 열어볼 수 있어요`,
   complete: () => "다 모였어요. 팡! 열어볼까요?",
   open: () => "기간이 만료되었어요.",
 };
@@ -96,7 +96,7 @@ export default function FundingCard({
         {type !== "open" && pendingCount > 0 && (
           <Badge
             color="danger"
-            label={`확인대기 ${pendingCount}`}
+            label={`확인 대기 ${pendingCount}`}
             className="absolute bottom-0 left-4"
           />
         )}

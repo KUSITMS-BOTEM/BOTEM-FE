@@ -212,7 +212,7 @@ describe("HomeFundingTab", () => {
 
     expect(container).toBeEmptyDOMElement();
   });
-  it("확인대기 보탬이 있는 마감 카드를 누르면 해당 펀딩 id로 입금 확인 시트가 열린다", async () => {
+  it("확인 대기 보탬이 있는 마감 카드를 누르면 해당 펀딩 id로 입금 확인 시트가 열린다", async () => {
     mockQueries({
       data: fundingList([
         { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 2 },
@@ -316,7 +316,7 @@ describe("HomeFundingTab", () => {
     expect(fundingService.getReveal).toHaveBeenCalledTimes(1);
   });
 
-  it("확인대기가 없고 참여자가 있는 마감 카드(complete)를 누르면 공개 시트 없이 공개 화면으로 이동한다", async () => {
+  it("확인 대기가 없고 참여자가 있는 마감 카드(complete)를 누르면 공개 시트 없이 공개 화면으로 이동한다", async () => {
     mockQueries({
       data: fundingList([
         {

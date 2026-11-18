@@ -17,14 +17,14 @@ describe("FundingRevealSheet", () => {
   it("열리면 제목과 안내 문구를 보여준다", () => {
     render(<FundingRevealSheet open onClose={vi.fn()} onReveal={vi.fn()} />);
 
-    expect(screen.getByText("펀딩을 공개할까요?")).toBeInTheDocument();
-    expect(screen.getByText(/펀딩을 공개하면/)).toBeInTheDocument();
+    expect(screen.getByText("지금 열어볼까요?")).toBeInTheDocument();
+    expect(screen.getByText("친구들의 메시지를 한 번에 볼 수 있어요")).toBeInTheDocument();
   });
 
   it("닫혀 있으면 내용을 렌더하지 않는다", () => {
     render(<FundingRevealSheet open={false} onClose={vi.fn()} onReveal={vi.fn()} />);
 
-    expect(screen.queryByText("펀딩을 공개할까요?")).not.toBeInTheDocument();
+    expect(screen.queryByText("지금 열어볼까요?")).not.toBeInTheDocument();
   });
 
   it("접근성 이름이 '펀딩 공개'인 dialog로 열린다", () => {
@@ -44,12 +44,12 @@ describe("FundingRevealSheet", () => {
     expect(onReveal).not.toHaveBeenCalled();
   });
 
-  it("'펀딩 열기'를 누르면 onReveal만 호출한다", async () => {
+  it("'팡! 열어보기'를 누르면 onReveal만 호출한다", async () => {
     const onClose = vi.fn();
     const onReveal = vi.fn();
     render(<FundingRevealSheet open onClose={onClose} onReveal={onReveal} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
+    await userEvent.click(screen.getByRole("button", { name: "팡! 열어보기" }));
 
     expect(onReveal).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
