@@ -116,10 +116,10 @@ describe("FundingCard", () => {
     expect(screen.getByText("확인 대기 3건을 확인하고 터트려보아요!")).toBeInTheDocument();
   });
 
-  it("complete 타입이면 '전부 다 모였어요. 펑! 터트려볼까요?' 라벨을 표시한다", () => {
+  it("complete 타입이면 '다 모였어요. 팡! 열어볼까요?' 라벨을 표시한다", () => {
     render(<FundingCard {...baseProps} type="complete" />);
 
-    expect(screen.getByText("전부 다 모였어요. 펑! 터트려볼까요?")).toBeInTheDocument();
+    expect(screen.getByText("다 모였어요. 팡! 열어볼까요?")).toBeInTheDocument();
   });
 
   it("open 타입이면 '기간이 만료되었어요.' 라벨을 표시하고 선물 커버 문구는 없다", () => {
@@ -202,7 +202,7 @@ describe("FundingCard 효과 타입 탭 동작", () => {
     render(<FundingCard {...baseProps} type="complete" onClick={vi.fn()} />);
 
     expect(screen.getByRole("button", tapName)).toHaveAccessibleDescription(
-      "전부 다 모였어요. 펑! 터트려볼까요?",
+      "다 모였어요. 팡! 열어볼까요?",
     );
   });
 
