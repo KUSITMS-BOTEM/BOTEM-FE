@@ -9,6 +9,7 @@ import Header from "@/components/Header";
 import ProfileBox from "@/components/ProfileBox";
 import Tooltip from "@/components/Tooltip";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
+import { getClosedLabel } from "@/utils/funding/fundingProgress";
 import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
 import BotemPopup from "@/widgets/funding/BotemPopup";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
@@ -75,6 +76,8 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
   const contributeAmount = useFundingContributionStore(state => state.amount);
   const { setAmount, setLetter, setPassword, reset } = useFundingContributionStore.getState();
   const [isExitOpen, setIsExitOpen] = useState(false);
+  // 메시지 보태기는 금액·송금 없이 편지 → 비밀번호만 거친다
+  const [isMessageOnly, setIsMessageOnly] = useState(false);
   // 올리면 금액·편지 시트가 새로 마운트되어 입력값이 모두 초기화된다
   const [flowKey, setFlowKey] = useState(0);
   const closePopup = () => setIsPopupOpen(false);
@@ -90,6 +93,8 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
     setFlowKey(key => key + 1);
   };
   const remainingAmount = funding.targetAmount - funding.currentAmount;
+  // 금액 달성(마감)·기간 마감 모두 닫힌 펀딩이다
+  const isClosed = getClosedLabel(funding) !== null;
 
   return (
     <main className="flex min-h-dvh flex-col">
@@ -124,7 +129,11 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
           type="button"
           onClick={() => setIsPopupOpen(true)}
           className="flex cursor-pointer items-center gap-2 self-end">
-          <Tooltip>나도 {funding.hostName}님께 보태볼까요?</Tooltip>
+          <Tooltip>
+            {isClosed
+              ? "마감일까지 메시지로 보탤까요?"
+              : `나도 ${funding.hostName}님께 보태볼까요?`}
+          </Tooltip>
           <ProfileBox
             profiles={funding.participants.map(color => ({ color }))}
             extraCount={funding.extraParticipantCount}
@@ -138,18 +147,24 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
         unconfirmedCount={funding.unconfirmedCount}
         friends={funding.friends}
         ownerName={funding.hostName}
-        isClosed={remainingAmount <= 0}
+        isClosed={isClosed}
         onClose={closePopup}
         onUnconfirmedClick={noop}
         onEditClick={() => {
           closePopup();
           setIsEditOpen(true);
         }}
-        onMessageClick={noop}
+        onMessageClick={() => {
+          closePopup();
+          reset();
+          setIsMessageOnly(true);
+          setIsLetterOpen(true);
+        }}
         onContributeClick={() => {
           closePopup();
           // 뒤로가기 등으로 플로우를 중간에 떠나 남은 값이 있으면 비우고 시작한다
           reset();
+          setIsMessageOnly(false);
           setIsContributeOpen(true);
         }}
       />
@@ -211,6 +226,7 @@ export default function FundingShareContainer({ fundingId }: FundingShareContain
         hostName={funding.hostName}
         amount={contributeAmount}
         account={funding.account}
+        messageOnly={isMessageOnly}
         onClose={requestExit}
         onPrev={() => setIsPasswordOpen(false)}
         onComplete={password => {

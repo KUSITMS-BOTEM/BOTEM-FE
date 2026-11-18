@@ -34,6 +34,7 @@ type HarnessProps = {
   onPrev?: () => void;
   onComplete?: (password: string) => void;
   closeOnComplete?: boolean;
+  messageOnly?: boolean;
 };
 
 function Harness({
@@ -41,6 +42,7 @@ function Harness({
   onPrev = vi.fn(),
   onComplete = vi.fn(),
   closeOnComplete,
+  messageOnly,
 }: HarnessProps) {
   const [open, setOpen] = useState(true);
   return (
@@ -56,6 +58,7 @@ function Harness({
           setOpen(false);
         }}
         onPrev={onPrev}
+        messageOnly={messageOnly}
         onComplete={password => {
           onComplete(password);
           if (closeOnComplete) setOpen(false);
@@ -163,6 +166,21 @@ describe("FundingPasswordSheet", () => {
     expect(getInput()).toHaveValue("1234");
     expect(getComplete()).toBeEnabled();
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("메시지만 보태는 경우 버튼이 완료하기이고, 누르면 송금 안내 없이 바로 onComplete가 호출된다", async () => {
+    const user = userEvent.setup();
+    const onComplete = vi.fn();
+    render(<Harness messageOnly onComplete={onComplete} />);
+    expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
+    const complete = screen.getByRole("button", { name: "완료하기" });
+    expect(complete).toBeDisabled();
+
+    await user.type(getInput(), "1234");
+    await user.click(complete);
+
+    expect(onComplete).toHaveBeenCalledWith("1234");
+    expect(getGuideHeading()).not.toBeInTheDocument();
   });
 
   it("이전을 누르면 onPrev가 호출된다", async () => {
