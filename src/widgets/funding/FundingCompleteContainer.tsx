@@ -2,13 +2,14 @@
 
 import { AnimatePresence, motion, useReducedMotion, type Easing } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
 import ToastMessage from "@/components/ToastMessage";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
+import { useShareLink } from "@/hooks/useShareLink";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import FundingBragCard from "@/widgets/funding/FundingBragCard";
 import FundingCompleteConfetti from "@/widgets/funding/FundingCompleteConfetti";
@@ -34,7 +35,6 @@ const MOCK_COMPLETE = {
 // Figma 12.2초 타임라인(한 번만 재생): 진행률 장면 → 2.3초에 자랑 장면으로 전환 → 공유 버튼은 전환 2.26초 뒤에 등장
 const SHARE_SCENE_AT_MS = 2300;
 const CTA_AT_MS = 4560;
-const TOAST_DURATION_MS = 2000;
 
 const EASE: Easing = [0.87, 0, 0.13, 1];
 
@@ -50,8 +50,7 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
   const [isMessageOnly] = useState(() => useFundingContributionStore.getState().amount === 0);
   // 0: 진행률 장면, 1: 자랑 장면, 2: 자랑 장면 + 공유 버튼
   const [step, setStep] = useState(0);
-  const [toast, setToast] = useState<"success" | "fail" | null>(null);
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const { toast, share } = useShareLink();
   const scene = reduceMotion ? 2 : step;
   const isShareScene = scene >= 1;
 
@@ -64,35 +63,14 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
     return () => timers.forEach(clearTimeout);
   }, [reduceMotion]);
 
-  useEffect(() => () => clearTimeout(toastTimerRef.current), []);
-
   // 완료 페이지를 떠나면 보태기 플로우의 비밀번호 등 입력값을 메모리에서 지운다
   useEffect(() => () => useFundingContributionStore.getState().reset(), []);
 
-  const showToast = (result: "success" | "fail") => {
-    setToast(result);
-    clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = setTimeout(() => setToast(null), TOAST_DURATION_MS);
-  };
-
-  const handleShare = async () => {
-    const url = `${window.location.origin}/share/${fundingId}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: `${funding.hostName}에게 보탬`, url });
-        return;
-      } catch (error) {
-        // 사용자가 공유창을 닫은 경우다. 그 외 실패는 링크 복사로 넘어간다
-        if (error instanceof DOMException && error.name === "AbortError") return;
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      showToast("success");
-    } catch {
-      showToast("fail");
-    }
-  };
+  const handleShare = () =>
+    share({
+      title: `${funding.hostName}에게 보탬`,
+      url: `${window.location.origin}/share/${fundingId}`,
+    });
 
   return (
     <main className="relative flex min-h-dvh flex-col overflow-hidden pb-[calc(7rem+env(safe-area-inset-bottom))]">

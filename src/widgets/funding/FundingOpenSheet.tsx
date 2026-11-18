@@ -11,6 +11,7 @@ import FundingAccountStep, {
 } from "@/widgets/funding/FundingAccountStep";
 import FundingConfirmSheet from "@/widgets/funding/FundingConfirmSheet";
 import FundingInfoStep, { type FundingInfoValues } from "@/widgets/funding/FundingInfoStep";
+import FundingOpenCompleteSheet from "@/widgets/funding/FundingOpenCompleteSheet";
 import FundingWishSelectStep from "@/widgets/funding/FundingWishSelectStep";
 
 type FundingOpenSheetProps = {
@@ -18,6 +19,8 @@ type FundingOpenSheetProps = {
   onClose: () => void;
   // 있으면 위시 선택 단계를 건너뛰고 이 상품으로 펀딩 정보부터 시작한다 (친구 위시 서프라이즈)
   initialWish?: FundingWish;
+  // 서프라이즈 대상 친구 이름. 있으면 펀딩 열기를 확정한 뒤 개설 완료 화면을 보여준다
+  recipientName?: string;
   className?: string;
 };
 
@@ -29,6 +32,7 @@ export default function FundingOpenSheet({
   open,
   onClose,
   initialWish,
+  recipientName,
   className,
 }: FundingOpenSheetProps) {
   const [selectedWish, setSelectedWish] = useState<FundingWish | null>(initialWish ?? null);
@@ -39,6 +43,7 @@ export default function FundingOpenSheet({
   const [info, setInfo] = useState<FundingInfoValues | null>(null);
   const [account, setAccount] = useState<FundingAccountValues | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [completeOpen, setCompleteOpen] = useState(false);
   // 확인 시트를 연 채로 그 위에 띄우는 수정 시트
   const [editing, setEditing] = useState<Step | null>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
@@ -53,6 +58,7 @@ export default function FundingOpenSheet({
     setInfo(null);
     setAccount(null);
     setConfirmOpen(false);
+    setCompleteOpen(false);
     setEditing(null);
     setSyncVersion(0);
     onClose();
@@ -129,6 +135,8 @@ export default function FundingOpenSheet({
             info={info}
             account={account}
             onClose={() => setConfirmOpen(false)}
+            // TODO(API): 펀딩 생성 API가 정해지면 성공 뒤에 완료 화면을 연다
+            onConfirm={() => setCompleteOpen(true)}
             onEditInfo={() => setEditing("info")}
             onEditAccount={() => setEditing("account")}
           />
@@ -161,6 +169,17 @@ export default function FundingOpenSheet({
               />
             )}
           </OpenSheet>
+          {recipientName && (
+            <FundingOpenCompleteSheet
+              open={completeOpen}
+              variant="surprise"
+              recipientName={recipientName}
+              wish={selectedWish}
+              info={info}
+              onClose={handleClose}
+              className={className}
+            />
+          )}
         </>
       )}
     </>

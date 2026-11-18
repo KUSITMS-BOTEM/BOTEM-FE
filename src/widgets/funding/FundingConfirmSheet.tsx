@@ -16,6 +16,7 @@ type FundingConfirmSheetProps = {
   info: FundingInfoValues;
   account: FundingAccountValues;
   onClose: () => void;
+  onConfirm: () => void;
   onEditInfo: () => void;
   onEditAccount: () => void;
 };
@@ -26,6 +27,7 @@ export default function FundingConfirmSheet({
   info,
   account,
   onClose,
+  onConfirm,
   onEditInfo,
   onEditAccount,
 }: FundingConfirmSheetProps) {
@@ -36,7 +38,12 @@ export default function FundingConfirmSheet({
       open={open}
       title="펀딩 열기 확인"
       height="auto"
-      buttons={{ leftLabel: "미리보기", leftColor: "brand", rightLabel: "펀딩 열기" }}
+      buttons={{
+        leftLabel: "미리보기",
+        leftColor: "brand",
+        rightLabel: "펀딩 열기",
+        onRightClick: onConfirm,
+      }}
       onClose={onClose}>
       <div className="flex w-full flex-col gap-3">
         <Title
