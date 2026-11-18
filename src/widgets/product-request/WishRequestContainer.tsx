@@ -47,8 +47,8 @@ export default function WishRequestContainer() {
     requestProduct(
       { productUrl: productUrl.trim(), productName: productName.trim() || null },
       {
-        // 성공 시 이동할 전용 페이지가 있지만 디자인이 아직 나오지 않아 만들지 못했다 — 임시로 /wish/recommended로 이동한다
-        onSuccess: () => router.push("/wish/recommended"),
+        // 뒤로가기로 입력 폼에 돌아와 같은 요청을 다시 보내지 않도록 히스토리를 교체한다
+        onSuccess: () => router.replace("/wish/request/complete"),
         // inline 코드는 전역 Dialog가 띄우지 않으므로 여기서 Toast로 보여준다
         onError: error => {
           if (error instanceof ApiError && ERROR_MESSAGES[error.code]?.action === "inline") {
