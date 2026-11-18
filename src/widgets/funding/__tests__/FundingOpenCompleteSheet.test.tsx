@@ -83,7 +83,8 @@ describe("FundingOpenCompleteSheet", () => {
     mockProfile("이정민");
     renderSheet();
 
-    expect(await screen.findByText("이정민가 여는")).toBeInTheDocument();
+    // CI 병렬 부하에서 프로필 응답이 기본 1초를 넘길 수 있어 여유를 둔다
+    expect(await screen.findByText("이정민가 여는", {}, { timeout: 5000 })).toBeInTheDocument();
   });
 
   describe("공유하기", () => {
