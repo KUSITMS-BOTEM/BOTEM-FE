@@ -130,6 +130,12 @@ export default function LetterWriteSheet({
     openRef.current = open;
   }, [open]);
 
+  // 되돌리기(bodyKey 증가) 전에 시작한 사진 검증 결과를 버리기 위해, 선택 시점의 bodyKey와 최신 값을 비교한다
+  const bodyKeyRef = useRef(bodyKey);
+  useEffect(() => {
+    bodyKeyRef.current = bodyKey;
+  }, [bodyKey]);
+
   const toolOpen = activeTool !== null && activeTool !== "photo";
   const stickerOpen = activeTool === "sticker";
   const photoOpen = activeTool === "photo";
@@ -346,7 +352,8 @@ export default function LetterWriteSheet({
             hideEmptyIconSlots={photoOpen && !photo}
             // 검증 중 시트를 닫았다면 초기화된 편지에 사진이 되살아나지 않게 버린다
             onPhotoChange={file => {
-              if (openRef.current) setPhoto({ file, url: URL.createObjectURL(file) });
+              if (openRef.current && bodyKey === bodyKeyRef.current)
+                setPhoto({ file, url: URL.createObjectURL(file) });
             }}
             onPhotoRemove={() => setPhoto(null)}
             textSlot={

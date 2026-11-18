@@ -12,11 +12,13 @@ export default function ProductDetailViewSkeleton() {
 
   return (
     <div className="flex flex-col">
-      <Header
-        title="위시 상품"
-        leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
-        className={`fixed inset-x-0 top-0 z-10 mx-auto w-full ${APP_MAX_WIDTH_CLASS} pt-[env(safe-area-inset-top)]`}
-      />
+      <div
+        className={`bg-semantic-background-default fixed inset-x-0 top-0 z-10 mx-auto w-full ${APP_MAX_WIDTH_CLASS} pt-[env(safe-area-inset-top)]`}>
+        <Header
+          title="위시 상품"
+          leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
+        />
+      </div>
       <div aria-hidden className="h-[calc(64px+env(safe-area-inset-top))] shrink-0" />
       <div className="px-5">
         <div className="relative aspect-square w-full shrink-0">

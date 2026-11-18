@@ -24,6 +24,9 @@ const MOCK_MY_LETTER = {
 export default function BotemEditFlow({ open, recipientName, onClose }: BotemEditFlowProps) {
   const [isLetterOpen, setIsLetterOpen] = useState(false);
   const [isSavedOpen, setIsSavedOpen] = useState(false);
+  // 저장한 값을 다음 수정 세션의 기준으로 삼고, 확인 때 key를 올려 시트를 그 값으로 다시 마운트한다
+  const [letter, setLetter] = useState<LetterWriteValues>(MOCK_MY_LETTER);
+  const [letterKey, setLetterKey] = useState(0);
 
   return (
     <>
@@ -31,12 +34,16 @@ export default function BotemEditFlow({ open, recipientName, onClose }: BotemEdi
       <BotemEditSheet open={open} onClose={onClose} onSubmit={() => setIsLetterOpen(true)} />
       {/* TODO(API): 저장(onSave)은 보탬 수정 API가 정해지면 연결하고, 성공했을 때만 완료 안내를 띄운다 */}
       <LetterWriteSheet
+        key={letterKey}
         open={isLetterOpen}
         recipientName={recipientName}
         isLoggedIn={false}
-        initialValues={MOCK_MY_LETTER}
+        initialValues={letter}
         onClose={() => setIsLetterOpen(false)}
-        onSave={() => setIsSavedOpen(true)}
+        onSave={values => {
+          setLetter(values);
+          setIsSavedOpen(true);
+        }}
       />
       {/* 확인을 누르면 수정 시트를 모두 닫아 처음 진입했던 화면으로 돌아간다 */}
       <Dialog
@@ -46,6 +53,7 @@ export default function BotemEditFlow({ open, recipientName, onClose }: BotemEdi
         onConfirm={() => {
           setIsSavedOpen(false);
           setIsLetterOpen(false);
+          setLetterKey(key => key + 1);
           onClose();
         }}
       />
