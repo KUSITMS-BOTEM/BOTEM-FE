@@ -153,6 +153,11 @@ const NAME_SLOTS: NameSlot[] = [
   { from: [1.148746, -67.512711], peak: [0.605287, -195.835159], rotate: [2.896118, 0.163142] },
   { from: [-66.214745, -66.629288], peak: [-31.804752, -193.389175], rotate: [-3.46232, 0.130441] },
   { from: [9.120364, -39.017776], peak: [3.850141, -192.793213], rotate: [-3.393703, 0.036219] },
+  // 9번째부터는 Figma에 없는 슬롯이라 위 8개와 같은 규칙으로 계산했다(시작점은 중앙 자물쇠 근처, 정점은 카드 위쪽)
+  { from: [44, -11], peak: [18.5, -153], rotate: [-2.9, 0.1] },
+  { from: [-42, -11], peak: [-17.6, -153], rotate: [2.9, -0.1] },
+  { from: [46, 18], peak: [19.3, -134], rotate: [-3.1, 0.09] },
+  { from: [-44, 18], peak: [-18.5, -134], rotate: [3.1, -0.09] },
 ];
 
 const NAME_COLORS = [
@@ -162,11 +167,13 @@ const NAME_COLORS = [
   "bg-semantic-fill-blue-weak text-semantic-fill-blue",
 ];
 
-// 아랫줄부터 4·3·1명씩 쌓는 피라미드
+// 아랫줄부터 4·3·1명씩 쌓는 피라미드. 8명을 넘으면 그 위 빈 공간에 2명씩 더 얹는다
 const NAME_ROWS = [
   { first: 0, capacity: 4, top: "top-[252px]" },
   { first: 4, capacity: 3, top: "top-[223.5px]" },
   { first: 7, capacity: 1, top: "top-[195px]" },
+  { first: 8, capacity: 2, top: "top-[166.5px]" },
+  { first: 10, capacity: 2, top: "top-[138px]" },
 ];
 const MAX_REVEAL_NAMES = NAME_SLOTS.length;
 
@@ -226,7 +233,7 @@ const namePreset = (slot: number, vacancy: number): MotionPreset => {
 };
 
 type RevealMotionProps = {
-  // 보탠 친구 이름. 앞에서부터 8명까지만 칩으로 보여준다
+  // 보탠 친구 이름. 앞에서부터 12명까지만 칩으로 보여준다
   names: string[];
   className?: string;
 };

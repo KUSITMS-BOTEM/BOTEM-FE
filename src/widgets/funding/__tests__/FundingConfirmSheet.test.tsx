@@ -42,6 +42,7 @@ const renderSheet = (props = {}) =>
       info={info}
       account={account}
       onClose={vi.fn()}
+      onConfirm={vi.fn()}
       onEditInfo={vi.fn()}
       onEditAccount={vi.fn()}
       {...props}

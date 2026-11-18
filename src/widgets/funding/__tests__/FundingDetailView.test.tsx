@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
-import FundingShareContainer from "@/widgets/funding/FundingShareContainer";
+import FundingDetailView from "@/widgets/funding/FundingDetailView";
 
 const replaceMock = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: replaceMock }) }));
@@ -44,20 +44,34 @@ const goToPasswordSheet = async (user: ReturnType<typeof userEvent.setup>) => {
   await clickTopmost(user, "다음");
 };
 
-describe("FundingShareContainer", () => {
+describe("FundingDetailView", () => {
   afterEach(() => useFundingContributionStore.getState().reset());
 
   it("펀딩 제목과 '나도 보태볼까요?' 버튼을 보여준다", () => {
-    render(<FundingShareContainer fundingId="1" />);
+    render(<FundingDetailView fundingId="1" />);
 
     expect(screen.getByRole("heading", { level: 1, name: "지유의 생일" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /나도 지유님께 보태볼까요\?/ })).toBeInTheDocument();
   });
 
+  it("서프라이즈 개설자가 팝업의 '확인 대기' 행을 누르면 팝업을 닫지 않고 그 위에 입금 확인 시트가 열린다", async () => {
+    const user = userEvent.setup();
+    render(<FundingDetailView fundingId="1" variant="surprise" />);
+
+    await user.click(screen.getByRole("button", { name: /확인 대기 3건이 있어요/ }));
+    await user.click(screen.getByRole("button", { name: /통장에 들어왔는지 확인해주세요/ }));
+
+    const sheet = screen.getByRole("dialog", { name: "입금 확인" });
+    expect(sheet).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "내 보탬" })).toBeInTheDocument();
+    // top layer는 나중에 showModal한 다이얼로그가 위에 쌓인다
+    expect(vi.mocked(HTMLDialogElement.prototype.showModal).mock.contexts.at(-1)).toBe(sheet);
+  });
+
   it("기간이 마감되면 툴팁이 바뀌고 팝업에서 메세지 보태기만 누를 수 있다", () => {
     vi.useFakeTimers({ toFake: ["Date"], now: new Date("2027-01-02T00:00:00") });
     try {
-      render(<FundingShareContainer fundingId="1" />);
+      render(<FundingDetailView fundingId="1" />);
 
       fireEvent.click(screen.getByRole("button", { name: /축하 메시지만 보낼 수 있어요!/ }));
 
@@ -72,7 +86,7 @@ describe("FundingShareContainer", () => {
     vi.useFakeTimers({ toFake: ["Date"], now: new Date("2027-01-02T00:00:00") });
     try {
       const user = userEvent.setup();
-      render(<FundingShareContainer fundingId="1" />);
+      render(<FundingDetailView fundingId="1" />);
       await user.click(screen.getByRole("button", { name: /축하 메시지만 보낼 수 있어요!/ }));
       await user.click(screen.getByRole("button", { name: "메세지 보태기" }));
 
@@ -97,7 +111,7 @@ describe("FundingShareContainer", () => {
   });
 
   it("헤더에 공유·더보기 버튼이 있고 뒤로가기 버튼은 없다", () => {
-    render(<FundingShareContainer fundingId="1" />);
+    render(<FundingDetailView fundingId="1" />);
 
     expect(screen.getByRole("button", { name: "공유" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "더보기" })).toBeInTheDocument();
@@ -106,7 +120,7 @@ describe("FundingShareContainer", () => {
 
   it("보탬을 수정해 저장하면 완료 안내를 띄우고, 확인을 눌러야 수정 화면이 닫힌다", async () => {
     const user = userEvent.setup();
-    render(<FundingShareContainer fundingId="1" />);
+    render(<FundingDetailView fundingId="1" />);
     await user.click(screen.getByRole("button", { name: /나도 지유님께 보태볼까요\?/ }));
     await user.click(screen.getByRole("button", { name: /내 보탬 수정하기/ }));
     await user.type(await screen.findByRole("textbox", { name: "이름" }), "민지");
@@ -131,7 +145,7 @@ describe("FundingShareContainer", () => {
   });
 
   it("진행 카드와 사연(Message)을 함께 보여준다", () => {
-    render(<FundingShareContainer fundingId="1" />);
+    render(<FundingDetailView fundingId="1" />);
 
     expect(
       screen.getByRole("region", { name: "소니 WH-1000XM5 펀딩 진행 상황" }),
@@ -145,7 +159,7 @@ describe("FundingShareContainer", () => {
 
   it("편지 시트에서 다음을 누르면 비밀번호 입력 시트가 나타난다", async () => {
     const user = userEvent.setup();
-    render(<FundingShareContainer fundingId="1" />);
+    render(<FundingDetailView fundingId="1" />);
     expect(screen.queryByLabelText("비밀번호 4자리")).not.toBeInTheDocument();
 
     await goToPasswordSheet(user);
@@ -155,7 +169,7 @@ describe("FundingShareContainer", () => {
 
   it("비밀번호 시트에서 이전을 누르면 편지 시트로 돌아온다", async () => {
     const user = userEvent.setup();
-    render(<FundingShareContainer fundingId="1" />);
+    render(<FundingDetailView fundingId="1" />);
     await goToPasswordSheet(user);
     await screen.findByLabelText("비밀번호 4자리");
 
@@ -167,7 +181,7 @@ describe("FundingShareContainer", () => {
 
   it("비밀번호를 입력하고 보태러 가기를 누르면 입력한 금액이 담긴 송금 안내 시트가 나타난다", async () => {
     const user = userEvent.setup();
-    render(<FundingShareContainer fundingId="1" />);
+    render(<FundingDetailView fundingId="1" />);
     await goToPasswordSheet(user);
 
     await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
@@ -179,7 +193,7 @@ describe("FundingShareContainer", () => {
 
   it("송금 안내 시트에서 완료하기를 누르면 완료 페이지로 replace 이동한다", async () => {
     const user = userEvent.setup();
-    render(<FundingShareContainer fundingId="1" />);
+    render(<FundingDetailView fundingId="1" />);
     await goToPasswordSheet(user);
     await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
     await user.click(screen.getByRole("button", { name: "보태러 가기" }));
@@ -193,7 +207,7 @@ describe("FundingShareContainer", () => {
 
   it("완료하기를 누르면 금액·편지·비밀번호가 스토어에 모두 담겨 있다", async () => {
     const user = userEvent.setup();
-    render(<FundingShareContainer fundingId="1" />);
+    render(<FundingDetailView fundingId="1" />);
     await goToPasswordSheet(user);
     await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
     await user.click(screen.getByRole("button", { name: "보태러 가기" }));
@@ -217,7 +231,7 @@ describe("FundingShareContainer", () => {
 
     it("편지 시트의 X를 누르면 나가기 확인 Dialog가 뜨고, 아니오를 누르면 Dialog만 닫힌다", async () => {
       const user = userEvent.setup();
-      render(<FundingShareContainer fundingId="1" />);
+      render(<FundingDetailView fundingId="1" />);
       await goToPasswordSheet(user);
       await screen.findByLabelText("비밀번호 4자리");
       await clickTopmost(user, "이전");
@@ -238,7 +252,7 @@ describe("FundingShareContainer", () => {
 
     it("예를 누르면 열린 시트가 모두 닫히고, 다시 시작하면 입력이 비어 있다", async () => {
       const user = userEvent.setup();
-      render(<FundingShareContainer fundingId="1" />);
+      render(<FundingDetailView fundingId="1" />);
       await goToPasswordSheet(user);
       await screen.findByLabelText("비밀번호 4자리");
 
@@ -258,7 +272,7 @@ describe("FundingShareContainer", () => {
 
     it("예를 누르면 스토어에 쌓인 입력값이 초기화된다", async () => {
       const user = userEvent.setup();
-      render(<FundingShareContainer fundingId="1" />);
+      render(<FundingDetailView fundingId="1" />);
       await goToPasswordSheet(user);
       await screen.findByLabelText("비밀번호 4자리");
       expect(useFundingContributionStore.getState().amount).toBe(50000);

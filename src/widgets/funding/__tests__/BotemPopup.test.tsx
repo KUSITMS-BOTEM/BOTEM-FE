@@ -55,6 +55,27 @@ describe("BotemPopup 미확인 행", () => {
   });
 });
 
+describe("BotemPopup 개설자 확인 대기 행", () => {
+  it("개설자에게 미확인이 있으면 '확인 대기 n건'을 보여주고 클릭할 수 있다", () => {
+    const { onUnconfirmedClick } = renderPopup({ isHost: true });
+
+    expect(screen.getByText("확인 대기 3건")).toBeInTheDocument();
+    expect(screen.getByText("통장에 들어왔는지 확인해주세요")).toBeInTheDocument();
+    expect(screen.queryByText(/내 보탬 · 미확인/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /확인 대기 3건/ }));
+    expect(onUnconfirmedClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("개설자에게 미확인이 없으면 '확인 대기 0건'과 안내 문구를 보여주고 클릭할 수 없다", () => {
+    renderPopup({ isHost: true, unconfirmedCount: 0 });
+
+    expect(screen.getByText("확인 대기 0건")).toBeInTheDocument();
+    expect(screen.getByText("새로 확인할 보탬이 없어요")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /확인 대기/ })).not.toBeInTheDocument();
+  });
+});
+
 describe("BotemPopup 마감 상태", () => {
   it("마감 전이면 수정 행과 하단 버튼이 동작한다", () => {
     const { onEditClick, onMessageClick, onContributeClick } = renderPopup();

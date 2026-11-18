@@ -43,12 +43,24 @@ describe("RevealMotion", () => {
     expect(rowSizes(container)).toEqual([4, 3, 1]);
   });
 
-  it("이름이 8명을 넘으면 앞에서 8명까지만 보여준다", () => {
-    render(<RevealMotion names={makeNames(10)} />);
+  it("이름이 9명이면 피라미드 위에 칩 한 줄을 더 얹는다", () => {
+    const { container } = render(<RevealMotion names={makeNames(9)} />);
 
-    expect(screen.getAllByRole("listitem")).toHaveLength(8);
-    expect(screen.getByText("친구8")).toBeInTheDocument();
-    expect(screen.queryByText("친구9")).not.toBeInTheDocument();
+    expect(rowSizes(container)).toEqual([4, 3, 1, 1]);
+  });
+
+  it("이름이 12명이면 피라미드 위에 2명씩 두 줄을 더 얹는다", () => {
+    const { container } = render(<RevealMotion names={makeNames(12)} />);
+
+    expect(rowSizes(container)).toEqual([4, 3, 1, 2, 2]);
+  });
+
+  it("이름이 12명을 넘으면 앞에서 12명까지만 보여준다", () => {
+    render(<RevealMotion names={makeNames(15)} />);
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(12);
+    expect(screen.getByText("친구12")).toBeInTheDocument();
+    expect(screen.queryByText("친구13")).not.toBeInTheDocument();
   });
 
   it("모션 감소 설정이 꺼져 있으면 aria-hidden 컨페티 레이어를 렌더한다", () => {

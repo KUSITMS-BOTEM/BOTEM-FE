@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { motion, type Easing, type TargetAndTransition } from "framer-motion";
 
 import Badge from "@/components/Badge";
@@ -20,13 +21,22 @@ const TITLE_DELAY = 0.706;
 const CHIP_DELAY = 1.105;
 const GIFT_FLOAT = { delay: 1.105, duration: 2, ease: [0.37, 0, 0.63, 1] as Easing };
 
-type FundingBragCardProps = {
-  giverName: string;
-  recipientName: string;
+// 기본은 보탠 사람 문구. 다른 화면(서프라이즈 준비 완료 등)은 title·ariaLabel로 문구를 직접 정한다
+type BragCardCopy =
+  | { giverName: string; recipientName: string; title?: never; ariaLabel?: never }
+  | { title: string; ariaLabel: string; giverName?: never; recipientName?: never };
+
+type FundingBragCardProps = BragCardCopy & {
   productImageUrl: string;
   productName: string;
   /** "YYYY-MM-DD" */
   deadline: string;
+  /** 있으면 D-day 배지 자리에 대신 보여준다 */
+  badge?: ReactNode;
+  /** 우측 상단 프로필 아이콘 */
+  showProfile?: boolean;
+  /** 상품 이름 아래 줄을 마감일 문구 대신 바꾼다 */
+  productCaption?: string;
   /** 모션 감소 설정이면 등장 모션 없이 완성된 모습으로 그린다 */
   reduceMotion: boolean;
 };
@@ -34,17 +44,24 @@ type FundingBragCardProps = {
 export default function FundingBragCard({
   giverName,
   recipientName,
+  title,
+  ariaLabel,
   productImageUrl,
   productName,
   deadline,
+  badge,
+  showProfile = true,
+  productCaption,
   reduceMotion,
 }: FundingBragCardProps) {
   const initial = (value: TargetAndTransition) => (reduceMotion ? false : value);
   const dDay = getDDayLabel(deadline);
+  const badgeNode =
+    badge ?? (dDay && <Badge color="brand" variant="weak" size="medium" label={dDay} />);
 
   return (
     <section
-      aria-label={`${giverName}님이 ${recipientName}님에게 보탠 내용`}
+      aria-label={ariaLabel ?? `${giverName}님이 ${recipientName}님에게 보탠 내용`}
       className="relative flex h-full w-full flex-col px-3 pt-[22px] pb-3">
       <div
         aria-hidden
@@ -64,9 +81,9 @@ export default function FundingBragCard({
               y: { delay: TITLE_DELAY, duration: 0.35, ease: "linear" },
             }}
             className="text-semantic-text-strong [letter-spacing:var(--letter-spacing-default)] whitespace-pre-line [font:var(--semantic-title-a2-z-medium)]">
-            {`${giverName}가 ${recipientName}에게\n보탰어요!`}
+            {title ?? `${giverName}가 ${recipientName}에게\n보탰어요!`}
           </motion.p>
-          {dDay && (
+          {badgeNode && (
             <motion.div
               initial={initial({ opacity: 0, scale: 0.3 })}
               animate={{ opacity: 1, scale: 1 }}
@@ -74,18 +91,20 @@ export default function FundingBragCard({
                 opacity: { delay: CHIP_DELAY, duration: 0.1, ease: "linear" },
                 scale: { delay: CHIP_DELAY, duration: 0.25, ease: "linear" },
               }}>
-              <Badge color="brand" variant="weak" size="medium" label={dDay} />
+              {badgeNode}
             </motion.div>
           )}
         </div>
-        <motion.div
-          aria-hidden
-          initial={initial({ scale: 0.6 })}
-          animate={{ scale: [0.6, 1.08, 1] }}
-          transition={PROFILE_TRANSITION}
-          className="size-9 shrink-0">
-          <ProfileOrange className="size-full" />
-        </motion.div>
+        {showProfile && (
+          <motion.div
+            aria-hidden
+            initial={initial({ scale: 0.6 })}
+            animate={{ scale: [0.6, 1.08, 1] }}
+            transition={PROFILE_TRANSITION}
+            className="size-9 shrink-0">
+            <ProfileOrange className="size-full" />
+          </motion.div>
+        )}
       </div>
       <div aria-hidden className="relative w-full flex-1">
         <div className="absolute top-[calc(50%+10.86px)] left-[calc(50%+0.35px)] size-[280.69px] -translate-x-1/2 -translate-y-1/2">
@@ -101,6 +120,7 @@ export default function FundingBragCard({
         productImageUrl={productImageUrl}
         productName={productName}
         deadline={deadline}
+        caption={productCaption}
         className="bg-semantic-fill-default text-semantic-text-strong [&_p:last-child]:text-semantic-text-secondary relative drop-shadow-[0_8px_12px_rgb(26_26_46/0.06)]"
       />
     </section>

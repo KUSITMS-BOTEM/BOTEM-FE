@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 import { cn } from "@/utils/cn";
 import List from "@/components/List";
 import IconErrorCircleFill from "@/assets/icons/icon-errorcirclefill.svg?react";
@@ -5,6 +6,8 @@ import IconErrorCircleFill from "@/assets/icons/icon-errorcirclefill.svg?react";
 type PendingContributionItemProps = {
   senderName: string;
   depositMethod: string;
+  leading?: ReactNode;
+  right?: ReactNode;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   className?: string;
@@ -13,6 +16,8 @@ type PendingContributionItemProps = {
 export default function PendingContributionItem({
   senderName,
   depositMethod,
+  leading = <IconErrorCircleFill aria-hidden />,
+  right,
   checked,
   onCheckedChange,
   className,
@@ -34,9 +39,10 @@ export default function PendingContributionItem({
         className="sr-only"
       />
       <List
-        leading={<IconErrorCircleFill aria-hidden />}
+        leading={leading}
         title={`${senderName}의 보탬`}
         description={depositMethod}
+        right={right}
         className="py-0"
       />
     </label>

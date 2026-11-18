@@ -25,6 +25,8 @@ type BotemPopupProps = {
   friends: BotemPopupFriend[];
   ownerName: string;
   isClosed: boolean;
+  // 펀딩(서프라이즈) 개설자가 보는 팝업이면 첫 행을 '확인 대기'로 표시한다
+  isHost?: boolean;
   onClose: () => void;
   onUnconfirmedClick: () => void;
   onEditClick: () => void;
@@ -38,6 +40,7 @@ export default function BotemPopup({
   friends,
   ownerName,
   isClosed,
+  isHost = false,
   onClose,
   onUnconfirmedClick,
   onEditClick,
@@ -97,11 +100,17 @@ export default function BotemPopup({
                 }
               />
             }
-            title={`내 보탬 · 미확인 ${unconfirmedCount}개`}
+            title={
+              isHost ? `확인 대기 ${unconfirmedCount}건` : `내 보탬 · 미확인 ${unconfirmedCount}개`
+            }
             description={
               hasUnconfirmed
-                ? `${ownerWithParticle} 못 받은거 같아요. 확인해 볼까요?`
-                : `${ownerWithParticle} 전부 확인했어요`
+                ? isHost
+                  ? "통장에 들어왔는지 확인해주세요"
+                  : `${ownerWithParticle} 못 받은거 같아요. 확인해 볼까요?`
+                : isHost
+                  ? "새로 확인할 보탬이 없어요"
+                  : `${ownerWithParticle} 전부 확인했어요`
             }
             onClick={hasUnconfirmed ? onUnconfirmedClick : undefined}
           />

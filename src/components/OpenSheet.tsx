@@ -10,6 +10,8 @@ import { SLIDE_TRANSITION } from "@/constants/motion";
 export type OpenSheetProps = {
   open: boolean;
   title: string;
+  // title이 비어 화면에 제목이 없을 때 다이얼로그 이름으로 쓴다
+  ariaLabel?: string;
   onClose: () => void;
   slideOutOnClose?: boolean;
   slideInOnOpen?: boolean;
@@ -27,6 +29,7 @@ const NO_TRANSITION = { duration: 0 } as const;
 export default function OpenSheet({
   open,
   title,
+  ariaLabel,
   onClose,
   slideOutOnClose = false,
   slideInOnOpen = true,
@@ -79,7 +82,8 @@ export default function OpenSheet({
   return (
     <dialog
       ref={dialogRef}
-      aria-labelledby={titleId}
+      aria-labelledby={title ? titleId : undefined}
+      aria-label={title ? undefined : ariaLabel}
       className="m-0 border-none bg-transparent p-0 outline-none backdrop:bg-transparent">
       <MotionConfig reducedMotion="user">
         <AnimatePresence onExitComplete={() => dialogRef.current?.close()}>
