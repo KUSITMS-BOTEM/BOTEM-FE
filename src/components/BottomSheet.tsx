@@ -46,7 +46,7 @@ const DEFAULT_ENTER_TRANSITION: BottomSheetEnterTransition = {
 // Tailwind가 클래스명을 정적으로 스캔하므로 두 값을 완전한 리터럴 문자열로 각각 써야 한다(템플릿 리터럴 조립 금지).
 // max는 풀스크린 취급 — safe-area만 피하고 상단까지 꽉 채우며, 상단 모서리도 둥글게 하지 않는다.
 // -bottom-6(24px)만큼 내려가는 걸 상쇄하기 위해 높이에 24px을 더해 상단이 safe-area 바로 아래에 오게 한다.
-// auto는 카드형이라 상단에 56px(safe-area + 32px) 여백을 남기고 radius를 유지한다.
+// auto는 카드형이라 상단에 safe-area + 56px(높이 제한 32px + -bottom-6 오프셋 24px) 이상의 여백을 남기고 radius를 유지한다.
 const SHEET_HEIGHT_MAX = "h-[calc(100dvh_-_env(safe-area-inset-top)_+_24px)]";
 const SHEET_HEIGHT_AUTO =
   "rounded-t-xxx-large max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_32px)]";

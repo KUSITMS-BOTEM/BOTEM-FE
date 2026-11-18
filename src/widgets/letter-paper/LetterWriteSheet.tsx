@@ -147,7 +147,11 @@ export default function LetterWriteSheet({
     // 외부 리소스(object URL)의 수명과 state를 맞추는 동기화라 effect 안 setState가 불가피하다
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPhotoPreview({ file: photo, url });
-    return () => URL.revokeObjectURL(url);
+    return () => {
+      URL.revokeObjectURL(url);
+      // 해제된 URL이 남아 같은 File로 되돌렸을 때 재사용되지 않게 비운다
+      setPhotoPreview(undefined);
+    };
   }, [photo]);
 
   // 짧은 화면에서 툴 영역이 하단 CTA에 가려지면 스크롤을 내리고, 이미 보이면 그대로 둔다(nearest)
