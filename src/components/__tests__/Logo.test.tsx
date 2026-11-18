@@ -23,6 +23,20 @@ describe("Logo", () => {
     expect(screen.getByRole("img")).toHaveClass("flex", "items-center", "gap-1", "custom-logo");
   });
 
+  it("color=gray면 path fill을 회색 토큰으로 덮어쓰고, 기본값이면 원래 색을 유지한다", () => {
+    const { rerender } = render(<Logo />);
+    expect(screen.getByRole("img")).not.toHaveClass("[&_path]:fill-semantic-text-quaternary");
+
+    rerender(<Logo color="gray" />);
+    expect(screen.getByRole("img")).toHaveClass("[&_path]:fill-semantic-text-quaternary");
+  });
+
+  it("size=medium이면 작은 간격을 쓴다", () => {
+    render(<Logo size="medium" />);
+
+    expect(screen.getByRole("img")).toHaveClass("gap-0.5");
+  });
+
   it("className이 없어도 기본 클래스가 유지된다", () => {
     render(<Logo />);
 

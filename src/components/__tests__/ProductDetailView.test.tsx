@@ -21,6 +21,18 @@ describe("ProductDetailView", () => {
     expect(screen.getByText("애플")).toBeInTheDocument();
   });
 
+  it("productImageUrl이 없으면 상품 이미지를 렌더하지 않는다", () => {
+    render(<ProductDetailView {...baseProps} productImageUrl={undefined} />);
+
+    expect(screen.queryByRole("img", { name: "에어팟 프로" })).not.toBeInTheDocument();
+  });
+
+  it("하단 쿠팡 파트너스 안내에 보탬 로고를 보여준다", () => {
+    render(<ProductDetailView {...baseProps} />);
+
+    expect(screen.getByRole("img", { name: "보탬" })).toBeInTheDocument();
+  });
+
   it("price를 ko-KR 천 단위 쉼표와 '원'으로 표시한다", () => {
     render(<ProductDetailView {...baseProps} />);
 
