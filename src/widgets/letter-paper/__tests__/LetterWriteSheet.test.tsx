@@ -397,7 +397,7 @@ describe("LetterWriteSheet", () => {
       await userEvent.click(screen.getByRole("button", { name: "다음" }));
 
       expect(onNext).toHaveBeenCalledWith(
-        expect.objectContaining({ largeSticker: expect.objectContaining({ id: "sticker-1" }) }),
+        expect.objectContaining({ largeSticker: expect.objectContaining({ id: "heart" }) }),
       );
       expect(onNext.mock.calls[0][0]).not.toHaveProperty("smallSticker");
     });

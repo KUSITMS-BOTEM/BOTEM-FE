@@ -1,8 +1,8 @@
 import { STICKERS } from "@/widgets/letter-paper/stickers";
 
 describe("STICKERS", () => {
-  it("스크롤 레이아웃 확인용으로 20개이다", () => {
-    expect(STICKERS).toHaveLength(20);
+  it("디자인 시안의 스티커 8개이다", () => {
+    expect(STICKERS).toHaveLength(8);
   });
 
   it("모든 id가 중복 없이 유일하다", () => {
