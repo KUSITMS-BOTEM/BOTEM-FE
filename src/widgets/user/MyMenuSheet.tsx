@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
+import Asset from "@/components/Asset";
 import List from "@/components/List";
 import ListHeader from "@/components/ListHeader";
 import CloseSheet from "@/components/CloseSheet";
@@ -26,9 +27,22 @@ import IconFriend from "@/assets/icons/multicolor/icon-friend.svg?react";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 import IconNotification from "@/assets/icons/multicolor/icon-notification.svg?react";
 import IconTerms from "@/assets/icons/multicolor/icon-terms.svg?react";
+import IconRight from "@/assets/icons/icon-right.svg?react";
 
-// Figma의 메뉴 우측 텍스트 버튼은 보조 텍스트 색이라 TextButton 기본색(primary)을 덮어쓴다
 const MENU_TEXT_BUTTON_CLASS = "text-semantic-text-secondary";
+
+function MenuTrailing({ label }: { label: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-small)]",
+        MENU_TEXT_BUTTON_CLASS,
+      )}>
+      {label}
+      <Asset icon={<IconRight aria-hidden />} size="xsmall" className="shrink-0" />
+    </span>
+  );
+}
 
 type MyMenuSheetProps = {
   open: boolean;
@@ -91,26 +105,14 @@ export default function MyMenuSheet({
             <List
               leading={<IconFundingOpen />}
               title="마감된 펀딩"
-              right={
-                <TextButton
-                  size="medium"
-                  label={`${closedFundingCount}개`}
-                  onClick={() => setClosedFundingSheetOpen(true)}
-                  className={MENU_TEXT_BUTTON_CLASS}
-                />
-              }
+              onClick={() => setClosedFundingSheetOpen(true)}
+              right={<MenuTrailing label={`${closedFundingCount}개`} />}
             />
             <List
               leading={<IconAccount />}
               title="대표 계좌"
-              right={
-                <TextButton
-                  size="medium"
-                  label={defaultAccount?.bankName ?? ""}
-                  onClick={() => setAccountSheetOpen(true)}
-                  className={MENU_TEXT_BUTTON_CLASS}
-                />
-              }
+              onClick={() => setAccountSheetOpen(true)}
+              right={<MenuTrailing label={defaultAccount?.bankName ?? ""} />}
             />
             <List leading={<IconNotification />} title="알림 설정" />
             <List leading={<IconFaqGuide />} title="FAQ · 금액 가이드" />
