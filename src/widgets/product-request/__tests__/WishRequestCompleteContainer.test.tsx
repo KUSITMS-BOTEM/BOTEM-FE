@@ -12,6 +12,14 @@ describe("WishRequestCompleteContainer", () => {
   beforeEach(() => {
     push.mockClear();
     replace.mockClear();
+    sessionStorage.setItem("wishRequestSent", "1");
+  });
+
+  it("요청 없이 직접 들어오면 /wish/request로 돌려보낸다", () => {
+    sessionStorage.clear();
+    render(<WishRequestCompleteContainer />);
+    expect(replace).toHaveBeenCalledWith("/wish/request");
+    expect(screen.queryByRole("button", { name: "닫기" })).not.toBeInTheDocument();
   });
 
   it("닫기 버튼을 누르면 /home으로 이동한다", async () => {

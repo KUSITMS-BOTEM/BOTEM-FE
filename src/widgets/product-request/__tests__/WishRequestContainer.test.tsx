@@ -63,4 +63,19 @@ describe("WishRequestContainer 링크 검증", () => {
     await userEvent.type(input, "https://www.coupang.com/vp/products/1");
     expect(screen.queryByText("잘못된 형식의 링크예요")).not.toBeInTheDocument();
   });
+
+  it("입력을 비우면 에러 문구는 사라지고 버튼만 잠긴다", async () => {
+    vi.mocked(useRequestProductMutation).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof useRequestProductMutation>);
+    render(<WishRequestContainer />);
+    const input = screen.getByPlaceholderText("링크를 붙여넣어주세요");
+    await userEvent.type(input, "abc");
+    await userEvent.click(screen.getByRole("button", { name: "요청 보내기" }));
+    await userEvent.clear(input);
+
+    expect(screen.queryByText("잘못된 형식의 링크예요")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "요청 보내기" })).toBeDisabled();
+  });
 });

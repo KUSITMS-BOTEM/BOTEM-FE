@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useSyncExternalStore } from "react";
+
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
@@ -8,6 +10,7 @@ import Button from "@/components/Button";
 import Header from "@/components/Header";
 import Title from "@/components/Title";
 import IconClose from "@/assets/icons/icon-close.svg?react";
+import { WISH_REQUEST_SENT_KEY } from "@/constants/wishRequest";
 
 // 홈 랜딩과 같은 모션이다. framer-motion과 모션 데이터를 첫 번들에서 분리한다
 const HeroMotion = dynamic(() => import("@/components/effects/hero-motion/HeroMotion"), {
@@ -16,6 +19,18 @@ const HeroMotion = dynamic(() => import("@/components/effects/hero-motion/HeroMo
 
 export default function WishRequestCompleteContainer() {
   const router = useRouter();
+  const isAllowed = useSyncExternalStore(
+    () => () => {},
+    () => sessionStorage.getItem(WISH_REQUEST_SENT_KEY) !== null,
+    () => false,
+  );
+
+  // 요청을 보내지 않고 URL로 직접 들어온 경우 입력 화면으로 돌려보낸다
+  useEffect(() => {
+    if (!isAllowed) router.replace("/wish/request");
+  }, [isAllowed, router]);
+
+  if (!isAllowed) return null;
 
   return (
     <>
