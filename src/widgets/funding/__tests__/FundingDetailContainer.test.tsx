@@ -21,7 +21,7 @@ describe("FundingDetailContainer", () => {
     render(<FundingDetailContainer fundingId="1" friendId="7" />);
 
     expect(screen.getByRole("img", { name: "서프라이즈 펀딩" })).toBeInTheDocument();
-    expect(screen.getByText("확인 대기 1건이 있어요")).toBeInTheDocument();
+    expect(screen.getByText("확인 대기 3건이 있어요")).toBeInTheDocument();
   });
 
   it("뒤로가기를 누르면 친구 프로필로 이동한다", async () => {
@@ -32,12 +32,11 @@ describe("FundingDetailContainer", () => {
     expect(push).toHaveBeenCalledWith("/friends/7");
   });
 
-  it("친구 id가 없으면 이전 페이지로 돌아간다", async () => {
+  it("친구 id가 없으면 개설자도 대상자도 아니므로 일반 펀딩 화면을 보여준다", () => {
     render(<FundingDetailContainer fundingId="1" />);
 
-    await userEvent.click(screen.getByRole("button", { name: "뒤로가기" }));
-
-    expect(back).toHaveBeenCalled();
-    expect(push).not.toHaveBeenCalled();
+    expect(screen.queryByText("아직 비밀이에요")).not.toBeInTheDocument();
+    expect(screen.queryByText("확인 대기 1건이 있어요")).not.toBeInTheDocument();
+    expect(screen.getByText("나도 지유님께 보태볼까요?")).toBeInTheDocument();
   });
 });
