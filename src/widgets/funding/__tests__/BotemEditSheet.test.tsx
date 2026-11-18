@@ -115,6 +115,22 @@ describe("BotemEditSheet", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
+  it("입력란 사이를 옮겨도 키보드 상태가 유지되고, 입력 영역을 벗어나면 풀린다", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    const isCtaHidden = () => getSubmit().closest(".pointer-coarse\\:hidden") !== null;
+
+    await user.click(getName());
+    expect(isCtaHidden()).toBe(true);
+
+    await user.tab();
+    expect(getPassword()).toHaveFocus();
+    expect(isCtaHidden()).toBe(true);
+
+    await user.click(document.body);
+    expect(isCtaHidden()).toBe(false);
+  });
+
   it("닫았다 다시 열면 입력이 비워진다", async () => {
     const user = userEvent.setup();
     render(<Harness closeOnSubmit />);

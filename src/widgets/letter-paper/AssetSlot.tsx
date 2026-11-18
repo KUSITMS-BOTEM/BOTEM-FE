@@ -30,7 +30,7 @@ type AssetSlotProps =
       disabled?: boolean;
       // 사진을 붙일 자리로 안내할 때 비어 있는 슬롯을 실선 테두리로 강조한다
       active?: boolean;
-      // 사진이 있을 때만 우측 상단에 삭제 버튼이 생긴다
+      // 사진이 있을 때만 좌측 상단에 삭제 버튼이 생긴다(우측 상단의 작은 아이콘 슬롯과 겹치지 않게)
       onRemove?: () => void;
       onImageChange?: (file: File) => void;
       allowedTypes?: string[];
@@ -135,7 +135,7 @@ function PhotoSlot({
             type="button"
             aria-label="사진 삭제"
             onClick={onRemove}
-            className="absolute -top-[6.2px] -right-[9.7px] size-5 cursor-pointer before:absolute before:-inset-2.5 before:content-['']">
+            className="absolute -top-[12px] -left-[10px] size-5 cursor-pointer before:absolute before:-inset-2.5 before:content-['']">
             <IconRemove aria-hidden className="size-full" />
           </button>
         )}

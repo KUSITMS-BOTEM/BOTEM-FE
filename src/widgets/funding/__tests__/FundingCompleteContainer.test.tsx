@@ -41,6 +41,23 @@ describe("FundingCompleteContainer 입력값 정리", () => {
   });
 });
 
+describe("FundingCompleteContainer 올랐어요 뱃지", () => {
+  afterEach(() => useFundingContributionStore.getState().reset());
+
+  it("금액을 보탠 경우에는 올랐어요 뱃지를 보여준다", () => {
+    useFundingContributionStore.getState().setAmount(50000);
+    render(<FundingCompleteContainer fundingId="1" />);
+
+    expect(screen.getByText("올랐어요")).toBeInTheDocument();
+  });
+
+  it("메시지만 보탠 경우(금액 0)에는 올랐어요 뱃지를 숨긴다", () => {
+    render(<FundingCompleteContainer fundingId="1" />);
+
+    expect(screen.queryByText("올랐어요")).not.toBeInTheDocument();
+  });
+});
+
 describe("FundingCompleteContainer", () => {
   afterEach(() => {
     vi.clearAllMocks();

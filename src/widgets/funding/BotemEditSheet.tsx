@@ -73,7 +73,10 @@ export default function BotemEditSheet({
             // 입력 영역이 다 나타난 뒤에 포커스해야 모션 중 키보드가 올라와 레이아웃이 흔들리지 않는다
             onAnimationComplete={() => nameRef.current?.focus({ preventScroll: true })}
             onFocus={() => setIsTyping(true)}
-            onBlur={() => setIsTyping(false)}
+            // 이름→비밀번호처럼 입력란 사이를 옮길 때는 키보드가 내려가지 않으므로 영역 밖으로 나갈 때만 해제한다
+            onBlur={event => {
+              if (!event.currentTarget.contains(event.relatedTarget)) setIsTyping(false);
+            }}
             className="flex w-full flex-col gap-3">
             <TextField
               ref={nameRef}

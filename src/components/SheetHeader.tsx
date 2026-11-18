@@ -65,7 +65,13 @@ export default function SheetHeader({
           {title}
         </p>
       </div>
-      {rightAction && <div className="absolute top-2 right-[51px]">{rightAction}</div>}
+      {rightAction && (
+        // 닫기 버튼(right 11px + 36px)과 4px 간격. 뒤로 가기 모드에는 우측 닫기 버튼이 없어 우측 끝(20px)에 둔다
+        <div
+          className={cn("absolute", closeType === "back" ? "top-3 right-5" : "top-2 right-[51px]")}>
+          {rightAction}
+        </div>
+      )}
       {closeType === "back" ? (
         <IconButton
           size="xlarge"

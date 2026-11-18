@@ -17,30 +17,30 @@ function renderSheet(props: Partial<React.ComponentProps<typeof StickerSheet>> =
 }
 
 describe("StickerSheet", () => {
-  it("안내 문구와 스티커 20개를 보여준다", () => {
+  it("안내 문구와 스티커 8개를 보여준다", () => {
     renderSheet();
 
     expect(screen.getByText("아이콘을 편지지에 붙여보세요")).toBeInTheDocument();
-    expect(screen.getAllByRole("listitem")).toHaveLength(20);
+    expect(screen.getAllByRole("listitem")).toHaveLength(8);
   });
 
   it("스티커를 누르면 해당 스티커로 onSelect가 호출된다", async () => {
     const onSelect = vi.fn();
     renderSheet({ onSelect });
 
-    await userEvent.click(screen.getByRole("button", { name: "스티커 3" }));
+    await userEvent.click(screen.getByRole("button", { name: STICKERS[2].label }));
 
     expect(onSelect).toHaveBeenCalledWith(STICKERS[2]);
   });
 
   it("선택된 스티커만 pressed 상태이다", () => {
-    renderSheet({ selectedId: "sticker-2" });
+    renderSheet({ selectedId: STICKERS[1].id });
 
-    expect(screen.getByRole("button", { name: "스티커 2" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: STICKERS[1].label })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    expect(screen.getByRole("button", { name: "스티커 1" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: STICKERS[0].label })).toHaveAttribute(
       "aria-pressed",
       "false",
     );
@@ -49,7 +49,7 @@ describe("StickerSheet", () => {
   it("마우스로 목록을 끌면 스티커가 선택되지 않고 단순 클릭은 선택된다", () => {
     const onSelect = vi.fn();
     renderSheet({ onSelect });
-    const sticker = screen.getByRole("button", { name: "스티커 1" });
+    const sticker = screen.getByRole("button", { name: STICKERS[0].label });
 
     fireEvent.pointerDown(sticker, { pointerType: "mouse", clientX: 0 });
     fireEvent.pointerMove(sticker, { pointerType: "mouse", clientX: 30 });

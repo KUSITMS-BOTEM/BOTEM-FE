@@ -155,12 +155,7 @@ export default function BotemPopup({
             className="from-semantic-background-default/0 to-semantic-background-default h-9 w-full bg-gradient-to-b"
           />
           <div className="bg-semantic-background-default pointer-events-auto flex w-full gap-2 px-4 pt-6 pb-4">
-            <Button
-              variant="weak"
-              size="large"
-              className="flex-1"
-              disabled={isClosed}
-              onClick={onMessageClick}>
+            <Button variant="weak" size="large" className="flex-1" onClick={onMessageClick}>
               메세지 보태기
             </Button>
             <Button size="large" className="flex-1" disabled={isClosed} onClick={onContributeClick}>

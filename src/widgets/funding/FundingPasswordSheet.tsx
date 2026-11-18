@@ -29,6 +29,8 @@ type FundingPasswordSheetProps = {
   onPrev: () => void;
   // 보태러 가기 뒤 송금 안내 시트에서 완료하기를 누르면 입력한 비밀번호와 함께 호출된다
   onComplete: (password: string) => void;
+  /** true면 송금이 없는 메시지 보태기라 송금 안내 시트를 건너뛰고 '완료하기'에서 바로 onComplete를 호출한다 */
+  messageOnly?: boolean;
   className?: string;
 };
 
@@ -40,6 +42,7 @@ export default function FundingPasswordSheet({
   onClose,
   onPrev,
   onComplete,
+  messageOnly = false,
   className,
 }: FundingPasswordSheetProps) {
   const [password, setPassword] = useState("");
@@ -112,8 +115,8 @@ export default function FundingPasswordSheet({
             color="brand"
             size="xlarge"
             disabled={!isFilled}
-            onClick={() => setGuideOpen(true)}>
-            보태러 가기
+            onClick={() => (messageOnly ? onComplete(password) : setGuideOpen(true))}>
+            {messageOnly ? "완료하기" : "보태러 가기"}
           </Button>
         </BottomCTA>
       </OpenSheet>

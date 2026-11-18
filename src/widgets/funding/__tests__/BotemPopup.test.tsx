@@ -68,11 +68,12 @@ describe("BotemPopup 마감 상태", () => {
     expect(onContributeClick).toHaveBeenCalledTimes(1);
   });
 
-  it("마감됐으면 수정 행을 숨기고 하단 두 버튼을 비활성화한다", () => {
-    renderPopup({ isClosed: true });
+  it("마감됐으면 수정 행을 숨기고 보태기만 비활성화하며 메세지 보태기는 동작한다", () => {
+    const { onMessageClick } = renderPopup({ isClosed: true });
 
     expect(screen.queryByText("내 보탬 수정하기")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "메세지 보태기" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "메세지 보태기" }));
+    expect(onMessageClick).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: "보태기" })).toBeDisabled();
   });
 });
