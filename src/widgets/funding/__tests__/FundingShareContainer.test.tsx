@@ -62,6 +62,32 @@ describe("FundingShareContainer", () => {
     expect(screen.queryByRole("button", { name: /뒤로/ })).not.toBeInTheDocument();
   });
 
+  it("보탬을 수정해 저장하면 완료 안내를 띄우고, 확인을 눌러야 수정 화면이 닫힌다", async () => {
+    const user = userEvent.setup();
+    render(<FundingShareContainer fundingId="1" />);
+    await user.click(screen.getByRole("button", { name: /나도 지유님께 보태볼까요\?/ }));
+    await user.click(screen.getByRole("button", { name: /내 보탬 수정하기/ }));
+    await user.type(await screen.findByRole("textbox", { name: "이름" }), "민지");
+    await user.type(screen.getByLabelText("비밀번호 4자리"), "1234");
+    await user.click(screen.getByRole("button", { name: "확인" }));
+
+    const letter = await screen.findByRole("textbox", { name: "편지 내용" });
+    expect(letter).toHaveTextContent("올해도 같이 많이 웃자");
+    letter.textContent = "고친 편지";
+    fireEvent.input(letter);
+    await user.click(screen.getByRole("button", { name: "이대로 저장하기" }));
+
+    expect(await screen.findByRole("heading", { name: "보탬을 수정했어요" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "편지 내용" })).toBeInTheDocument();
+
+    await clickTopmost(user, "확인");
+
+    await waitFor(() =>
+      expect(screen.queryByRole("textbox", { name: "편지 내용" })).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByRole("heading", { name: "보탬을 수정했어요" })).not.toBeInTheDocument();
+  });
+
   it("진행 카드와 사연(Message)을 함께 보여준다", () => {
     render(<FundingShareContainer fundingId="1" />);
 

@@ -35,6 +35,19 @@ describe("SheetHeader", () => {
     expect(screen.getByRole("button", { name: "닫기" })).toBeInTheDocument();
   });
 
+  it("closeType이 back이면 rightAction을 닫기 버튼 자리가 아닌 우측 끝에 둔다", () => {
+    render(
+      <SheetHeader
+        title=""
+        closeType="back"
+        onClose={vi.fn()}
+        rightAction={<button type="button">되돌리기</button>}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "되돌리기" }).parentElement).toHaveClass("right-5");
+  });
+
   it("showHandle을 생략하면 드래그 핸들이 보인다", () => {
     const { container } = render(<SheetHeader title="타이틀" onClose={vi.fn()} />);
 

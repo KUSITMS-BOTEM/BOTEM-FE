@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
+import LetterWriteSheet, { type LetterWriteValues } from "@/widgets/letter-paper/LetterWriteSheet";
 
 function renderSheet(props: Partial<React.ComponentProps<typeof LetterWriteSheet>> = {}) {
   return render(
@@ -534,6 +534,153 @@ describe("LetterWriteSheet", () => {
 
       expect(screen.queryByText("탭으로 녹음 시작")).not.toBeInTheDocument();
       expect(screen.queryByRole("group", { name: "음성 메시지" })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("수정 모드", () => {
+    const initialValues = {
+      text: "원래 편지",
+      name: "민지",
+      color: "lime",
+      paperStyle: "vividSolid",
+    } satisfies LetterWriteValues;
+
+    const renderEdit = (props: Partial<React.ComponentProps<typeof LetterWriteSheet>> = {}) =>
+      renderSheet({ isLoggedIn: false, initialValues, onSave: vi.fn(), ...props });
+    const saveButton = () => screen.getByRole("button", { name: "이대로 저장하기" });
+
+    it("작성했던 편지를 그대로 보여주고 이름 입력란과 제목 문구는 없다", () => {
+      renderEdit();
+
+      expect(letterInput()).toHaveTextContent("원래 편지");
+      expect(nameInput()).not.toBeInTheDocument();
+      expect(screen.queryByText(/에게 직접/)).not.toBeInTheDocument();
+      expect(screen.getByText("보탠 금액과 이름은 바꿀 수 없어요")).toBeInTheDocument();
+    });
+
+    it("From 영역은 눌러도 이름을 바꿀 수 없어 버튼이 아니다", () => {
+      renderEdit();
+
+      expect(screen.getByText("From. 민지")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /From\. 민지/ })).not.toBeInTheDocument();
+    });
+
+    it("바뀐 게 없으면 저장 버튼이 비활성이고 수정하면 활성이 된다", () => {
+      renderEdit();
+      expect(saveButton()).toBeDisabled();
+
+      typeLetter("고친 편지");
+
+      expect(saveButton()).toBeEnabled();
+    });
+
+    it("편지를 비우면 저장할 수 없다", () => {
+      renderEdit();
+
+      typeLetter("");
+
+      expect(saveButton()).toBeDisabled();
+    });
+
+    it("편지지 색을 바꿔도 저장 버튼이 활성이 되고 원래 색으로 돌리면 다시 비활성이 된다", async () => {
+      renderEdit();
+
+      await userEvent.click(screen.getByRole("button", { name: "주황" }));
+      expect(saveButton()).toBeEnabled();
+
+      await userEvent.click(screen.getByRole("button", { name: "라임" }));
+      expect(saveButton()).toBeDisabled();
+    });
+
+    it("저장하면 수정한 값을 이름과 함께 넘긴다", async () => {
+      const onSave = vi.fn();
+      renderEdit({ onSave });
+      typeLetter("고친 편지");
+
+      await userEvent.click(saveButton());
+
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ text: "고친 편지", name: "민지", color: "lime" }),
+      );
+    });
+
+    it("바뀐 게 있을 때 되돌리기를 누르면 확인을 받고 '예'를 누르면 처음 작성했던 내용으로 돌아간다", async () => {
+      renderEdit();
+      typeLetter("고친 편지");
+
+      await userEvent.click(screen.getByRole("button", { name: "되돌리기" }));
+      expect(screen.getByRole("heading", { name: "원래대로 돌릴까요?" })).toBeInTheDocument();
+      expect(letterInput()).toHaveTextContent("고친 편지");
+
+      await userEvent.click(screen.getByRole("button", { name: "예" }));
+
+      expect(letterInput()).toHaveTextContent("원래 편지");
+      expect(saveButton()).toBeDisabled();
+    });
+
+    it("되돌리기 확인에서 '아니오'를 누르면 수정한 내용이 그대로 남는다", async () => {
+      renderEdit();
+      typeLetter("고친 편지");
+
+      await userEvent.click(screen.getByRole("button", { name: "되돌리기" }));
+      await userEvent.click(screen.getByRole("button", { name: "아니오" }));
+
+      expect(letterInput()).toHaveTextContent("고친 편지");
+      expect(saveButton()).toBeEnabled();
+    });
+
+    it("바뀐 게 없는데 되돌리기를 누르면 변경된 사항이 없다고 알린다", async () => {
+      renderEdit();
+      expect(screen.queryByText("변경된 사항이 없어요")).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole("button", { name: "되돌리기" }));
+
+      expect(screen.getByText("변경된 사항이 없어요")).toBeInTheDocument();
+    });
+
+    it("바뀐 게 있을 때 되돌리기를 눌러도 안내 토스트는 띄우지 않는다", async () => {
+      renderEdit();
+      typeLetter("고친 편지");
+
+      await userEvent.click(screen.getByRole("button", { name: "되돌리기" }));
+
+      expect(screen.queryByText("변경된 사항이 없어요")).not.toBeInTheDocument();
+    });
+
+    it("바뀐 게 없으면 뒤로 가기 버튼으로 확인 없이 바로 닫는다", async () => {
+      const onClose = vi.fn();
+      renderEdit({ onClose });
+
+      await userEvent.click(screen.getByRole("button", { name: "뒤로 가기" }));
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(screen.queryByRole("heading", { name: "이대로 나갈까요?" })).not.toBeInTheDocument();
+    });
+
+    it("바뀐 게 있을 때 뒤로 가기를 누르면 확인을 받고 '예'를 눌러야 닫힌다", async () => {
+      const onClose = vi.fn();
+      renderEdit({ onClose });
+      typeLetter("고친 편지");
+
+      await userEvent.click(screen.getByRole("button", { name: "뒤로 가기" }));
+      expect(screen.getByRole("heading", { name: "이대로 나갈까요?" })).toBeInTheDocument();
+      expect(onClose).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByRole("button", { name: "예" }));
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("나가기 확인에서 '아니오'를 누르면 닫히지 않고 수정 중인 내용이 남는다", async () => {
+      const onClose = vi.fn();
+      renderEdit({ onClose });
+      typeLetter("고친 편지");
+
+      await userEvent.click(screen.getByRole("button", { name: "뒤로 가기" }));
+      await userEvent.click(screen.getByRole("button", { name: "아니오" }));
+
+      expect(onClose).not.toHaveBeenCalled();
+      expect(letterInput()).toHaveTextContent("고친 편지");
     });
   });
 });

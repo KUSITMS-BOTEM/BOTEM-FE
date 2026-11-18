@@ -5,8 +5,11 @@ import { motion } from "framer-motion";
 
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
+import Dialog from "@/components/Dialog";
+import IconButton from "@/components/IconButton";
 import OpenSheet from "@/components/OpenSheet";
 import Title from "@/components/Title";
+import ToastMessage from "@/components/ToastMessage";
 import type { Color } from "@/constants/color";
 import type { LetterPaperStyle } from "@/constants/letterPaperStyle";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
@@ -20,6 +23,7 @@ import LetterWriteBody from "@/widgets/letter-paper/LetterWriteBody";
 import PaletteArea from "@/widgets/letter-paper/PaletteArea";
 import StickerSheet from "@/widgets/letter-paper/StickerSheet";
 import { STICKERS, type Sticker } from "@/widgets/letter-paper/stickers";
+import IconReset from "@/assets/icons/icon-reset.svg?react";
 
 // 시트가 이미 떠 있는 상태에서 빈 화면 → Title → 입력 영역 순서로 나타난다 (FundingInfoStep 모션 기준)
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
@@ -61,7 +65,15 @@ type LetterWriteSheetProps = {
   recipientName: string;
   isLoggedIn: boolean;
   onNext?: (values: LetterWriteValues) => void;
+  // 있으면 수정 모드다: 이 값으로 시작하고, 이름은 바꿀 수 없으며, 되돌리기·저장 버튼이 나온다.
+  // 값은 처음 마운트될 때만 읽으므로 서버 데이터가 도착한 뒤에 마운트하거나 key로 다시 마운트한다
+  initialValues?: LetterWriteValues;
+  onSave?: (values: LetterWriteValues) => void;
 };
+
+const TOAST_DURATION_MS = 2000;
+
+const toPhotoState = (file?: File) => (file ? { file, url: URL.createObjectURL(file) } : null);
 
 export default function LetterWriteSheet({
   open,
@@ -70,19 +82,37 @@ export default function LetterWriteSheet({
   recipientName,
   isLoggedIn,
   onNext,
+  initialValues,
+  onSave,
 }: LetterWriteSheetProps) {
-  const [text, setText] = useState("");
-  const [name, setName] = useState("");
+  const isEdit = initialValues !== undefined;
+  // 수정 모드에서는 보탠 사람의 이름을 바꿀 수 없어 로그인 상태처럼 이름 입력란을 두지 않는다
+  const hideName = isLoggedIn || isEdit;
+  const [text, setText] = useState(initialValues?.text ?? "");
+  const [name, setName] = useState(initialValues?.name ?? "");
   const [shrunk, setShrunk] = useState(false);
-  const [color, setColor] = useState<Color>("orange");
+  const [color, setColor] = useState<Color>(initialValues?.color ?? "orange");
   // 툴은 한 번에 하나만 열린다. photo는 툴 영역을 접고 사진 슬롯만 강조하는 상태다
   const [activeTool, setActiveTool] = useState<ActiveTool>(null);
-  const [voice, setVoice] = useState<LetterVoice | null>(null);
+  const [voice, setVoice] = useState<LetterVoice | null>(initialValues?.voice ?? null);
   const [selectedSticker, setSelectedSticker] = useState<Sticker | null>(null);
-  const [largeSticker, setLargeSticker] = useState<Sticker | null>(null);
-  const [smallSticker, setSmallSticker] = useState<Sticker | null>(null);
-  const [photo, setPhoto] = useState<{ file: File; url: string } | null>(null);
-  const [paperStyle, setPaperStyle] = useState<LetterPaperStyle>("vividSolid");
+  const [largeSticker, setLargeSticker] = useState<Sticker | null>(
+    initialValues?.largeSticker ?? null,
+  );
+  const [smallSticker, setSmallSticker] = useState<Sticker | null>(
+    initialValues?.smallSticker ?? null,
+  );
+  const [photo, setPhoto] = useState<{ file: File; url: string } | null>(() =>
+    toPhotoState(initialValues?.photo),
+  );
+  const [paperStyle, setPaperStyle] = useState<LetterPaperStyle>(
+    initialValues?.paperStyle ?? "vividSolid",
+  );
+  // 편지 본문 편집 영역은 처음 값만 읽으므로, 값을 되돌릴 때 key를 올려 다시 마운트한다
+  const [bodyKey, setBodyKey] = useState(0);
+  const [toastShown, setToastShown] = useState(false);
+  // 수정 모드에서 변경사항을 버리게 되는 동작(나가기·되돌리기)은 확인을 받고 진행한다
+  const [confirm, setConfirm] = useState<null | "exit" | "reset">(null);
   const recorder = useVoiceRecorder();
   const toolAreaRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
@@ -114,7 +144,25 @@ export default function LetterWriteSheet({
     if (toolOpen) toolAreaRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [activeTool, toolOpen]);
 
-  const canNext = text.trim() !== "" && (isLoggedIn || name.trim() !== "");
+  useEffect(() => {
+    if (!toastShown) return;
+    const timer = setTimeout(() => setToastShown(false), TOAST_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [toastShown]);
+
+  const canNext = text.trim() !== "" && (hideName || name.trim() !== "");
+
+  // 사진·스티커·녹음은 원본과 같은 참조/id인지로 비교한다. 이름은 수정할 수 없어 비교하지 않는다
+  const isDirty =
+    initialValues !== undefined &&
+    (text !== initialValues.text ||
+      color !== initialValues.color ||
+      paperStyle !== initialValues.paperStyle ||
+      voice?.blob !== initialValues.voice?.blob ||
+      largeSticker?.id !== initialValues.largeSticker?.id ||
+      smallSticker?.id !== initialValues.smallSticker?.id ||
+      photo?.file !== initialValues.photo);
+  const canSave = isDirty && text.trim() !== "" && recorder.status !== "recording";
 
   // 편지지에 포커스가 가 입력을 시작하면 안내 말풍선은 더 보여주지 않는다
   const handleFocus = (event: FocusEvent<HTMLDivElement>) => {
@@ -133,26 +181,61 @@ export default function LetterWriteSheet({
     }
   };
 
-  // 시트를 닫으면 다음에 열 때 빈 편지로 시작한다
-  const handleClose = () => {
-    setText("");
+  // 편지를 values(없으면 빈 편지)로 되돌린다
+  const restore = (values?: LetterWriteValues) => {
+    setText(values?.text ?? "");
     setShrunk(false);
-    setName("");
-    setColor("orange");
-    setPaperStyle("vividSolid");
+    setName(values?.name ?? "");
+    setColor(values?.color ?? "orange");
+    setPaperStyle(values?.paperStyle ?? "vividSolid");
     recorder.reset();
-    setVoice(null);
+    setVoice(values?.voice ?? null);
     setSelectedSticker(null);
-    setLargeSticker(null);
-    setSmallSticker(null);
+    setLargeSticker(values?.largeSticker ?? null);
+    setSmallSticker(values?.smallSticker ?? null);
     setActiveTool(null);
-    setPhoto(null);
+    setPhoto(toPhotoState(values?.photo));
+    setBodyKey(key => key + 1);
+  };
+
+  // 시트를 닫으면 다음에 열 때 처음 상태(수정 모드는 원본, 아니면 빈 편지)로 시작한다
+  const handleClose = () => {
+    restore(initialValues);
     setTooltipDismissed(false);
     setIsTyping(false);
     setNameOpen(true);
     setNameReopened(false);
     onClose();
   };
+
+  // 바뀐 게 있으면 확인을 받고, 없으면 되돌릴 것이 없다고 알린다
+  const handleReset = () => {
+    if (isDirty) setConfirm("reset");
+    else setToastShown(true);
+  };
+
+  // 바뀐 게 있으면 저장되지 않는다고 확인을 받고 나간다
+  const handleBack = () => {
+    if (isDirty) setConfirm("exit");
+    else handleClose();
+  };
+
+  const handleConfirm = () => {
+    if (confirm === "reset") restore(initialValues);
+    else handleClose();
+    setConfirm(null);
+  };
+
+  const buildValues = (): LetterWriteValues => ({
+    text,
+    name,
+    color,
+    paperStyle,
+    ...(voice && { voice }),
+    ...(largeSticker && { largeSticker }),
+    ...(smallSticker && { smallSticker }),
+    ...(photo && { photo: photo.file }),
+  });
 
   // 이미 열린 툴은 유지하고, 닫혀 있거나 사진 강조 상태면 툴 목록을 연다
   const handleAddClick = () => {
@@ -191,19 +274,43 @@ export default function LetterWriteSheet({
   };
 
   return (
-    <OpenSheet open={open} title="" onClose={onExit ?? handleClose} hideScrollbar>
+    <OpenSheet
+      open={open}
+      title={isEdit ? "보탬 수정하기" : ""}
+      onClose={isEdit ? handleBack : (onExit ?? handleClose)}
+      closeType={isEdit ? "back" : undefined}
+      headerAction={
+        isEdit ? (
+          <IconButton
+            size="xlarge"
+            icon={<IconReset />}
+            aria-label="되돌리기"
+            onClick={handleReset}
+          />
+        ) : undefined
+      }
+      overlay={
+        isEdit ? (
+          <div className="pointer-events-none absolute inset-x-0 bottom-40 flex justify-center">
+            <ToastMessage show={toastShown} text="변경된 사항이 없어요" state={false} />
+          </div>
+        ) : undefined
+      }
+      hideScrollbar>
       <div
         ref={topRef}
         onFocus={handleFocus}
         onBlur={() => setIsTyping(false)}
         className={cn("flex w-full flex-col", CTA_CLEARANCE_CLASS)}>
-        <motion.div
-          initial={{ opacity: 0, y: 32 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={TITLE_TRANSITION}
-          className="w-full">
-          <Title title={`${recipientName}에게 직접\n편지를 남겨볼까요?`} />
-        </motion.div>
+        {!isEdit && (
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={TITLE_TRANSITION}
+            className="w-full">
+            <Title title={`${recipientName}에게 직접\n편지를 남겨볼까요?`} />
+          </motion.div>
+        )}
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
@@ -217,8 +324,8 @@ export default function LetterWriteSheet({
             forceSmallText={shrunk}
             hasVoiceMessage={voice !== null}
             voiceAudio={voice?.blob}
-            textTopInset={!isLoggedIn && nameOpen}
-            onSenderClick={isLoggedIn ? undefined : handleSenderClick}
+            textTopInset={!hideName && nameOpen}
+            onSenderClick={hideName ? undefined : handleSenderClick}
             largeIcon={largeSticker && <largeSticker.Icon aria-hidden className="size-full" />}
             smallIcon={smallSticker && <smallSticker.Icon aria-hidden className="size-full" />}
             // 스티커 시트가 열려 있을 때만 슬롯이 눌리게 한다(닫혀 있으면 슬롯 버튼이 disabled)
@@ -244,6 +351,7 @@ export default function LetterWriteSheet({
             onPhotoRemove={() => setPhoto(null)}
             textSlot={
               <LetterWriteBody
+                key={bodyKey}
                 text={text}
                 onTextChange={value => {
                   setText(value);
@@ -253,7 +361,7 @@ export default function LetterWriteSheet({
                 onShrink={() => setShrunk(true)}
                 placeholder={`${withVocativeParticle(recipientName)} 생일 축하해!`}
                 name={name}
-                onNameChange={isLoggedIn || !nameOpen ? undefined : setName}
+                onNameChange={hideName || !nameOpen ? undefined : setName}
                 onNameBlur={() => name.trim() !== "" && setNameOpen(false)}
                 nameAutoFocus={nameReopened}
               />
@@ -311,35 +419,59 @@ export default function LetterWriteSheet({
             </div>
           )}
         </motion.div>
-        <BottomCTA className={cn(isTyping && "pointer-coarse:hidden")}>
+        <BottomCTA
+          className={cn(isTyping && "pointer-coarse:hidden")}
+          upper={
+            isEdit ? (
+              <p className="text-semantic-text-tertiary text-center [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-x-small-weak)]">
+                보탠 금액과 이름은 바꿀 수 없어요
+              </p>
+            ) : undefined
+          }>
           <motion.div
             initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             transition={CONTENT_TRANSITION}
             className="flex gap-2 *:min-w-24 *:flex-1">
-            <Button color="neutral" variant="weak" size="xlarge" onClick={handleClose}>
-              이전
-            </Button>
-            <Button
-              color="neutral"
-              size="xlarge"
-              disabled={!canNext || recorder.status === "recording"}
-              onClick={() =>
-                onNext?.({
-                  text,
-                  name,
-                  color,
-                  paperStyle,
-                  ...(voice && { voice }),
-                  ...(largeSticker && { largeSticker }),
-                  ...(smallSticker && { smallSticker }),
-                  ...(photo && { photo: photo.file }),
-                })
-              }>
-              다음
-            </Button>
+            {isEdit ? (
+              <Button
+                color="brand"
+                size="xlarge"
+                disabled={!canSave}
+                onClick={() => onSave?.(buildValues())}>
+                이대로 저장하기
+              </Button>
+            ) : (
+              <>
+                <Button color="neutral" variant="weak" size="xlarge" onClick={handleClose}>
+                  이전
+                </Button>
+                <Button
+                  color="neutral"
+                  size="xlarge"
+                  disabled={!canNext || recorder.status === "recording"}
+                  onClick={() => onNext?.(buildValues())}>
+                  다음
+                </Button>
+              </>
+            )}
           </motion.div>
         </BottomCTA>
+        {isEdit && (
+          <Dialog
+            kind="confirm"
+            open={confirm !== null}
+            title={confirm === "reset" ? "원래대로 돌릴까요?" : "이대로 나갈까요?"}
+            description={
+              confirm === "reset"
+                ? "지금 변경한 내용은 되돌릴 수 없어요"
+                : "변경된 내용은 저장되지 않아요"
+            }
+            confirmColor="neutral"
+            onCancel={() => setConfirm(null)}
+            onConfirm={handleConfirm}
+          />
+        )}
       </div>
     </OpenSheet>
   );
