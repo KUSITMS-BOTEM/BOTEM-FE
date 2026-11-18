@@ -20,7 +20,7 @@ export default function FundingRevealSheet({ open, onClose, onReveal }: FundingR
       onClose={onClose}
       buttons={{
         leftLabel: "다음에",
-        rightLabel: "펀딩 열기",
+        rightLabel: "팡! 열어보기",
         onLeftClick: onClose,
         onRightClick: onReveal,
       }}>
@@ -28,8 +28,8 @@ export default function FundingRevealSheet({ open, onClose, onReveal }: FundingR
         <GiftAnimation variant="open" playing={open} />
         <Title
           type="a2z"
-          title="펀딩을 공개할까요?"
-          description={"펀딩을 공개하면\n편지를 한 번에 볼 수 있어요."}
+          title="지금 열어볼까요?"
+          description="친구들의 메시지를 한 번에 볼 수 있어요"
         />
       </div>
     </BottomSheet>

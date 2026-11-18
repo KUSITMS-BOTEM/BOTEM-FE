@@ -11,8 +11,8 @@ type FundingCardGiftCoverProps = {
 
 const GIFT_COVER_TEXT: Record<FundingCardGiftCoverProps["type"], (pendingCount: number) => string> =
   {
-    notification: count => `확인대기 ${count}건을\n확인하고 펑 터트려봐요!`,
-    open: () => "펑!\n터트려볼까요?",
+    notification: count => `확인 대기 ${count}건을\n확인하면 열어볼 수 있어요`,
+    open: () => "다 모였어요.\n팡! 열어볼까요?",
   };
 
 export default function FundingCardGiftCover({

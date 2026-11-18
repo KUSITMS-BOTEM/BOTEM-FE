@@ -25,7 +25,7 @@ describe("toFundingCardData", () => {
     expect(result.dDay).toBe(3);
   });
 
-  it("마감 후 확인대기가 있으면 notification 타입이다", () => {
+  it("마감 후 확인 대기가 있으면 notification 타입이다", () => {
     const result = toFundingCardData(
       makeCard({ cardType: "CLOSED_UNOPENED", remainingDays: null, pendingContributionCount: 2 }),
       "지유",
@@ -35,7 +35,7 @@ describe("toFundingCardData", () => {
     expect(result.pendingCount).toBe(2);
   });
 
-  it("마감 후 확인대기가 없고 참여자가 있으면 complete 타입이다", () => {
+  it("마감 후 확인 대기가 없고 참여자가 있으면 complete 타입이다", () => {
     const result = toFundingCardData(
       makeCard({
         cardType: "CLOSED_UNOPENED",
@@ -49,7 +49,7 @@ describe("toFundingCardData", () => {
     expect(result.type).toBe("complete");
   });
 
-  it("마감 후 확인대기도 참여자도 없으면 open 타입이고 dDay는 null이다", () => {
+  it("마감 후 확인 대기도 참여자도 없으면 open 타입이고 dDay는 null이다", () => {
     const result = toFundingCardData(
       makeCard({
         cardType: "CLOSED_UNOPENED",

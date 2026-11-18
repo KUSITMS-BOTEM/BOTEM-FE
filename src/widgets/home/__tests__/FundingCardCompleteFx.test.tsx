@@ -14,7 +14,7 @@ const renderFx = (
 ) =>
   render(
     <FundingCardCompleteFx
-      label="터트려볼까요?"
+      label="팡! 열어볼까요?"
       labelId="fx-label"
       phase={phase}
       animate
@@ -30,7 +30,7 @@ describe("FundingCardCompleteFx", () => {
   it("라벨을 labelId를 가진 요소로 렌더하고 children도 렌더한다", () => {
     renderFx("idle");
 
-    expect(screen.getByText("터트려볼까요?")).toHaveAttribute("id", "fx-label");
+    expect(screen.getByText("팡! 열어볼까요?")).toHaveAttribute("id", "fx-label");
     expect(screen.getByText("카드 내용")).toBeInTheDocument();
   });
 
