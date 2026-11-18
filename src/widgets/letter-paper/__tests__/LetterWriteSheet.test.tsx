@@ -358,7 +358,7 @@ describe("LetterWriteSheet", () => {
       renderSheet();
       await openStickerSheet();
 
-      await userEvent.click(screen.getByRole("button", { name: "스티커 1" }));
+      await userEvent.click(screen.getByRole("button", { name: "하트" }));
       await userEvent.click(slots()[0]);
 
       expect(screen.getAllByRole("button", { name: /아이콘 삭제/ })).toHaveLength(1);
@@ -391,7 +391,7 @@ describe("LetterWriteSheet", () => {
       renderSheet({ onNext });
       typeLetter("생일 축하해");
       await openStickerSheet();
-      await userEvent.click(screen.getByRole("button", { name: "스티커 1" }));
+      await userEvent.click(screen.getByRole("button", { name: "하트" }));
       await userEvent.click(screen.getByRole("button", { name: "큰 아이콘 선택" }));
 
       await userEvent.click(screen.getByRole("button", { name: "다음" }));
@@ -405,7 +405,7 @@ describe("LetterWriteSheet", () => {
     it("삭제 버튼을 누르면 붙인 스티커가 지워진다", async () => {
       renderSheet();
       await openStickerSheet();
-      await userEvent.click(screen.getByRole("button", { name: "스티커 1" }));
+      await userEvent.click(screen.getByRole("button", { name: "하트" }));
       await userEvent.click(slots()[1]);
 
       await userEvent.click(screen.getByRole("button", { name: /아이콘 삭제/ }));
@@ -416,7 +416,7 @@ describe("LetterWriteSheet", () => {
     it("스티커 시트를 닫으면 툴 선택으로 돌아가고 붙인 스티커는 남는다", async () => {
       renderSheet();
       await openStickerSheet();
-      await userEvent.click(screen.getByRole("button", { name: "스티커 1" }));
+      await userEvent.click(screen.getByRole("button", { name: "하트" }));
       await userEvent.click(slots()[0]);
 
       await userEvent.click(screen.getAllByRole("button", { name: "닫기" }).at(-1)!);
@@ -431,7 +431,7 @@ describe("LetterWriteSheet", () => {
     it("시트를 닫았다 다시 열면 붙인 스티커가 없다", async () => {
       const { rerender } = renderSheet();
       await openStickerSheet();
-      await userEvent.click(screen.getByRole("button", { name: "스티커 1" }));
+      await userEvent.click(screen.getByRole("button", { name: "하트" }));
       await userEvent.click(slots()[0]);
 
       await userEvent.click(screen.getByRole("button", { name: "이전" }));
