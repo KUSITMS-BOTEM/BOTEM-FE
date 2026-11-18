@@ -9,7 +9,8 @@ type SheetHeaderProps = {
   titleId?: string;
   onClose: () => void;
   showHandle?: boolean;
-  closeType?: "close" | "back";
+  // close-left: 닫기(X) 아이콘을 뒤로 가기 자리(좌측)에 둔다
+  closeType?: "close" | "back" | "close-left";
   type?: "title" | "handle";
   showHandleClose?: boolean;
   rightAction?: ReactNode;
@@ -68,15 +69,18 @@ export default function SheetHeader({
       {rightAction && (
         // 닫기 버튼(right 11px + 36px)과 4px 간격. 뒤로 가기 모드에는 우측 닫기 버튼이 없어 우측 끝(20px)에 둔다
         <div
-          className={cn("absolute", closeType === "back" ? "top-3 right-5" : "top-2 right-[51px]")}>
+          className={cn(
+            "absolute",
+            closeType === "close" ? "top-2 right-[51px]" : "top-3 right-5",
+          )}>
           {rightAction}
         </div>
       )}
-      {closeType === "back" ? (
+      {closeType !== "close" ? (
         <IconButton
           size="xlarge"
-          icon={<IconLeft />}
-          aria-label="뒤로 가기"
+          icon={closeType === "back" ? <IconLeft /> : <IconClose />}
+          aria-label={closeType === "back" ? "뒤로 가기" : "닫기"}
           onClick={onClose}
           className="absolute top-3 left-2.5"
         />

@@ -12,6 +12,8 @@ type ProductInfoProps = {
   deadline: string;
   /** 서프라이즈 펀딩이라 마감일 옆에 자물쇠를 보여준다 */
   locked?: boolean;
+  /** 마감일 문구 대신 보여줄 두 번째 줄 (예: 펀딩 기간) */
+  caption?: string;
   className?: string;
 };
 
@@ -20,6 +22,7 @@ export default function ProductInfo({
   productName,
   deadline,
   locked = false,
+  caption,
   className,
 }: ProductInfoProps) {
   // 날짜 형식이 틀리면 빈 문자열이라 구분자(·)를 붙이지 않는다
@@ -46,8 +49,12 @@ export default function ProductInfo({
         <p className="truncate [font:var(--semantic-label-small)]">{productName}</p>
         <div className="flex items-center gap-0.5">
           <p className="truncate [font:var(--semantic-body-x-small)]">
-            마감 {formatDeadlineShort(deadline)}
-            {dDay && ` · ${dDay}`}
+            {caption ?? (
+              <>
+                마감 {formatDeadlineShort(deadline)}
+                {dDay && ` · ${dDay}`}
+              </>
+            )}
           </p>
           {locked && <IconLock aria-hidden className="size-4 shrink-0 [&_path]:fill-white" />}
         </div>
