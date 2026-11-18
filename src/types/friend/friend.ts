@@ -32,6 +32,8 @@ export type FriendWishResponse = {
   productName: string;
   productImageUrl: string | null;
   price: number;
+  sellerName: string;
+  productUrl: string;
 };
 
 export type FriendProfileResponse = {

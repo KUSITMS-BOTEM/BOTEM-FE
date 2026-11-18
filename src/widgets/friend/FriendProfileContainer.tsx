@@ -1,17 +1,23 @@
 "use client";
 
+import { useState } from "react";
+
 import { useRouter } from "next/navigation";
 
 import Button from "@/components/Button";
 import Header from "@/components/Header";
 import { getProfileColor } from "@/components/Profile";
 import { useFriendProfileQuery } from "@/hooks/queries/friend/useFriendProfileQuery";
+import type { FriendWishResponse } from "@/types/friend/friend";
 import { getBirthdayDdayText } from "@/utils/friend/getBirthdayDdayText";
+import { toFundingWish } from "@/utils/friend/toFundingWish";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
 import FriendFundingSection from "@/widgets/friend/FriendFundingSection";
 import FriendListItem from "@/widgets/friend/FriendListItem";
+import FriendSurpriseWishSheet from "@/widgets/friend/FriendSurpriseWishSheet";
 import FriendWishSection from "@/widgets/friend/FriendWishSection";
 import FriendProfileSkeleton from "@/widgets/friend/skeleton/FriendProfileSkeleton";
+import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 
 type FriendProfileContainerProps = {
@@ -21,6 +27,15 @@ type FriendProfileContainerProps = {
 export default function FriendProfileContainer({ friendId }: FriendProfileContainerProps) {
   const router = useRouter();
   const { data, isPending, refetch } = useFriendProfileQuery(friendId);
+  const [wishSheetOpen, setWishSheetOpen] = useState(false);
+  const [surpriseWish, setSurpriseWish] = useState<FriendWishResponse | null>(null);
+  const [fundingSheetOpen, setFundingSheetOpen] = useState(false);
+
+  const handleWishSelect = (wish: FriendWishResponse) => {
+    setWishSheetOpen(false);
+    setSurpriseWish(wish);
+    setFundingSheetOpen(true);
+  };
 
   return (
     <div className="bg-semantic-background-default flex min-h-dvh w-full flex-col">
@@ -51,10 +66,29 @@ export default function FriendProfileContainer({ friendId }: FriendProfileContai
             />
             {data.fundings.length > 0 && <FriendFundingSection fundings={data.fundings} />}
             <div aria-hidden className="bg-semantic-border-weak -mx-5 h-px" />
-            <FriendWishSection wishes={data.wishes} />
+            <FriendWishSection
+              friendId={friendId}
+              wishes={data.wishes}
+              onSurpriseOpen={() => setWishSheetOpen(true)}
+            />
+            <FriendSurpriseWishSheet
+              open={wishSheetOpen}
+              wishes={data.wishes}
+              onClose={() => setWishSheetOpen(false)}
+              onSelect={handleWishSelect}
+            />
           </>
         )}
       </main>
+      {surpriseWish && (
+        // initialWish는 마운트 때만 읽히므로 위시가 바뀌면 새로 마운트해 입력 상태를 초기화한다
+        <FundingOpenSheet
+          key={surpriseWish.wishId}
+          open={fundingSheetOpen}
+          initialWish={toFundingWish(surpriseWish)}
+          onClose={() => setFundingSheetOpen(false)}
+        />
+      )}
     </div>
   );
 }

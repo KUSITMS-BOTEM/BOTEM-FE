@@ -6,6 +6,7 @@ import { mockPointer } from "@/__tests__/mockPointer";
 import { pickWheelDate } from "@/__tests__/pickWheelDate";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
+import type { FundingWish } from "@/types/funding/funding";
 import type { WishResponse } from "@/types/wish/wish";
 import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
 
@@ -53,12 +54,12 @@ const mockWishes = () =>
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useWishesQuery>);
 
-function Harness() {
+function Harness({ initialWish }: { initialWish?: FundingWish }) {
   const [open, setOpen] = useState(true);
   return (
     <>
       <button onClick={() => setOpen(true)}>열기</button>
-      <FundingOpenSheet open={open} onClose={() => setOpen(false)} />
+      <FundingOpenSheet open={open} onClose={() => setOpen(false)} initialWish={initialWish} />
     </>
   );
 }
@@ -103,7 +104,50 @@ describe("FundingOpenSheet", () => {
     expect(screen.getByText("내 위시에서 고르기")).toBeInTheDocument();
   });
 
+  it("initialWish가 있으면 위시 선택 없이 펀딩 정보부터 시작한다", () => {
+    render(
+      <FundingOpenSheet
+        open
+        onClose={vi.fn()}
+        initialWish={{ productName: "모자", price: 429000 }}
+      />,
+    );
+
+    expect(screen.getByText("펀딩 정보")).toBeInTheDocument();
+    expect(screen.queryByText("내 위시에서 고르기")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("목표 금액")).toBeInTheDocument();
+  });
+
+  it("initialWish로 시작한 시트를 그만두고 다시 열면 입력값 없이 펀딩 정보부터 시작한다", async () => {
+    render(<Harness initialWish={{ productName: "모자", price: 429000 }} />);
+    await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
+
+    await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+    await userEvent.click(screen.getByRole("button", { name: "그만두기" }));
+    await userEvent.click(screen.getByRole("button", { name: "열기", hidden: true }));
+
+    expect(await screen.findByText("펀딩 정보")).toBeInTheDocument();
+    expect(screen.queryByText("내 위시에서 고르기")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("목표 금액")).toHaveValue("");
+  });
+
   describe("X 버튼 이탈 확인", () => {
+    it("initialWish로 시작하면 입력 전이라도 X를 누를 때 Dialog가 뜬다", async () => {
+      const onClose = vi.fn();
+      render(
+        <FundingOpenSheet
+          open
+          onClose={onClose}
+          initialWish={{ productName: "모자", price: 429000 }}
+        />,
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+      expect(screen.getByText("펀딩 만들기를 그만둘까요?")).toBeVisible();
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
     it("위시를 고르기 전에는 확인 없이 바로 닫는다", async () => {
       const onClose = vi.fn();
       render(<FundingOpenSheet open onClose={onClose} />);

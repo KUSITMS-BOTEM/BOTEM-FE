@@ -10,13 +10,14 @@ import Button from "@/components/Button";
 import Header from "@/components/Header";
 import List from "@/components/List";
 import ListText from "@/components/ListText";
+import Logo from "@/components/Logo";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 import IconInfo from "@/assets/icons/icon-info.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconRight from "@/assets/icons/icon-right.svg?react";
 
 type ProductDetailViewProps = {
-  productImageUrl: string;
+  productImageUrl?: string;
   productName: string;
   price: number;
   sellerName: string;
@@ -62,14 +63,16 @@ export default function ProductDetailView({
       {/* fixed 헤더(64px + safe area)가 차지하던 자리를 비워 사진이 헤더 아래에서 시작하게 한다 */}
       <div aria-hidden className="h-[calc(64px+env(safe-area-inset-top))] shrink-0" />
       <div className="px-5">
-        <div className="relative aspect-square w-full shrink-0 overflow-hidden rounded-3xl">
-          <Image
-            src={productImageUrl}
-            alt={productName}
-            fill
-            unoptimized
-            className="object-cover"
-          />
+        <div className="bg-semantic-fill-neutral-weak relative aspect-square w-full shrink-0 overflow-hidden rounded-3xl">
+          {productImageUrl && (
+            <Image
+              src={productImageUrl}
+              alt={productName}
+              fill
+              unoptimized
+              className="object-cover"
+            />
+          )}
           <div
             aria-hidden
             className="absolute inset-0 bg-linear-to-b from-black/0 from-[84.444%] to-black/20 to-[160.69%]"
@@ -104,7 +107,7 @@ export default function ProductDetailView({
         )}
         <div className="flex w-full flex-col items-center pt-10">
           <div className="to-semantic-fill-neutral-weak -mx-5 flex w-[calc(100%+40px)] flex-col gap-6 bg-linear-to-b from-transparent to-[27.355%] px-5 py-8">
-            <p className="text-semantic-text-primary [font:var(--semantic-label-x-small)]">Logo</p>
+            <Logo color="gray" size="medium" />
             <p className="text-semantic-text-secondary [font:var(--semantic-subtext-small)]">
               쿠팡 파트너스의 일환으로,
               <br />

@@ -85,6 +85,8 @@ const createWishes = (count: number): FriendWishResponse[] =>
     productName: product.name,
     productImageUrl: product.imageUrl,
     price: product.price,
+    sellerName: product.sellerName,
+    productUrl: "https://link.coupang.com/a/example",
   }));
 
 // 친구 프로필 4가지 분기(펀딩 O/X × 위시 O/X)를 친구별로 확인할 수 있게 배정한다. 목록에 없는 친구는 404

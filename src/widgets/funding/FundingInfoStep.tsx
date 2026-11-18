@@ -10,7 +10,7 @@ import InfoBox from "@/components/InfoBox";
 import SelectBox from "@/components/SelectBox";
 import TextArea from "@/components/TextArea";
 import Title from "@/components/Title";
-import type { WishResponse } from "@/types/wish/wish";
+import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
 import { formatDeadline, getTodayDate } from "@/utils/funding/formatDeadline";
 
@@ -49,7 +49,7 @@ export type FundingInfoValues = {
 };
 
 type FundingInfoStepProps = {
-  wish: WishResponse;
+  wish: FundingWish;
   onNext: (values: FundingInfoValues) => void;
   // 있으면 수정 모드: 모든 필드를 채워 보여주고, 값이 바뀌어야 CTA가 활성화된다
   initialValues?: FundingInfoValues;
