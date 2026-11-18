@@ -54,6 +54,20 @@ describe("FundingDetailView", () => {
     expect(screen.getByRole("button", { name: /나도 지유님께 보태볼까요\?/ })).toBeInTheDocument();
   });
 
+  it("서프라이즈 개설자가 팝업의 '확인 대기' 행을 누르면 팝업을 닫지 않고 그 위에 입금 확인 시트가 열린다", async () => {
+    const user = userEvent.setup();
+    render(<FundingDetailView fundingId="1" variant="surprise" />);
+
+    await user.click(screen.getByRole("button", { name: /확인 대기 3건이 있어요/ }));
+    await user.click(screen.getByRole("button", { name: /통장에 들어왔는지 확인해주세요/ }));
+
+    const sheet = screen.getByRole("dialog", { name: "입금 확인" });
+    expect(sheet).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "내 보탬" })).toBeInTheDocument();
+    // top layer는 나중에 showModal한 다이얼로그가 위에 쌓인다
+    expect(vi.mocked(HTMLDialogElement.prototype.showModal).mock.contexts.at(-1)).toBe(sheet);
+  });
+
   it("기간이 마감되면 툴팁이 바뀌고 팝업에서 메세지 보태기만 누를 수 있다", () => {
     vi.useFakeTimers({ toFake: ["Date"], now: new Date("2027-01-02T00:00:00") });
     try {

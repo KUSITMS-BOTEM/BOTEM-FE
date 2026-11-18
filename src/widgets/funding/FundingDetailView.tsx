@@ -9,9 +9,11 @@ import Header from "@/components/Header";
 import ProfileBox from "@/components/ProfileBox";
 import Tooltip from "@/components/Tooltip";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
+import type { DepositItem } from "@/utils/funding/depositConfirm";
 import { getClosedLabel } from "@/utils/funding/fundingProgress";
 import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
 import BotemPopup from "@/widgets/funding/BotemPopup";
+import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
 import FundingGiftProofView from "@/widgets/funding/FundingGiftProofView";
 import FundingMessage from "@/widgets/funding/FundingMessage";
@@ -49,7 +51,12 @@ const MOCK_FUNDING = {
   targetAmount: 123456789,
   participants: ["orange", "blue", "pink"] as const,
   extraParticipantCount: 99,
-  unconfirmedCount: 1,
+  // TODO(API): 개설자의 확인 대기 입금 목록 API가 나오면 교체한다 (건수도 이 목록 길이로 맞춘다)
+  deposits: [
+    { id: 1, senderName: "하린이", amount: 45000, depositedAt: "2026-11-18T11:20:00" },
+    { id: 2, senderName: "도윤이", amount: 30000, depositedAt: "2026-11-16T09:05:00" },
+    { id: 3, senderName: "서준이", amount: 10000, depositedAt: "2026-11-16T08:00:00" },
+  ] satisfies DepositItem[],
   friends: [
     { id: 1, name: "민수", contributedAt: "2026-11-10T09:00:00" },
     { id: 2, name: "서연", contributedAt: "2026-11-12T18:30:00" },
@@ -71,8 +78,10 @@ export default function FundingDetailView({
 }: FundingDetailViewProps) {
   const router = useRouter();
   const funding = MOCK_FUNDING;
+  const unconfirmedCount = funding.deposits.length;
   const isSurprise = variant === "surprise";
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isContributeOpen, setIsContributeOpen] = useState(false);
   const [isLetterOpen, setIsLetterOpen] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
@@ -149,7 +158,7 @@ export default function FundingDetailView({
           className="flex cursor-pointer items-center gap-2 self-end">
           <Tooltip>
             {isSurprise
-              ? `확인 대기 ${funding.unconfirmedCount}건이 있어요`
+              ? `확인 대기 ${unconfirmedCount}건이 있어요`
               : isClosed
                 ? "마감일까지 메시지로 보탤까요?"
                 : `나도 ${funding.hostName}님께 보태볼까요?`}
@@ -157,7 +166,7 @@ export default function FundingDetailView({
           <ProfileBox
             profiles={funding.participants.map(color => ({ color }))}
             extraCount={funding.extraParticipantCount}
-            notification={isSurprise && funding.unconfirmedCount > 0}
+            notification={isSurprise && unconfirmedCount > 0}
             className="bg-semantic-fill-default shadow-[0_4px_8px_0_var(--color-semantic-shadow-weak)]"
           />
         </button>
@@ -165,13 +174,14 @@ export default function FundingDetailView({
       {/* TODO: 팝업 내부 동작(미확인·수정·메세지·보태기)은 보탬 폼 디자인이 정해지면 연결한다 */}
       <BotemPopup
         open={isPopupOpen}
-        unconfirmedCount={funding.unconfirmedCount}
+        unconfirmedCount={unconfirmedCount}
         friends={funding.friends}
         ownerName={funding.hostName}
         isClosed={isClosed}
         isHost={isSurprise}
         onClose={closePopup}
-        onUnconfirmedClick={noop}
+        // 팝업은 닫지 않는다 — 나중에 showModal된 다이얼로그가 top layer에서 위에 쌓인다
+        onUnconfirmedClick={isSurprise ? () => setIsDepositOpen(true) : noop}
         onEditClick={() => {
           closePopup();
           setIsEditOpen(true);
@@ -189,6 +199,12 @@ export default function FundingDetailView({
           setIsMessageOnly(false);
           setIsContributeOpen(true);
         }}
+      />
+      {/* TODO(API): 처리 결과가 서버에 반영되면 팝업의 확인 대기 건수도 갱신해야 한다 */}
+      <DepositConfirmSheet
+        open={isDepositOpen}
+        deposits={funding.deposits}
+        onClose={() => setIsDepositOpen(false)}
       />
       <BotemEditFlow
         open={isEditOpen}
