@@ -24,4 +24,10 @@ describe("cn", () => {
   it("충돌하는 tailwind 클래스는 나중 값으로 병합한다", () => {
     expect(cn("p-2", "p-4")).toBe("p-4");
   });
+
+  it("프로젝트 radius 토큰끼리도 나중 값으로 병합한다", () => {
+    expect(cn("rounded-small", "rounded-full")).toBe("rounded-full");
+    expect(cn("rounded-full", "rounded-x-large")).toBe("rounded-x-large");
+    expect(cn("rounded-t-xxx-large", "rounded-t-none")).toBe("rounded-t-none");
+  });
 });
