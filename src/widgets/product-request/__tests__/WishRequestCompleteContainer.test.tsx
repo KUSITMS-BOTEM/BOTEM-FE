@@ -23,7 +23,8 @@ describe("WishRequestCompleteContainer", () => {
   });
 
   it("스토리지 접근이 차단되면 /wish/request로 돌려보낸다", () => {
-    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+    // Node 네이티브 webstorage가 jsdom 것을 가려 Storage.prototype이 sessionStorage의 프로토타입이 아닐 수 있다
+    vi.spyOn(Object.getPrototypeOf(sessionStorage), "getItem").mockImplementation(() => {
       throw new DOMException("blocked", "SecurityError");
     });
     render(<WishRequestCompleteContainer />);
