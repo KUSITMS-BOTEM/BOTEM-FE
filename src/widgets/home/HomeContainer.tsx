@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 
 import { useHomeWishesQuery } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
+import { useGiftVerificationBannerVariant } from "@/hooks/useGiftVerificationBannerSession";
 import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
 import FloatingButton from "@/widgets/home/FloatingButton";
+import GiftVerificationBannerLayer from "@/widgets/home/GiftVerificationBannerLayer";
 import HomeFundingTab from "@/widgets/home/HomeFundingTab";
 import HomeHeader from "@/widgets/home/HomeHeader";
 import HomeMyMenuSheet, { MY_MENU_OPEN_PATH } from "@/widgets/home/HomeMyMenuSheet";
@@ -38,6 +40,7 @@ export default function HomeContainer({ autoOpenFunding = false }: HomeContainer
   const [segment, setSegment] = useState<SegmentValue>("funding");
   const router = useRouter();
   const [fundingSheetOpen, setFundingSheetOpen] = useState(false);
+  const giftVerificationBannerVariant = useGiftVerificationBannerVariant();
 
   // 공유 화면의 "나도 만들기"(/home?open=funding)로 들어오면 한 번 열고 쿼리를 지운다
   const [autoOpenHandled, setAutoOpenHandled] = useState(false);
@@ -71,7 +74,15 @@ export default function HomeContainer({ autoOpenFunding = false }: HomeContainer
       />
       <main className="flex w-full flex-col px-5">
         {segment === "funding" ? (
-          <HomeFundingTab onAddWish={goToRecommendedWish} onOpenFunding={openFundingSheet} />
+          <GiftVerificationBannerLayer variant={giftVerificationBannerVariant}>
+            {banner => (
+              <HomeFundingTab
+                onAddWish={goToRecommendedWish}
+                onOpenFunding={openFundingSheet}
+                banner={banner}
+              />
+            )}
+          </GiftVerificationBannerLayer>
         ) : (
           <HomeWishTab onAddWish={goToRecommendedWish} />
         )}

@@ -1,4 +1,8 @@
-import { withSubjectParticle, withVocativeParticle } from "@/utils/withSubjectParticle";
+import {
+  withObjectParticle,
+  withSubjectParticle,
+  withVocativeParticle,
+} from "@/utils/withSubjectParticle";
 
 describe("withVocativeParticle", () => {
   it.each(["민준", "서진"])("받침이 있는 이름 %s 뒤에는 '아'를 붙인다", name => {
@@ -31,4 +35,17 @@ describe("withSubjectParticle", () => {
   it("한글 범위 밖 자모로 끝나면 '가'를 붙인다", () => {
     expect(withSubjectParticle("ㄱ")).toBe("ㄱ가");
   });
+});
+
+describe("withObjectParticle", () => {
+  it.each(["민준", "서진", "혁"])("받침이 있는 단어 %s 뒤에는 '을'을 붙인다", name => {
+    expect(withObjectParticle(name)).toBe(`${name}을`);
+  });
+
+  it.each(["지유", "서하", "Tom"])(
+    "받침이 없거나 영문으로 끝나는 단어 %s 뒤에는 '를'을 붙인다",
+    name => {
+      expect(withObjectParticle(name)).toBe(`${name}를`);
+    },
+  );
 });

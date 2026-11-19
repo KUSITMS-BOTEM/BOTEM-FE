@@ -7,6 +7,7 @@ import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { consumeKakaoOauthState } from "@/utils/auth/kakaoOauthState";
 import { consumeLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 import { setSignupFlow } from "@/utils/auth/signupFlowStorage";
+import { clearGiftVerificationBannerStorage } from "@/utils/home/giftVerificationBannerStorage";
 
 type KakaoLoginMutate = ReturnType<typeof useKakaoLoginMutation>["mutate"];
 type Router = ReturnType<typeof useRouter>;
@@ -38,6 +39,7 @@ export const handleKakaoCallback = (
       onSuccess: data => {
         if (!data) return;
         useAuthStore.getState().setAccessToken(data.accessToken);
+        clearGiftVerificationBannerStorage();
 
         if (data.isNewUser) {
           setSignupFlow({ step: "profile" });

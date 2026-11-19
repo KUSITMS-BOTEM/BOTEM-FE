@@ -14,6 +14,10 @@ export function withSubjectParticle(name: string): string {
   return `${name}${hasBatchim(name) ? "이" : "가"}`;
 }
 
+export function withObjectParticle(name: string): string {
+  return `${name}${hasBatchim(name) ? "을" : "를"}`;
+}
+
 export function withVocativeParticle(name: string): string {
   return `${name}${hasBatchim(name) ? "아" : "야"}`;
 }

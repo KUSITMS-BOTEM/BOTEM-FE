@@ -97,11 +97,21 @@ describe("AddImage", () => {
     expect(handleChange).not.toHaveBeenCalled();
   });
 
-  it("컴포넌트가 unmount되면 생성된 미리보기 URL이 revokeObjectURL로 해제된다", () => {
+  it("미리보기 이미지 로드가 끝나면 생성된 URL이 revokeObjectURL로 해제된다", () => {
     const file = new File(["dummy"], "photo.png", { type: "image/png" });
-    const { unmount } = render(<AddImage value={file} onChange={vi.fn()} />);
+    const { container } = render(<AddImage value={file} onChange={vi.fn()} />);
 
-    unmount();
+    expect(mockRevokeObjectURL).not.toHaveBeenCalled();
+    fireEvent.load(container.querySelector("img") as HTMLImageElement);
+
+    expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
+  });
+
+  it("미리보기 이미지 로드에 실패해도 생성된 URL이 revokeObjectURL로 해제된다", () => {
+    const file = new File(["dummy"], "photo.png", { type: "image/png" });
+    const { container } = render(<AddImage value={file} onChange={vi.fn()} />);
+
+    fireEvent.error(container.querySelector("img") as HTMLImageElement);
 
     expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
   });

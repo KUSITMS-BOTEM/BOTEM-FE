@@ -3,6 +3,7 @@ import { delay, http, HttpResponse } from "msw";
 
 import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
 import { getMockContributionProgress } from "@/mocks/mockContributions";
+import { getMockGiftVerificationTargets } from "@/mocks/mockGiftVerifications";
 
 type MockHomeScenario =
   | "FUNDING"
@@ -177,6 +178,24 @@ export const createHomeHandlers = (scenario: MockHomeScenario) => [
         birthdayDday: 23,
         wishes: { content, page: 0, size: 10, totalElements: content.length, hasNext: false },
       },
+      error: null,
+    });
+  }),
+  http.get("*/api/home/gift-verifications/banner", async () => {
+    await delay(300);
+    const pendingCount = getMockGiftVerificationTargets().length;
+    return HttpResponse.json({
+      success: true,
+      data: { visible: pendingCount > 0, pendingCount },
+      error: null,
+    });
+  }),
+  http.get("*/api/home/gift-verifications", async () => {
+    await delay(500);
+    const targets = getMockGiftVerificationTargets();
+    return HttpResponse.json({
+      success: true,
+      data: { pendingCount: targets.length, targets },
       error: null,
     });
   }),

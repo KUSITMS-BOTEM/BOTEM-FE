@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 
 import Image from "next/image";
 
@@ -12,25 +12,33 @@ import IconPlus from "@/assets/icons/icon-plus.svg?react";
 type AddImageProps = {
   value: File | null;
   onChange: (file: File) => void;
+  label?: string;
+  allowedTypes?: string[];
+  maxSizeBytes?: number;
   className?: string;
 };
 
-export default function AddImage({ value, onChange, className }: AddImageProps) {
+export default function AddImage({
+  value,
+  onChange,
+  label = "상품 이미지",
+  allowedTypes,
+  maxSizeBytes,
+  className,
+}: AddImageProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const { errorText, handleFileChange } = useImageFileSelect({ onSelect: onChange });
+  const { errorText, handleFileChange } = useImageFileSelect({
+    allowedTypes,
+    maxSizeBytes,
+    onSelect: onChange,
+  });
 
-  useEffect(() => {
-    if (!value) return;
-    const url = URL.createObjectURL(value);
-    // objectURL 생성이 브라우저 리소스를 할당하는 부수효과라 렌더/useMemo가 아닌 이펙트에서 생성·해제를 같이 묶어야 함
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPreviewUrl(url);
-    return () => {
-      URL.revokeObjectURL(url);
-      setPreviewUrl(null);
-    };
-  }, [value]);
+  const previewUrl = useMemo(() => (value ? URL.createObjectURL(value) : null), [value]);
+  // effect cleanup에서 해제하면 StrictMode의 마운트→정리→마운트에서 memo된 URL이 해제돼 미리보기가 깨진다.
+  // 로드가 끝난 img는 URL을 해제해도 화면에 남으므로 로드 시점에 해제한다
+  const revokePreviewUrl = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -40,15 +48,23 @@ export default function AddImage({ value, onChange, className }: AddImageProps) 
           className,
         )}>
         <p className="text-semantic-text-tertiary [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-small-weak)]">
-          상품 이미지
+          {label}
         </p>
         <button
           type="button"
-          aria-label="상품 이미지 선택"
+          aria-label={`${label} 선택`}
           onClick={() => inputRef.current?.click()}
           className="border-semantic-border-primary border-medium relative size-36 shrink-0 cursor-pointer overflow-hidden rounded-3xl border-dashed">
           {previewUrl ? (
-            <Image src={previewUrl} alt="" fill unoptimized className="object-cover" />
+            <Image
+              src={previewUrl}
+              alt=""
+              fill
+              unoptimized
+              className="object-cover"
+              onLoad={revokePreviewUrl}
+              onError={revokePreviewUrl}
+            />
           ) : (
             <span className="bg-semantic-fill-default/70 flex size-full items-center justify-center">
               <IconPlus aria-hidden className="size-7" />
@@ -58,7 +74,7 @@ export default function AddImage({ value, onChange, className }: AddImageProps) 
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept={allowedTypes?.join(",") ?? "image/*"}
           className="sr-only"
           onChange={handleFileChange}
         />
