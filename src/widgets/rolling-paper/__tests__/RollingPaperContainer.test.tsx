@@ -8,7 +8,12 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, prefetch: vi.fn() }),
 }));
 
-beforeEach(() => pushMock.mockClear());
+const onClose = vi.fn();
+
+beforeEach(() => {
+  pushMock.mockClear();
+  onClose.mockClear();
+});
 
 // jsdom은 HTMLDialogElement의 showModal/close를 구현하지 않아 open 속성만 토글하도록 대체한다
 beforeAll(() => {
@@ -23,7 +28,9 @@ beforeAll(() => {
 
 describe("RollingPaperContainer", () => {
   it("시트 안에 타이틀·힌트·공유 버튼이 보인다", () => {
-    const { container } = render(<RollingPaperContainer rollingPaperId="1" count={5} />);
+    const { container } = render(
+      <RollingPaperContainer fundingId={1} count={5} open onClose={onClose} />,
+    );
 
     expect(container.querySelector("dialog")).toHaveAttribute("open");
     // 타이틀이 <br />로 줄바꿈돼 textContent에는 두 줄이 공백 없이 이어진다
@@ -33,49 +40,69 @@ describe("RollingPaperContainer", () => {
   });
 
   it("하단 CTA에 선물 받으러 가기 버튼이 보인다", () => {
-    render(<RollingPaperContainer rollingPaperId="1" count={5} />);
+    render(<RollingPaperContainer fundingId={1} count={5} open onClose={onClose} />);
 
     expect(screen.getByRole("button", { name: "선물 받으러 가기" })).toBeInTheDocument();
   });
 
   it("타이틀 개수는 받은 편지지 개수를 나타낸다", () => {
-    const { container, rerender } = render(<RollingPaperContainer rollingPaperId="1" count={3} />);
+    const { container, rerender } = render(
+      <RollingPaperContainer fundingId={1} count={3} open onClose={onClose} />,
+    );
     expect(container.textContent).toContain("총 3개의 메세지가");
 
-    rerender(<RollingPaperContainer rollingPaperId="1" count={12} />);
+    rerender(<RollingPaperContainer fundingId={1} count={12} open onClose={onClose} />);
     expect(container.textContent).toContain("총 12개의 메세지가");
   });
 
-  it("선물 받으러 가기를 누르면 하단 CTA가 아래로 내려가며 사라지도록 표시된다", async () => {
+  it("편지지를 누르면 하단 CTA가 아래로 내려가며 사라지도록 표시된다", async () => {
     const user = userEvent.setup();
-    render(<RollingPaperContainer rollingPaperId="1" count={5} />);
-    const button = screen.getByRole("button", { name: "선물 받으러 가기" });
-    const cta = button.closest(".pointer-events-none");
+    render(<RollingPaperContainer fundingId={1} count={5} open onClose={onClose} />);
+    const cta = screen
+      .getByRole("button", { name: "선물 받으러 가기" })
+      .closest(".pointer-events-none");
     expect(cta).not.toHaveClass("opacity-0");
 
-    await user.click(button);
+    await user.click(screen.getByRole("button", { name: "편지지 크게 보기" }));
 
     expect(cta).toHaveClass("opacity-0");
   });
 
-  it("선물 받으러 가기를 누르면 회색이 다 덮인 뒤에 롤링페이퍼 페이지로 이동한다", async () => {
+  it("편지지를 누르면 회색이 다 덮인 뒤에 롤링페이퍼 페이지로 이동한다", async () => {
     const user = userEvent.setup();
-    render(<RollingPaperContainer rollingPaperId="1" count={5} />);
+    render(<RollingPaperContainer fundingId={1} count={5} open onClose={onClose} />);
 
-    await user.click(screen.getByRole("button", { name: "선물 받으러 가기" }));
+    await user.click(screen.getByRole("button", { name: "편지지 크게 보기" }));
     expect(pushMock).not.toHaveBeenCalled();
 
-    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/rolling-paper/1?count=5"), {
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/rolling-paper/1"), {
       timeout: 3000,
     });
   });
 
-  it("닫기 버튼을 누르면 시트가 닫힌다", async () => {
+  it("선물 받으러 가기를 누르면 선물 확인 페이지로 이동한다", async () => {
     const user = userEvent.setup();
-    const { container } = render(<RollingPaperContainer rollingPaperId="1" count={5} />);
+    render(<RollingPaperContainer fundingId={1} count={5} open onClose={onClose} />);
+
+    await user.click(screen.getByRole("button", { name: "선물 받으러 가기" }));
+
+    expect(pushMock).toHaveBeenCalledWith("/funding/1/result");
+  });
+
+  it("닫기 버튼을 누르면 onClose를 호출한다", async () => {
+    const user = userEvent.setup();
+    render(<RollingPaperContainer fundingId={1} count={5} open onClose={onClose} />);
 
     await user.click(screen.getByRole("button", { name: "닫기" }));
 
-    await waitFor(() => expect(container.querySelector("dialog")).not.toHaveAttribute("open"));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("open이 false면 시트가 열리지 않는다", () => {
+    const { container } = render(
+      <RollingPaperContainer fundingId={1} count={5} open={false} onClose={onClose} />,
+    );
+
+    expect(container.querySelector("dialog")).not.toHaveAttribute("open");
   });
 });
