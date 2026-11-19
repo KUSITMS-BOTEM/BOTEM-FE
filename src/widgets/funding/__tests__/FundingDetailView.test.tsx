@@ -1,5 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { createElement, type ReactElement, type ReactNode } from "react";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
 
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import FundingDetailView from "@/widgets/funding/FundingDetailView";
@@ -26,6 +31,27 @@ beforeAll(() => {
 });
 
 // 앞 단계 시트는 열어 둔 채 위에 쌓이므로 같은 이름의 버튼은 마지막(가장 위) 것을 누른다
+// 입금 확인 시트가 확인 대기 목록을 조회하므로 QueryClient와 빈 목록 응답을 준비한다
+const server = setupServer(
+  http.get("*/api/fundings/:fundingId/contributions/pending", () =>
+    HttpResponse.json({
+      success: true,
+      data: { pendingContributionCount: 0, contributions: [] },
+      error: null,
+    }),
+  ),
+);
+
+beforeAll(() => server.listen());
+afterAll(() => server.close());
+
+const render = (ui: ReactElement) => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  return rtlRender(ui, { wrapper });
+};
+
 const clickTopmost = async (user: ReturnType<typeof userEvent.setup>, name: string) =>
   user.click(screen.getAllByRole("button", { name }).at(-1)!);
 
