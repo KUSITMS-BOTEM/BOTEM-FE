@@ -96,6 +96,19 @@ describe("useAddWishMutation", () => {
     expect(queryClient.getQueryState(["wishes", "7"])?.isInvalidated).toBe(false);
   });
 
+  it("성공 시 추천 상품 목록 쿼리가 무효화된다", async () => {
+    vi.mocked(wishService.addWish).mockResolvedValue({ ...mockWish, id: 7 });
+    queryClient.setQueryData(["recommendedProducts", undefined], []);
+    const { result } = renderHook(() => useAddWishMutation(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate({ recommendedProductId: 1 });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(queryClient.getQueryState(["recommendedProducts", undefined])?.isInvalidated).toBe(true);
+  });
+
   it("성공 응답의 data가 null이면 추천 목록(/wish/recommended)으로 되돌아간다", async () => {
     vi.mocked(wishService.addWish).mockResolvedValue(null);
     const { result } = renderHook(() => useAddWishMutation(), {

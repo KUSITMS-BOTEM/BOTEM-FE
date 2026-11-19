@@ -9,6 +9,8 @@ export const MOCK_RECOMMENDED_PRODUCTS = [
     sellerName: "Apple 공식 브랜드관",
     category: "EARPHONE_HEADPHONE",
     status: "ON_SALE",
+    // TODO(백엔드 확정 시 정리): 위시에 담은 상품 이동 확인용 임시 값
+    wishId: 1,
   },
   {
     id: 2,
@@ -18,6 +20,9 @@ export const MOCK_RECOMMENDED_PRODUCTS = [
     sellerName: "다이슨 공식 스토어",
     category: "HAIR_BEAUTY_DEVICE",
     status: "ON_SALE",
+    // TODO(백엔드 확정 시 정리): 펀딩 진행 중 상품 이동 확인용 임시 값
+    wishId: 2,
+    fundingId: 1,
   },
   {
     id: 3,
