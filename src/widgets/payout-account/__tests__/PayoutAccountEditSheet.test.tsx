@@ -1,10 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { useUpdatePayoutAccountMutation } from "@/hooks/mutations/payout-account/useUpdatePayoutAccountMutation";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import PayoutAccountEditSheet from "@/widgets/payout-account/PayoutAccountEditSheet";
 
 vi.mock("@/hooks/queries/payout-account/usePayoutAccountsQuery");
+vi.mock("@/hooks/mutations/payout-account/useUpdatePayoutAccountMutation");
+
+const mutate = vi.fn();
 
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
@@ -17,6 +21,10 @@ beforeAll(() => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(useUpdatePayoutAccountMutation).mockReturnValue({
+    mutate,
+    isPending: false,
+  } as unknown as ReturnType<typeof useUpdatePayoutAccountMutation>);
   vi.mocked(usePayoutAccountsQuery).mockReturnValue({
     data: [
       {
@@ -84,5 +92,36 @@ describe("PayoutAccountEditSheet", () => {
 
     expect(onClose).toHaveBeenCalled();
     expect(input).toHaveValue("100159014821");
+  });
+
+  it("수정 완료를 누르면 대표 계좌 id와 바꾼 값으로 수정을 요청하고, 성공하면 닫는다", async () => {
+    const onClose = vi.fn();
+    mutate.mockImplementation((_vars, options) => options.onSuccess({ id: 1 }));
+    render(<PayoutAccountEditSheet open onClose={onClose} />);
+    const input = screen.getByLabelText("계좌번호");
+
+    await userEvent.clear(input);
+    await userEvent.type(input, "123456789012");
+    await userEvent.click(getButtons().submit);
+
+    expect(mutate).toHaveBeenCalledWith(
+      { accountId: 1, bank: "TOSS_BANK", accountNumber: "123456789012", accountHolder: "지유" },
+      expect.any(Object),
+    );
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("요청이 실패하면 시트를 닫지 않고 입력값을 유지한다", async () => {
+    const onClose = vi.fn();
+    mutate.mockImplementation(() => undefined);
+    render(<PayoutAccountEditSheet open onClose={onClose} />);
+    const input = screen.getByLabelText("계좌번호");
+
+    await userEvent.clear(input);
+    await userEvent.type(input, "123456789012");
+    await userEvent.click(getButtons().submit);
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(input).toHaveValue("123456789012");
   });
 });

@@ -27,6 +27,8 @@ export const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   HOME_001: { message: "홈에 표시할 펀딩이 존재합니다.", action: "none" }, // 에러가 아닌 정상 분기 신호, useHomeNoFundingQuery에서 로컬 처리
 
   // --- 계좌 ---
+  PAYOUT_ACCOUNT_001: { message: "받을 계좌를 찾을 수 없습니다.", action: "dialog" },
+  PAYOUT_ACCOUNT_003: { message: "이미 등록한 은행입니다.", action: "dialog" },
   PAYOUT_ACCOUNT_004: { message: "계좌번호 형식이 올바르지 않습니다.", action: "inline" },
 
   // --- 추천 상품 ---

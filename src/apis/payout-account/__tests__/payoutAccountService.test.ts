@@ -5,6 +5,7 @@ import type { PayoutAccountResponse } from "@/types/payout-account/payoutAccount
 vi.mock("@/apis/client", () => ({
   clientApi: {
     get: vi.fn(),
+    put: vi.fn(),
   },
 }));
 
@@ -40,5 +41,25 @@ describe("payoutAccountService.getPayoutAccounts", () => {
     vi.mocked(clientApi.get).mockRejectedValue(error);
 
     await expect(payoutAccountService.getPayoutAccounts()).rejects.toBe(error);
+  });
+});
+
+describe("payoutAccountService.updatePayoutAccount", () => {
+  it("accountId는 경로로, 나머지는 body로 clientApi.put을 호출하고 응답을 반환한다", async () => {
+    vi.mocked(clientApi.put).mockResolvedValue(mockAccounts[0]);
+
+    const result = await payoutAccountService.updatePayoutAccount({
+      accountId: 1,
+      bank: "TOSS_BANK",
+      accountNumber: "123456789012",
+      accountHolder: null,
+    });
+
+    expect(clientApi.put).toHaveBeenCalledWith("/api/users/me/payout-accounts/1", {
+      bank: "TOSS_BANK",
+      accountNumber: "123456789012",
+      accountHolder: null,
+    });
+    expect(result).toEqual(mockAccounts[0]);
   });
 });

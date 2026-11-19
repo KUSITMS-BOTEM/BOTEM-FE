@@ -7,6 +7,7 @@ import Button from "@/components/Button";
 import CloseSheet from "@/components/CloseSheet";
 import TextButton from "@/components/TextButton";
 import type { BankCode } from "@/constants/bank";
+import { useUpdatePayoutAccountMutation } from "@/hooks/mutations/payout-account/useUpdatePayoutAccountMutation";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import type { PayoutAccountResponse } from "@/types/payout-account/payoutAccount";
 import { ACCOUNT_NUMBER_REGEX } from "@/utils/payout-account/parseClipboardAccount";
@@ -20,6 +21,7 @@ type PayoutAccountEditSheetProps = {
 
 export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountEditSheetProps) {
   const { data: payoutAccounts } = usePayoutAccountsQuery();
+  const { mutate: updatePayoutAccount, isPending } = useUpdatePayoutAccountMutation();
   const [original, setOriginal] = useState<PayoutAccountResponse>();
   const [accountNumber, setAccountNumber] = useState("");
   const [bank, setBank] = useState<BankCode | null>(null);
@@ -45,6 +47,19 @@ export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountE
     onClose();
   };
 
+  const handleSubmit = () => {
+    if (!original || !bank) return;
+    updatePayoutAccount(
+      { accountId: original.id, bank, accountNumber, accountHolder: original.accountHolder },
+      {
+        onSuccess: updated => {
+          if (updated) setOriginal(updated);
+          onClose();
+        },
+      },
+    );
+  };
+
   return (
     <CloseSheet open={open} title="대표 계좌 수정" onClose={handleClose}>
       <PayoutAccountForm
@@ -68,7 +83,9 @@ export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountE
         <Button
           color="brand"
           size="xlarge"
-          disabled={!isChanged || !ACCOUNT_NUMBER_REGEX.test(accountNumber) || !bank}>
+          states={isPending ? "loading" : "default"}
+          disabled={!isChanged || !ACCOUNT_NUMBER_REGEX.test(accountNumber) || !bank}
+          onClick={handleSubmit}>
           수정 완료
         </Button>
       </BottomCTA>

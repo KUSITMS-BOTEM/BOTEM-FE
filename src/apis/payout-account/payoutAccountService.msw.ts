@@ -18,4 +18,20 @@ export const payoutAccountHandlers = [
       error: null,
     });
   }),
+  http.put("*/api/users/me/payout-accounts/:accountId", async ({ params, request }) => {
+    const body = (await request.json()) as Record<string, unknown>;
+    return HttpResponse.json({
+      success: true,
+      // 추정 mock 값: bankName·verificationStatus는 요청에 없어 임의 값
+      data: {
+        id: Number(params.accountId),
+        bankName: "토스뱅크",
+        accountHolder: "지유",
+        isDefault: true,
+        verificationStatus: "UNVERIFIED",
+        ...body,
+      },
+      error: null,
+    });
+  }),
 ];
