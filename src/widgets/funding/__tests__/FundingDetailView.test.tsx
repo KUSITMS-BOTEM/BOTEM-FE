@@ -1,6 +1,11 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
 
+import { MOCK_FUNDING_MANAGEMENT } from "@/apis/funding/fundingService.msw";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import FundingDetailView from "@/widgets/funding/FundingDetailView";
 
@@ -24,6 +29,33 @@ beforeAll(() => {
     this.dispatchEvent(new Event("close"));
   });
 });
+
+// 개설자 화면(surprise·owner)은 펀딩 관리 API로 데이터를 받아 그린다
+const server = setupServer(
+  http.get("*/api/fundings/:fundingId/management", () =>
+    HttpResponse.json({ success: true, data: MOCK_FUNDING_MANAGEMENT, error: null }),
+  ),
+);
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+
+vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
+  useMyProfileQuery: () => ({ data: { name: "민지" } }),
+}));
+
+// 개설자 화면은 더보기 플로우가 mutation 훅을 쓰므로 QueryClient로 감싼다
+const render = (ui: ReactElement) =>
+  rtlRender(
+    <QueryClientProvider
+      client={
+        new QueryClient({
+          defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+        })
+      }>
+      {ui}
+    </QueryClientProvider>,
+  );
 
 // 앞 단계 시트는 열어 둔 채 위에 쌓이므로 같은 이름의 버튼은 마지막(가장 위) 것을 누른다
 const clickTopmost = async (user: ReturnType<typeof userEvent.setup>, name: string) =>
@@ -58,7 +90,7 @@ describe("FundingDetailView", () => {
     const user = userEvent.setup();
     render(<FundingDetailView fundingId="1" variant="surprise" />);
 
-    await user.click(screen.getByRole("button", { name: /확인 대기 3건이 있어요/ }));
+    await user.click(await screen.findByRole("button", { name: /확인 대기 3건이 있어요/ }));
     await user.click(screen.getByRole("button", { name: /통장에 들어왔는지 확인해주세요/ }));
 
     const sheet = screen.getByRole("dialog", { name: "입금 확인" });
@@ -108,6 +140,129 @@ describe("FundingDetailView", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  describe("개설자 화면 데이터", () => {
+    it("펀딩 관리 응답의 제목을 보여준다", async () => {
+      server.use(
+        http.get("*/api/fundings/:fundingId/management", () =>
+          HttpResponse.json({
+            success: true,
+            data: { ...MOCK_FUNDING_MANAGEMENT, title: "서연의 졸업" },
+            error: null,
+          }),
+        ),
+      );
+      render(<FundingDetailView fundingId="1" variant="owner" />);
+
+      expect(await screen.findByRole("heading", { name: "서연의 졸업" })).toBeInTheDocument();
+    });
+
+    it("조회에 실패하면 안내와 다시 시도 버튼을 보여주고, 누르면 다시 요청한다", async () => {
+      const user = userEvent.setup();
+      const request = vi.fn();
+      server.use(
+        http.get("*/api/fundings/:fundingId/management", () => {
+          request();
+          return HttpResponse.json(
+            { success: false, data: null, error: { code: "INTERNAL", message: "fail" } },
+            { status: 500 },
+          );
+        }),
+      );
+      render(<FundingDetailView fundingId="1" variant="owner" />);
+
+      expect(await screen.findByText("펀딩을 불러오지 못했어요")).toBeInTheDocument();
+      const callsBeforeRetry = request.mock.calls.length;
+      await user.click(screen.getByRole("button", { name: "다시 시도" }));
+
+      await waitFor(() => expect(request.mock.calls.length).toBeGreaterThan(callsBeforeRetry));
+    });
+  });
+
+  describe("더보기", () => {
+    it("guest 화면에서는 더보기를 눌러도 시트가 열리지 않는다", async () => {
+      const user = userEvent.setup();
+      render(<FundingDetailView fundingId="1" />);
+
+      await user.click(await screen.findByRole("button", { name: "더보기" }));
+
+      expect(screen.queryByText("공유 카드 다시 받기")).not.toBeInTheDocument();
+    });
+
+    it("개설자가 더보기를 누르면 메뉴와 연장 안내가 담긴 시트가 열린다", async () => {
+      const user = userEvent.setup();
+      render(<FundingDetailView fundingId="1" variant="owner" />);
+
+      await user.click(await screen.findByRole("button", { name: "더보기" }));
+
+      expect(await screen.findByRole("button", { name: "공유 카드 다시 받기" })).toBeVisible();
+      expect(screen.getByRole("button", { name: /조기 마감하기/ })).toBeInTheDocument();
+      expect(screen.getByText("마감일이 지나면 한 번 더 연장할 수 있어요")).toBeInTheDocument();
+    });
+
+    it("공유 카드 다시 받기를 누르면 공유 카드 화면이 열린다", async () => {
+      const user = userEvent.setup();
+      render(<FundingDetailView fundingId="1" variant="owner" />);
+
+      await user.click(await screen.findByRole("button", { name: "더보기" }));
+      await user.click(await screen.findByRole("button", { name: "공유 카드 다시 받기" }));
+
+      expect(await screen.findByRole("button", { name: "공유 카드 저장" })).toBeInTheDocument();
+      expect(screen.getByText("지유의 생일 펀딩")).toBeInTheDocument();
+    });
+
+    it("조기 마감에서 예를 누르면 마감 API를 호출하고 확인 Dialog를 닫는다", async () => {
+      const user = userEvent.setup();
+      const closeRequest = vi.fn();
+      server.use(
+        http.post("*/api/fundings/:fundingId/close", ({ params }) => {
+          closeRequest(params.fundingId);
+          return HttpResponse.json({
+            success: true,
+            data: {
+              fundingId: 1,
+              type: "BIRTHDAY",
+              status: "CLOSED",
+              deadline: "2026-12-31",
+              revealAt: null,
+              earlyClosedAt: "2026-11-20T10:00:00",
+            },
+            error: null,
+          });
+        }),
+      );
+      render(<FundingDetailView fundingId="1" variant="owner" />);
+
+      await user.click(await screen.findByRole("button", { name: "더보기" }));
+      await user.click(await screen.findByRole("button", { name: /조기 마감하기/ }));
+      expect(await screen.findByText("지금 마감할까요?")).toBeVisible();
+      await user.click(screen.getByRole("button", { name: "예" }));
+
+      await waitFor(() => expect(closeRequest).toHaveBeenCalledWith("1"));
+      await waitFor(() =>
+        expect(screen.getByText("지금 마감할까요?").closest("dialog")).not.toHaveAttribute("open"),
+      );
+    });
+
+    it("조기 마감에서 아니오를 누르면 API 호출 없이 Dialog만 닫힌다", async () => {
+      const user = userEvent.setup();
+      const closeRequest = vi.fn();
+      server.use(
+        http.post("*/api/fundings/:fundingId/close", () => {
+          closeRequest();
+          return HttpResponse.json({ success: true, data: null, error: null });
+        }),
+      );
+      render(<FundingDetailView fundingId="1" variant="owner" />);
+
+      await user.click(await screen.findByRole("button", { name: "더보기" }));
+      await user.click(await screen.findByRole("button", { name: /조기 마감하기/ }));
+      await user.click(await screen.findByRole("button", { name: "아니오" }));
+
+      expect(screen.getByText("지금 마감할까요?").closest("dialog")).not.toHaveAttribute("open");
+      expect(closeRequest).not.toHaveBeenCalled();
+    });
   });
 
   it("헤더에 공유·더보기 버튼이 있고 뒤로가기 버튼은 없다", () => {

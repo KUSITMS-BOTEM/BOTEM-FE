@@ -4,21 +4,27 @@ import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
+import Button from "@/components/Button";
 import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
+import LoadingAnimation from "@/components/LoadingAnimation";
 import PageExitMotion from "@/components/effects/PageExitMotion";
+import { getProfileColor } from "@/components/Profile";
 import ProfileBox from "@/components/ProfileBox";
 import Tooltip from "@/components/Tooltip";
+import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import type { DepositItem } from "@/utils/funding/depositConfirm";
-import { getClosedLabel } from "@/utils/funding/fundingProgress";
+import { calcFundingPercent, getClosedLabel } from "@/utils/funding/fundingProgress";
+import { toFundingDetailViewData } from "@/utils/funding/toFundingDetailViewData";
 import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
-import BotemPopup from "@/widgets/funding/BotemPopup";
+import BotemPopup, { type BotemPopupFriend } from "@/widgets/funding/BotemPopup";
 import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
 import FundingGiftProofView from "@/widgets/funding/FundingGiftProofView";
 import FundingMessage from "@/widgets/funding/FundingMessage";
+import FundingMoreFlow from "@/widgets/funding/FundingMoreFlow";
 import FundingPasswordSheet from "@/widgets/funding/FundingPasswordSheet";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
 import type { FundingTransferAccount } from "@/widgets/funding/FundingTransferGuideSheet";
@@ -38,33 +44,41 @@ type FundingDetailViewProps = {
   onBack?: () => void;
 };
 
-// TODO(API): 비회원 펀딩 공개 조회 API가 나오면 fundingId로 받아온 값으로 교체한다
+// TODO(API): 비회원 펀딩 공개 조회 API가 나오면 fundingId로 받아온 값으로 교체한다.
+// 개설자 화면(surprise·owner)은 아래 '응답에 없는 값'만 이 MOCK을 쓰고 나머지는 펀딩 관리 API 값으로 덮어쓴다
 const MOCK_FUNDING = {
-  hostName: "지유",
   title: "지유의 생일",
   story: "올해 생일엔 출퇴근길에 쓸 노캔 헤드폰이 갖고 싶어요. 조금씩 보태주면 감동할게요!",
   pledge: "펀딩이 성공하면 헤드폰 끼고 출근하는 인증샷을 꼭 올릴게요!",
   productName: "소니 WH-1000XM5",
   productImageUrl: SampleProduct.src,
   deadline: "2026-12-31",
-  // TODO(API): 개설자가 선물 인증 사진을 올렸는지 서버 값으로 교체한다 (true면 마감 후 인증 화면)
-  hasGiftProof: false,
+  extended: false,
   currentAmount: 74074074,
   targetAmount: 123456789,
-  participants: ["orange", "blue", "pink"] as const,
+  profiles: [{ order: 0 }, { order: 3 }, { order: 1 }] as { order: number; imageUrl?: string }[],
   extraParticipantCount: 99,
-  // TODO(API): 개설자의 확인 대기 입금 목록 API가 나오면 교체한다 (건수도 이 목록 길이로 맞춘다)
+  actions: { canCloseEarly: true, canReissueShareCard: true },
+  // TODO(API): 개설자의 확인 대기 입금 목록 API가 나오면 교체한다. 그 전이라도 건수(unconfirmedCount)는 펀딩 관리 응답의 pendingContributionCount로 맞출 수 있다
   deposits: [
     { id: 1, senderName: "하린이", amount: 45000, depositedAt: "2026-11-18T11:20:00" },
     { id: 2, senderName: "도윤이", amount: 30000, depositedAt: "2026-11-16T09:05:00" },
     { id: 3, senderName: "서준이", amount: 10000, depositedAt: "2026-11-16T08:00:00" },
   ] satisfies DepositItem[],
-  // TODO(API): 펀딩 주인이 받은 메세지 수·친구별 감사카드 발송 여부를 서버 값으로 교체한다
   messageCount: 8,
   friends: [
     { id: 1, name: "민수", contributedAt: "2026-11-10T09:00:00", thankCardSent: false },
     { id: 2, name: "서연", contributedAt: "2026-11-12T18:30:00", thankCardSent: true },
-  ],
+  ] as BotemPopupFriend[],
+};
+
+// 펀딩 관리 응답에 없는 값
+const MOCK_MISSING_FIELDS = {
+  // TODO(API): guest 화면 문구("나도 지유님께 보태볼까요?" 등)와 개설자 화면 BotemPopup의 ownerName에 쓰인다. 공유용 상세 API에 받는 사람 이름 추가를 요청할 예정
+  hostName: "지유",
+  // TODO(API): guest 화면 전용. 공유용 상세 API의 giftVerification으로 교체한다 (true면 마감 후 인증 화면)
+  hasGiftProof: false,
+  // TODO(API): guest 보태기(FundingPasswordSheet) 전용. 공유용 상세 API의 송금 계좌로 교체한다
   account: {
     bank: "TOSS_BANK",
     accountHolder: "김지유",
@@ -72,7 +86,7 @@ const MOCK_FUNDING = {
   } satisfies FundingTransferAccount,
 };
 
-// TODO: 공유·더보기 동작은 디자인이 정해지면 연결한다
+// TODO: 공유 동작(과 guest 화면의 더보기)은 디자인이 정해지면 연결한다
 const noop = () => {};
 
 export default function FundingDetailView({
@@ -82,18 +96,24 @@ export default function FundingDetailView({
 }: FundingDetailViewProps) {
   const router = useRouter();
   const { pageExit, exitPage } = usePageExit();
-  const funding = MOCK_FUNDING;
-  const unconfirmedCount = funding.deposits.length;
   const isSurprise = variant === "surprise";
   const isOwner = variant === "owner";
   // 받은 입금을 확인해야 하는 쪽(서프라이즈 개설자·펀딩 주인)
   const confirmsDeposits = isSurprise || isOwner;
+  const managementQuery = useFundingManagementQuery(Number(fundingId), confirmsDeposits);
+  const funding = {
+    ...MOCK_FUNDING,
+    ...MOCK_MISSING_FIELDS,
+    ...(managementQuery.data && toFundingDetailViewData(managementQuery.data)),
+  };
+  const unconfirmedCount = funding.deposits.length;
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isContributeOpen, setIsContributeOpen] = useState(false);
   const [isLetterOpen, setIsLetterOpen] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
   const contributeAmount = useFundingContributionStore(state => state.amount);
   const { setAmount, setLetter, setPassword, reset } = useFundingContributionStore.getState();
   const [isExitOpen, setIsExitOpen] = useState(false);
@@ -118,7 +138,29 @@ export default function FundingDetailView({
   const closedLabel = getClosedLabel(funding);
   const isClosed = closedLabel !== null;
 
-  if (isClosed && funding.hasGiftProof) {
+  if (confirmsDeposits && managementQuery.isPending) {
+    return (
+      <div role="status" className="flex min-h-dvh items-center justify-center">
+        <LoadingAnimation size="large" />
+        <span className="sr-only">펀딩을 불러오는 중이에요</span>
+      </div>
+    );
+  }
+  if (confirmsDeposits && managementQuery.isError) {
+    return (
+      <main className="flex min-h-dvh flex-col items-center justify-center gap-4 text-center">
+        <p className="text-semantic-text-secondary [font:var(--semantic-subtext-large)]">
+          펀딩을 불러오지 못했어요
+        </p>
+        <Button disabled={managementQuery.isFetching} onClick={() => managementQuery.refetch()}>
+          다시 시도
+        </Button>
+      </main>
+    );
+  }
+
+  // 공유 링크로 들어온 친구에게 마감 후 선물 인증을 보여주는 화면이라 개설자 화면은 해당하지 않는다
+  if (!confirmsDeposits && isClosed && funding.hasGiftProof) {
     return (
       <FundingGiftProofView
         contributorCount={funding.friends.length}
@@ -142,8 +184,12 @@ export default function FundingDetailView({
           rightItems={[
             // TODO: 공유 버튼 클릭 시 동작 구현 필요 (예: 카카오톡/링크 공유)
             { icon: <IconShare />, ariaLabel: "공유", onClick: noop },
-            // TODO: 더보기 버튼 클릭 시 동작 구현 필요 (예: 메뉴/바텀시트 노출)
-            { icon: <IconDotVertical />, ariaLabel: "더보기", onClick: noop },
+            // 더보기(공유 카드 다시 받기·조기 마감)는 개설자만 쓸 수 있다
+            {
+              icon: <IconDotVertical />,
+              ariaLabel: "더보기",
+              onClick: confirmsDeposits ? () => setIsMoreOpen(true) : noop,
+            },
           ]}
         />
         <div className="flex flex-col gap-4 px-5 pb-[calc(var(--padding-large)+env(safe-area-inset-bottom))]">
@@ -185,7 +231,10 @@ export default function FundingDetailView({
               </Tooltip>
             )}
             <ProfileBox
-              profiles={funding.participants.map(color => ({ color }))}
+              profiles={funding.profiles.map(({ order, imageUrl }) => ({
+                color: getProfileColor(order),
+                imageUrl,
+              }))}
               extraCount={funding.extraParticipantCount}
               notification={confirmsDeposits && unconfirmedCount > 0}
               className="bg-semantic-fill-default shadow-[0_4px_8px_0_var(--color-semantic-shadow-weak)]"
@@ -229,6 +278,26 @@ export default function FundingDetailView({
           deposits={funding.deposits}
           onClose={() => setIsDepositOpen(false)}
         />
+        {confirmsDeposits && (
+          <FundingMoreFlow
+            open={isMoreOpen}
+            fundingId={Number(fundingId)}
+            extended={funding.extended}
+            actions={funding.actions}
+            shareCard={{
+              cardTitle: `${funding.title} 펀딩`,
+              wish: {
+                id: 0,
+                productName: funding.productName,
+                productImageUrl: funding.productImageUrl,
+                price: funding.targetAmount,
+              },
+              info: { targetAmount: String(funding.targetAmount), deadline: funding.deadline },
+              progress: calcFundingPercent(funding.currentAmount, funding.targetAmount),
+            }}
+            onClose={() => setIsMoreOpen(false)}
+          />
+        )}
         <BotemEditFlow
           open={isEditOpen}
           recipientName={funding.hostName}
