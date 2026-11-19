@@ -14,12 +14,13 @@ import HomeFundingView from "@/widgets/home/HomeFundingView";
 import HomeLoadError from "@/widgets/home/HomeLoadError";
 import HomeWishRecommendation from "@/widgets/home/HomeWishRecommendation";
 import PendingContributionBottomSheet from "@/widgets/home/PendingContributionBottomSheet";
+import type { HomeWishCardResponse } from "@/types/home/home";
 
 const REVEAL_PREFETCH_TIMEOUT_MS = 1500;
 
 type HomeFundingTabProps = {
   onAddWish: () => void;
-  onOpenFunding?: () => void;
+  onOpenFunding?: (wish: HomeWishCardResponse) => void;
   banner?: ReactNode;
 };
 

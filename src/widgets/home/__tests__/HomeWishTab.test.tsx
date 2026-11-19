@@ -84,6 +84,15 @@ describe("HomeWishTab", () => {
     expect(screen.getByText("상품1")).toBeInTheDocument();
   });
 
+  it("위시 카드는 각 위시의 상세 페이지(/wish/{id})로 연결된다", () => {
+    mockWishes({ content: [makeWish(21, "AVAILABLE"), makeWish(22, "FUNDING")] });
+
+    render(<HomeWishTab onAddWish={vi.fn()} />);
+
+    expect(screen.getByRole("link", { name: /상품21/ })).toHaveAttribute("href", "/wish/21");
+    expect(screen.getByRole("link", { name: /상품22/ })).toHaveAttribute("href", "/wish/22");
+  });
+
   it("펀딩 중인 위시에만 '펀딩 중' 배지를 표시한다", () => {
     mockWishes({ content: [makeWish(1, "FUNDING"), makeWish(2, "AVAILABLE")] });
 
