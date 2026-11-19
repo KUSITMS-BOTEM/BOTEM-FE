@@ -118,7 +118,12 @@ beforeEach(() => {
 
 afterEach(() => server.resetHandlers());
 
-const renderSheet = (props: Partial<Parameters<typeof DepositConfirmSheet>[0]> = {}) => {
+type SheetProps = Parameters<typeof DepositConfirmSheet>[0];
+
+const renderSheet = (
+  props: Partial<Pick<SheetProps, "onClose">> &
+    ({ variant?: "default" } | { variant: "preReveal"; onReveal: () => void }) = {},
+) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -173,6 +178,37 @@ describe("DepositConfirmSheet 목록", () => {
   });
 });
 
+describe("DepositConfirmSheet 공개 전 입금 확인", () => {
+  const renderPreReveal = (onReveal = vi.fn()) => {
+    renderSheet({ variant: "preReveal", onReveal });
+    return onReveal;
+  };
+
+  it("공개 전 제목과 남은 건수 안내·미확인 보탬 건수를 보여주고, 남은 건이 있으면 공개 버튼은 없다", async () => {
+    renderPreReveal();
+
+    expect(await screen.findByRole("heading", { name: "미확인 보탬 3건" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "공개 전에 확인해주세요" })).toBeInTheDocument();
+    expect(screen.getByText("확인이 필요한 보탬이 3건 있어요.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "팡! 열어보기" })).not.toBeInTheDocument();
+  });
+
+  it("모두 확인하면 남은 건수 안내를 숨기고, 팡! 열어보기를 누르면 onReveal을 호출한다", async () => {
+    const onReveal = renderPreReveal();
+    await screen.findByRole("heading", { name: "미확인 보탬 3건" });
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "전체 선택" }));
+    await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
+
+    expect(await screen.findByRole("heading", { name: "미확인 보탬 0건" })).toBeInTheDocument();
+    expect(screen.getByText("모든 내역을 확인했어요")).toBeInTheDocument();
+    expect(screen.queryByText(/확인이 필요한 보탬이/)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "팡! 열어보기" }));
+    expect(onReveal).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("DepositConfirmSheet 처리와 토스트", () => {
   it("개별 선택 후 받았어요를 누르면 confirm을 요청하고 재조회한 목록과 안내 토스트를 보여준다", async () => {
     renderSheet();
@@ -210,6 +246,7 @@ describe("DepositConfirmSheet 처리와 토스트", () => {
     expect(requests).toEqual(["CONFIRM_ALL"]);
     expect(screen.getByRole("heading", { name: "입금 확인 0건" })).toBeInTheDocument();
     expect(screen.getByText("모든 내역을 확인했어요")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "팡! 열어보기" })).not.toBeInTheDocument();
   });
 
   it("처리 토스트의 실행 취소를 누르면 토스트만 닫히고 추가 요청은 나가지 않는다", async () => {

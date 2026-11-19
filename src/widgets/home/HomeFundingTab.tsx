@@ -48,6 +48,19 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding, banner }: Hom
     return <HomeLoadError message="홈 정보를 불러오지 못했어요" onRetry={handleRetry} />;
   }
 
+  // 결과 화면에 로딩 상태가 끼지 않도록 데이터를 받아 둔 뒤 이동한다 (실패 시 결과 화면의 재시도 UI에 맡긴다)
+  // 모션 줄이기 설정에서는 탭 즉시 호출돼 받는 동안의 연타를 막아야 한다 — 이동하면 언마운트되므로 풀지 않는다
+  const openReveal = async (fundingId: number) => {
+    if (revealLockRef.current) return;
+    revealLockRef.current = true;
+    // 응답이 늦거나 오프라인이면 프리페치가 끝나지 않아 이동이 막히므로 제한 시간이 지나면 그대로 이동한다
+    await Promise.race([
+      queryClient.prefetchQuery(fundingRevealQueryOptions(fundingId)),
+      new Promise(resolve => setTimeout(resolve, REVEAL_PREFETCH_TIMEOUT_MS)),
+    ]);
+    router.push(`/funding/${fundingId}/reveal`);
+  };
+
   if (fundingCards && fundingCards.length > 0) {
     if (!profile) return null;
     const cards = fundingCards.map(card => {
@@ -56,19 +69,7 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding, banner }: Hom
         return { ...data, onClick: () => router.push(`/funding/${card.fundingId}`) };
       }
       if (data.type === "complete") {
-        // 결과 화면에 로딩 상태가 끼지 않도록 데이터를 받아 둔 뒤 이동한다 (실패 시 결과 화면의 재시도 UI에 맡긴다)
-        // 모션 줄이기 설정에서는 탭 즉시 호출돼 받는 동안의 연타를 막아야 한다 — 이동하면 언마운트되므로 풀지 않는다
-        const openReveal = async () => {
-          if (revealLockRef.current) return;
-          revealLockRef.current = true;
-          // 응답이 늦거나 오프라인이면 프리페치가 끝나지 않아 이동이 막히므로 제한 시간이 지나면 그대로 이동한다
-          await Promise.race([
-            queryClient.prefetchQuery(fundingRevealQueryOptions(card.fundingId)),
-            new Promise(resolve => setTimeout(resolve, REVEAL_PREFETCH_TIMEOUT_MS)),
-          ]);
-          router.push(`/funding/${card.fundingId}/reveal`);
-        };
-        return { ...data, onClick: openReveal };
+        return { ...data, onClick: () => openReveal(card.fundingId) };
       }
       const openCardSheet = () => {
         setSheetFundingId(card.fundingId);
@@ -82,10 +83,12 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding, banner }: Hom
       <>
         <HomeFundingView cards={cards} banner={banner} />
         <DepositConfirmSheet
+          variant="preReveal"
           open={isSheetOpen}
           fundingId={sheetFundingId}
           enterTransition={PENDING_SHEET_ENTER}
           onClose={() => setIsSheetOpen(false)}
+          onReveal={() => sheetFundingId !== null && openReveal(sheetFundingId)}
         />
       </>
     );

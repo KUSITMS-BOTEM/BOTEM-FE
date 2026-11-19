@@ -36,7 +36,11 @@ type DepositToast = {
   undoable?: boolean;
 };
 
-type DepositConfirmSheetProps = {
+// preReveal: 마감 후 공개 전에 남은 입금을 확인하는 시트라, 모두 확인하면 공개 화면으로 보낼 수 있다
+type DepositConfirmSheetVariantProps =
+  { variant?: "default"; onReveal?: never } | { variant: "preReveal"; onReveal: () => void };
+
+type DepositConfirmSheetProps = DepositConfirmSheetVariantProps & {
   open: boolean;
   fundingId: number | null;
   onClose: () => void;
@@ -48,7 +52,10 @@ export default function DepositConfirmSheet({
   fundingId,
   onClose,
   enterTransition,
+  variant = "default",
+  onReveal,
 }: DepositConfirmSheetProps) {
+  const isPreReveal = variant === "preReveal";
   const query = usePendingContributionsQuery({ fundingId, enabled: open });
   const confirmMutation = useConfirmContributionMutation(fundingId);
   const rejectMutation = useRejectContributionMutation(fundingId);
@@ -174,14 +181,24 @@ export default function DepositConfirmSheet({
         <div className="flex w-full flex-col items-start gap-4 pt-2 pb-5">
           <div className="flex w-full flex-col gap-2">
             <h3 className="text-semantic-text-strong [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-title-a2-z-large)]">
-              입금 확인{" "}
-              <span className={count > 0 ? "text-semantic-text-brand" : undefined}>{count}건</span>
+              {isPreReveal ? (
+                "공개 전에 확인해주세요"
+              ) : (
+                <>
+                  입금 확인{" "}
+                  <span className={count > 0 ? "text-semantic-text-brand" : undefined}>
+                    {count}건
+                  </span>
+                </>
+              )}
             </h3>
-            <p className="text-semantic-text-secondary [letter-spacing:var(--letter-spacing-default)] whitespace-pre-line [font:var(--semantic-subtext-large)]">
-              {
-                "통장에 실제로 들어온 것만 눌러 받았어요를 눌러주세요.\n입금 전에 누르면 진행률이 그대로 올라가요."
-              }
-            </p>
+            {(!isPreReveal || count > 0) && (
+              <p className="text-semantic-text-secondary [letter-spacing:var(--letter-spacing-default)] whitespace-pre-line [font:var(--semantic-subtext-large)]">
+                {isPreReveal
+                  ? `확인이 필요한 보탬이 ${count}건 있어요.`
+                  : "통장에 실제로 들어온 것만 눌러 받았어요를 눌러주세요.\n입금 전에 누르면 진행률이 그대로 올라가요."}
+              </p>
+            )}
           </div>
           <Button
             color="brand"
@@ -193,48 +210,56 @@ export default function DepositConfirmSheet({
             토스 확인하기
           </Button>
         </div>
-        {query.isLoading ? (
-          <div aria-busy className="flex w-full flex-col gap-3">
-            {Array.from({ length: SKELETON_COUNT }, (_, index) => (
-              <ShimmerBar key={index} className="h-[82px] w-full rounded-2xl" />
-            ))}
-          </div>
-        ) : query.isError && !query.data ? (
-          <div className="flex flex-col items-center gap-4 py-10 text-center">
-            <p className="text-semantic-text-secondary [font:var(--semantic-subtext-large)]">
-              입금 내역을 불러오지 못했어요
-            </p>
-            <Button onClick={() => query.refetch()}>다시 시도</Button>
-          </div>
-        ) : count === 0 ? (
-          <div className="flex min-h-[268px] w-full flex-col items-center justify-center gap-3">
-            <DepositConfirmedAnimation />
-            <p className="text-semantic-text-quaternary [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-small)]">
-              모든 내역을 확인했어요
-            </p>
-          </div>
-        ) : (
-          <div className="flex w-full flex-col gap-3">
-            {groups.map(({ dateLabel, deposits: groupDeposits }) => (
-              <section key={dateLabel} className="flex w-full flex-col gap-1">
-                <ListHeader title={dateLabel} as="h4" />
-                <ul className="flex w-full flex-col gap-3">
-                  {groupDeposits.map(({ id, senderName, depositedAt }) => (
-                    <li key={id}>
-                      <PendingContributionItem
-                        senderName={senderName}
-                        depositMethod={formatDepositTime(depositedAt)}
-                        leading={<IconDeposit aria-hidden />}
-                        checked={selectedIds.includes(id)}
-                        onCheckedChange={checked => toggle(id, checked)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
-        )}
+        <div className="flex w-full flex-col gap-3">
+          {isPreReveal && query.data && <ListHeader title={`미확인 보탬 ${count}건`} as="h4" />}
+          {query.isLoading ? (
+            <div aria-busy className="flex w-full flex-col gap-3">
+              {Array.from({ length: SKELETON_COUNT }, (_, index) => (
+                <ShimmerBar key={index} className="h-[82px] w-full rounded-2xl" />
+              ))}
+            </div>
+          ) : query.isError && !query.data ? (
+            <div className="flex flex-col items-center gap-4 py-10 text-center">
+              <p className="text-semantic-text-secondary [font:var(--semantic-subtext-large)]">
+                입금 내역을 불러오지 못했어요
+              </p>
+              <Button onClick={() => query.refetch()}>다시 시도</Button>
+            </div>
+          ) : count === 0 ? (
+            <div className="flex min-h-[268px] w-full flex-col items-center justify-center gap-3">
+              <DepositConfirmedAnimation />
+              <p className="text-semantic-text-quaternary [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-small)]">
+                모든 내역을 확인했어요
+              </p>
+              {onReveal && (
+                <Button color="neutral" variant="weak" size="medium" onClick={onReveal}>
+                  팡! 열어보기
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="flex w-full flex-col gap-3">
+              {groups.map(({ dateLabel, deposits: groupDeposits }) => (
+                <section key={dateLabel} className="flex w-full flex-col gap-1">
+                  <ListHeader title={dateLabel} as="h4" />
+                  <ul className="flex w-full flex-col gap-3">
+                    {groupDeposits.map(({ id, senderName, depositedAt }) => (
+                      <li key={id}>
+                        <PendingContributionItem
+                          senderName={senderName}
+                          depositMethod={formatDepositTime(depositedAt)}
+                          leading={<IconDeposit aria-hidden />}
+                          checked={selectedIds.includes(id)}
+                          onCheckedChange={checked => toggle(id, checked)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </BottomSheet>
   );
