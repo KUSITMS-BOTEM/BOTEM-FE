@@ -371,6 +371,42 @@ describe("FundingOpenSheet", () => {
 
         await waitFor(() => expect(confirmSheet().getByText("1001590148219")).toBeInTheDocument());
       });
+
+      it("확인 시트에서 수정한 값으로 개설 요청을 보낸다", async () => {
+        await openConfirm();
+        await userEvent.click(screen.getAllByRole("button", { name: /변경하기/ })[0]);
+        await userEvent.type(screen.getAllByLabelText("사연").at(-1)!, "!");
+        await userEvent.click(await screen.findByRole("button", { name: "수정 완료" }));
+        await waitFor(() => expect(confirmSheet().getByText("생일 선물!")).toBeInTheDocument());
+
+        await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
+
+        expect(createFunding).toHaveBeenCalledWith(
+          expect.objectContaining({ story: "생일 선물!" }),
+          expect.anything(),
+        );
+      });
+
+      it("확인 시트에서 수정하고 그냥 닫으면 입력 단계는 수정 전 값을 유지하고 다시 열어도 수정 전 값으로 요청한다", async () => {
+        await openConfirm();
+        await userEvent.click(screen.getAllByRole("button", { name: /변경하기/ })[0]);
+        await userEvent.type(screen.getAllByLabelText("사연").at(-1)!, "!");
+        await userEvent.click(await screen.findByRole("button", { name: "수정 완료" }));
+        await waitFor(() => expect(confirmSheet().getByText("생일 선물!")).toBeInTheDocument());
+
+        const dialog = screen.getByText("이대로 펀딩을 열까요?").closest("dialog") as HTMLElement;
+        await userEvent.click(confirmSheet().getByRole("button", { name: "닫기" }));
+        await waitFor(() => expect(dialog).not.toHaveAttribute("open"));
+
+        await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
+        await screen.findByText("이대로 펀딩을 열까요?");
+        await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
+
+        expect(createFunding).toHaveBeenCalledWith(
+          expect.objectContaining({ story: "생일 선물" }),
+          expect.anything(),
+        );
+      });
     });
 
     it("계좌 단계에 들어가기 전에는 대표 계좌를 조회하지 않는다", async () => {
