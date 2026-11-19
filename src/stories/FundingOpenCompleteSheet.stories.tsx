@@ -65,9 +65,8 @@ function FundingOpenCompleteSheetDemo({
         info={{
           targetAmount: "429000",
           deadline: addDays(getTodayDate(), 7),
-          story: "",
-          pledge: "",
         }}
+        fundingId={1}
         onClose={() => setOpen(false)}
       />
     </QueryClientProvider>

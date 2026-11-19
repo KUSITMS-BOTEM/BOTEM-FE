@@ -10,16 +10,12 @@ const wishes: FriendWishResponse[] = [
     productName: "모자",
     productImageUrl: null,
     price: 429000,
-    sellerName: "쿠팡",
-    productUrl: "https://link.coupang.com/a/example",
   },
   {
     wishId: 2,
     productName: "Matin Kim 지갑",
     productImageUrl: null,
     price: 327500,
-    sellerName: "쿠팡",
-    productUrl: "https://link.coupang.com/a/example",
   },
 ];
 

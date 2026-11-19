@@ -26,6 +26,19 @@ export type CreateFundingRequest = {
   promise?: string;
 };
 
+export type CreateSurpriseFundingRequest = {
+  recipientId: number;
+  wishId: number;
+  bank: BankCode;
+  accountNumber: string;
+  targetAmount: number;
+  // "YYYY-MM-DD"
+  deadline: string;
+  // "YYYY-MM-DDTHH:mm:ss"
+  revealAt: string;
+  showOnRecipientProfile: boolean;
+};
+
 export type CreateFundingResponse = {
   fundingId: number;
   type: FundingType;

@@ -15,6 +15,8 @@ const mockProfile: FriendProfileResponse = {
   birthday: "10-24",
   birthdayDday: 3,
   fundings: [],
+  wishesVisible: true,
+  wishCount: 0,
   wishes: [],
 };
 
@@ -29,18 +31,28 @@ describe("friendService.getFriends", () => {
 });
 
 describe("friendService.getFriendProfile", () => {
-  it("clientApi.get을 /api/friends/{friendId} 경로로 호출한다", async () => {
+  it("clientApi.get을 /api/friends/{friendId}/profile 경로로 호출한다", async () => {
     vi.mocked(clientApi.get).mockResolvedValue(mockProfile);
 
     await friendService.getFriendProfile("5");
 
-    expect(clientApi.get).toHaveBeenCalledWith("/api/friends/5");
+    expect(clientApi.get).toHaveBeenCalledWith("/api/friends/5/profile");
   });
 
   it("clientApi.get이 반환한 값을 그대로 반환한다", async () => {
     vi.mocked(clientApi.get).mockResolvedValue(mockProfile);
 
     await expect(friendService.getFriendProfile("5")).resolves.toEqual(mockProfile);
+  });
+});
+
+describe("friendService.getFriendWish", () => {
+  it("clientApi.get을 /api/friends/{friendId}/wishes/{wishId} 경로로 호출한다", async () => {
+    vi.mocked(clientApi.get).mockResolvedValue(null);
+
+    await friendService.getFriendWish("5", "11");
+
+    expect(clientApi.get).toHaveBeenCalledWith("/api/friends/5/wishes/11");
   });
 });
 
