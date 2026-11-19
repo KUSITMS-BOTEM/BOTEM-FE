@@ -95,6 +95,18 @@ describe("useDeleteWishMutation", () => {
     expect(useWishDeletedToastStore.getState().pending).toBe(true);
   });
 
+  it("위시 응답에 추천 상품 id가 있으면 담은 기록이 없어도 그 상세로 이동한다", async () => {
+    vi.mocked(wishService.deleteWish).mockResolvedValue(null);
+    const { result } = renderHook(() => useDeleteWishMutation("1", 7), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate();
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(replace).toHaveBeenCalledWith("/wish/recommended/7");
+  });
+
   it("wishService.deleteWish가 실패하면 isError가 true가 되고 router.replace는 호출되지 않는다", async () => {
     const error = new Error("위시 삭제 실패");
     vi.mocked(wishService.deleteWish).mockRejectedValue(error);

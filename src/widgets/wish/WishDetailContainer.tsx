@@ -24,7 +24,10 @@ export default function WishDetailContainer() {
   const { wishId } = useParams<{ wishId: string }>();
   const { data: wish, error, isLoading, refetch } = useWishQuery(wishId);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { mutate: deleteWish, isPending: isDeletePending } = useDeleteWishMutation(wishId);
+  const { mutate: deleteWish, isPending: isDeletePending } = useDeleteWishMutation(
+    wishId,
+    wish?.recommendedProductId,
+  );
   const errorAction = resolveWishErrorAction(error);
   // 위시 담기 직후 이동해 온 경우에만 토스트를 보여준다(초기값으로 읽고, 새로고침·재방문엔 안 뜨도록 아래서 비운다)
   const [showAddedToast, setShowAddedToast] = useState(

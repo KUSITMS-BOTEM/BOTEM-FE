@@ -9,6 +9,8 @@ export type WishResponse = {
   sellerName: string;
   status: WishStatus;
   fundingId: number | null;
+  // TODO: 백엔드 응답 확정 전 임시 선택 필드 — 위시를 만든 추천 상품 id(삭제 후 그 상세로 돌아갈 때 사용)
+  recommendedProductId?: number | null;
 };
 
 export type WishPageResponse = {
