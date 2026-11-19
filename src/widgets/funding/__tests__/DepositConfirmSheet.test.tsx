@@ -290,6 +290,33 @@ describe("DepositConfirmSheet 처리와 토스트", () => {
     expect(checkbox("하린이의 보탬")).toBeChecked();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
+
+  it("일부만 실패하면 성공한 건만 선택에서 빼고, 다시 받았어요를 눌러도 선택하지 않은 건은 처리하지 않는다", async () => {
+    server.use(
+      http.post(`${BASE}/:contributionId/reject`, args =>
+        args.params.contributionId === "2"
+          ? HttpResponse.json({}, { status: 500 })
+          : decide("REJECTED")(args),
+      ),
+    );
+    renderSheet();
+    await waitForList();
+
+    await userEvent.click(checkbox("하린이의 보탬"));
+    await userEvent.click(checkbox("도윤이의 보탬"));
+    await userEvent.click(screen.getByRole("button", { name: "못받았어요" }));
+
+    expect(await screen.findByText(/1건의 입금을 못받음 처리했어요/)).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "입금 확인 2건" });
+    expect(checkbox("도윤이의 보탬")).toBeChecked();
+    expect(checkbox("서준이의 보탬")).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "전체 선택" })).not.toBeChecked();
+
+    await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
+
+    await screen.findByRole("heading", { name: "입금 확인 1건" });
+    expect(requests).toEqual(["REJECTED:1", "CONFIRMED:2"]);
+  });
 });
 
 describe("DepositConfirmSheet 토스 확인하기", () => {

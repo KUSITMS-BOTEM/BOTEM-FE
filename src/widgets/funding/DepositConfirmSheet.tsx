@@ -57,9 +57,9 @@ export default function DepositConfirmSheet({
 }: DepositConfirmSheetProps) {
   const isPreReveal = variant === "preReveal";
   const query = usePendingContributionsQuery({ fundingId, enabled: open });
-  const confirmMutation = useConfirmContributionMutation(fundingId);
-  const rejectMutation = useRejectContributionMutation(fundingId);
-  const confirmAllMutation = useConfirmAllContributionsMutation(fundingId);
+  const confirmMutation = useConfirmContributionMutation();
+  const rejectMutation = useRejectContributionMutation();
+  const confirmAllMutation = useConfirmAllContributionsMutation();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   // 클릭 즉시 버튼을 잠근다. 여러 건을 병렬로 보내면 isPending만으로는 마지막 요청 상태만 보인다
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,6 +74,7 @@ export default function DepositConfirmSheet({
   const count = pendingDeposits.length;
   const groups = groupDepositsByDate(pendingDeposits);
   const hasSelection = selectedIds.length > 0;
+  const isAllSelected = count > 0 && pendingDeposits.every(({ id }) => selectedIds.includes(id));
   const isBusy =
     isSubmitting ||
     confirmMutation.isPending ||
@@ -91,23 +92,43 @@ export default function DepositConfirmSheet({
     );
   };
 
-  const requestProcess = (action: DepositAction, ids: number[]) => {
-    if (action === "notReceived") return Promise.all(ids.map(id => rejectMutation.mutateAsync(id)));
-    if (ids.length === count) return confirmAllMutation.mutateAsync();
-    return Promise.all(ids.map(id => confirmMutation.mutateAsync(id)));
+  // 건별 요청의 성공한 id만 돌려준다. 일부만 실패해도 성공한 건은 이미 서버에 반영됐다
+  const requestEach = async (action: DepositAction, targetFundingId: number, ids: number[]) => {
+    const mutation = action === "notReceived" ? rejectMutation : confirmMutation;
+    const results = await Promise.allSettled(
+      ids.map(contributionId =>
+        mutation.mutateAsync({ fundingId: targetFundingId, contributionId }),
+      ),
+    );
+    return ids.filter((_, index) => results[index].status === "fulfilled");
+  };
+
+  const requestProcess = async (action: DepositAction, targetFundingId: number, ids: number[]) => {
+    if (action === "received" && isAllSelected) {
+      await confirmAllMutation.mutateAsync(targetFundingId);
+      return ids;
+    }
+    return requestEach(action, targetFundingId, ids);
   };
 
   // 누르는 즉시 서버에 반영한다. 실행 취소는 되돌리는 API가 없어 지금은 토스트만 닫는다
   const handleProcess = async (action: DepositAction) => {
-    if (isBusy) return;
-    const ids = selectedIds;
+    if (isBusy || fundingId === null) return;
+    // 이전 부분 실패로 선택에 남은 id 중 이미 처리돼 목록에서 빠진 건은 다시 보내지 않는다
+    const ids = selectedIds.filter(id => pendingDeposits.some(deposit => deposit.id === id));
     setIsSubmitting(true);
     try {
-      await requestProcess(action, ids);
-      setSelectedIds([]);
-      showToast({ text: getDepositToastText(action, ids.length, count), undoable: true });
+      const succeededIds = await requestProcess(action, fundingId, ids);
+      // 실패한 건은 선택을 유지해 바로 다시 누를 수 있게 둔다. 실패 안내는 전역 MutationCache onError가 맡는다
+      setSelectedIds(prev => prev.filter(id => ids.includes(id) && !succeededIds.includes(id)));
+      if (succeededIds.length > 0) {
+        showToast({
+          text: getDepositToastText(action, succeededIds.length, count),
+          undoable: true,
+        });
+      }
     } catch {
-      // 실패 안내는 전역 MutationCache onError가 맡는다. 선택을 유지해 바로 다시 누를 수 있게 둔다
+      // confirm-all 실패. 안내는 전역 MutationCache onError가 맡고 선택은 그대로 둔다
     } finally {
       setIsSubmitting(false);
     }
@@ -170,7 +191,7 @@ export default function DepositConfirmSheet({
           <CheckBox
             label="전체 선택"
             disabled={count === 0 || isBusy}
-            checked={count > 0 && selectedIds.length === count}
+            checked={isAllSelected}
             onChange={event =>
               setSelectedIds(event.target.checked ? pendingDeposits.map(({ id }) => id) : [])
             }

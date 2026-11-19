@@ -7,6 +7,7 @@ import { contributionService } from "@/apis/contribution/contributionService";
 import { useConfirmContributionMutation } from "@/hooks/mutations/contribution/useConfirmContributionMutation";
 import { pendingContributionsQueryKey } from "@/hooks/queries/contribution/usePendingContributionsQuery";
 import { ownerFundingDetailQueryKey } from "@/hooks/queries/funding/useOwnerFundingDetailQuery";
+import { homeFundingsQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
 
 vi.mock("@/apis/contribution/contributionService", () => ({
   contributionService: {
@@ -41,9 +42,9 @@ describe("useConfirmContributionMutation", () => {
   it("mutate 호출 시 펀딩 id와 참여 id로 confirm 서비스를 호출한다", async () => {
     vi.mocked(contributionService.confirmContribution).mockResolvedValue(response);
     const { wrapper } = setup();
-    const { result } = renderHook(() => useConfirmContributionMutation(5), { wrapper });
+    const { result } = renderHook(() => useConfirmContributionMutation(), { wrapper });
 
-    result.current.mutate(31);
+    result.current.mutate({ fundingId: 5, contributionId: 31 });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(contributionService.confirmContribution).toHaveBeenCalledWith(5, 31);
@@ -53,13 +54,13 @@ describe("useConfirmContributionMutation", () => {
   it("성공하면 해당 펀딩의 pending 목록·관리 상세와 홈 펀딩 목록 쿼리를 무효화한다", async () => {
     vi.mocked(contributionService.confirmContribution).mockResolvedValue(response);
     const { wrapper, invalidateQueries } = setup();
-    const { result } = renderHook(() => useConfirmContributionMutation(5), { wrapper });
+    const { result } = renderHook(() => useConfirmContributionMutation(), { wrapper });
 
-    result.current.mutate(31);
+    result.current.mutate({ fundingId: 5, contributionId: 31 });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: pendingContributionsQueryKey(5) });
-    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["home", "fundings"] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: homeFundingsQueryKey });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ownerFundingDetailQueryKey(5) });
   });
 
@@ -70,9 +71,9 @@ describe("useConfirmContributionMutation", () => {
     invalidateQueries.mockImplementation(
       () => new Promise<void>(resolve => (finishRefetch = resolve)),
     );
-    const { result } = renderHook(() => useConfirmContributionMutation(5), { wrapper });
+    const { result } = renderHook(() => useConfirmContributionMutation(), { wrapper });
 
-    result.current.mutate(31);
+    result.current.mutate({ fundingId: 5, contributionId: 31 });
 
     await waitFor(() =>
       expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: pendingContributionsQueryKey(5) }),
@@ -88,9 +89,9 @@ describe("useConfirmContributionMutation", () => {
     const error = new Error("입금 확인 처리 실패");
     vi.mocked(contributionService.confirmContribution).mockRejectedValue(error);
     const { wrapper, invalidateQueries } = setup();
-    const { result } = renderHook(() => useConfirmContributionMutation(5), { wrapper });
+    const { result } = renderHook(() => useConfirmContributionMutation(), { wrapper });
 
-    result.current.mutate(31);
+    result.current.mutate({ fundingId: 5, contributionId: 31 });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBe(error);

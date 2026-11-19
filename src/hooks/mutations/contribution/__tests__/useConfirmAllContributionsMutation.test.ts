@@ -41,9 +41,9 @@ describe("useConfirmAllContributionsMutation", () => {
   it("mutate 호출 시 펀딩 id로 confirm-all 서비스를 호출한다", async () => {
     vi.mocked(contributionService.confirmAllContributions).mockResolvedValue(response);
     const { wrapper } = setup();
-    const { result } = renderHook(() => useConfirmAllContributionsMutation(5), { wrapper });
+    const { result } = renderHook(() => useConfirmAllContributionsMutation(), { wrapper });
 
-    result.current.mutate();
+    result.current.mutate(5);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(contributionService.confirmAllContributions).toHaveBeenCalledWith(5);
@@ -53,9 +53,9 @@ describe("useConfirmAllContributionsMutation", () => {
   it("성공하면 해당 펀딩의 pending 목록·관리 상세와 홈 펀딩 목록 쿼리를 무효화한다", async () => {
     vi.mocked(contributionService.confirmAllContributions).mockResolvedValue(response);
     const { wrapper, invalidateQueries } = setup();
-    const { result } = renderHook(() => useConfirmAllContributionsMutation(5), { wrapper });
+    const { result } = renderHook(() => useConfirmAllContributionsMutation(), { wrapper });
 
-    result.current.mutate();
+    result.current.mutate(5);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: pendingContributionsQueryKey(5) });
@@ -70,9 +70,9 @@ describe("useConfirmAllContributionsMutation", () => {
     invalidateQueries.mockImplementation(
       () => new Promise<void>(resolve => (finishRefetch = resolve)),
     );
-    const { result } = renderHook(() => useConfirmAllContributionsMutation(5), { wrapper });
+    const { result } = renderHook(() => useConfirmAllContributionsMutation(), { wrapper });
 
-    result.current.mutate();
+    result.current.mutate(5);
 
     await waitFor(() =>
       expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: pendingContributionsQueryKey(5) }),
@@ -88,9 +88,9 @@ describe("useConfirmAllContributionsMutation", () => {
     const error = new Error("입금 확인 처리 실패");
     vi.mocked(contributionService.confirmAllContributions).mockRejectedValue(error);
     const { wrapper, invalidateQueries } = setup();
-    const { result } = renderHook(() => useConfirmAllContributionsMutation(5), { wrapper });
+    const { result } = renderHook(() => useConfirmAllContributionsMutation(), { wrapper });
 
-    result.current.mutate();
+    result.current.mutate(5);
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBe(error);
