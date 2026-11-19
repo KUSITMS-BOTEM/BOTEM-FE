@@ -11,7 +11,7 @@ import { useFriendProfileQuery } from "@/hooks/queries/friend/useFriendProfileQu
 import { useFriendWishQuery } from "@/hooks/queries/friend/useFriendWishQuery";
 import { toFundingWish } from "@/utils/friend/toFundingWish";
 import { isValidUrl } from "@/utils/isValidUrl";
-import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
+import SurpriseOpenSheet from "@/widgets/funding/SurpriseOpenSheet";
 
 type FriendWishDetailContainerProps = {
   friendId: string;
@@ -60,11 +60,13 @@ export default function FriendWishDetailContainer({
         ctaLabel="친구 몰래 서프라이즈 열기"
         onCtaClick={() => setFundingSheetOpen(true)}
       />
-      <FundingOpenSheet
+      <SurpriseOpenSheet
         open={fundingSheetOpen}
-        initialWish={fundingWish}
-        recipientName={data.name}
+        wish={fundingWish}
         recipientId={friendId}
+        recipientName={data.name}
+        recipientBirthday={data.birthday}
+        recipientBirthdayDday={data.birthdayDday}
         onClose={() => setFundingSheetOpen(false)}
       />
     </div>

@@ -17,7 +17,7 @@ import FriendListItem from "@/widgets/friend/FriendListItem";
 import FriendSurpriseWishSheet from "@/widgets/friend/FriendSurpriseWishSheet";
 import FriendWishSection from "@/widgets/friend/FriendWishSection";
 import FriendProfileSkeleton from "@/widgets/friend/skeleton/FriendProfileSkeleton";
-import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
+import SurpriseOpenSheet from "@/widgets/funding/SurpriseOpenSheet";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 
 type FriendProfileContainerProps = {
@@ -80,14 +80,16 @@ export default function FriendProfileContainer({ friendId }: FriendProfileContai
           </>
         )}
       </main>
-      {surpriseWish && (
-        // initialWish는 마운트 때만 읽히므로 위시가 바뀌면 새로 마운트해 입력 상태를 초기화한다
-        <FundingOpenSheet
+      {surpriseWish && data && (
+        // 위시는 마운트 때만 읽히므로 위시가 바뀌면 새로 마운트해 입력 상태를 초기화한다
+        <SurpriseOpenSheet
           key={surpriseWish.wishId}
           open={fundingSheetOpen}
-          initialWish={toFundingWish(surpriseWish)}
-          recipientName={data?.name}
+          wish={toFundingWish(surpriseWish)}
           recipientId={friendId}
+          recipientName={data.name}
+          recipientBirthday={data.birthday}
+          recipientBirthdayDday={data.birthdayDday}
           onClose={() => setFundingSheetOpen(false)}
         />
       )}

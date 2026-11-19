@@ -10,8 +10,8 @@ const useFriendProfileQuery = vi.fn();
 const useFriendWishQuery = vi.fn();
 const windowOpen = vi.fn();
 
-vi.mock("@/hooks/mutations/funding/useCreateFundingMutation", () => ({
-  useCreateFundingMutation: () => ({ mutate: vi.fn(), isPending: false }),
+vi.mock("@/hooks/mutations/funding/useCreateSurpriseFundingMutation", () => ({
+  useCreateSurpriseFundingMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ back, push: vi.fn() }),

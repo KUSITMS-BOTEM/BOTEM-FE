@@ -8,8 +8,8 @@ const back = vi.fn();
 const refetch = vi.fn();
 const useFriendProfileQuery = vi.fn();
 
-vi.mock("@/hooks/mutations/funding/useCreateFundingMutation", () => ({
-  useCreateFundingMutation: () => ({ mutate: vi.fn(), isPending: false }),
+vi.mock("@/hooks/mutations/funding/useCreateSurpriseFundingMutation", () => ({
+  useCreateSurpriseFundingMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ back }),
