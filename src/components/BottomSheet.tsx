@@ -16,6 +16,7 @@ type BottomSheetButtons = {
   onRightClick?: () => void;
   leftDisabled?: boolean;
   rightDisabled?: boolean;
+  rightLoading?: boolean;
   upper?: ReactNode;
 };
 
@@ -178,6 +179,7 @@ export default function BottomSheet({
                             size="xlarge"
                             className="flex-1"
                             disabled={buttons.rightDisabled}
+                            states={buttons.rightLoading ? "loading" : "default"}
                             onClick={buttons.onRightClick}>
                             {buttons.rightLabel}
                           </Button>

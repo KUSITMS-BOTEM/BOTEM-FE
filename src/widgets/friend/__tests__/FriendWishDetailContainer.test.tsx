@@ -11,6 +11,9 @@ const notFound = vi.fn(() => {
   throw new Error("NEXT_NOT_FOUND");
 });
 
+vi.mock("@/hooks/mutations/funding/useCreateFundingMutation", () => ({
+  useCreateFundingMutation: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ back, push: vi.fn() }),
   notFound: () => notFound(),

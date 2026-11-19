@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 
 import Dialog from "@/components/Dialog";
 import OpenSheet from "@/components/OpenSheet";
+import { useCreateFundingMutation } from "@/hooks/mutations/funding/useCreateFundingMutation";
 import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
+import { toCreateFundingRequest } from "@/utils/funding/toCreateFundingRequest";
 import FundingAccountStep, {
   type FundingAccountValues,
 } from "@/widgets/funding/FundingAccountStep";
@@ -43,6 +45,7 @@ export default function FundingOpenSheet({
   className,
 }: FundingOpenSheetProps) {
   const router = useRouter();
+  const { mutateAsync: createFunding, isPending } = useCreateFundingMutation();
   const [selectedWish, setSelectedWish] = useState<FundingWish | null>(initialWish ?? null);
   const [step, setStep] = useState<Step>("info");
   // 계좌 단계는 처음 진입할 때 마운트해 대표 계좌 조회와 등장 모션이 그때 시작되게 한다
@@ -55,8 +58,13 @@ export default function FundingOpenSheet({
   // 확인 시트를 연 채로 그 위에 띄우는 수정 시트
   const [editing, setEditing] = useState<Step | null>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
-  // 수정 완료 때마다 올려, 숨겨 둔 입력 단계를 수정값으로 다시 채워 마운트한다
-  const [syncVersion, setSyncVersion] = useState(0);
+  // isPending은 비동기로 갱신돼 더블클릭을 못 막으므로 클릭 즉시 잠그는 1차 방어를 따로 둔다
+  const [submitting, setSubmitting] = useState(false);
+  // 확인 시트에서 수정한 값. 입력 단계(info·account)에는 반영하지 않고, 펀딩 열기 요청에만 쓰며 시트를 닫으면 버린다
+  const [draftInfo, setDraftInfo] = useState<FundingInfoValues | null>(null);
+  const [draftAccount, setDraftAccount] = useState<FundingAccountValues | null>(null);
+  const confirmInfo = draftInfo ?? info;
+  const confirmAccount = draftAccount ?? account;
 
   // 시트를 닫으면 다음에 열 때 위시 선택(initialWish가 있으면 펀딩 정보)부터 다시 시작한다
   const handleClose = () => {
@@ -68,8 +76,19 @@ export default function FundingOpenSheet({
     setConfirmOpen(false);
     setCompleteOpen(false);
     setEditing(null);
-    setSyncVersion(0);
+    setDraftInfo(null);
+    setDraftAccount(null);
+    // 시트가 항상 마운트돼 있어, 성공 뒤에 풀지 않으면 다시 열었을 때 버튼이 잠긴 채 남는다
+    setSubmitting(false);
     onClose();
+  };
+
+  const handleConfirmClose = () => {
+    // 요청 중에 닫으면 취소한 줄 아는 사용자가 성공 뒤 갑자기 이동하게 된다
+    if (submitting) return;
+    setConfirmOpen(false);
+    setDraftInfo(null);
+    setDraftAccount(null);
   };
 
   // 입력 단계(위시를 골랐거나 initialWish로 시작)에서는 입력한 정보가 사라지므로 확인을 받고, 위시 선택 단계에서는 바로 닫는다
@@ -78,7 +97,7 @@ export default function FundingOpenSheet({
   // 시트를 닫지 않고 이동만 한다. 이동이 끝나 이 화면이 언마운트될 때 함께 사라져 뒤 화면이 비치지 않는다
   const handleCompleteClose = () => {
     const query = recipientId ? `?friendId=${encodeURIComponent(recipientId)}` : "";
-    // TODO(API): 펀딩 생성 API 응답의 fundingId로 교체한다 (지금은 목 ID라 모든 펀딩이 같은 링크로 간다)
+    // TODO(API): 서프라이즈 펀딩 생성 API(POST /api/fundings/surprise) 응답의 fundingId로 교체한다 (지금은 목 ID라 모든 펀딩이 같은 링크로 간다)
     router.push(`/funding/${MOCK_FUNDING_ID}${query}`);
   };
 
@@ -91,6 +110,24 @@ export default function FundingOpenSheet({
     setInfo(values);
     setAccountVisited(true);
     setStep("account");
+  };
+
+  const handleConfirm = async () => {
+    if (!selectedWish || !confirmInfo || !confirmAccount) return;
+    // TODO(API): 서프라이즈 펀딩 생성 API가 정해지면 서프라이즈도 요청 성공 뒤에 완료 화면을 연다
+    if (recipientName) return setCompleteOpen(true);
+    setSubmitting(true);
+    try {
+      await createFunding(toCreateFundingRequest(selectedWish.id, confirmInfo, confirmAccount));
+    } catch {
+      // 에러 안내는 전역 MutationCache onError가 처리하므로 여기서는 재시도할 수 있게 잠금만 푼다
+      setSubmitting(false);
+      return;
+    }
+    // TODO(디자인): 일반 펀딩 개설 완료 화면 Figma가 나오면 FundingOpenCompleteSheet로 교체한다 (docs/todos/funding_open_complete_screen.md)
+    router.push("/home");
+    // 이동만으로는 이 화면이 언마운트되지 않아 시트가 /home 위에 남으므로 직접 닫는다
+    handleClose();
   };
 
   const handleAccountSubmit = (values: FundingAccountValues) => {
@@ -110,7 +147,6 @@ export default function FundingOpenSheet({
           <>
             <div className={cn("w-full", step !== "info" && "hidden")}>
               <FundingInfoStep
-                key={syncVersion}
                 wish={selectedWish}
                 defaultValues={info ?? undefined}
                 onNext={handleInfoNext}
@@ -119,7 +155,6 @@ export default function FundingOpenSheet({
             {accountVisited && (
               <div className={cn("w-full", step !== "account" && "hidden")}>
                 <FundingAccountStep
-                  key={syncVersion}
                   defaultValues={account ?? undefined}
                   onSubmit={handleAccountSubmit}
                   onPrev={() => setStep("info")}
@@ -142,16 +177,16 @@ export default function FundingOpenSheet({
         onCancel={() => setLeaveOpen(false)}
         onConfirm={handleLeave}
       />
-      {selectedWish && info && account && (
+      {selectedWish && confirmInfo && confirmAccount && (
         <>
           <FundingConfirmSheet
             open={confirmOpen}
             wish={selectedWish}
-            info={info}
-            account={account}
-            onClose={() => setConfirmOpen(false)}
-            // TODO(API): 펀딩 생성 API가 정해지면 성공 뒤에 완료 화면을 연다
-            onConfirm={() => setCompleteOpen(true)}
+            info={confirmInfo}
+            account={confirmAccount}
+            onClose={handleConfirmClose}
+            submitting={submitting || isPending}
+            onConfirm={handleConfirm}
             onEditInfo={() => setEditing("info")}
             onEditAccount={() => setEditing("account")}
           />
@@ -163,22 +198,20 @@ export default function FundingOpenSheet({
             {editing === "info" && (
               <FundingInfoStep
                 wish={selectedWish}
-                initialValues={info}
+                initialValues={confirmInfo}
                 submitLabel="수정 완료"
                 onNext={values => {
-                  setInfo(values);
-                  setSyncVersion(version => version + 1);
+                  setDraftInfo(values);
                   setEditing(null);
                 }}
               />
             )}
             {editing === "account" && (
               <FundingAccountStep
-                initialValues={account}
+                initialValues={confirmAccount}
                 submitLabel="수정 완료"
                 onSubmit={values => {
-                  setAccount(values);
-                  setSyncVersion(version => version + 1);
+                  setDraftAccount(values);
                   setEditing(null);
                 }}
               />
@@ -190,7 +223,7 @@ export default function FundingOpenSheet({
               variant="surprise"
               recipientName={recipientName}
               wish={selectedWish}
-              info={info}
+              info={confirmInfo}
               onClose={handleCompleteClose}
               className={className}
             />

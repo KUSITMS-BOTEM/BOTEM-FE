@@ -7,6 +7,7 @@ import Button from "@/components/Button";
 import CloseSheet from "@/components/CloseSheet";
 import TextButton from "@/components/TextButton";
 import type { BankCode } from "@/constants/bank";
+import { useUpdatePayoutAccountMutation } from "@/hooks/mutations/payout-account/useUpdatePayoutAccountMutation";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import type { PayoutAccountResponse } from "@/types/payout-account/payoutAccount";
 import { ACCOUNT_NUMBER_REGEX } from "@/utils/payout-account/parseClipboardAccount";
@@ -20,6 +21,7 @@ type PayoutAccountEditSheetProps = {
 
 export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountEditSheetProps) {
   const { data: payoutAccounts } = usePayoutAccountsQuery();
+  const { mutate: updatePayoutAccount, isPending } = useUpdatePayoutAccountMutation();
   const [original, setOriginal] = useState<PayoutAccountResponse>();
   const [accountNumber, setAccountNumber] = useState("");
   const [bank, setBank] = useState<BankCode | null>(null);
@@ -39,10 +41,28 @@ export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountE
     setBank(original?.bank ?? null);
   };
 
-  // 저장하지 않고 닫으면 다음에 열 때 수정 전 대표 계좌로 다시 보이도록 되돌려둔다
+  // 저장하지 않고 닫으면 다음에 열 때 수정 전 대표 계좌로 다시 보이도록 되돌려둔다. 요청 중에는 닫지 않는다
   const handleClose = () => {
+    if (isPending) return;
     handleReset();
     onClose();
+  };
+
+  const handleSubmit = () => {
+    if (!original || !bank) return;
+    updatePayoutAccount(
+      { accountId: original.id, bank, accountNumber, accountHolder: original.accountHolder },
+      {
+        onSuccess: updated => {
+          // 응답이 비어 있어도 방금 저장한 값을 기준으로 삼고, 요청 중 바뀐 입력도 저장 결과에 맞춘다
+          const saved = updated ?? { ...original, bank, accountNumber };
+          setOriginal(saved);
+          setBank(saved.bank);
+          setAccountNumber(saved.accountNumber);
+          onClose();
+        },
+      },
+    );
   };
 
   return (
@@ -68,7 +88,9 @@ export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountE
         <Button
           color="brand"
           size="xlarge"
-          disabled={!isChanged || !ACCOUNT_NUMBER_REGEX.test(accountNumber) || !bank}>
+          states={isPending ? "loading" : "default"}
+          disabled={!isChanged || !ACCOUNT_NUMBER_REGEX.test(accountNumber) || !bank}
+          onClick={handleSubmit}>
           수정 완료
         </Button>
       </BottomCTA>

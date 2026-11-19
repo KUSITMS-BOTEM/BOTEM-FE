@@ -56,7 +56,12 @@ function FundingOpenCompleteSheetDemo({
         variant={variant}
         progress={progress}
         recipientName="지유"
-        wish={{ productName: "소니 WH-1000XM5", productImageUrl: SampleProduct.src, price: 468000 }}
+        wish={{
+          id: 1,
+          productName: "소니 WH-1000XM5",
+          productImageUrl: SampleProduct.src,
+          price: 468000,
+        }}
         info={{
           targetAmount: "429000",
           deadline: addDays(getTodayDate(), 7),

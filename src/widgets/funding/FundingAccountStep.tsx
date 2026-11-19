@@ -39,6 +39,9 @@ export default function FundingAccountStep({
   const { data: payoutAccounts } = usePayoutAccountsQuery();
   const defaultAccount = payoutAccounts?.find(account => account.isDefault);
 
+  const isDefaultAccountFilled =
+    accountNumber === defaultAccount?.accountNumber && bank === defaultAccount?.bank;
+
   const fillDefaultAccount = () => {
     if (!defaultAccount) return;
     setAccountNumber(defaultAccount.accountNumber);
@@ -61,7 +64,7 @@ export default function FundingAccountStep({
             size="medium"
             label="대표 계좌 사용하기"
             icon={<IconReset />}
-            disabled={!defaultAccount}
+            disabled={!defaultAccount || isDefaultAccountFilled}
             onClick={fillDefaultAccount}
           />
         }>

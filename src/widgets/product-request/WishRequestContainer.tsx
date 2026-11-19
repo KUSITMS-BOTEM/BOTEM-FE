@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -34,8 +34,8 @@ export default function WishRequestContainer() {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   // 제출 이후에는 값에서 에러를 계산해, 링크를 고치면 자동으로 풀린다
   const isUrlInvalid = hasSubmitted && productUrl.trim() !== "" && !isCoupangProductUrl(productUrl);
-  // isPending은 비동기로 갱신돼 빠른 더블클릭을 막지 못하므로 ref로 동기 잠금
-  const isSubmitting = useRef(false);
+  // 클릭 즉시 버튼을 잠가 더블클릭을 막고, 실패했을 때만 푼다(성공 시엔 화면을 떠난다)
+  const [isLocked, setIsLocked] = useState(false);
 
   useEffect(() => {
     if (!toastText) return;
@@ -44,10 +44,9 @@ export default function WishRequestContainer() {
   }, [toastText]);
 
   const handleSubmit = () => {
-    if (isSubmitting.current) return;
     setHasSubmitted(true);
     if (!isCoupangProductUrl(productUrl)) return;
-    isSubmitting.current = true;
+    setIsLocked(true);
     requestProduct(
       { productUrl: productUrl.trim(), productName: productName.trim() || null },
       {
@@ -58,12 +57,10 @@ export default function WishRequestContainer() {
         },
         // inline 코드는 전역 Dialog가 띄우지 않으므로 여기서 Toast로 보여준다
         onError: error => {
+          setIsLocked(false);
           if (error instanceof ApiError && ERROR_MESSAGES[error.code]?.action === "inline") {
             setToastText(ERROR_MESSAGES[error.code].message);
           }
-        },
-        onSettled: () => {
-          isSubmitting.current = false;
         },
       },
     );
@@ -117,7 +114,9 @@ export default function WishRequestContainer() {
           <Button
             color="brand"
             size="xlarge"
-            disabled={!canSubmitWishRequest({ productUrl }) || isUrlInvalid || isPending}
+            disabled={
+              !canSubmitWishRequest({ productUrl }) || isUrlInvalid || isLocked || isPending
+            }
             onClick={handleSubmit}>
             요청 보내기
           </Button>

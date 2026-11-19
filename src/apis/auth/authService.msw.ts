@@ -23,7 +23,7 @@ export const authHandlers = [
 
     return HttpResponse.json({
       success: true,
-      data: { loginUri: `${redirectUri}?code=${NEW_USER_KAKAO_CODE}` },
+      data: { loginUri: `${redirectUri}?code=${EXISTING_USER_KAKAO_CODE}` },
       error: null,
     });
   }),

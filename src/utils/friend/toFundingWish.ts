@@ -3,6 +3,7 @@ import type { FundingWish } from "@/types/funding/funding";
 import { isValidUrl } from "@/utils/isValidUrl";
 
 export const toFundingWish = (wish: FriendWishResponse): FundingWish => ({
+  id: wish.wishId,
   productName: wish.productName,
   productImageUrl:
     wish.productImageUrl && isValidUrl(wish.productImageUrl) ? wish.productImageUrl : undefined,

@@ -11,8 +11,9 @@ const wish: FriendWishResponse = {
 };
 
 describe("toFundingWish", () => {
-  it("펀딩 열기에 필요한 상품명·이미지·가격만 남긴다", () => {
+  it("펀딩 열기에 필요한 id·상품명·이미지·가격만 남긴다", () => {
     expect(toFundingWish(wish)).toEqual({
+      id: 1,
       productName: "모자",
       productImageUrl: "https://example.com/hat.png",
       price: 429000,

@@ -48,3 +48,18 @@ describe("fundingHandlers", () => {
     expect(body.error).toBeNull();
   });
 });
+
+describe("fundingHandlers POST /api/fundings", () => {
+  it("ApiResponse 형태로 개설된 펀딩의 fundingId·type·status·shareUrl을 반환한다", async () => {
+    const response = await fetch("http://localhost/api/fundings", { method: "POST", body: "{}" });
+    const body = await response.json();
+
+    expect(body.success).toBe(true);
+    expect(body.data).toEqual({
+      fundingId: expect.any(Number),
+      type: "BIRTHDAY",
+      status: "FUNDING",
+      shareUrl: expect.any(String),
+    });
+  });
+});

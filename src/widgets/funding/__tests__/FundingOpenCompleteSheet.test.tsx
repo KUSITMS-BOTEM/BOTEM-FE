@@ -22,6 +22,7 @@ const mockProfile = (name: string | null) => {
 };
 
 const wish = {
+  id: 1,
   productName: "소니 WH-1000XM5",
   productImageUrl: "https://example.com/1.png",
   price: 468000,

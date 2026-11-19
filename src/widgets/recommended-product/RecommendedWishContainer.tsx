@@ -19,6 +19,7 @@ import { usePageExit } from "@/hooks/usePageExit";
 import { useRecommendedProductsQuery } from "@/hooks/queries/recommended-product/useRecommendedProductsQuery";
 import { RECOMMENDED_PRODUCT_CATEGORIES } from "@/constants/recommendedProductCategory";
 import type { RecommendedProductCategory } from "@/types/recommended-product/recommendedProduct";
+import { getRecommendedProductHref } from "@/utils/recommended-product/getRecommendedProductHref";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconRight from "@/assets/icons/icon-right.svg?react";
@@ -78,8 +79,9 @@ export default function RecommendedWishContainer() {
               {recommendedProducts && (
                 <div className="grid grid-cols-2 gap-x-3 gap-y-4">
                   {recommendedProducts.map(product => (
-                    <Link key={product.id} href={`/wish/recommended/${product.id}`}>
+                    <Link key={product.id} href={getRecommendedProductHref(product)}>
                       <WishCard
+                        type={product.fundingId != null ? "funding" : "default"}
                         productName={product.name}
                         price={product.price}
                         productImageUrl={product.imageUrl}

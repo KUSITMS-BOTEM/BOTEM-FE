@@ -4,6 +4,7 @@ import TextButton from "@/components/TextButton";
 type ListHeaderRightItem = {
   label: string;
   onClick: () => void;
+  disabled?: boolean;
 };
 
 type ListHeaderProps = {
@@ -36,6 +37,7 @@ export default function ListHeader({
           size="medium"
           label={rightItem.label}
           onClick={rightItem.onClick}
+          disabled={rightItem.disabled}
           className="shrink-0"
         />
       )}
