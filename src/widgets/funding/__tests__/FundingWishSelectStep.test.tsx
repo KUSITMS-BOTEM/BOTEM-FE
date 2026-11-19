@@ -49,6 +49,10 @@ const pageOf = (content: WishResponse[]) => ({
 const renderStep = (onSelect = vi.fn()) => render(<FundingWishSelectStep onSelect={onSelect} />);
 
 describe("FundingWishSelectStep", () => {
+  beforeEach(() => {
+    mockPush.mockClear();
+  });
+
   it("AVAILABLE 위시만 최신 순서 그대로 최대 3개까지 보여준다", () => {
     mockQuery({
       data: pageOf([
@@ -115,6 +119,17 @@ describe("FundingWishSelectStep", () => {
     renderStep();
     await userEvent.click(screen.getByRole("button", { name: /상품 보기/ }));
 
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith("/wish/recommended");
+  });
+
+  it("상품 보기 박스의 제목 영역을 클릭해도 /wish/recommended로 이동한다", async () => {
+    mockQuery({});
+
+    renderStep();
+    await userEvent.click(screen.getByText("위시 상품을 찾아볼까요?"));
+
+    expect(mockPush).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith("/wish/recommended");
   });
 });

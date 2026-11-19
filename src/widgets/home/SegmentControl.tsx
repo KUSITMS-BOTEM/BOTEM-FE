@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState, type KeyboardEvent } from "react";
+import { useId, useRef, type KeyboardEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/utils/cn";
 
@@ -15,19 +15,18 @@ const PANEL_STYLE =
   "bg-semantic-fill-default/70 shadow-[0_4px_16px_0_var(--color-semantic-shadow-weak)] rounded-full";
 
 type SegmentControlProps = {
-  onChange?: (value: SegmentValue) => void;
+  value: SegmentValue;
+  onChange: (value: SegmentValue) => void;
   className?: string;
 };
 
-export default function SegmentControl({ onChange, className }: SegmentControlProps) {
-  const [value, setValue] = useState<SegmentValue>("funding");
+export default function SegmentControl({ value, onChange, className }: SegmentControlProps) {
   const indicatorId = useId();
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const reduceMotion = useReducedMotion();
 
   const handleSelect = (next: SegmentValue) => {
-    setValue(next);
-    onChange?.(next);
+    if (next !== value) onChange(next);
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {

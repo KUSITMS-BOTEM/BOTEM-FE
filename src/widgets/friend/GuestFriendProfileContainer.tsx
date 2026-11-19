@@ -9,7 +9,7 @@ import Logo from "@/components/Logo";
 import { getProfileColor } from "@/components/Profile";
 import TextButton from "@/components/TextButton";
 import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
-import { useGuestFriendProfileQuery } from "@/hooks/queries/friend/useGuestFriendProfileQuery";
+import { useWishProfileQuery } from "@/hooks/queries/wish-profile/useWishProfileQuery";
 import { handleKakaoLoginClick } from "@/utils/auth/handleKakaoLoginClick";
 import { getBirthdayDdayText } from "@/utils/friend/getBirthdayDdayText";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
@@ -20,12 +20,14 @@ import FriendProfileSkeleton from "@/widgets/friend/skeleton/FriendProfileSkelet
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 
 type GuestFriendProfileContainerProps = {
-  userId: string;
+  wishProfileKey: string;
 };
 
-export default function GuestFriendProfileContainer({ userId }: GuestFriendProfileContainerProps) {
+export default function GuestFriendProfileContainer({
+  wishProfileKey,
+}: GuestFriendProfileContainerProps) {
   const router = useRouter();
-  const { data, isPending, refetch } = useGuestFriendProfileQuery(userId);
+  const { data, isPending, refetch } = useWishProfileQuery(wishProfileKey);
   const { mutate } = useKakaoLoginUriMutation();
   const hasWish = (data?.wishCount ?? 0) > 0;
 
@@ -84,7 +86,7 @@ export default function GuestFriendProfileContainer({ userId }: GuestFriendProfi
         <BottomCTA
           type="kakao"
           label={hasWish ? "카카오로 3초 만에 보기" : "카카오로 시작하기"}
-          onClick={() => handleKakaoLoginClick(mutate, `/friends/${encodeURIComponent(userId)}`)}
+          onClick={() => handleKakaoLoginClick(mutate, `/friends/${data.userId}`)}
         />
       )}
     </div>

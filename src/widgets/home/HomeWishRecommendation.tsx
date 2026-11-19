@@ -7,7 +7,7 @@ import type { HomeWishCardResponse } from "@/types/home/home";
 type HomeWishRecommendationProps = {
   nickname: string;
   wishes: HomeWishCardResponse[];
-  onOpenFunding?: () => void;
+  onOpenFunding?: (wish: HomeWishCardResponse) => void;
   banner?: ReactNode;
 };
 
@@ -33,7 +33,7 @@ export default function HomeWishRecommendation({
               productName={wish.productName}
               price={wish.price}
               productImageUrl={wish.productImageUrl}
-              onOpenFunding={onOpenFunding}
+              onOpenFunding={() => onOpenFunding?.(wish)}
             />
           </li>
         ))}

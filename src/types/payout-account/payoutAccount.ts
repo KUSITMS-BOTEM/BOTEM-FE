@@ -17,3 +17,8 @@ export type PayoutAccountResponse = {
   isDefault: boolean;
   verificationStatus: PayoutAccountVerificationStatus;
 };
+
+export type BankResponse = {
+  code: BankCode;
+  name: string;
+};
