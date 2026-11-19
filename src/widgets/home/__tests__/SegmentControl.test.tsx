@@ -1,11 +1,26 @@
+import { useState } from "react";
+
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import SegmentControl from "@/widgets/home/SegmentControl";
+import SegmentControl, { type SegmentValue } from "@/widgets/home/SegmentControl";
+
+function ControlledSegmentControl({ onChange }: { onChange?: (value: SegmentValue) => void }) {
+  const [value, setValue] = useState<SegmentValue>("funding");
+  return (
+    <SegmentControl
+      value={value}
+      onChange={next => {
+        setValue(next);
+        onChange?.(next);
+      }}
+    />
+  );
+}
 
 describe("SegmentControl", () => {
   it("펀딩/위시 탭 2개가 tablist 안에 렌더된다", () => {
-    render(<SegmentControl />);
+    render(<ControlledSegmentControl />);
 
     expect(screen.getByRole("tablist")).toBeInTheDocument();
     expect(screen.getAllByRole("tab")).toHaveLength(2);
@@ -14,7 +29,7 @@ describe("SegmentControl", () => {
   });
 
   it("처음에는 펀딩 탭이 선택되어 있다", () => {
-    render(<SegmentControl />);
+    render(<ControlledSegmentControl />);
 
     expect(screen.getByRole("tab", { name: "펀딩" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tab", { name: "위시" })).toHaveAttribute("aria-selected", "false");
@@ -22,7 +37,7 @@ describe("SegmentControl", () => {
 
   it("위시 탭을 클릭하면 위시로, 다시 펀딩 탭을 클릭하면 펀딩으로 전환된다", async () => {
     const user = userEvent.setup();
-    render(<SegmentControl />);
+    render(<ControlledSegmentControl />);
 
     await user.click(screen.getByRole("tab", { name: "위시" }));
     expect(screen.getByRole("tab", { name: "위시" })).toHaveAttribute("aria-selected", "true");
@@ -36,7 +51,7 @@ describe("SegmentControl", () => {
   it("탭을 클릭하면 onChange가 선택한 값으로 호출된다", async () => {
     const handleChange = vi.fn();
     const user = userEvent.setup();
-    render(<SegmentControl onChange={handleChange} />);
+    render(<ControlledSegmentControl onChange={handleChange} />);
 
     await user.click(screen.getByRole("tab", { name: "위시" }));
     await user.click(screen.getByRole("tab", { name: "펀딩" }));
@@ -45,17 +60,24 @@ describe("SegmentControl", () => {
     expect(handleChange).toHaveBeenNthCalledWith(2, "funding");
   });
 
-  it("onChange 없이도 클릭으로 전환된다", async () => {
-    const user = userEvent.setup();
-    render(<SegmentControl />);
-
-    await user.click(screen.getByRole("tab", { name: "위시" }));
+  it("value로 받은 탭이 선택된다", () => {
+    render(<SegmentControl value="wish" onChange={vi.fn()} />);
 
     expect(screen.getByRole("tab", { name: "위시" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "펀딩" })).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("이미 선택된 탭을 누르면 onChange를 호출하지 않는다", async () => {
+    const handleChange = vi.fn();
+    render(<SegmentControl value="funding" onChange={handleChange} />);
+
+    await userEvent.click(screen.getByRole("tab", { name: "펀딩" }));
+
+    expect(handleChange).not.toHaveBeenCalled();
   });
 
   it("선택된 탭만 Tab 순서에 포함된다", () => {
-    render(<SegmentControl />);
+    render(<ControlledSegmentControl />);
 
     expect(screen.getByRole("tab", { name: "펀딩" })).toHaveAttribute("tabindex", "0");
     expect(screen.getByRole("tab", { name: "위시" })).toHaveAttribute("tabindex", "-1");
@@ -64,7 +86,7 @@ describe("SegmentControl", () => {
   it("좌우 화살표 키로 탭을 이동하며 선택하고 포커스를 옮긴다", async () => {
     const handleChange = vi.fn();
     const user = userEvent.setup();
-    render(<SegmentControl onChange={handleChange} />);
+    render(<ControlledSegmentControl onChange={handleChange} />);
 
     screen.getByRole("tab", { name: "펀딩" }).focus();
     await user.keyboard("{ArrowRight}");

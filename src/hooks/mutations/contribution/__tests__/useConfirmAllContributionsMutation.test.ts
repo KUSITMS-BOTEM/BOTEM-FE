@@ -7,6 +7,7 @@ import { contributionService } from "@/apis/contribution/contributionService";
 import { useConfirmAllContributionsMutation } from "@/hooks/mutations/contribution/useConfirmAllContributionsMutation";
 import { pendingContributionsQueryKey } from "@/hooks/queries/contribution/usePendingContributionsQuery";
 import { ownerFundingDetailQueryKey } from "@/hooks/queries/funding/useOwnerFundingDetailQuery";
+import { homeFundingsQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
 
 vi.mock("@/apis/contribution/contributionService", () => ({
   contributionService: {
@@ -58,7 +59,7 @@ describe("useConfirmAllContributionsMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: pendingContributionsQueryKey(5) });
-    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["home", "fundings"] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: homeFundingsQueryKey });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ownerFundingDetailQueryKey(5) });
   });
 

@@ -47,11 +47,7 @@ export type FriendWishDetailResponse = FriendWishResponse & {
   activeSurpriseFundingId: number | null;
 };
 
-// 비로그인 공개 프로필은 위시 내용을 숨기고 개수만 받는다 (TODO(API): BE 스펙 확정 후 필드 맞추기)
-export type GuestFriendProfileResponse = Omit<FriendProfileResponse, "wishes" | "wishesVisible"> & {
-  wishCount: number;
-};
-
+// 친구 프로필(GET /friends/{id}/profile)과 위시 프로필(GET /wish-profiles/{key})이 같은 형식을 쓴다
 export type FriendProfileResponse = {
   userId: number;
   name: string;
@@ -59,7 +55,13 @@ export type FriendProfileResponse = {
   birthday: string | null;
   birthdayDday: number | null;
   fundings: FriendFundingResponse[];
+  // 비로그인·친구 아닌 방문자는 false이고 wishes는 빈 배열이다
   wishesVisible: boolean;
   wishCount: number;
   wishes: FriendWishResponse[];
+};
+
+export type AddFriendRequest = {
+  // 위시 프로필 주소 /@{wishProfileKey}의 값
+  wishProfileKey: string;
 };

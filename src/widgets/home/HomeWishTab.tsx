@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import Asset from "@/components/Asset";
 import Button from "@/components/Button";
 import { useHomeWishesQuery } from "@/hooks/queries/wish/useHomeWishesQuery";
@@ -48,13 +50,15 @@ export default function HomeWishTab({ onAddWish }: HomeWishTabProps) {
       <ul className="grid w-full grid-cols-2 gap-x-3 gap-y-4 pb-5">
         {wishes.map(wish => (
           <li key={wish.id} className="min-w-0">
-            <WishCard
-              type={wish.status === "FUNDING" ? "funding" : "default"}
-              productName={wish.productName}
-              price={wish.price}
-              productImageUrl={wish.productImageUrl}
-              className="w-full"
-            />
+            <Link href={`/wish/${wish.id}`} className="block">
+              <WishCard
+                type={wish.status === "FUNDING" ? "funding" : "default"}
+                productName={wish.productName}
+                price={wish.price}
+                productImageUrl={wish.productImageUrl}
+                className="w-full"
+              />
+            </Link>
           </li>
         ))}
       </ul>

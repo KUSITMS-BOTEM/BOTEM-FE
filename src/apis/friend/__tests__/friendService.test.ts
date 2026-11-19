@@ -55,13 +55,3 @@ describe("friendService.getFriendWish", () => {
     expect(clientApi.get).toHaveBeenCalledWith("/api/friends/5/wishes/11");
   });
 });
-
-describe("friendService.getGuestFriendProfile", () => {
-  it("clientApi.get을 /api/friends/{userId}/public 경로로 호출한다", async () => {
-    vi.mocked(clientApi.get).mockResolvedValue(null);
-
-    await friendService.getGuestFriendProfile("5");
-
-    expect(clientApi.get).toHaveBeenCalledWith("/api/friends/5/public");
-  });
-});

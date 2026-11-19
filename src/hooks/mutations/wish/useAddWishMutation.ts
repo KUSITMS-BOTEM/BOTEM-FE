@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { wishService } from "@/apis/wish/wishService";
+import { homeNoFundingQueryKey } from "@/hooks/queries/home/useHomeNoFundingQuery";
 import { recommendedProductsQueryKey } from "@/hooks/queries/recommended-product/useRecommendedProductsQuery";
 import { homeWishesQueryKey } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { wishesQueryKey } from "@/hooks/queries/wish/useWishesQuery";
@@ -21,6 +22,8 @@ export const useAddWishMutation = () => {
       // ["wishes"] 접두사 전체를 무효화하면 아래에서 채울 상세 캐시까지 stale이 되므로 목록 키만 지정한다
       queryClient.invalidateQueries({ queryKey: wishesQueryKey, exact: true });
       queryClient.invalidateQueries({ queryKey: homeWishesQueryKey });
+      // 펀딩 없는 홈 응답에도 위시 목록이 들어 있어 함께 다시 받는다
+      queryClient.invalidateQueries({ queryKey: homeNoFundingQueryKey });
       // 응답이 위시 정보뿐이라 추천 상품 쪽 wishId는 서버에서 다시 받아와야 한다 — 뒤로 가 목록을 볼 때 담은 상품으로 보이게 한다
       queryClient.invalidateQueries({ queryKey: recommendedProductsQueryKey });
       // 성공인데 data가 비어 있으면 이동할 위시 id가 없어 추천 목록으로 되돌린다

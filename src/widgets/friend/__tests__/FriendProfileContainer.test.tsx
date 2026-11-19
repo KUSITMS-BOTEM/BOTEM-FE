@@ -37,6 +37,8 @@ const profile = (overrides: Partial<FriendProfileResponse> = {}): FriendProfileR
   birthday: "10-24",
   birthdayDday: 3,
   fundings: [funding],
+  wishesVisible: true,
+  wishCount: 1,
   wishes: [
     {
       wishId: 1,
@@ -45,8 +47,6 @@ const profile = (overrides: Partial<FriendProfileResponse> = {}): FriendProfileR
       price: 429000,
     },
   ],
-  wishesVisible: true,
-  wishCount: 1,
   ...overrides,
 });
 

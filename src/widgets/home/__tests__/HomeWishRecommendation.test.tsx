@@ -35,19 +35,20 @@ describe("HomeWishRecommendation", () => {
     expect(screen.queryAllByRole("listitem")).toHaveLength(0);
   });
 
-  it("펀딩 열기를 누르면 개설 동작을 호출한다", async () => {
+  it("펀딩 열기를 누르면 누른 카드의 위시로 개설 동작을 호출한다", async () => {
     const onOpenFunding = vi.fn();
     render(
       <HomeWishRecommendation
         nickname="지유"
-        wishes={[makeWish(1)]}
+        wishes={[makeWish(1), makeWish(2)]}
         onOpenFunding={onOpenFunding}
       />,
     );
 
-    await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
+    await userEvent.click(screen.getAllByRole("button", { name: "펀딩 열기" })[1]);
 
     expect(onOpenFunding).toHaveBeenCalledTimes(1);
+    expect(onOpenFunding).toHaveBeenCalledWith(makeWish(2));
   });
 
   it("banner를 넘기면 함께 렌더한다", () => {

@@ -46,6 +46,10 @@ export const BgWithRightItem: Story = {
   args: { bg: true, rightItem: RIGHT_ITEM },
 };
 
+export const BgBoxClickable: Story = {
+  args: { bg: true, boxClickable: true, rightItem: RIGHT_ITEM },
+};
+
 export const LongTitle: Story = {
   args: {
     title: "아주 긴 타이틀이 들어가서 한 줄을 넘어가면 말줄임 처리가 됩니다",

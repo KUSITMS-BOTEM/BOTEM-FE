@@ -9,9 +9,10 @@ vi.mock("@/hooks/queries/home/useHomeFundingsQuery");
 vi.mock("@/hooks/queries/wish/useHomeWishesQuery", () => ({ useHomeWishesQuery: vi.fn() }));
 const push = vi.fn();
 const replace = vi.fn();
+let searchParams = new URLSearchParams();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, replace }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => searchParams,
 }));
 vi.mock("@/widgets/funding/FundingOpenSheet", () => ({
   default: ({ open }: { open: boolean }) => (open ? <div>펀딩 열기 시트</div> : null),
@@ -35,20 +36,56 @@ describe("HomeContainer", () => {
   beforeEach(() => {
     push.mockClear();
     replace.mockClear();
+    searchParams = new URLSearchParams();
     vi.mocked(useHomeFundingsQuery).mockReturnValue({
       data: { fundingCards: [], activeFundingCount: 0, canOpenFunding: true },
     } as unknown as ReturnType<typeof useHomeFundingsQuery>);
   });
 
-  it("처음에는 펀딩 탭을 보여주고 '위시' 탭을 누르면 위시 탭으로 바뀐다", async () => {
+  it("tab 쿼리가 없으면 펀딩 탭을 보여준다", () => {
     render(<HomeContainer />);
 
     expect(screen.getByRole("button", { name: "펀딩 탭 위시 추가" })).toBeInTheDocument();
+    expect(screen.queryByText("위시 탭 내용")).not.toBeInTheDocument();
+  });
+
+  it("?tab=wish로 들어오면 위시 탭을 보여준다", () => {
+    searchParams = new URLSearchParams("tab=wish");
+    render(<HomeContainer />);
+
+    expect(screen.getByText("위시 탭 내용")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "위시" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("'위시' 탭을 누르면 서버 이동 없이 URL만 ?tab=wish로 바꾼다", async () => {
+    const replaceState = vi.spyOn(window.history, "replaceState");
+    render(<HomeContainer />);
 
     await userEvent.click(screen.getByRole("tab", { name: "위시" }));
 
-    expect(screen.getByText("위시 탭 내용")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "펀딩 탭 위시 추가" })).not.toBeInTheDocument();
+    expect(replaceState).toHaveBeenCalledWith(null, "", "/home?tab=wish");
+    expect(replace).not.toHaveBeenCalled();
+    replaceState.mockRestore();
+  });
+
+  it("위시 탭에서 '펀딩' 탭을 누르면 tab 쿼리를 지운다", async () => {
+    searchParams = new URLSearchParams("tab=wish");
+    const replaceState = vi.spyOn(window.history, "replaceState");
+    render(<HomeContainer />);
+
+    await userEvent.click(screen.getByRole("tab", { name: "펀딩" }));
+
+    expect(replaceState).toHaveBeenCalledWith(null, "", "/home");
+    replaceState.mockRestore();
+  });
+
+  it("위시 탭에서 메뉴를 열어도 tab 쿼리를 유지한다", async () => {
+    searchParams = new URLSearchParams("tab=wish");
+    render(<HomeContainer />);
+
+    await userEvent.click(screen.getByRole("button", { name: "메뉴 열기" }));
+
+    expect(replace).toHaveBeenCalledWith("/home?tab=wish&menu=open", { scroll: false });
   });
 
   it("헤더의 '메뉴 열기'를 누르면 /home?menu=open으로 replace한다", async () => {

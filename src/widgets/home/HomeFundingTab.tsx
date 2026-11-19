@@ -15,6 +15,7 @@ import HomeFundingView from "@/widgets/home/HomeFundingView";
 import HomeLoadError from "@/widgets/home/HomeLoadError";
 import HomeWishRecommendation from "@/widgets/home/HomeWishRecommendation";
 import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
+import type { HomeWishCardResponse } from "@/types/home/home";
 
 const REVEAL_PREFETCH_TIMEOUT_MS = 1500;
 // Pending 카드 탭 전환 스펙: 카드 눌림(0–0.32s)이 먼저 보이도록 딤(0.25–0.6s)·시트(0.28–0.85s, 오버슈트 없음) 진입을 늦춘다
@@ -25,7 +26,7 @@ const PENDING_SHEET_ENTER: BottomSheetEnterTransition = {
 
 type HomeFundingTabProps = {
   onAddWish: () => void;
-  onOpenFunding?: () => void;
+  onOpenFunding?: (wish: HomeWishCardResponse) => void;
   banner?: ReactNode;
 };
 
