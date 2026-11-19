@@ -46,8 +46,10 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding, banner }: Hom
     if (!profile) return null;
     const cards = fundingCards.map(card => {
       const data = toFundingCardData(card, getDisplayName(profile));
-      if (data.type === "default") return data;
-      if (data.type === "complete" || data.type === "open") {
+      if (data.type === "default" || data.type === "open") {
+        return { ...data, onClick: () => router.push(`/funding/${card.fundingId}`) };
+      }
+      if (data.type === "complete") {
         // 결과 화면에 로딩 상태가 끼지 않도록 데이터를 받아 둔 뒤 이동한다 (실패 시 결과 화면의 재시도 UI에 맡긴다)
         // 모션 줄이기 설정에서는 탭 즉시 호출돼 받는 동안의 연타를 막아야 한다 — 이동하면 언마운트되므로 풀지 않는다
         const openReveal = async () => {
