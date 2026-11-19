@@ -54,8 +54,11 @@ export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountE
       { accountId: original.id, bank, accountNumber, accountHolder: original.accountHolder },
       {
         onSuccess: updated => {
-          // 응답이 비어 있어도 방금 저장한 값을 기준으로 삼아 "변경됨" 상태가 남지 않게 한다
-          setOriginal(updated ?? { ...original, bank, accountNumber });
+          // 응답이 비어 있어도 방금 저장한 값을 기준으로 삼고, 요청 중 바뀐 입력도 저장 결과에 맞춘다
+          const saved = updated ?? { ...original, bank, accountNumber };
+          setOriginal(saved);
+          setBank(saved.bank);
+          setAccountNumber(saved.accountNumber);
           onClose();
         },
       },

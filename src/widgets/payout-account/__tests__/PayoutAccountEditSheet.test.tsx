@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useUpdatePayoutAccountMutation } from "@/hooks/mutations/payout-account/useUpdatePayoutAccountMutation";
@@ -136,6 +136,36 @@ describe("PayoutAccountEditSheet", () => {
     await userEvent.click(getButtons().submit);
 
     expect(onClose).toHaveBeenCalled();
+    expect(input).toHaveValue("123456789012");
+    expect(getButtons().submit).toBeDisabled();
+  });
+
+  it("요청 중 입력을 바꿔도 성공하면 입력이 저장된 계좌로 맞춰진다", async () => {
+    let onSuccess: (updated: unknown) => void = () => undefined;
+    mutate.mockImplementation((_vars, options) => {
+      onSuccess = options.onSuccess;
+    });
+    render(<PayoutAccountEditSheet open onClose={vi.fn()} />);
+    const input = screen.getByLabelText("계좌번호");
+
+    await userEvent.clear(input);
+    await userEvent.type(input, "123456789012");
+    await userEvent.click(getButtons().submit);
+    await userEvent.click(getButtons().reset);
+    expect(input).toHaveValue("100159014821");
+
+    act(() =>
+      onSuccess({
+        id: 1,
+        bank: "TOSS_BANK",
+        bankName: "토스뱅크",
+        accountNumber: "123456789012",
+        accountHolder: "지유",
+        isDefault: true,
+        verificationStatus: "UNVERIFIED",
+      }),
+    );
+
     expect(input).toHaveValue("123456789012");
     expect(getButtons().submit).toBeDisabled();
   });

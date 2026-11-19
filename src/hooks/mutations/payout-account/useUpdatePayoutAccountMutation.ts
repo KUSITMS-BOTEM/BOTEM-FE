@@ -10,11 +10,13 @@ export const useUpdatePayoutAccountMutation = () => {
   return useMutation({
     mutationFn: payoutAccountService.updatePayoutAccount,
     // 응답이 수정된 계좌라 재조회 없이 목록 캐시의 해당 항목만 교체한다. 응답이 비어 있으면 재조회로 맞춘다
-    onSuccess: updated => {
+    // 진행 중인 목록 조회가 수정 전 값으로 끝나 캐시를 덮어쓰지 않게 먼저 취소한다
+    onSuccess: async updated => {
       if (!updated) {
         queryClient.invalidateQueries({ queryKey: payoutAccountsQueryKey });
         return;
       }
+      await queryClient.cancelQueries({ queryKey: payoutAccountsQueryKey });
       queryClient.setQueryData<PayoutAccountResponse[]>(payoutAccountsQueryKey, accounts =>
         accounts?.map(account => (account.id === updated.id ? updated : account)),
       );

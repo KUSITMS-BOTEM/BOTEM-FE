@@ -70,6 +70,21 @@ describe("useUpdatePayoutAccountMutation", () => {
     ]);
   });
 
+  it("캐시를 교체하기 전에 진행 중인 목록 조회를 취소한다", async () => {
+    queryClient.setQueryData(payoutAccountsQueryKey, [account(1, "100159014821")]);
+    const cancelSpy = vi.spyOn(queryClient, "cancelQueries");
+    vi.mocked(payoutAccountService.updatePayoutAccount).mockResolvedValue(
+      account(1, "123456789012"),
+    );
+    const { result } = renderHook(() => useUpdatePayoutAccountMutation(), { wrapper });
+
+    result.current.mutate(variables);
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(cancelSpy).toHaveBeenCalledWith({ queryKey: payoutAccountsQueryKey });
+    cancelSpy.mockRestore();
+  });
+
   it("목록 캐시가 없으면 캐시를 새로 만들지 않는다", async () => {
     vi.mocked(payoutAccountService.updatePayoutAccount).mockResolvedValue(
       account(1, "123456789012"),
