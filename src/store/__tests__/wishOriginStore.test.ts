@@ -26,6 +26,15 @@ describe("useWishOriginStore", () => {
     expect(origins()).toEqual({ "1": 10, "2": 20 });
   });
 
+  it("clearOrigin은 해당 wishId만 지운다", () => {
+    useWishOriginStore.getState().setOrigin("1", 10);
+    useWishOriginStore.getState().setOrigin("2", 20);
+
+    useWishOriginStore.getState().clearOrigin("1");
+
+    expect(origins()).toEqual({ "2": 20 });
+  });
+
   it("같은 wishId를 다시 setOrigin하면 값을 덮어쓴다", () => {
     useWishOriginStore.getState().setOrigin("1", 10);
     useWishOriginStore.getState().setOrigin("1", 30);

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
+import { useWishToastStore } from "@/store/wishToastStore";
 import { useAddWishMutation } from "@/hooks/mutations/wish/useAddWishMutation";
 import { useRecommendedProductQuery } from "@/hooks/queries/recommended-product/useRecommendedProductQuery";
 import { ApiError } from "@/types/api";
@@ -60,6 +61,7 @@ const mockAddWishMutation = (value: { isPending?: boolean; isSuccess?: boolean }
 describe("RecommendedProductDetailContainer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useWishToastStore.setState({ pending: null });
     mockAddWishMutation();
   });
 
@@ -71,6 +73,23 @@ describe("RecommendedProductDetailContainer", () => {
     expect(screen.getByText("에어팟 프로 3")).toBeInTheDocument();
     expect(screen.getByText("359,000원")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "위시에 담기" })).toBeInTheDocument();
+  });
+
+  it("위시 삭제 직후 이동해 왔으면 삭제 토스트를 보여준다", () => {
+    useWishToastStore.setState({ pending: "deleted" });
+    mockProductQuery({ data: mockProduct });
+
+    render(<RecommendedProductDetailContainer />);
+
+    expect(screen.getByText("위시를 삭제했어요")).toBeInTheDocument();
+  });
+
+  it("삭제 이력 없이 진입하면 삭제 토스트가 없다", () => {
+    mockProductQuery({ data: mockProduct });
+
+    render(<RecommendedProductDetailContainer />);
+
+    expect(screen.queryByText("위시를 삭제했어요")).not.toBeInTheDocument();
   });
 
   it("'위시에 담기'를 누르면 해당 상품 id로 addWish를 호출한다", async () => {

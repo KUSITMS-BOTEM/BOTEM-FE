@@ -8,8 +8,8 @@ import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutat
 import { recommendedProductsQueryKey } from "@/hooks/queries/recommended-product/useRecommendedProductsQuery";
 import { homeWishesQueryKey } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { wishesQueryKey } from "@/hooks/queries/wish/useWishesQuery";
-import { useWishDeletedToastStore } from "@/store/wishDeletedToastStore";
 import { useWishOriginStore } from "@/store/wishOriginStore";
+import { useWishToastStore } from "@/store/wishToastStore";
 
 vi.mock("@/apis/wish/wishService", () => ({
   wishService: {
@@ -36,7 +36,7 @@ describe("useDeleteWishMutation", () => {
   beforeEach(() => {
     replace.mockClear();
     useWishOriginStore.setState({ recommendedProductIdByWishId: {} });
-    useWishDeletedToastStore.setState({ pending: false });
+    useWishToastStore.setState({ pending: null });
   });
 
   it("mutate 호출 시 wishService.deleteWish가 전달받은 wishId로 호출된다", async () => {
@@ -92,7 +92,8 @@ describe("useDeleteWishMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(replace).toHaveBeenCalledWith("/wish/recommended/10");
-    expect(useWishDeletedToastStore.getState().pending).toBe(true);
+    expect(useWishToastStore.getState().pending).toBe("deleted");
+    expect(useWishOriginStore.getState().recommendedProductIdByWishId["1"]).toBeUndefined();
   });
 
   it("wishService.deleteWish가 실패하면 isError가 true가 되고 router.replace는 호출되지 않는다", async () => {

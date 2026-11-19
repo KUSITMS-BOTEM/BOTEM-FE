@@ -10,14 +10,12 @@ import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutat
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import ProductDetailFallback from "@/components/ProductDetailFallback";
 import ToastMessage from "@/components/ToastMessage";
-import { useWishAddedToastStore } from "@/store/wishAddedToastStore";
+import { useWishToast } from "@/hooks/useWishToast";
 import ProductDetailView from "@/components/ProductDetailView";
 import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
 import { isValidUrl } from "@/utils/isValidUrl";
 import { resolveWishErrorAction } from "@/utils/wish/resolveWishErrorAction";
 import IconDelete from "@/assets/icons/icon-delete.svg?react";
-
-const ADDED_TOAST_DURATION_MS = 1000;
 
 export default function WishDetailContainer() {
   const router = useRouter();
@@ -26,21 +24,7 @@ export default function WishDetailContainer() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { mutate: deleteWish, isPending: isDeletePending } = useDeleteWishMutation(wishId);
   const errorAction = resolveWishErrorAction(error);
-  // 위시 담기 직후 이동해 온 경우에만 토스트를 보여준다(초기값으로 읽고, 새로고침·재방문엔 안 뜨도록 아래서 비운다)
-  const [showAddedToast, setShowAddedToast] = useState(
-    () => useWishAddedToastStore.getState().pending,
-  );
-
-  useEffect(() => {
-    useWishAddedToastStore.getState().consume();
-  }, []);
-
-  // 소비 effect와 분리: StrictMode가 effect를 두 번 돌려도 타이머가 지워지지 않게 한다
-  useEffect(() => {
-    if (!showAddedToast) return;
-    const timer = setTimeout(() => setShowAddedToast(false), ADDED_TOAST_DURATION_MS);
-    return () => clearTimeout(timer);
-  }, [showAddedToast]);
+  const showAddedToast = useWishToast("added");
 
   useEffect(() => {
     if (errorAction === "unauthorized") router.replace("/");
@@ -60,7 +44,8 @@ export default function WishDetailContainer() {
   }
 
   const { fundingId } = wish;
-  const isFunding = wish.status === "FUNDING";
+  // fundingId 없는 FUNDING은 이동할 곳이 없어 CTA가 죽으므로 펀딩 중으로 다루지 않는다(삭제 가능 여부는 서버가 판정)
+  const isFunding = wish.status === "FUNDING" && fundingId != null;
 
   // TODO: wish.status === "DISCONTINUED"일 때 다른 디자인을 보여줄 예정 — 디자인 미정이라 분기는 보류
   return (
@@ -86,11 +71,9 @@ export default function WishDetailContainer() {
               ]
         }
         onBack={() => router.back()}
-        statusBadge={isFunding ? "펀딩중" : undefined}
+        statusBadge={isFunding ? "펀딩 중" : undefined}
         ctaLabel={isFunding ? "해당 상품 펀딩 보러가기" : "이 상품으로 펀딩 열기"}
-        onCtaClick={
-          isFunding && fundingId != null ? () => router.push(`/funding/${fundingId}`) : undefined
-        }
+        onCtaClick={isFunding ? () => router.push(`/funding/${fundingId}`) : undefined}
         ctaHelperText={isFunding ? "펀딩 진행중인 위시 상품은 삭제할 수 없어요" : undefined}
       />
       <Dialog

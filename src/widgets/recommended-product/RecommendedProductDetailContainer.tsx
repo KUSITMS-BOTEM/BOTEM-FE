@@ -1,20 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import { notFound, useParams, useRouter } from "next/navigation";
 
 import { showGlobalErrorDialog } from "@/lib/queryClient";
 import { useAddWishMutation } from "@/hooks/mutations/wish/useAddWishMutation";
+import { useWishToast } from "@/hooks/useWishToast";
 import { useRecommendedProductQuery } from "@/hooks/queries/recommended-product/useRecommendedProductQuery";
 import ProductDetailFallback from "@/components/ProductDetailFallback";
 import ProductDetailView from "@/components/ProductDetailView";
 import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
 import ToastMessage from "@/components/ToastMessage";
-import { useWishDeletedToastStore } from "@/store/wishDeletedToastStore";
 import { resolveRecommendedProductErrorAction } from "@/utils/recommended-product/resolveRecommendedProductErrorAction";
-
-const DELETED_TOAST_DURATION_MS = 1000;
 
 export default function RecommendedProductDetailContainer() {
   const router = useRouter();
@@ -35,21 +33,7 @@ export default function RecommendedProductDetailContainer() {
     addWish({ recommendedProductId }, { onError: () => (isAddWishLockedRef.current = false) });
   };
 
-  // 위시 삭제 직후 이동해 온 경우에만 토스트를 보여준다(초기값으로 읽고, 새로고침·재방문엔 안 뜨도록 아래서 비운다)
-  const [showDeletedToast, setShowDeletedToast] = useState(
-    () => useWishDeletedToastStore.getState().pending,
-  );
-
-  useEffect(() => {
-    useWishDeletedToastStore.getState().consume();
-  }, []);
-
-  // 소비 effect와 분리: StrictMode가 effect를 두 번 돌려도 타이머가 지워지지 않게 한다
-  useEffect(() => {
-    if (!showDeletedToast) return;
-    const timer = setTimeout(() => setShowDeletedToast(false), DELETED_TOAST_DURATION_MS);
-    return () => clearTimeout(timer);
-  }, [showDeletedToast]);
+  const showDeletedToast = useWishToast("deleted");
 
   useEffect(() => {
     if (errorAction === "unauthorized") router.replace("/");

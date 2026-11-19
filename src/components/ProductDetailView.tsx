@@ -13,6 +13,7 @@ import List from "@/components/List";
 import ListText from "@/components/ListText";
 import Logo from "@/components/Logo";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
+import { cn } from "@/utils/cn";
 import IconInfo from "@/assets/icons/icon-info.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconRight from "@/assets/icons/icon-right.svg?react";
@@ -130,9 +131,13 @@ export default function ProductDetailView({
         </div>
       </div>
       {/* 하단 고정 BottomCTA(그라데이션 36px + padding-large + 버튼 56px)에 콘텐츠가 가려지지 않도록 같은 높이만큼 스크롤 여백 확보 */}
+      {/* mb-[42px]: BottomCTA lower 영역(pt-6 24px + 안내 문구 한 줄) 높이 — BottomCTA 구조가 바뀌면 함께 조정 */}
       <div
         aria-hidden
-        className={`h-[calc(36px+var(--padding-large)+56px+env(safe-area-inset-bottom))] ${ctaHelperText ? "mb-[42px]" : ""}`}
+        className={cn(
+          "h-[calc(36px+var(--padding-large)+56px+env(safe-area-inset-bottom))]",
+          ctaHelperText && "mb-[42px]",
+        )}
       />
       <BottomCTA
         lower={

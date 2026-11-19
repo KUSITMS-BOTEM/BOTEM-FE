@@ -4,7 +4,7 @@ import type { RecommendedProductResponse } from "@/types/recommended-product/rec
 export const getRecommendedProductHref = ({
   id,
   wishId,
-}: Pick<RecommendedProductResponse, "id" | "wishId" | "fundingId">) => {
+}: Pick<RecommendedProductResponse, "id" | "wishId">) => {
   if (wishId != null) return `/wish/${wishId}`;
   return `/wish/recommended/${id}`;
 };

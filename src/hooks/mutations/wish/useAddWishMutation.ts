@@ -7,8 +7,8 @@ import { recommendedProductsQueryKey } from "@/hooks/queries/recommended-product
 import { homeWishesQueryKey } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { wishesQueryKey } from "@/hooks/queries/wish/useWishesQuery";
 import { wishQueryKey } from "@/hooks/queries/wish/useWishQuery";
-import { useWishAddedToastStore } from "@/store/wishAddedToastStore";
 import { useWishOriginStore } from "@/store/wishOriginStore";
+import { useWishToastStore } from "@/store/wishToastStore";
 import type { AddWishRequest } from "@/types/wish/wish";
 
 export const useAddWishMutation = () => {
@@ -27,7 +27,7 @@ export const useAddWishMutation = () => {
       if (!wish) return router.replace("/wish/recommended");
       // useWishQuery의 키는 useParams의 문자열 wishId라 String으로 맞춰야 캐시가 적중한다
       queryClient.setQueryData(wishQueryKey(String(wish.id)), wish);
-      useWishAddedToastStore.getState().markAdded();
+      useWishToastStore.getState().mark("added");
       useWishOriginStore.getState().setOrigin(String(wish.id), recommendedProductId);
       router.replace(`/wish/${wish.id}`);
     },

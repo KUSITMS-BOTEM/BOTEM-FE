@@ -120,11 +120,11 @@ describe("ProductDetailView", () => {
   });
 
   it("statusBadge가 있으면 뱃지를 렌더하고 없으면 렌더하지 않는다", () => {
-    const { rerender } = render(<ProductDetailView {...baseProps} statusBadge="펀딩중" />);
-    expect(screen.getByText("펀딩중")).toBeInTheDocument();
+    const { rerender } = render(<ProductDetailView {...baseProps} statusBadge="펀딩 중" />);
+    expect(screen.getByText("펀딩 중")).toBeInTheDocument();
 
     rerender(<ProductDetailView {...baseProps} />);
-    expect(screen.queryByText("펀딩중")).not.toBeInTheDocument();
+    expect(screen.queryByText("펀딩 중")).not.toBeInTheDocument();
   });
 
   it("ctaHelperText가 있으면 CTA 아래에 안내 문구를 렌더한다", () => {

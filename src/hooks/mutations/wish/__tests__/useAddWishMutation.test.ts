@@ -5,6 +5,8 @@ import { renderHook, waitFor } from "@testing-library/react";
 
 import { wishService } from "@/apis/wish/wishService";
 import { useAddWishMutation } from "@/hooks/mutations/wish/useAddWishMutation";
+import { useWishOriginStore } from "@/store/wishOriginStore";
+import { useWishToastStore } from "@/store/wishToastStore";
 import type { WishResponse } from "@/types/wish/wish";
 
 vi.mock("@/apis/wish/wishService", () => ({
@@ -42,6 +44,8 @@ describe("useAddWishMutation", () => {
   beforeEach(() => {
     replace.mockClear();
     queryClient.clear();
+    useWishToastStore.setState({ pending: null });
+    useWishOriginStore.setState({ recommendedProductIdByWishId: {} });
   });
 
   it("mutate 호출 시 wishService.addWish가 전달받은 body로 호출된다", async () => {
@@ -66,6 +70,19 @@ describe("useAddWishMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(replace).toHaveBeenCalledWith("/wish/7");
+  });
+
+  it("성공 시 추가 토스트를 예약하고 담은 추천 상품 id를 기록한다", async () => {
+    vi.mocked(wishService.addWish).mockResolvedValue({ ...mockWish, id: 7 });
+    const { result } = renderHook(() => useAddWishMutation(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate({ recommendedProductId: 3 });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(useWishToastStore.getState().pending).toBe("added");
+    expect(useWishOriginStore.getState().recommendedProductIdByWishId["7"]).toBe(3);
   });
 
   it("성공 시 위시 상세 쿼리 캐시(['wishes', String(id)])가 응답으로 미리 채워진다", async () => {
