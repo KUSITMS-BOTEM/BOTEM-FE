@@ -6,8 +6,6 @@ const wish: FriendWishResponse = {
   productName: "모자",
   productImageUrl: "https://example.com/hat.png",
   price: 429000,
-  sellerName: "쿠팡",
-  productUrl: "https://link.coupang.com/a/example",
 };
 
 describe("toFundingWish", () => {

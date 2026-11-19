@@ -6,15 +6,14 @@ import FriendFundingSection from "@/widgets/friend/FriendFundingSection";
 
 const funding = (fundingId: number): FriendFundingResponse => ({
   fundingId,
-  isSurprise: false,
-  title: "지유의 생일 펀딩",
+  type: "BIRTHDAY",
   productName: `상품 ${fundingId}`,
   productImageUrl: null,
   deadline: "2026-10-13",
-  currentAmount: 50,
-  targetAmount: 100,
-  representativeParticipantName: "민지",
+  remainingDays: 7,
   participantCount: 2,
+  firstParticipantName: "민지",
+  confirmedPercentage: 50,
 });
 
 const fundings = (count: number) => Array.from({ length: count }, (_, index) => funding(index + 1));

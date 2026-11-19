@@ -1,11 +1,11 @@
 import GuestFriendProfileContainer from "@/widgets/friend/GuestFriendProfileContainer";
 
 type GuestFriendProfilePageProps = {
-  params: Promise<{ userId: string }>;
+  params: Promise<{ wishProfileKey: string }>;
 };
 
 export default async function GuestFriendProfilePage({ params }: GuestFriendProfilePageProps) {
-  const { userId } = await params;
+  const { wishProfileKey } = await params;
 
-  return <GuestFriendProfileContainer userId={userId} />;
+  return <GuestFriendProfileContainer wishProfileKey={wishProfileKey} />;
 }
