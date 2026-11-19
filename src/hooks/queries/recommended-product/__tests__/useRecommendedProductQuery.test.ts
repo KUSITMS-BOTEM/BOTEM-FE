@@ -22,6 +22,8 @@ const mockRecommendedProduct: RecommendedProductResponse = {
   sellerName: "애플",
   category: "EARPHONE_HEADPHONE",
   status: "ON_SALE",
+  wishId: null,
+  fundingId: null,
 };
 
 const createWrapper = () => {

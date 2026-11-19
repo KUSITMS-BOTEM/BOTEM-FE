@@ -6,7 +6,7 @@ export type WishResponse = {
   productImageUrl: string;
   price: number;
   productUrl: string;
-  sellerName: string;
+  sellerName: string | null;
   status: WishStatus;
   fundingId: number | null;
 };

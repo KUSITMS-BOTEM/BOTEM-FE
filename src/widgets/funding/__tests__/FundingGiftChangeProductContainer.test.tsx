@@ -21,6 +21,8 @@ const mockProduct: RecommendedProductResponse = {
   sellerName: "쿠팡",
   category: "EARPHONE_HEADPHONE",
   status: "ON_SALE",
+  wishId: null,
+  fundingId: null,
 };
 
 const mockProductQuery = (value: Partial<ReturnType<typeof useRecommendedProductQuery>>) => {

@@ -5,6 +5,7 @@ import { type ComponentProps } from "react";
 import Image from "next/image";
 
 import Asset from "@/components/Asset";
+import Badge from "@/components/Badge";
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
@@ -12,6 +13,7 @@ import List from "@/components/List";
 import ListText from "@/components/ListText";
 import Logo from "@/components/Logo";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
+import { cn } from "@/utils/cn";
 import IconInfo from "@/assets/icons/icon-info.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconRight from "@/assets/icons/icon-right.svg?react";
@@ -20,7 +22,7 @@ type ProductDetailViewProps = {
   productImageUrl?: string;
   productName: string;
   price: number;
-  sellerName: string;
+  sellerName?: string | null;
   onSellerClick?: () => void;
   sellerDisabled?: boolean;
   rightItems?: ComponentProps<typeof Header>["rightItems"];
@@ -28,6 +30,9 @@ type ProductDetailViewProps = {
   ctaLabel: string;
   onCtaClick?: () => void;
   ctaPending?: boolean;
+  ctaColor?: "brand" | "neutral";
+  statusBadge?: string;
+  ctaHelperText?: string;
 };
 
 export default function ProductDetailView({
@@ -42,15 +47,18 @@ export default function ProductDetailView({
   ctaLabel,
   onCtaClick,
   ctaPending = false,
+  ctaColor = "brand",
+  statusBadge,
+  ctaHelperText,
 }: ProductDetailViewProps) {
-  const sellerRow = (
+  const sellerRow = sellerName ? (
     <List
       title={sellerName}
       description="판매처"
       titleUp
       right={<Asset icon={<IconRight />} size="small" className="text-semantic-icon-default" />}
     />
-  );
+  ) : null;
 
   return (
     <div className="flex flex-col">
@@ -84,12 +92,15 @@ export default function ProductDetailView({
       </div>
       <div className="flex flex-col gap-3 px-5 pt-5">
         <div className="flex w-full flex-col gap-2">
-          <ListText
-            title={`${price.toLocaleString("ko-KR")}원`}
-            description={productName}
-            titleUp
-            type="price"
-          />
+          <div className="flex items-start justify-between gap-2">
+            <ListText
+              title={`${price.toLocaleString("ko-KR")}원`}
+              description={productName}
+              titleUp
+              type="price"
+            />
+            {statusBadge && <Badge color="brand" size="medium" label={statusBadge} />}
+          </div>
           <div className="bg-semantic-fill-neutral-weak rounded-large flex items-center gap-1 p-3">
             <Asset icon={<IconInfo />} size="xsmall" className="text-semantic-icon-default" />
             <p className="text-semantic-text-secondary [font:var(--semantic-subtext-medium)]">
@@ -97,7 +108,7 @@ export default function ProductDetailView({
             </p>
           </div>
         </div>
-        {onSellerClick ? (
+        {sellerRow && onSellerClick ? (
           <button
             type="button"
             onClick={onSellerClick}
@@ -120,13 +131,24 @@ export default function ProductDetailView({
         </div>
       </div>
       {/* 하단 고정 BottomCTA(그라데이션 36px + padding-large + 버튼 56px)에 콘텐츠가 가려지지 않도록 같은 높이만큼 스크롤 여백 확보 */}
+      {/* mb-[42px]: BottomCTA lower 영역(pt-6 24px + 안내 문구 한 줄) 높이 — BottomCTA 구조가 바뀌면 함께 조정 */}
       <div
         aria-hidden
-        className="h-[calc(36px+var(--padding-large)+56px+env(safe-area-inset-bottom))]"
+        className={cn(
+          "h-[calc(36px+var(--padding-large)+56px+env(safe-area-inset-bottom))]",
+          ctaHelperText && "mb-[42px]",
+        )}
       />
-      <BottomCTA>
+      <BottomCTA
+        lower={
+          ctaHelperText && (
+            <p className="text-semantic-text-secondary [font:var(--semantic-subtext-medium)]">
+              {ctaHelperText}
+            </p>
+          )
+        }>
         <Button
-          color="brand"
+          color={ctaColor}
           size="xlarge"
           states={ctaPending ? "loading" : "default"}
           onClick={onCtaClick}>

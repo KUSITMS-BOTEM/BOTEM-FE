@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
+import { useWishToastStore } from "@/store/wishToastStore";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import { ApiError } from "@/types/api";
@@ -16,8 +17,9 @@ vi.mock("@/hooks/mutations/wish/useDeleteWishMutation", () => ({
 
 const replace = vi.fn();
 const back = vi.fn();
+const push = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace, back }),
+  useRouter: () => ({ replace, back, push }),
   useParams: () => ({ wishId: "1" }),
   notFound: vi.fn(),
 }));
@@ -144,6 +146,68 @@ describe("WishDetailContainer", () => {
 
     expect(screen.getByRole("dialog", { hidden: true })).not.toHaveAttribute("open");
     expect(deleteWish).not.toHaveBeenCalled();
+  });
+
+  it("펀딩 진행 중이면 뱃지·안내 문구·펀딩 CTA를 보여주고 삭제 버튼은 숨긴다", () => {
+    mockWishQuery({ data: { ...mockWish, status: "FUNDING", fundingId: 5 } });
+
+    render(<WishDetailContainer />);
+
+    expect(screen.getByText("펀딩 중")).toBeInTheDocument();
+    expect(screen.getByText("펀딩 진행중인 위시 상품은 삭제할 수 없어요")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "해당 상품 펀딩 보러가기" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "삭제" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "이 상품으로 펀딩 열기" })).not.toBeInTheDocument();
+  });
+
+  it("펀딩 CTA를 누르면 해당 펀딩 페이지로 이동한다", async () => {
+    const user = userEvent.setup();
+    mockWishQuery({ data: { ...mockWish, status: "FUNDING", fundingId: 5 } });
+
+    render(<WishDetailContainer />);
+    await user.click(screen.getByRole("button", { name: "해당 상품 펀딩 보러가기" }));
+
+    expect(push).toHaveBeenCalledWith("/funding/5");
+  });
+
+  it("펀딩 상태인데 fundingId가 없으면 펀딩 중으로 다루지 않아 죽은 CTA를 보여주지 않는다", () => {
+    mockWishQuery({ data: { ...mockWish, status: "FUNDING", fundingId: null } });
+
+    render(<WishDetailContainer />);
+
+    expect(
+      screen.queryByRole("button", { name: "해당 상품 펀딩 보러가기" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("펀딩 중")).not.toBeInTheDocument();
+  });
+
+  it("위시 담기 직후 이동해 왔으면 추가 토스트를 보여준다", () => {
+    useWishToastStore.setState({ pending: "added" });
+    mockWishQuery({ data: mockWish });
+
+    render(<WishDetailContainer />);
+
+    expect(screen.getByText("위시에 추가됐어요")).toBeInTheDocument();
+  });
+
+  it("담기 이력 없이 진입하면 추가 토스트가 없다", () => {
+    useWishToastStore.setState({ pending: null });
+    mockWishQuery({ data: mockWish });
+
+    render(<WishDetailContainer />);
+
+    expect(screen.queryByText("위시에 추가됐어요")).not.toBeInTheDocument();
+  });
+
+  it("펀딩 중이 아니면 뱃지와 삭제 불가 안내를 보여주지 않는다", () => {
+    mockWishQuery({ data: mockWish });
+
+    render(<WishDetailContainer />);
+
+    expect(screen.queryByText("펀딩 중")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("펀딩 진행중인 위시 상품은 삭제할 수 없어요"),
+    ).not.toBeInTheDocument();
   });
 
   it("인증 에러(AUTH_*)면 랜딩('/')으로 replace한다", () => {

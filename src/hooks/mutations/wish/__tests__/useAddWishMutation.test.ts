@@ -5,6 +5,8 @@ import { renderHook, waitFor } from "@testing-library/react";
 
 import { wishService } from "@/apis/wish/wishService";
 import { useAddWishMutation } from "@/hooks/mutations/wish/useAddWishMutation";
+import { useWishOriginStore } from "@/store/wishOriginStore";
+import { useWishToastStore } from "@/store/wishToastStore";
 import type { WishResponse } from "@/types/wish/wish";
 
 vi.mock("@/apis/wish/wishService", () => ({
@@ -42,6 +44,8 @@ describe("useAddWishMutation", () => {
   beforeEach(() => {
     replace.mockClear();
     queryClient.clear();
+    useWishToastStore.setState({ pending: null });
+    useWishOriginStore.setState({ recommendedProductIdByWishId: {} });
   });
 
   it("mutate 호출 시 wishService.addWish가 전달받은 body로 호출된다", async () => {
@@ -68,6 +72,19 @@ describe("useAddWishMutation", () => {
     expect(replace).toHaveBeenCalledWith("/wish/7");
   });
 
+  it("성공 시 추가 토스트를 예약하고 담은 추천 상품 id를 기록한다", async () => {
+    vi.mocked(wishService.addWish).mockResolvedValue({ ...mockWish, id: 7 });
+    const { result } = renderHook(() => useAddWishMutation(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate({ recommendedProductId: 3 });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(useWishToastStore.getState().pending).toBe("added");
+    expect(useWishOriginStore.getState().recommendedProductIdByWishId["7"]).toBe(3);
+  });
+
   it("성공 시 위시 상세 쿼리 캐시(['wishes', String(id)])가 응답으로 미리 채워진다", async () => {
     vi.mocked(wishService.addWish).mockResolvedValue({ ...mockWish, id: 7 });
     const { result } = renderHook(() => useAddWishMutation(), {
@@ -78,6 +95,35 @@ describe("useAddWishMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(queryClient.getQueryData(["wishes", "7"])).toEqual({ ...mockWish, id: 7 });
+  });
+
+  it("성공 시 위시 목록 쿼리들은 무효화되고 방금 채운 상세 캐시는 stale이 되지 않는다", async () => {
+    vi.mocked(wishService.addWish).mockResolvedValue({ ...mockWish, id: 7 });
+    queryClient.setQueryData(["wishes"], { content: [] });
+    queryClient.setQueryData(["wishes", { size: 4 }], { pages: [], pageParams: [] });
+    const { result } = renderHook(() => useAddWishMutation(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate({ recommendedProductId: 1 });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(queryClient.getQueryState(["wishes"])?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(["wishes", { size: 4 }])?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(["wishes", "7"])?.isInvalidated).toBe(false);
+  });
+
+  it("성공 시 추천 상품 목록 쿼리가 무효화된다", async () => {
+    vi.mocked(wishService.addWish).mockResolvedValue({ ...mockWish, id: 7 });
+    queryClient.setQueryData(["recommendedProducts", undefined], []);
+    const { result } = renderHook(() => useAddWishMutation(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate({ recommendedProductId: 1 });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(queryClient.getQueryState(["recommendedProducts", undefined])?.isInvalidated).toBe(true);
   });
 
   it("성공 응답의 data가 null이면 추천 목록(/wish/recommended)으로 되돌아간다", async () => {

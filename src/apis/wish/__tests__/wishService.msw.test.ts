@@ -25,6 +25,14 @@ describe("wishHandlers GET /api/wishes", () => {
     expect(statuses).toEqual(new Set(["AVAILABLE", "FUNDING", "DISCONTINUED"]));
   });
 
+  it("위시 상세는 wishId에 맞는 상태를 반환해 목록과 일치한다", async () => {
+    const funding = await (await fetch("http://localhost/api/wishes/2")).json();
+    const available = await (await fetch("http://localhost/api/wishes/1")).json();
+
+    expect(funding.data).toMatchObject({ id: 2, status: "FUNDING", fundingId: 1 });
+    expect(available.data).toMatchObject({ id: 1, status: "AVAILABLE", fundingId: null });
+  });
+
   it("page와 size에 맞춰 다음 위시 페이지를 반환한다", async () => {
     const first = await (await fetch("http://localhost/api/wishes?page=0&size=4")).json();
     const second = await (await fetch("http://localhost/api/wishes?page=1&size=4")).json();

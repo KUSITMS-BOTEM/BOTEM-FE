@@ -9,6 +9,8 @@ export const MOCK_RECOMMENDED_PRODUCTS = [
     sellerName: "Apple 공식 브랜드관",
     category: "EARPHONE_HEADPHONE",
     status: "ON_SALE",
+    wishId: 1,
+    fundingId: null,
   },
   {
     id: 2,
@@ -18,6 +20,8 @@ export const MOCK_RECOMMENDED_PRODUCTS = [
     sellerName: "다이슨 공식 스토어",
     category: "HAIR_BEAUTY_DEVICE",
     status: "ON_SALE",
+    wishId: 2,
+    fundingId: 1,
   },
   {
     id: 3,
@@ -43,7 +47,7 @@ export const MOCK_RECOMMENDED_PRODUCTS = [
     imageUrl: faker.image.urlPicsumPhotos({ width: 400, height: 400, blur: 0 }),
     price: 59000,
     sellerName: "스탠리 공식 스토어",
-    category: "TUMBLER_LIVING",
+    category: "LIVING_APPLIANCE",
     status: "ON_SALE",
   },
   {
@@ -52,7 +56,7 @@ export const MOCK_RECOMMENDED_PRODUCTS = [
     imageUrl: faker.image.urlPicsumPhotos({ width: 400, height: 400, blur: 0 }),
     price: 45000,
     sellerName: "라네즈 공식 스토어",
-    category: "SKINCARE_MAKEUP",
+    category: "SKINCARE",
     status: "ON_SALE",
   },
 ];
