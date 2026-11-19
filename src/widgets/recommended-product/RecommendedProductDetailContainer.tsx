@@ -67,6 +67,7 @@ export default function RecommendedProductDetailContainer() {
       sellerName={product.sellerName}
       onBack={() => router.back()}
       ctaLabel="위시에 담기"
+      ctaColor="neutral"
       ctaPending={isAddWishPending || isAddWishSuccess}
       onCtaClick={() => handleAddWish(product.id)}
     />

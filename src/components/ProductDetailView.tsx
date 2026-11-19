@@ -28,6 +28,7 @@ type ProductDetailViewProps = {
   ctaLabel: string;
   onCtaClick?: () => void;
   ctaPending?: boolean;
+  ctaColor?: "brand" | "neutral";
 };
 
 export default function ProductDetailView({
@@ -42,6 +43,7 @@ export default function ProductDetailView({
   ctaLabel,
   onCtaClick,
   ctaPending = false,
+  ctaColor = "brand",
 }: ProductDetailViewProps) {
   const sellerRow = (
     <List
@@ -126,7 +128,7 @@ export default function ProductDetailView({
       />
       <BottomCTA>
         <Button
-          color="brand"
+          color={ctaColor}
           size="xlarge"
           states={ctaPending ? "loading" : "default"}
           onClick={onCtaClick}>
