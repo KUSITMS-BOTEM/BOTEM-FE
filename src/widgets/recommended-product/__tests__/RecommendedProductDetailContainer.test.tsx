@@ -84,6 +84,15 @@ describe("RecommendedProductDetailContainer", () => {
     expect(screen.getByText("위시를 삭제했어요")).toBeInTheDocument();
   });
 
+  it("위시 삭제 직후 상세를 로딩 중이어도 삭제 토스트를 보여준다", () => {
+    useWishToastStore.setState({ pending: "deleted" });
+    mockProductQuery({ isLoading: true });
+
+    render(<RecommendedProductDetailContainer />);
+
+    expect(screen.getByText("위시를 삭제했어요")).toBeInTheDocument();
+  });
+
   it("삭제 이력 없이 진입하면 삭제 토스트가 없다", () => {
     mockProductQuery({ data: mockProduct });
 

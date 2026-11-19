@@ -40,8 +40,25 @@ export default function RecommendedProductDetailContainer() {
     else if (errorAction === "alert" && error) showGlobalErrorDialog(error);
   }, [errorAction, error, router]);
 
+  // 삭제 직후 상세 캐시가 없으면 로딩 중에도 토스트 타이머가 흘러가므로, 로딩 분기에서도 같은 토스트를 그린다
+  const deletedToast = (
+    <ToastMessage
+      show={showDeletedToast}
+      state
+      text="위시를 삭제했어요"
+      className="pointer-events-none fixed bottom-32 left-1/2 z-20 -translate-x-1/2"
+    />
+  );
+
   if (errorAction === "notFound") notFound();
-  if (isLoading) return <ProductDetailViewSkeleton />;
+  if (isLoading) {
+    return (
+      <>
+        <ProductDetailViewSkeleton />
+        {deletedToast}
+      </>
+    );
+  }
 
   if (!product) {
     return (
@@ -76,12 +93,7 @@ export default function RecommendedProductDetailContainer() {
         ctaPending={isAddWishPending || isAddWishSuccess}
         onCtaClick={() => handleAddWish(product.id)}
       />
-      <ToastMessage
-        show={showDeletedToast}
-        state
-        text="위시를 삭제했어요"
-        className="pointer-events-none fixed bottom-32 left-1/2 z-20 -translate-x-1/2"
-      />
+      {deletedToast}
     </>
   );
 }
