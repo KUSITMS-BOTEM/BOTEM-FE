@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import SurpriseNotifySheet from "@/widgets/funding/SurpriseNotifySheet";
+import SurpriseProfileExposureSheet from "@/widgets/funding/SurpriseProfileExposureSheet";
 
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
@@ -15,7 +15,7 @@ beforeAll(() => {
 
 const renderSheet = (props = {}) =>
   render(
-    <SurpriseNotifySheet
+    <SurpriseProfileExposureSheet
       open
       recipientName="민지"
       onSelect={vi.fn()}
@@ -24,11 +24,14 @@ const renderSheet = (props = {}) =>
     />,
   );
 
-describe("SurpriseNotifySheet", () => {
+describe("SurpriseProfileExposureSheet", () => {
   it("질문과 받는 사람에게 보이지 않는다는 안내를 보여준다", () => {
     renderSheet();
 
-    expect(screen.getByText("보탠 친구에게도 알릴까요?")).toBeInTheDocument();
+    expect(screen.getByText("민지의 프로필에 서프라이즈 펀딩을 보여줄까요?")).toBeInTheDocument();
+    expect(
+      screen.getByText("민지의 프로필에 들른 다른 친구들도 펀딩을 보고 같이 보탬 할 수 있어요"),
+    ).toBeInTheDocument();
     expect(screen.getByText("서프라이즈 펀딩은 민지에게 보이지 않아요")).toBeInTheDocument();
   });
 

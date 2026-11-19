@@ -37,11 +37,11 @@ const renderSheet = (props = {}) =>
       recipientName="민지"
       info={info}
       account={account}
-      notifyRecipientFriends
+      showOnRecipientProfile
       onClose={vi.fn()}
       onConfirm={vi.fn()}
       onEditInfo={vi.fn()}
-      onEditNotify={vi.fn()}
+      onEditExposure={vi.fn()}
       onEditAccount={vi.fn()}
       {...props}
     />,
@@ -61,7 +61,7 @@ describe("SurpriseConfirmSheet", () => {
   });
 
   it("보여주기로 했으면 받는 사람 프로필 문구를 보여준다", () => {
-    renderSheet({ notifyRecipientFriends: true });
+    renderSheet({ showOnRecipientProfile: true });
 
     expect(screen.getByText("보여주기로 설정")).toBeInTheDocument();
     expect(
@@ -70,7 +70,7 @@ describe("SurpriseConfirmSheet", () => {
   });
 
   it("보여주지 않기로 했으면 문구가 바뀐다", () => {
-    renderSheet({ notifyRecipientFriends: false });
+    renderSheet({ showOnRecipientProfile: false });
 
     expect(screen.getByText("보여주지 않기로 설정")).toBeInTheDocument();
     expect(screen.queryByText("보여주기로 설정")).not.toBeInTheDocument();
@@ -79,17 +79,17 @@ describe("SurpriseConfirmSheet", () => {
 
   it("각 영역의 변경하기가 해당 수정 콜백을 호출한다", async () => {
     const onEditInfo = vi.fn();
-    const onEditNotify = vi.fn();
+    const onEditExposure = vi.fn();
     const onEditAccount = vi.fn();
-    renderSheet({ onEditInfo, onEditNotify, onEditAccount });
-    const [info, notify, account] = screen.getAllByRole("button", { name: "변경하기" });
+    renderSheet({ onEditInfo, onEditExposure, onEditAccount });
+    const [info, showOnProfile, account] = screen.getAllByRole("button", { name: "변경하기" });
 
     await userEvent.click(info);
-    await userEvent.click(notify);
+    await userEvent.click(showOnProfile);
     await userEvent.click(account);
 
     expect(onEditInfo).toHaveBeenCalledTimes(1);
-    expect(onEditNotify).toHaveBeenCalledTimes(1);
+    expect(onEditExposure).toHaveBeenCalledTimes(1);
     expect(onEditAccount).toHaveBeenCalledTimes(1);
   });
 

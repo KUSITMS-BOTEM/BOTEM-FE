@@ -16,7 +16,7 @@ import FundingAccountStep, {
 import FundingOpenCompleteSheet from "@/widgets/funding/FundingOpenCompleteSheet";
 import SurpriseConfirmSheet from "@/widgets/funding/SurpriseConfirmSheet";
 import SurpriseInfoStep, { type SurpriseInfoValues } from "@/widgets/funding/SurpriseInfoStep";
-import SurpriseNotifySheet from "@/widgets/funding/SurpriseNotifySheet";
+import SurpriseProfileExposureSheet from "@/widgets/funding/SurpriseProfileExposureSheet";
 
 type SurpriseOpenSheetProps = {
   open: boolean;
@@ -52,41 +52,41 @@ export default function SurpriseOpenSheet({
   // 각 단계에서 확정한 값. 확인 시트에 보여주고 수정 시트의 초기값이 된다
   const [info, setInfo] = useState<SurpriseInfoValues | null>(null);
   const [account, setAccount] = useState<FundingAccountValues | null>(null);
-  const [notify, setNotify] = useState<boolean | null>(null);
-  // 펀딩 정보를 확정한 뒤 계좌 단계로 가기 전에 띄우는 알림 선택 시트
-  const [notifyOpen, setNotifyOpen] = useState(false);
+  const [showOnProfile, setShowOnProfile] = useState<boolean | null>(null);
+  // 펀딩 정보를 확정한 뒤 계좌 단계로 가기 전에 띄우는 프로필 노출 선택 시트
+  const [exposureOpen, setExposureOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [createdFundingId, setCreatedFundingId] = useState<number | null>(null);
   // 확인 시트를 연 채로 그 위에 띄우는 수정 시트
   const [editing, setEditing] = useState<Step | null>(null);
-  const [editingNotify, setEditingNotify] = useState(false);
+  const [editingExposure, setEditingExposure] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   // isPending은 비동기로 갱신돼 더블클릭을 못 막으므로 클릭 즉시 잠그는 1차 방어를 따로 둔다
   const [submitting, setSubmitting] = useState(false);
   // 확인 시트에서 수정한 값. 입력 단계에는 반영하지 않고 개설 요청에만 쓰며 시트를 닫으면 버린다
   const [draftInfo, setDraftInfo] = useState<SurpriseInfoValues | null>(null);
   const [draftAccount, setDraftAccount] = useState<FundingAccountValues | null>(null);
-  const [draftNotify, setDraftNotify] = useState<boolean | null>(null);
+  const [draftShowOnProfile, setDraftShowOnProfile] = useState<boolean | null>(null);
   const confirmInfo = draftInfo ?? info;
   const confirmAccount = draftAccount ?? account;
-  const confirmNotify = draftNotify ?? notify;
+  const confirmShowOnProfile = draftShowOnProfile ?? showOnProfile;
 
   const handleClose = () => {
     setStep("info");
     setAccountVisited(false);
     setInfo(null);
     setAccount(null);
-    setNotify(null);
-    setNotifyOpen(false);
+    setShowOnProfile(null);
+    setExposureOpen(false);
     setConfirmOpen(false);
     setCompleteOpen(false);
     setCreatedFundingId(null);
     setEditing(null);
-    setEditingNotify(false);
+    setEditingExposure(false);
     setDraftInfo(null);
     setDraftAccount(null);
-    setDraftNotify(null);
+    setDraftShowOnProfile(null);
     // 시트가 항상 마운트돼 있어, 성공 뒤에 풀지 않으면 다시 열었을 때 버튼이 잠긴 채 남는다
     setSubmitting(false);
     onClose();
@@ -98,7 +98,7 @@ export default function SurpriseOpenSheet({
     setConfirmOpen(false);
     setDraftInfo(null);
     setDraftAccount(null);
-    setDraftNotify(null);
+    setDraftShowOnProfile(null);
   };
 
   const handleLeave = () => {
@@ -113,12 +113,12 @@ export default function SurpriseOpenSheet({
 
   const handleInfoNext = (values: SurpriseInfoValues) => {
     setInfo(values);
-    setNotifyOpen(true);
+    setExposureOpen(true);
   };
 
-  const handleNotifySelect = (value: boolean) => {
-    setNotify(value);
-    setNotifyOpen(false);
+  const handleExposureSelect = (value: boolean) => {
+    setShowOnProfile(value);
+    setExposureOpen(false);
     setAccountVisited(true);
     setStep("account");
   };
@@ -129,7 +129,7 @@ export default function SurpriseOpenSheet({
   };
 
   const handleConfirm = async () => {
-    if (!confirmInfo || !confirmAccount || confirmNotify === null) return;
+    if (!confirmInfo || !confirmAccount || confirmShowOnProfile === null) return;
     setSubmitting(true);
     try {
       const created = await createSurprise(
@@ -138,7 +138,7 @@ export default function SurpriseOpenSheet({
           wish.id,
           confirmInfo,
           confirmAccount,
-          confirmNotify,
+          confirmShowOnProfile,
         ),
       );
       setCreatedFundingId(created.fundingId);
@@ -182,11 +182,11 @@ export default function SurpriseOpenSheet({
           </div>
         )}
       </OpenSheet>
-      <SurpriseNotifySheet
-        open={notifyOpen}
+      <SurpriseProfileExposureSheet
+        open={exposureOpen}
         recipientName={recipientName}
-        onSelect={handleNotifySelect}
-        onClose={() => setNotifyOpen(false)}
+        onSelect={handleExposureSelect}
+        onClose={() => setExposureOpen(false)}
       />
       <Dialog
         kind="confirm"
@@ -199,7 +199,7 @@ export default function SurpriseOpenSheet({
         onCancel={() => setLeaveOpen(false)}
         onConfirm={handleLeave}
       />
-      {confirmInfo && confirmAccount && confirmNotify !== null && (
+      {confirmInfo && confirmAccount && confirmShowOnProfile !== null && (
         <>
           <SurpriseConfirmSheet
             open={confirmOpen}
@@ -207,12 +207,12 @@ export default function SurpriseOpenSheet({
             recipientName={recipientName}
             info={confirmInfo}
             account={confirmAccount}
-            notifyRecipientFriends={confirmNotify}
+            showOnRecipientProfile={confirmShowOnProfile}
             submitting={submitting || isPending}
             onClose={handleConfirmClose}
             onConfirm={handleConfirm}
             onEditInfo={() => setEditing("info")}
-            onEditNotify={() => setEditingNotify(true)}
+            onEditExposure={() => setEditingExposure(true)}
             onEditAccount={() => setEditing("account")}
           />
           <OpenSheet
@@ -242,14 +242,14 @@ export default function SurpriseOpenSheet({
               />
             )}
           </OpenSheet>
-          <SurpriseNotifySheet
-            open={editingNotify}
+          <SurpriseProfileExposureSheet
+            open={editingExposure}
             recipientName={recipientName}
             onSelect={value => {
-              setDraftNotify(value);
-              setEditingNotify(false);
+              setDraftShowOnProfile(value);
+              setEditingExposure(false);
             }}
-            onClose={() => setEditingNotify(false)}
+            onClose={() => setEditingExposure(false)}
           />
           {createdFundingId !== null && (
             <FundingOpenCompleteSheet

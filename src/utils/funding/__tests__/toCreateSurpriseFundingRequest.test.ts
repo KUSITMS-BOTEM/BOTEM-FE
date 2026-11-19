@@ -13,13 +13,13 @@ describe("toCreateSurpriseFundingRequest", () => {
       targetAmount: 350000,
       deadline: "2026-11-30",
       revealAt: "2026-12-01T00:00:00",
-      notifyRecipientFriends: true,
+      showOnRecipientProfile: true,
     });
   });
 
-  it("알리지 않기로 하면 notifyRecipientFriends가 false다", () => {
+  it("알리지 않기로 하면 showOnRecipientProfile가 false다", () => {
     expect(
-      toCreateSurpriseFundingRequest("3", 9, info, account, false).notifyRecipientFriends,
+      toCreateSurpriseFundingRequest("3", 9, info, account, false).showOnRecipientProfile,
     ).toBe(false);
   });
 });

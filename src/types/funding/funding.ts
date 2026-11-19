@@ -36,7 +36,7 @@ export type CreateSurpriseFundingRequest = {
   deadline: string;
   // "YYYY-MM-DDTHH:mm:ss"
   revealAt: string;
-  notifyRecipientFriends: boolean;
+  showOnRecipientProfile: boolean;
 };
 
 export type CreateFundingResponse = {

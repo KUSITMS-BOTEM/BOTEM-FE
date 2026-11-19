@@ -21,7 +21,7 @@ const body: CreateSurpriseFundingRequest = {
   targetAmount: 350000,
   deadline: "2026-11-30",
   revealAt: "2026-12-01T00:00:00",
-  notifyRecipientFriends: true,
+  showOnRecipientProfile: true,
 };
 const created = {
   fundingId: 8,

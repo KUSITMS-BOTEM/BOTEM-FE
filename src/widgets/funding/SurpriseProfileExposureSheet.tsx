@@ -3,25 +3,24 @@
 import BottomSheet from "@/components/BottomSheet";
 import Title from "@/components/Title";
 
-type SurpriseNotifySheetProps = {
+type SurpriseProfileExposureSheetProps = {
   open: boolean;
   recipientName: string;
   // 예 = true, 아니오 = false
-  onSelect: (notifyRecipientFriends: boolean) => void;
+  onSelect: (showOnRecipientProfile: boolean) => void;
   onClose: () => void;
 };
 
-// TODO(디자인): 디자인 팀이 노출·알림 시트를 합쳐 만든 상태라 문구는 임시다. 확정되면 이 시트의 문구만 바꾼다
-export default function SurpriseNotifySheet({
+export default function SurpriseProfileExposureSheet({
   open,
   recipientName,
   onSelect,
   onClose,
-}: SurpriseNotifySheetProps) {
+}: SurpriseProfileExposureSheetProps) {
   return (
     <BottomSheet
       open={open}
-      title="보탠 친구에게 알리기"
+      title="프로필 펀딩 노출"
       height="auto"
       headerType="handle"
       showHandleClose
@@ -40,8 +39,8 @@ export default function SurpriseNotifySheet({
       onClose={onClose}>
       <Title
         type="a2z"
-        title={"보탠 친구에게도\n알릴까요?"}
-        description={"서프라이즈에 보탠 친구들도\n마감일에 알림을 받을 수 있어요"}
+        title={`${recipientName}의 프로필에\n서프라이즈 펀딩을\n보여줄까요?`}
+        description={`${recipientName}의 프로필에 들른 다른 친구들도\n펀딩을 보고 같이 보탬 할 수 있어요`}
       />
     </BottomSheet>
   );

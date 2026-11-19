@@ -58,8 +58,8 @@ function Harness({ onClose = vi.fn() }: { onClose?: () => void }) {
   );
 }
 
-// 금액 → 마감일 → 생일 칩으로 공개일 → 다음까지 눌러 알림 선택 시트를 연다
-const goToNotify = async () => {
+// 금액 → 마감일 → 생일 칩으로 공개일 → 다음까지 눌러 프로필 노출 시트를 연다
+const goToExposure = async () => {
   const user = userEvent.setup();
   const amount = await screen.findByLabelText("목표 금액");
   await waitFor(() => expect(amount).toHaveFocus(), { timeout: 3000 });
@@ -71,10 +71,10 @@ const goToNotify = async () => {
   await user.click(screen.getByRole("button", { name: "다음" }));
 };
 
-const openConfirm = async (notify: "예" | "아니오" = "아니오") => {
+const openConfirm = async (showOnProfile: "예" | "아니오" = "아니오") => {
   render(<Harness />);
-  await goToNotify();
-  await userEvent.click(await screen.findByRole("button", { name: notify }));
+  await goToExposure();
+  await userEvent.click(await screen.findByRole("button", { name: showOnProfile }));
   await userEvent.click(await screen.findByRole("button", { name: /대표 계좌 사용하기/ }));
   await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
   await screen.findByText("이대로 서프라이즈 펀딩을 열까요?");
@@ -102,26 +102,28 @@ describe("SurpriseOpenSheet", () => {
     expect(screen.getByText("목표 금액은 얼마인가요?")).toBeInTheDocument();
   });
 
-  it("펀딩 정보에서 다음을 누르면 알림 선택 시트가 열린다", async () => {
+  it("펀딩 정보에서 다음을 누르면 프로필 노출 선택 시트가 열린다", async () => {
     render(<Harness />);
-    await goToNotify();
+    await goToExposure();
 
-    expect(await screen.findByText("보탠 친구에게도 알릴까요?")).toBeInTheDocument();
+    expect(
+      await screen.findByText("민지의 프로필에 서프라이즈 펀딩을 보여줄까요?"),
+    ).toBeInTheDocument();
   });
 
-  it("알림을 선택하면 계좌 단계로 넘어간다", async () => {
+  it("프로필 노출을 선택하면 계좌 단계로 넘어간다", async () => {
     render(<Harness />);
-    await goToNotify();
+    await goToExposure();
     await userEvent.click(await screen.findByRole("button", { name: "예" }));
 
     expect(await screen.findByText("펀딩 계좌")).toBeInTheDocument();
     expect(screen.getByLabelText("계좌번호")).toBeInTheDocument();
   });
 
-  it("알림 시트를 선택 없이 닫으면 계좌 단계로 넘어가지 않는다", async () => {
+  it("프로필 노출 시트를 선택 없이 닫으면 계좌 단계로 넘어가지 않는다", async () => {
     render(<Harness />);
-    await goToNotify();
-    const sheet = await screen.findByRole("dialog", { name: "보탠 친구에게 알리기" });
+    await goToExposure();
+    const sheet = await screen.findByRole("dialog", { name: "프로필 펀딩 노출" });
     await userEvent.click(within(sheet).getByRole("button", { name: "닫기" }));
 
     expect(screen.queryByLabelText("계좌번호")).not.toBeInTheDocument();
@@ -129,7 +131,7 @@ describe("SurpriseOpenSheet", () => {
 
   it("계좌 단계에서 이전을 누르면 펀딩 정보로 돌아오고 값이 남아 있다", async () => {
     render(<Harness />);
-    await goToNotify();
+    await goToExposure();
     await userEvent.click(await screen.findByRole("button", { name: "예" }));
     await userEvent.click(await screen.findByRole("button", { name: "이전" }));
 
@@ -150,7 +152,7 @@ describe("SurpriseOpenSheet", () => {
   });
 
   describe("확인 시트", () => {
-    it("알림을 아니오로 골랐으면 보여주지 않기로 설정이라고 보여준다", async () => {
+    it("프로필 노출을 아니오로 골랐으면 보여주지 않기로 설정이라고 보여준다", async () => {
       await openConfirm("아니오");
 
       expect(confirmSheet().getByText("보여주지 않기로 설정")).toBeInTheDocument();
@@ -171,7 +173,7 @@ describe("SurpriseOpenSheet", () => {
         targetAmount: 1000,
         deadline: "2027-12-25",
         revealAt: "2027-12-26T00:00:00",
-        notifyRecipientFriends: false,
+        showOnRecipientProfile: false,
       });
       expect(await screen.findByText("서프라이즈가 시작됐어요!")).toBeInTheDocument();
       expect(push).not.toHaveBeenCalled();
@@ -200,7 +202,7 @@ describe("SurpriseOpenSheet", () => {
       await waitFor(() => expect(confirmSheet().getByText("보여주기로 설정")).toBeInTheDocument());
       await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
       expect(createSurprise).toHaveBeenCalledWith(
-        expect.objectContaining({ notifyRecipientFriends: true }),
+        expect.objectContaining({ showOnRecipientProfile: true }),
       );
     });
 

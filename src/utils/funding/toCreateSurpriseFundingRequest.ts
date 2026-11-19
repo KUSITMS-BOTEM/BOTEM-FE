@@ -11,7 +11,7 @@ export function toCreateSurpriseFundingRequest(
   wishId: number,
   info: SurpriseInfoInput,
   account: Pick<CreateFundingRequest, "bank" | "accountNumber">,
-  notifyRecipientFriends: boolean,
+  showOnRecipientProfile: boolean,
 ): CreateSurpriseFundingRequest {
   return {
     recipientId: Number(recipientId),
@@ -22,6 +22,6 @@ export function toCreateSurpriseFundingRequest(
     deadline: info.deadline,
     // 공개 시간은 밤 12시(자정)로 고정이다
     revealAt: `${info.revealDate}T00:00:00`,
-    notifyRecipientFriends,
+    showOnRecipientProfile,
   };
 }

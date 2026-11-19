@@ -16,13 +16,13 @@ type SurpriseConfirmSheetProps = {
   recipientName: string;
   info: SurpriseInfoValues;
   account: FundingAccountValues;
-  notifyRecipientFriends: boolean;
+  showOnRecipientProfile: boolean;
   // 개설 요청 중에는 펀딩 열기 버튼을 loading 상태로 잠근다
   submitting?: boolean;
   onClose: () => void;
   onConfirm: () => void;
   onEditInfo: () => void;
-  onEditNotify: () => void;
+  onEditExposure: () => void;
   onEditAccount: () => void;
 };
 
@@ -32,12 +32,12 @@ export default function SurpriseConfirmSheet({
   recipientName,
   info,
   account,
-  notifyRecipientFriends,
+  showOnRecipientProfile,
   submitting = false,
   onClose,
   onConfirm,
   onEditInfo,
-  onEditNotify,
+  onEditExposure,
   onEditAccount,
 }: SurpriseConfirmSheetProps) {
   const bank = BANKS.find(({ code }) => code === account.bank);
@@ -83,9 +83,9 @@ export default function SurpriseConfirmSheet({
         <div className="flex w-full flex-col">
           <ListHeader
             title="프로필 펀딩 노출"
-            rightItem={{ label: "변경하기", onClick: onEditNotify, disabled: submitting }}
+            rightItem={{ label: "변경하기", onClick: onEditExposure, disabled: submitting }}
           />
-          {notifyRecipientFriends ? (
+          {showOnRecipientProfile ? (
             <List
               titleUp
               title="보여주기로 설정"
