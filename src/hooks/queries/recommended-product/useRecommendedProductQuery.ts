@@ -5,7 +5,7 @@ import { ApiError } from "@/types/api";
 
 export const useRecommendedProductQuery = (productId: string) =>
   useQuery({
-    queryKey: ["recommendedProducts", productId],
+    queryKey: ["recommended-products", productId],
     queryFn: () => recommendedProductService.getRecommendedProduct(productId),
     meta: { skipGlobalError: true },
     // PRODUCT_001(없음)·AUTH_*(인증 실패)는 페이지에서 리다이렉트로 즉시 처리하므로 재시도하지 않는다
