@@ -10,6 +10,10 @@ import type { FundingWish } from "@/types/funding/funding";
 import type { WishResponse } from "@/types/wish/wish";
 import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
 
+const { createFunding } = vi.hoisted(() => ({ createFunding: vi.fn() }));
+vi.mock("@/hooks/mutations/funding/useCreateFundingMutation", () => ({
+  useCreateFundingMutation: () => ({ mutate: createFunding, isPending: false }),
+}));
 vi.mock("@/hooks/queries/wish/useWishesQuery");
 vi.mock("@/hooks/queries/payout-account/usePayoutAccountsQuery", () => ({
   usePayoutAccountsQuery: vi.fn(() => ({ data: [] })),
@@ -86,6 +90,9 @@ describe("FundingOpenSheet", () => {
   beforeEach(mockWishes);
   beforeEach(() => push.mockClear());
   beforeEach(() => {
+    createFunding.mockReset();
+  });
+  beforeEach(() => {
     mockPointer("coarse");
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 10, 13));
@@ -128,7 +135,7 @@ describe("FundingOpenSheet", () => {
       <FundingOpenSheet
         open
         onClose={vi.fn()}
-        initialWish={{ productName: "모자", price: 429000 }}
+        initialWish={{ id: 1, productName: "모자", price: 429000 }}
       />,
     );
 
@@ -138,7 +145,7 @@ describe("FundingOpenSheet", () => {
   });
 
   it("initialWish로 시작한 시트를 그만두고 다시 열면 입력값 없이 펀딩 정보부터 시작한다", async () => {
-    render(<Harness initialWish={{ productName: "모자", price: 429000 }} />);
+    render(<Harness initialWish={{ id: 1, productName: "모자", price: 429000 }} />);
     await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
 
     await userEvent.click(screen.getByRole("button", { name: "닫기" }));
@@ -157,7 +164,7 @@ describe("FundingOpenSheet", () => {
         <FundingOpenSheet
           open
           onClose={onClose}
-          initialWish={{ productName: "모자", price: 429000 }}
+          initialWish={{ id: 1, productName: "모자", price: 429000 }}
         />,
       );
 
@@ -288,6 +295,7 @@ describe("FundingOpenSheet", () => {
         await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
         expect(await screen.findByText("서프라이즈가 시작됐어요!")).toBeInTheDocument();
         expect(push).not.toHaveBeenCalled();
+        expect(createFunding).not.toHaveBeenCalled();
 
         const completeSheet = screen
           .getByText("서프라이즈가 시작됐어요!")
@@ -297,12 +305,47 @@ describe("FundingOpenSheet", () => {
         expect(push).toHaveBeenCalledWith("/funding/1?friendId=7");
       });
 
-      it("recipientName이 없으면 확인 시트에서 펀딩 열기를 눌러도 개설 완료 화면을 열지 않는다", async () => {
+      it("recipientName이 없으면 펀딩 열기로 개설 요청을 보내고 성공하면 완료 화면 없이 /home으로 이동한다", async () => {
+        createFunding.mockImplementation((_body, options) => options.onSuccess());
         await openConfirm();
 
         await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
 
+        expect(createFunding).toHaveBeenCalledWith(
+          {
+            wishId: 468,
+            bank: "TOSS_BANK",
+            accountNumber: "100159014821",
+            targetAmount: 1000,
+            deadline: "2027-12-25",
+            story: "생일 선물",
+            promise: undefined,
+          },
+          expect.anything(),
+        );
+        expect(push).toHaveBeenCalledWith("/home");
         expect(screen.queryByText("서프라이즈가 시작됐어요!")).not.toBeInTheDocument();
+      });
+
+      it("개설 요청이 끝나기 전에는 펀딩 열기 버튼이 잠겨 더블클릭해도 한 번만 요청한다", async () => {
+        await openConfirm();
+        const confirmButton = confirmSheet().getByRole("button", { name: "펀딩 열기" });
+
+        await userEvent.dblClick(confirmButton);
+
+        expect(createFunding).toHaveBeenCalledTimes(1);
+        expect(confirmButton).toBeDisabled();
+      });
+
+      it("개설 요청이 실패하면 펀딩 열기 버튼 잠금이 풀려 다시 누를 수 있다", async () => {
+        createFunding.mockImplementation((_body, options) => options.onError());
+        await openConfirm();
+        const confirmButton = confirmSheet().getByRole("button", { name: "펀딩 열기" });
+
+        await userEvent.click(confirmButton);
+        await userEvent.click(confirmButton);
+
+        expect(createFunding).toHaveBeenCalledTimes(2);
         expect(push).not.toHaveBeenCalled();
       });
 

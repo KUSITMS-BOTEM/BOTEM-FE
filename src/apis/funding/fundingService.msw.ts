@@ -28,4 +28,18 @@ export const fundingHandlers = [
     const data = MOCK_REVEALS[Number(params.fundingId)] ?? EMPTY_REVEAL;
     return HttpResponse.json({ success: true, data, error: null });
   }),
+  // 확인 시트의 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다
+  http.post("*/api/fundings", async () => {
+    await delay(1000);
+    return HttpResponse.json({
+      success: true,
+      data: {
+        fundingId: 1,
+        type: "BIRTHDAY",
+        status: "FUNDING",
+        shareUrl: "https://botem.example.com/funding/1",
+      },
+      error: null,
+    });
+  }),
 ];

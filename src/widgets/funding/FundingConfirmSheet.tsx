@@ -15,6 +15,8 @@ type FundingConfirmSheetProps = {
   wish: FundingWish;
   info: FundingInfoValues;
   account: FundingAccountValues;
+  // 개설 요청 중에는 펀딩 열기 버튼을 잠근다
+  submitting?: boolean;
   onClose: () => void;
   onConfirm: () => void;
   onEditInfo: () => void;
@@ -26,6 +28,7 @@ export default function FundingConfirmSheet({
   wish,
   info,
   account,
+  submitting = false,
   onClose,
   onConfirm,
   onEditInfo,
@@ -42,6 +45,7 @@ export default function FundingConfirmSheet({
         leftLabel: "미리보기",
         leftColor: "brand",
         rightLabel: "펀딩 열기",
+        rightDisabled: submitting,
         onRightClick: onConfirm,
       }}
       onClose={onClose}>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import Dialog from "@/components/Dialog";
 import OpenSheet from "@/components/OpenSheet";
+import { useCreateFundingMutation } from "@/hooks/mutations/funding/useCreateFundingMutation";
 import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
 import FundingAccountStep, {
@@ -43,6 +44,7 @@ export default function FundingOpenSheet({
   className,
 }: FundingOpenSheetProps) {
   const router = useRouter();
+  const { mutate: createFunding, isPending } = useCreateFundingMutation();
   const [selectedWish, setSelectedWish] = useState<FundingWish | null>(initialWish ?? null);
   const [step, setStep] = useState<Step>("info");
   // 계좌 단계는 처음 진입할 때 마운트해 대표 계좌 조회와 등장 모션이 그때 시작되게 한다
@@ -55,6 +57,8 @@ export default function FundingOpenSheet({
   // 확인 시트를 연 채로 그 위에 띄우는 수정 시트
   const [editing, setEditing] = useState<Step | null>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  // isPending은 비동기로 갱신돼 더블클릭을 못 막으므로 클릭 즉시 잠그는 1차 방어를 따로 둔다
+  const [submitting, setSubmitting] = useState(false);
   // 수정 완료 때마다 올려, 숨겨 둔 입력 단계를 수정값으로 다시 채워 마운트한다
   const [syncVersion, setSyncVersion] = useState(0);
 
@@ -69,6 +73,7 @@ export default function FundingOpenSheet({
     setCompleteOpen(false);
     setEditing(null);
     setSyncVersion(0);
+    setSubmitting(false);
     onClose();
   };
 
@@ -78,7 +83,7 @@ export default function FundingOpenSheet({
   // 시트를 닫지 않고 이동만 한다. 이동이 끝나 이 화면이 언마운트될 때 함께 사라져 뒤 화면이 비치지 않는다
   const handleCompleteClose = () => {
     const query = recipientId ? `?friendId=${encodeURIComponent(recipientId)}` : "";
-    // TODO(API): 펀딩 생성 API 응답의 fundingId로 교체한다 (지금은 목 ID라 모든 펀딩이 같은 링크로 간다)
+    // TODO(API): 서프라이즈 펀딩 생성 API(POST /api/fundings/surprise) 응답의 fundingId로 교체한다 (지금은 목 ID라 모든 펀딩이 같은 링크로 간다)
     router.push(`/funding/${MOCK_FUNDING_ID}${query}`);
   };
 
@@ -91,6 +96,29 @@ export default function FundingOpenSheet({
     setInfo(values);
     setAccountVisited(true);
     setStep("account");
+  };
+
+  const handleConfirm = () => {
+    if (!selectedWish || !info || !account) return;
+    // TODO(API): 서프라이즈 펀딩 생성 API가 정해지면 서프라이즈도 요청 성공 뒤에 완료 화면을 연다
+    if (recipientName) return setCompleteOpen(true);
+    setSubmitting(true);
+    createFunding(
+      {
+        wishId: selectedWish.id,
+        bank: account.bank,
+        accountNumber: account.accountNumber,
+        targetAmount: Number(info.targetAmount),
+        deadline: info.deadline,
+        story: info.story,
+        promise: info.pledge || undefined,
+      },
+      {
+        // TODO(디자인): 일반 펀딩 개설 완료 화면 Figma가 나오면 FundingOpenCompleteSheet로 교체한다 (docs/todos/funding_open_complete_screen.md)
+        onSuccess: () => router.push("/home"),
+        onError: () => setSubmitting(false),
+      },
+    );
   };
 
   const handleAccountSubmit = (values: FundingAccountValues) => {
@@ -150,8 +178,8 @@ export default function FundingOpenSheet({
             info={info}
             account={account}
             onClose={() => setConfirmOpen(false)}
-            // TODO(API): 펀딩 생성 API가 정해지면 성공 뒤에 완료 화면을 연다
-            onConfirm={() => setCompleteOpen(true)}
+            submitting={submitting || isPending}
+            onConfirm={handleConfirm}
             onEditInfo={() => setEditing("info")}
             onEditAccount={() => setEditing("account")}
           />

@@ -10,6 +10,9 @@ import { ApiError } from "@/types/api";
 import type { WishResponse } from "@/types/wish/wish";
 import WishDetailContainer from "@/widgets/wish/WishDetailContainer";
 
+vi.mock("@/hooks/mutations/funding/useCreateFundingMutation", () => ({
+  useCreateFundingMutation: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 vi.mock("@/hooks/queries/wish/useWishQuery", () => ({ useWishQuery: vi.fn() }));
 vi.mock("@/hooks/mutations/wish/useDeleteWishMutation", () => ({
   useDeleteWishMutation: vi.fn(),
@@ -127,7 +130,9 @@ describe("WishDetailContainer", () => {
     mockWishQuery({ data: mockWish });
 
     render(<WishDetailContainer />);
-    expect(screen.getByRole("dialog", { hidden: true })).not.toHaveAttribute("open");
+    expect(screen.getByText("내 위시에서 제거할까요?").closest("dialog")).not.toHaveAttribute(
+      "open",
+    );
 
     await user.click(screen.getByRole("button", { name: "삭제" }));
     expect(screen.getByRole("dialog", { name: "내 위시에서 제거할까요?" })).toHaveAttribute("open");
@@ -144,7 +149,9 @@ describe("WishDetailContainer", () => {
     await user.click(screen.getByRole("button", { name: "삭제" }));
     await user.click(screen.getByRole("button", { name: "아니오" }));
 
-    expect(screen.getByRole("dialog", { hidden: true })).not.toHaveAttribute("open");
+    expect(screen.getByText("내 위시에서 제거할까요?").closest("dialog")).not.toHaveAttribute(
+      "open",
+    );
     expect(deleteWish).not.toHaveBeenCalled();
   });
 
