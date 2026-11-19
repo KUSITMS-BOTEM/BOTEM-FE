@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
@@ -15,6 +15,6 @@ describe("ProductDetailViewSkeleton", () => {
 
     await user.click(screen.getByRole("button", { name: "뒤로 가기" }));
 
-    expect(back).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
   });
 });

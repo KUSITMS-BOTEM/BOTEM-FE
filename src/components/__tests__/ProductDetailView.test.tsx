@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ProductDetailView from "@/components/ProductDetailView";
@@ -69,7 +69,7 @@ describe("ProductDetailView", () => {
 
     await user.click(screen.getByRole("button", { name: "뒤로 가기" }));
 
-    expect(handleBack).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(handleBack).toHaveBeenCalledTimes(1));
   });
 
   it("ctaLabel을 CTA 버튼 텍스트로 렌더한다", () => {

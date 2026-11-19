@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import type { FriendFundingResponse, FriendProfileResponse } from "@/types/friend/friend";
@@ -132,6 +132,6 @@ describe("FriendProfileContainer", () => {
 
     await userEvent.setup().click(screen.getByRole("button", { name: "뒤로가기" }));
 
-    expect(back).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
   });
 });
