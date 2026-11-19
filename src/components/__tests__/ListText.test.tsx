@@ -68,4 +68,27 @@ describe("ListText", () => {
 
     expect(getLines(container)).toEqual(["타이틀", "설명"]);
   });
+
+  describe("size", () => {
+    it("small이면 작은 폰트를 쓰고 타이틀 줄바꿈을 허용한다", () => {
+      const { container } = render(
+        <ListText title={"첫 줄\n둘째 줄"} description="설명" size="small" />,
+      );
+
+      expect(screen.getByText(/첫 줄/)).toHaveClass(
+        "[font:var(--semantic-label-small)]",
+        "whitespace-pre-line",
+      );
+      expect(screen.getByText("설명")).toHaveClass("[font:var(--semantic-subtext-medium)]");
+      expect(container.firstElementChild).not.toHaveClass("[&>p:first-child]:whitespace-nowrap");
+    });
+
+    it("기본(medium)은 기존 폰트와 타이틀 한 줄 고정을 유지한다", () => {
+      const { container } = render(<ListText title="타이틀" description="설명" />);
+
+      expect(screen.getByText("타이틀")).toHaveClass("[font:var(--semantic-label-medium)]");
+      expect(screen.getByText("설명")).toHaveClass("[font:var(--semantic-subtext-large)]");
+      expect(container.firstElementChild).toHaveClass("[&>p:first-child]:whitespace-nowrap");
+    });
+  });
 });

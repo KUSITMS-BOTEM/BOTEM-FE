@@ -21,6 +21,7 @@ type ListProps = {
   caption?: string;
   titleUp?: boolean;
   textType?: ComponentProps<typeof ListText>["type"];
+  textSize?: ComponentProps<typeof ListText>["size"];
   right?: ReactNode;
   onClick?: () => void;
   className?: string;
@@ -37,13 +38,13 @@ export default function List({
   caption,
   titleUp = false,
   textType,
+  textSize,
   right,
   onClick,
   className,
 }: ListProps) {
   const isProduct = type === "product";
   const [failedSrc, setFailedSrc] = useState<string | StaticImageData>();
-  // 잠긴 썸네일은 실제 상품 대신 Figma 샘플 이미지를 블러 뒤에 깔아 질감을 낸다
   const imageSrc = thumbnailSrc ?? (thumbnailLocked ? LockedThumbnail : undefined);
   const showThumbnail = imageSrc && imageSrc !== failedSrc;
   const rootClassName = cn("flex w-full items-center gap-3 py-3", className);
@@ -87,6 +88,7 @@ export default function List({
           caption={caption}
           titleUp={titleUp}
           type={textType}
+          size={textSize}
           className="flex-1"
         />
       </div>
@@ -94,7 +96,6 @@ export default function List({
     </>
   );
 
-  // onClick이 있으면 행 전체가 버튼이 되므로 right에 또 다른 버튼을 넣으면 중첩 interactive가 된다
   if (onClick) {
     return (
       <button
