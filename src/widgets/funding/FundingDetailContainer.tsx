@@ -11,10 +11,11 @@ type FundingDetailContainerProps = {
   friendId?: string;
 };
 
-type ViewerRole = "recipient" | "host" | "guest";
+// owner: 내 펀딩을 연 주인 본인
+type ViewerRole = "recipient" | "host" | "guest" | "owner";
 
-// TODO(API): 펀딩 조회 API가 생기면 응답의 viewer 역할·공개 시각으로 바꾼다. 잠금 화면을 확인하려면 임시로 "recipient"로 바꾼다
-const MOCK_VIEWER_ROLE = "guest" as ViewerRole;
+// TODO(API): 펀딩 조회 API가 생기면 응답의 viewer 역할·공개 시각으로 바꾼다. 잠금 화면을 확인하려면 임시로 "recipient", 참여자 화면은 "guest"로 바꾼다
+const MOCK_VIEWER_ROLE = "owner" as ViewerRole;
 const MOCK_REVEAL_DATE_LABEL = "10월 13일 0시";
 
 export default function FundingDetailContainer({
@@ -28,6 +29,7 @@ export default function FundingDetailContainer({
 
   if (role === "recipient") return <FundingLockedView revealDateLabel={MOCK_REVEAL_DATE_LABEL} />;
   if (role === "guest") return <FundingDetailView fundingId={fundingId} variant="guest" />;
+  if (role === "owner") return <FundingDetailView fundingId={fundingId} variant="owner" />;
 
   return (
     <FundingDetailView
