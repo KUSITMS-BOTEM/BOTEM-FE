@@ -26,15 +26,14 @@ vi.mock("@/utils/auth/handleKakaoLoginClick", () => ({
 
 const funding: FriendFundingResponse = {
   fundingId: 1,
-  isSurprise: false,
-  title: "지유의 생일 펀딩",
+  type: "BIRTHDAY",
   productName: "소니 WH-1000 XM4",
   productImageUrl: null,
-  deadline: "2026-10-13",
-  currentAmount: 50,
-  targetAmount: 100,
-  representativeParticipantName: "민지",
+  deadline: "2026-10-13T23:59:59.999999",
+  remainingDays: 7,
   participantCount: 2,
+  firstParticipantName: "민지",
+  confirmedPercentage: 50,
 };
 
 const profile = (

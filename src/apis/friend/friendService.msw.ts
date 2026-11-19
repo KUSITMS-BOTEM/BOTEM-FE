@@ -64,20 +64,19 @@ const others: FriendResponse[] = [
   },
 ];
 
-const createFundings = (name: string, count: number): FriendFundingResponse[] =>
+const createFundings = (count: number): FriendFundingResponse[] =>
   Array.from({ length: count }, (_, index) => {
     const product = MOCK_RECOMMENDED_PRODUCTS[index % MOCK_RECOMMENDED_PRODUCTS.length];
     return {
       fundingId: 100 + index,
-      isSurprise: index === 0,
-      title: `${name}의 생일 펀딩`,
+      type: index === 0 ? "SURPRISE" : "BIRTHDAY",
       productName: product.name,
       productImageUrl: product.imageUrl,
-      deadline: addDays(getTodayDate(), 7 + index),
-      currentAmount: Math.floor(product.price * 0.55),
-      targetAmount: product.price,
-      representativeParticipantName: "민지",
+      deadline: `${addDays(getTodayDate(), 7 + index)}T23:59:59.999999`,
+      remainingDays: 7 + index,
       participantCount: 7,
+      firstParticipantName: "민지",
+      confirmedPercentage: 55,
     };
   });
 
@@ -87,8 +86,6 @@ const createWishes = (count: number): FriendWishResponse[] =>
     productName: product.name,
     productImageUrl: product.imageUrl,
     price: product.price,
-    sellerName: product.sellerName,
-    productUrl: "https://link.coupang.com/a/example",
   }));
 
 // 친구 프로필 4가지 분기(펀딩 O/X × 위시 O/X)를 친구별로 확인할 수 있게 배정한다. 목록에 없는 친구는 404
@@ -114,7 +111,7 @@ export const friendHandlers = [
       error: null,
     });
   }),
-  http.get("*/api/friends/:friendId", async ({ params }) => {
+  http.get("*/api/friends/:friendId/profile", async ({ params }) => {
     await delay(500);
     const friendId = Number(params.friendId);
     const friend = [...upcoming, ...others].find(item => item.userId === friendId);
@@ -138,8 +135,43 @@ export const friendHandlers = [
         profileImageUrl: friend.profileImageUrl,
         birthday: friend.birthday,
         birthdayDday: friend.birthdayDday,
-        fundings: createFundings(friend.name, profileCase.fundingCount),
+        fundings: createFundings(profileCase.fundingCount),
+        wishesVisible: true,
+        wishCount: profileCase.wishCount,
         wishes: createWishes(profileCase.wishCount),
+      },
+      error: null,
+    });
+  }),
+  http.get("*/api/friends/:friendId/wishes/:wishId", async ({ params }) => {
+    await delay(500);
+    const friendId = Number(params.friendId);
+    const wishId = Number(params.wishId);
+    const profileCase = PROFILE_CASES[friendId];
+    const product = MOCK_RECOMMENDED_PRODUCTS.slice(0, profileCase?.wishCount ?? 0).find(
+      item => 200 + item.id === wishId,
+    );
+    if (!product) {
+      return HttpResponse.json(
+        {
+          success: false,
+          data: null,
+          error: { code: "FRIEND_002", message: "친구가 아닌 회원입니다.", detail: null },
+        },
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        wishId,
+        productName: product.name,
+        productImageUrl: product.imageUrl,
+        price: product.price,
+        productUrl: "https://link.coupang.com/a/example",
+        sellerName: product.sellerName,
+        activeSurpriseFundingId: null,
       },
       error: null,
     });
@@ -169,7 +201,7 @@ export const friendHandlers = [
         profileImageUrl: friend.profileImageUrl,
         birthday: friend.birthday,
         birthdayDday: friend.birthdayDday,
-        fundings: createFundings(friend.name, profileCase.fundingCount),
+        fundings: createFundings(profileCase.fundingCount),
         wishCount: profileCase.wishCount,
       },
       error: null,
