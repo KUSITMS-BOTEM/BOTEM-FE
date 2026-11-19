@@ -49,6 +49,38 @@ describe("ClosedFundingSheet", () => {
     expect(refetch).toHaveBeenCalled();
   });
 
+  it("다시 시도 요청 중에는 버튼을 비활성화한다", () => {
+    mockQuery({ isError: true, isFetching: true });
+    render(<ClosedFundingSheet open onClose={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeDisabled();
+  });
+
+  it("이미 받은 목록이 있으면 refetch가 실패해도 목록을 유지한다", () => {
+    mockQuery({
+      isError: true,
+      data: {
+        fundings: [
+          {
+            fundingId: 1,
+            type: "SURPRISE",
+            productName: "에어팟 프로 2",
+            productImageUrl: "",
+            deadline: "2025-10-13T23:59:59.999999",
+            targetReached: false,
+            participantCount: 6,
+            recipientName: "서준",
+            giftVerificationStatus: null,
+          },
+        ],
+      },
+    });
+    render(<ClosedFundingSheet open onClose={vi.fn()} />);
+
+    expect(screen.getByText("에어팟 프로 2")).toBeInTheDocument();
+    expect(screen.queryByText("마감된 펀딩을 불러오지 못했어요.")).not.toBeInTheDocument();
+  });
+
   it("마감된 펀딩이 있으면 날짜별 목록을 보여준다", () => {
     mockQuery({
       data: {

@@ -12,17 +12,23 @@ type ClosedFundingSheetProps = {
 };
 
 export default function ClosedFundingSheet({ open, onClose }: ClosedFundingSheetProps) {
-  const { data, isPending, isError, refetch } = useClosedFundingsQuery(open);
+  const { data, isPending, isError, isFetching, refetch } = useClosedFundingsQuery(open);
   const fundings = data?.fundings ?? [];
 
   return (
     <CloseSheet open={open} title="마감된 펀딩" closeType="back" onClose={onClose}>
       {isPending ? (
         <ClosedFundingListSkeleton />
-      ) : isError ? (
+      ) : isError && !data ? (
         <div className="text-semantic-text-secondary flex flex-1 flex-col items-center justify-center gap-2">
           <p>마감된 펀딩을 불러오지 못했어요.</p>
-          <TextButton size="medium" label="다시 시도" rightIcon={false} onClick={() => refetch()} />
+          <TextButton
+            size="medium"
+            label="다시 시도"
+            rightIcon={false}
+            disabled={isFetching}
+            onClick={() => refetch()}
+          />
         </div>
       ) : fundings.length === 0 ? (
         <p className="text-semantic-text-secondary flex flex-1 items-center justify-center">
