@@ -5,6 +5,11 @@ import { renderHook, waitFor } from "@testing-library/react";
 
 import { wishService } from "@/apis/wish/wishService";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
+import { recommendedProductsQueryKey } from "@/hooks/queries/recommended-product/useRecommendedProductsQuery";
+import { homeWishesQueryKey } from "@/hooks/queries/wish/useHomeWishesQuery";
+import { wishesQueryKey } from "@/hooks/queries/wish/useWishesQuery";
+import { useWishDeletedToastStore } from "@/store/wishDeletedToastStore";
+import { useWishOriginStore } from "@/store/wishOriginStore";
 
 vi.mock("@/apis/wish/wishService", () => ({
   wishService: {
@@ -30,6 +35,8 @@ const createWrapper = () => {
 describe("useDeleteWishMutation", () => {
   beforeEach(() => {
     replace.mockClear();
+    useWishOriginStore.setState({ recommendedProductIdByWishId: {} });
+    useWishDeletedToastStore.setState({ pending: false });
   });
 
   it("mutate 호출 시 wishService.deleteWish가 전달받은 wishId로 호출된다", async () => {
@@ -54,6 +61,38 @@ describe("useDeleteWishMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(replace).toHaveBeenCalledWith("/home");
+  });
+
+  it("성공 시 추천 상품·위시 목록 쿼리를 무효화한다", async () => {
+    vi.mocked(wishService.deleteWish).mockResolvedValue(null);
+    const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
+    const { result } = renderHook(() => useDeleteWishMutation("1"), {
+      wrapper: ({ children }: { children: ReactNode }) =>
+        createElement(QueryClientProvider, { client: queryClient }, children),
+    });
+
+    result.current.mutate();
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
+    expect(keys).toContainEqual(recommendedProductsQueryKey);
+    expect(keys).toContainEqual(wishesQueryKey);
+    expect(keys).toContainEqual(homeWishesQueryKey);
+  });
+
+  it("추천 상품 상세에서 담은 위시면 그 상세로 이동하고 삭제 토스트를 예약한다", async () => {
+    vi.mocked(wishService.deleteWish).mockResolvedValue(null);
+    useWishOriginStore.getState().setOrigin("1", 10);
+    const { result } = renderHook(() => useDeleteWishMutation("1"), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate();
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(replace).toHaveBeenCalledWith("/wish/recommended/10");
+    expect(useWishDeletedToastStore.getState().pending).toBe(true);
   });
 
   it("wishService.deleteWish가 실패하면 isError가 true가 되고 router.replace는 호출되지 않는다", async () => {
