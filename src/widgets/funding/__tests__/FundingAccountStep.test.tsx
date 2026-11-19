@@ -73,6 +73,17 @@ describe("FundingAccountStep", () => {
     expect(screen.getByRole("button", { name: /대표 계좌 사용하기/ })).toBeDisabled();
   });
 
+  it("입력된 은행과 계좌번호가 대표 계좌와 같으면 대표 계좌 사용하기가 비활성화되고, 바꾸면 다시 활성화된다", async () => {
+    mockAccounts([account({})]);
+    render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole("button", { name: /대표 계좌 사용하기/ }));
+    expect(screen.getByRole("button", { name: /대표 계좌 사용하기/ })).toBeDisabled();
+
+    await userEvent.type(screen.getByLabelText("계좌번호"), "9");
+    expect(screen.getByRole("button", { name: /대표 계좌 사용하기/ })).toBeEnabled();
+  });
+
   it("이전을 누르면 onPrev를 호출한다", async () => {
     mockAccounts([]);
     const onPrev = vi.fn();
