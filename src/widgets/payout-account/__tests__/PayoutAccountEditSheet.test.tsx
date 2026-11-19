@@ -124,4 +124,48 @@ describe("PayoutAccountEditSheet", () => {
     expect(onClose).not.toHaveBeenCalled();
     expect(input).toHaveValue("123456789012");
   });
+
+  it("응답이 비어 있어도 성공하면 닫고, 다시 열었을 때 바꾼 값이 기준이 된다", async () => {
+    const onClose = vi.fn();
+    mutate.mockImplementation((_vars, options) => options.onSuccess(null));
+    render(<PayoutAccountEditSheet open onClose={onClose} />);
+    const input = screen.getByLabelText("계좌번호");
+
+    await userEvent.clear(input);
+    await userEvent.type(input, "123456789012");
+    await userEvent.click(getButtons().submit);
+
+    expect(onClose).toHaveBeenCalled();
+    expect(input).toHaveValue("123456789012");
+    expect(getButtons().submit).toBeDisabled();
+  });
+
+  describe("요청 중일 때", () => {
+    beforeEach(() => {
+      vi.mocked(useUpdatePayoutAccountMutation).mockReturnValue({
+        mutate,
+        isPending: true,
+      } as unknown as ReturnType<typeof useUpdatePayoutAccountMutation>);
+    });
+
+    it("수정 완료 버튼이 loading 상태로 눌리지 않는다", () => {
+      render(<PayoutAccountEditSheet open onClose={vi.fn()} />);
+
+      expect(getButtons().submit).toHaveAttribute("aria-busy", "true");
+      expect(getButtons().submit).toBeDisabled();
+    });
+
+    it("닫기를 눌러도 시트를 닫지 않고 입력값을 유지한다", async () => {
+      const onClose = vi.fn();
+      render(<PayoutAccountEditSheet open onClose={onClose} />);
+      const input = screen.getByLabelText("계좌번호");
+
+      await userEvent.clear(input);
+      await userEvent.type(input, "123456789012");
+      await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+      expect(onClose).not.toHaveBeenCalled();
+      expect(input).toHaveValue("123456789012");
+    });
+  });
 });

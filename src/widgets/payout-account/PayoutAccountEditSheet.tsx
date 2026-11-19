@@ -41,8 +41,9 @@ export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountE
     setBank(original?.bank ?? null);
   };
 
-  // 저장하지 않고 닫으면 다음에 열 때 수정 전 대표 계좌로 다시 보이도록 되돌려둔다
+  // 저장하지 않고 닫으면 다음에 열 때 수정 전 대표 계좌로 다시 보이도록 되돌려둔다. 요청 중에는 닫지 않는다
   const handleClose = () => {
+    if (isPending) return;
     handleReset();
     onClose();
   };
@@ -53,7 +54,8 @@ export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountE
       { accountId: original.id, bank, accountNumber, accountHolder: original.accountHolder },
       {
         onSuccess: updated => {
-          if (updated) setOriginal(updated);
+          // 응답이 비어 있어도 방금 저장한 값을 기준으로 삼아 "변경됨" 상태가 남지 않게 한다
+          setOriginal(updated ?? { ...original, bank, accountNumber });
           onClose();
         },
       },

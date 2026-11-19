@@ -82,7 +82,7 @@ describe("useUpdatePayoutAccountMutation", () => {
     expect(queryClient.getQueryData(payoutAccountsQueryKey)).toBeUndefined();
   });
 
-  it("응답이 null이면 캐시를 건드리지 않는다", async () => {
+  it("응답이 null이면 캐시 값은 두고 목록을 재조회 대상으로 표시한다", async () => {
     const cached = [account(1, "100159014821")];
     queryClient.setQueryData(payoutAccountsQueryKey, cached);
     vi.mocked(payoutAccountService.updatePayoutAccount).mockResolvedValue(null);
@@ -92,6 +92,7 @@ describe("useUpdatePayoutAccountMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(queryClient.getQueryData(payoutAccountsQueryKey)).toEqual(cached);
+    expect(queryClient.getQueryState(payoutAccountsQueryKey)?.isInvalidated).toBe(true);
   });
 
   it("실패하면 캐시는 그대로이고 isError가 true가 된다", async () => {
