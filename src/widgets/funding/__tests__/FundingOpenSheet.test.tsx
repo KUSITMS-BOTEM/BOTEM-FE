@@ -12,7 +12,7 @@ import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
 
 const { createFunding } = vi.hoisted(() => ({ createFunding: vi.fn() }));
 vi.mock("@/hooks/mutations/funding/useCreateFundingMutation", () => ({
-  useCreateFundingMutation: () => ({ mutate: createFunding, isPending: false }),
+  useCreateFundingMutation: () => ({ mutateAsync: createFunding, isPending: false }),
 }));
 vi.mock("@/hooks/queries/wish/useWishesQuery");
 vi.mock("@/hooks/queries/payout-account/usePayoutAccountsQuery", () => ({
@@ -306,24 +306,25 @@ describe("FundingOpenSheet", () => {
       });
 
       it("recipientName이 없으면 펀딩 열기로 개설 요청을 보내고 성공하면 완료 화면 없이 /home으로 이동한다", async () => {
-        createFunding.mockImplementation((_body, options) => options.onSuccess());
+        createFunding.mockResolvedValue({});
         await openConfirm();
 
         await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
 
-        expect(createFunding).toHaveBeenCalledWith(
-          {
-            wishId: 468,
-            bank: "TOSS_BANK",
-            accountNumber: "100159014821",
-            targetAmount: 1000,
-            deadline: "2027-12-25",
-            story: "생일 선물",
-            promise: undefined,
-          },
-          expect.anything(),
-        );
+        expect(createFunding).toHaveBeenCalledWith({
+          wishId: 468,
+          bank: "TOSS_BANK",
+          accountNumber: "100159014821",
+          targetAmount: 1000,
+          deadline: "2027-12-25",
+          story: "생일 선물",
+          promise: undefined,
+        });
         expect(push).toHaveBeenCalledWith("/home");
+        // 이동 뒤 확인 시트·개설 시트가 닫힌다
+        await waitFor(() =>
+          expect(screen.queryByText("이대로 펀딩을 열까요?")).not.toBeInTheDocument(),
+        );
         expect(screen.queryByText("서프라이즈가 시작됐어요!")).not.toBeInTheDocument();
       });
 
@@ -338,7 +339,7 @@ describe("FundingOpenSheet", () => {
       });
 
       it("개설 요청이 실패하면 펀딩 열기 버튼 잠금이 풀려 다시 누를 수 있다", async () => {
-        createFunding.mockImplementation((_body, options) => options.onError());
+        createFunding.mockRejectedValue(new Error("fail"));
         await openConfirm();
         const confirmButton = confirmSheet().getByRole("button", { name: "펀딩 열기" });
 
@@ -383,7 +384,6 @@ describe("FundingOpenSheet", () => {
 
         expect(createFunding).toHaveBeenCalledWith(
           expect.objectContaining({ story: "생일 선물!" }),
-          expect.anything(),
         );
       });
 
@@ -402,10 +402,7 @@ describe("FundingOpenSheet", () => {
         await screen.findByText("이대로 펀딩을 열까요?");
         await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
 
-        expect(createFunding).toHaveBeenCalledWith(
-          expect.objectContaining({ story: "생일 선물" }),
-          expect.anything(),
-        );
+        expect(createFunding).toHaveBeenCalledWith(expect.objectContaining({ story: "생일 선물" }));
       });
     });
 

@@ -44,7 +44,7 @@ export default function FundingOpenSheet({
   className,
 }: FundingOpenSheetProps) {
   const router = useRouter();
-  const { mutate: createFunding, isPending } = useCreateFundingMutation();
+  const { mutateAsync: createFunding, isPending } = useCreateFundingMutation();
   const [selectedWish, setSelectedWish] = useState<FundingWish | null>(initialWish ?? null);
   const [step, setStep] = useState<Step>("info");
   // 계좌 단계는 처음 진입할 때 마운트해 대표 계좌 조회와 등장 모션이 그때 시작되게 한다
@@ -108,13 +108,13 @@ export default function FundingOpenSheet({
     setStep("account");
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!selectedWish || !confirmInfo || !confirmAccount) return;
     // TODO(API): 서프라이즈 펀딩 생성 API가 정해지면 서프라이즈도 요청 성공 뒤에 완료 화면을 연다
     if (recipientName) return setCompleteOpen(true);
     setSubmitting(true);
-    createFunding(
-      {
+    try {
+      await createFunding({
         wishId: selectedWish.id,
         bank: confirmAccount.bank,
         accountNumber: confirmAccount.accountNumber,
@@ -122,13 +122,16 @@ export default function FundingOpenSheet({
         deadline: confirmInfo.deadline,
         story: confirmInfo.story,
         promise: confirmInfo.pledge || undefined,
-      },
-      {
-        // TODO(디자인): 일반 펀딩 개설 완료 화면 Figma가 나오면 FundingOpenCompleteSheet로 교체한다 (docs/todos/funding_open_complete_screen.md)
-        onSuccess: () => router.push("/home"),
-        onError: () => setSubmitting(false),
-      },
-    );
+      });
+    } catch {
+      // 에러 안내는 전역 MutationCache onError가 처리하므로 여기서는 재시도할 수 있게 잠금만 푼다
+      setSubmitting(false);
+      return;
+    }
+    // TODO(디자인): 일반 펀딩 개설 완료 화면 Figma가 나오면 FundingOpenCompleteSheet로 교체한다 (docs/todos/funding_open_complete_screen.md)
+    router.push("/home");
+    // 이동만으로는 이 화면이 언마운트되지 않아 시트가 /home 위에 남으므로 직접 닫는다
+    handleClose();
   };
 
   const handleAccountSubmit = (values: FundingAccountValues) => {
