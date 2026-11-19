@@ -2,45 +2,54 @@
 
 import { useState } from "react";
 
-import { useRouter } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 
 import ProductDetailFallback from "@/components/ProductDetailFallback";
 import ProductDetailView from "@/components/ProductDetailView";
 import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
 import { useFriendProfileQuery } from "@/hooks/queries/friend/useFriendProfileQuery";
 import { useFriendWishQuery } from "@/hooks/queries/friend/useFriendWishQuery";
+import { ApiError } from "@/types/api";
 import { toFundingWish } from "@/utils/friend/toFundingWish";
 import { isValidUrl } from "@/utils/isValidUrl";
-import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
+import SurpriseOpenSheet from "@/widgets/funding/SurpriseOpenSheet";
 
 type FriendWishDetailContainerProps = {
   friendId: string;
   wishId: string;
 };
 
+// 위시 상세(판매처·링크)는 위시 상세 API, 받는 사람 정보(이름·생일)는 친구 프로필 응답에서 가져온다
 export default function FriendWishDetailContainer({
   friendId,
   wishId,
 }: FriendWishDetailContainerProps) {
   const router = useRouter();
-  const { data: wish, isPending, refetch } = useFriendWishQuery(friendId, wishId);
-  // 위시 상세 응답에 친구 이름이 없어 펀딩 시트의 받는 사람 이름은 프로필 조회(목록에서 왔다면 캐시)로 채운다
-  // 이름 없이 시트를 열면 서프라이즈가 아닌 일반 펀딩으로 개설되므로 프로필이 올 때까지 CTA를 막는다
-  const { data: profile, isPending: profilePending } = useFriendProfileQuery(friendId);
+  const profileQuery = useFriendProfileQuery(friendId);
+  const wishQuery = useFriendWishQuery(friendId, wishId);
   const [fundingSheetOpen, setFundingSheetOpen] = useState(false);
+  const data = profileQuery.data;
+  const wish = wishQuery.data;
 
-  if (isPending) return <ProductDetailViewSkeleton />;
-  if (!wish) {
+  if (profileQuery.isPending || wishQuery.isPending) return <ProductDetailViewSkeleton />;
+  // FRIEND_002: 친구가 아니거나 친구의 위시가 아님 — 재시도로 풀리지 않는 영구 실패
+  if (wishQuery.error instanceof ApiError && wishQuery.error.code === "FRIEND_002") notFound();
+  if (!data || !wish) {
     return (
       <ProductDetailFallback
         message="위시 정보를 불러오지 못했어요"
         onBack={() => router.back()}
-        onRetry={() => refetch()}
+        onRetry={() => {
+          if (!data) profileQuery.refetch();
+          if (!wish) wishQuery.refetch();
+        }}
       />
     );
   }
 
   const fundingWish = toFundingWish(wish);
+  // 이 친구를 위한 진행 중 서프라이즈가 있으면(친구당 1개) 새로 열지 않고 그 펀딩에 보탠다
+  const activeFundingId = wish.activeSurpriseFundingId;
 
   return (
     <div className="flex flex-col">
@@ -53,16 +62,18 @@ export default function FriendWishDetailContainer({
         sellerDisabled={!isValidUrl(wish.productUrl)}
         onSellerClick={() => window.open(wish.productUrl, "_blank", "noopener,noreferrer")}
         onBack={() => router.back()}
-        ctaLabel="친구 몰래 서프라이즈 열기"
-        onCtaClick={() => setFundingSheetOpen(true)}
-        ctaPending={profilePending}
-        ctaDisabled={!profile}
+        ctaLabel={activeFundingId ? "같이 보태기" : "친구 몰래 서프라이즈 열기"}
+        onCtaClick={() =>
+          activeFundingId ? router.push(`/share/${activeFundingId}`) : setFundingSheetOpen(true)
+        }
       />
-      <FundingOpenSheet
+      <SurpriseOpenSheet
         open={fundingSheetOpen}
-        initialWish={fundingWish}
-        recipientName={profile?.name}
+        wish={fundingWish}
         recipientId={friendId}
+        recipientName={data.name}
+        recipientBirthday={data.birthday}
+        recipientBirthdayDday={data.birthdayDday}
         onClose={() => setFundingSheetOpen(false)}
       />
     </div>

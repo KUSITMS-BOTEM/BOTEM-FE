@@ -9,7 +9,7 @@ const funding = (fundingId: number): FriendFundingResponse => ({
   type: "BIRTHDAY",
   productName: `상품 ${fundingId}`,
   productImageUrl: null,
-  deadline: "2026-10-13",
+  deadline: "2026-10-13T23:59:59.999999",
   remainingDays: 7,
   participantCount: 2,
   firstParticipantName: "민지",

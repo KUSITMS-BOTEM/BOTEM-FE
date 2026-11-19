@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useReducedMotion } from "framer-motion";
 
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
@@ -122,12 +122,12 @@ describe("FundingCompleteContainer", () => {
     expect(screen.getByTestId("confetti")).toBeInTheDocument();
   });
 
-  it("닫기 버튼을 누르면 push가 아니라 replace로 공유 페이지에 이동한다", () => {
+  it("닫기 버튼을 누르면 push가 아니라 replace로 공유 페이지에 이동한다", async () => {
     render(<FundingCompleteContainer fundingId="7" />);
 
     fireEvent.click(screen.getByRole("button", { name: "닫기" }));
 
-    expect(replaceMock).toHaveBeenCalledWith("/share/7");
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/7"));
     expect(pushMock).not.toHaveBeenCalled();
   });
 

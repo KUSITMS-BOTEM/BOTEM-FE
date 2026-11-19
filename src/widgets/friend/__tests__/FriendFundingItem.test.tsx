@@ -8,7 +8,7 @@ const base: FriendFundingResponse = {
   type: "BIRTHDAY",
   productName: "소니 WH-1000 XM4",
   productImageUrl: "https://example.com/product.png",
-  deadline: "2026-10-13",
+  deadline: "2026-10-13T23:59:59.999999",
   remainingDays: 7,
   participantCount: 7,
   firstParticipantName: "민지",
@@ -44,18 +44,20 @@ describe("FriendFundingItem", () => {
     );
   });
 
-  it("일반 펀딩이면 서프라이즈 라벨과 안내 버튼이 없다", () => {
+  it("생일 펀딩이면 '생일 펀딩' 라벨을 보여주고 서프라이즈 안내 버튼은 없다", () => {
     render(<FriendFundingItem funding={base} />);
 
+    expect(screen.getByText("생일 펀딩")).toBeInTheDocument();
     expect(screen.queryByText("서프라이즈")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "서프라이즈 펀딩 안내" })).not.toBeInTheDocument();
   });
 
-  it("서프라이즈 펀딩이면 서프라이즈 라벨과 안내 버튼을 보여준다", () => {
+  it("서프라이즈 펀딩이면 서프라이즈 라벨과 안내 버튼을 보여주고 '생일 펀딩' 라벨은 숨긴다", () => {
     render(<FriendFundingItem funding={{ ...base, type: "SURPRISE" }} />);
 
     expect(screen.getByText("서프라이즈")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "서프라이즈 펀딩 안내" })).toBeInTheDocument();
+    expect(screen.queryByText("생일 펀딩")).not.toBeInTheDocument();
   });
 
   it("안내 버튼은 링크 안에 중첩되지 않는다", () => {

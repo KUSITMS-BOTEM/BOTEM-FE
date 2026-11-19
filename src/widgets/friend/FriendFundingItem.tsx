@@ -21,10 +21,12 @@ type FriendFundingItemProps = {
 
 export default function FriendFundingItem({ funding }: FriendFundingItemProps) {
   const productNameId = useId();
-  const percent = funding.confirmedPercentage;
   const isSurprise = funding.type === "SURPRISE";
-  const dDay = getDDayLabel(funding.deadline);
-  const deadlineText = `펀딩 마감 ${formatDeadlineShort(funding.deadline)}${dDay ? ` · ${dDay}` : ""}`;
+  const percent = funding.confirmedPercentage;
+  // deadline은 시각이 붙은 ISO 문자열이라 날짜 유틸이 받는 "YYYY-MM-DD"로 자른다
+  const deadlineDate = funding.deadline.slice(0, 10);
+  const dDay = getDDayLabel(deadlineDate);
+  const deadlineText = `펀딩 마감 ${formatDeadlineShort(deadlineDate)}${dDay ? ` · ${dDay}` : ""}`;
   const participantCaption = formatParticipantCaption(
     funding.firstParticipantName,
     funding.participantCount,
@@ -44,10 +46,14 @@ export default function FriendFundingItem({ funding }: FriendFundingItemProps) {
             )}
           </div>
           <div className="flex min-w-0 flex-1 flex-col gap-0.5 [letter-spacing:var(--letter-spacing-default)] [&>p]:truncate">
-            {isSurprise && (
+            {isSurprise ? (
               <p className="text-base-orange-500 flex items-center gap-0.5 [font:var(--semantic-label-x-small)]">
                 <IconSurprise aria-hidden className="shrink-0" />
                 서프라이즈
+              </p>
+            ) : (
+              <p className="text-semantic-text-secondary [font:var(--semantic-subtext-medium)]">
+                생일 펀딩
               </p>
             )}
             <p

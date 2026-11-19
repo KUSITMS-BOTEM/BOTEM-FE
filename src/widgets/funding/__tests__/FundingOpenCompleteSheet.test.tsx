@@ -27,7 +27,7 @@ const wish = {
   productImageUrl: "https://example.com/1.png",
   price: 468000,
 };
-const info = { targetAmount: "429000", deadline: "2099-11-13", story: "", pledge: "" };
+const info = { targetAmount: "429000", deadline: "2099-11-13" };
 
 const renderSheet = (
   onClose = vi.fn(),
@@ -42,6 +42,7 @@ const renderSheet = (
         recipientName="민지"
         wish={wish}
         info={info}
+        fundingId={1}
         onClose={onClose}
         {...props}
       />

@@ -1,23 +1,3 @@
-import type { BankCode } from "@/constants/bank";
-import type { CreateFundingResponse } from "@/types/funding/funding";
-
-export type CreateSurpriseFundingRequest = {
-  recipientId: number;
-  wishId: number;
-  bank: BankCode;
-  accountNumber: string;
-  targetAmount: number;
-  // "YYYY-MM-DD"
-  deadline: string;
-  // ISO date-time
-  revealAt: string;
-  // 생략하면 서버 기본값 true
-  showOnRecipientProfile?: boolean;
-  notifyRecipientFriends?: boolean;
-};
-
-export type CreateSurpriseFundingResponse = CreateFundingResponse;
-
 export type SurpriseMessage = {
   messageId: number;
   participantName: string;

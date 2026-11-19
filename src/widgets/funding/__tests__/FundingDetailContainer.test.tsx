@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import FundingDetailContainer from "@/widgets/funding/FundingDetailContainer";
@@ -29,14 +29,14 @@ describe("FundingDetailContainer", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "뒤로가기" }));
 
-    expect(push).toHaveBeenCalledWith("/friends/7");
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/friends/7"));
   });
 
-  it("친구 id가 없으면 개설자도 대상자도 아니므로 일반 펀딩 화면을 보여준다", () => {
+  it("친구 id가 없으면 mock 역할(펀딩 주인)로 툴팁·자물쇠 없는 펀딩 화면을 보여준다", () => {
     render(<FundingDetailContainer fundingId="1" />);
 
     expect(screen.queryByText("아직 비밀이에요")).not.toBeInTheDocument();
-    expect(screen.queryByText("확인 대기 1건이 있어요")).not.toBeInTheDocument();
-    expect(screen.getByText("나도 지유님께 보태볼까요?")).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "서프라이즈 펀딩" })).not.toBeInTheDocument();
+    expect(screen.queryByText("나도 지유님께 보태볼까요?")).not.toBeInTheDocument();
   });
 });

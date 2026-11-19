@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import RollingPaperDetailContainer from "@/widgets/rolling-paper/RollingPaperDetailContainer";
@@ -15,7 +15,7 @@ describe("RollingPaperDetailContainer", () => {
 
     await user.click(screen.getByRole("button", { name: "뒤로 가기" }));
 
-    expect(backMock).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(backMock).toHaveBeenCalledTimes(1));
   });
 
   it("편지지와 프로필 휠을 함께 그린다", () => {

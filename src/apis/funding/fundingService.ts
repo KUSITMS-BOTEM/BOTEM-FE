@@ -3,6 +3,7 @@ import type { ClosedFundingListResponse } from "@/types/funding/closedFunding";
 import type {
   CreateFundingRequest,
   CreateFundingResponse,
+  CreateSurpriseFundingRequest,
   FundingRevealResponse,
 } from "@/types/funding/funding";
 import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
@@ -20,8 +21,6 @@ import type {
   RollingPaperAttachmentUploadUrlResponse,
 } from "@/types/funding/rollingPaperAttachment";
 import type {
-  CreateSurpriseFundingRequest,
-  CreateSurpriseFundingResponse,
   SendSurpriseThankCardRequest,
   SurpriseGiftPreparationResponse,
   SurpriseRevealResponse,
@@ -37,7 +36,7 @@ export const fundingService = {
   postFunding: (body: CreateFundingRequest) =>
     clientApi.post<CreateFundingResponse>("/api/fundings", body),
   postSurpriseFunding: (body: CreateSurpriseFundingRequest) =>
-    clientApi.post<CreateSurpriseFundingResponse>("/api/fundings/surprise", body),
+    clientApi.post<CreateFundingResponse>("/api/fundings/surprise", body),
 
   getFundingDetail: (fundingId: number) =>
     clientApi.get<FundingDetailResponse>(`/api/fundings/${fundingId}`),

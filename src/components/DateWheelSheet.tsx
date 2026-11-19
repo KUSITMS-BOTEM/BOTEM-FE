@@ -22,6 +22,8 @@ type DateWheelSheetProps = {
   minDate?: string;
   // deadline에서 고를 수 있는 가장 늦은 날짜("YYYY-MM-DD"). 없으면 제한 없음
   maxDate?: string;
+  // 시트 제목. 없으면 variant에 맞는 기본 제목
+  title?: string;
   onSelect: (date: string) => void;
   onClose: () => void;
 };
@@ -31,6 +33,7 @@ const range = (from: number, to: number) =>
 
 export default function DateWheelSheet({
   variant,
+  title,
   open,
   value,
   minDate,
@@ -89,7 +92,7 @@ export default function DateWheelSheet({
   return (
     <BottomSheet
       open={open}
-      title={isBirth ? "생일 선택" : "마감일 선택"}
+      title={title ?? (isBirth ? "생일 선택" : "마감일 선택")}
       height="auto"
       onClose={onClose}
       buttons={{

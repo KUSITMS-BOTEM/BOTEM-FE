@@ -5,8 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
 import LoadingAnimation from "@/components/LoadingAnimation";
+import PageExitMotion from "@/components/effects/PageExitMotion";
 import { useCompleteGiftVerificationMutation } from "@/hooks/mutations/gift-verification/useCompleteGiftVerificationMutation";
 import { useGiftVerificationTargetsQuery } from "@/hooks/queries/home/useGiftVerificationTargetsQuery";
+import { usePageExit } from "@/hooks/usePageExit";
 import { getReceivedProductName } from "@/utils/home/giftVerificationTarget";
 import FundingGiftVerifyView, {
   type GiftVerifySubmitValues,
@@ -17,6 +19,7 @@ const HOME_PATH = "/home";
 
 export default function FundingGiftVerifyContainer() {
   const router = useRouter();
+  const { pageExit, exitPage } = usePageExit();
   const { fundingId } = useParams<{ fundingId: string }>();
   const { data, isLoading, isError, refetch } = useGiftVerificationTargetsQuery();
   const { mutate, isPending, isSuccess } = useCompleteGiftVerificationMutation();
@@ -80,13 +83,17 @@ export default function FundingGiftVerifyContainer() {
   };
 
   return (
-    <main className="bg-semantic-background-default flex min-h-dvh flex-col">
-      <h1 className="sr-only">선물 도착 인증</h1>
-      <Header
-        title="선물 도착 인증"
-        rightItems={[{ icon: <IconClose />, ariaLabel: "닫기", onClick: goHome }]}
-      />
-      {renderContent()}
-    </main>
+    <PageExitMotion exit={pageExit}>
+      <main className="bg-semantic-background-default flex min-h-dvh flex-col">
+        <h1 className="sr-only">선물 도착 인증</h1>
+        <Header
+          title="선물 도착 인증"
+          rightItems={[
+            { icon: <IconClose />, ariaLabel: "닫기", onClick: () => exitPage("fade", goHome) },
+          ]}
+        />
+        {renderContent()}
+      </main>
+    </PageExitMotion>
   );
 }

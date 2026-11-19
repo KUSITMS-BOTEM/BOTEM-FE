@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import type { FriendFundingResponse, FriendProfileResponse } from "@/types/friend/friend";
@@ -8,8 +8,8 @@ const back = vi.fn();
 const refetch = vi.fn();
 const useFriendProfileQuery = vi.fn();
 
-vi.mock("@/hooks/mutations/funding/useCreateFundingMutation", () => ({
-  useCreateFundingMutation: () => ({ mutate: vi.fn(), isPending: false }),
+vi.mock("@/hooks/mutations/funding/useCreateSurpriseFundingMutation", () => ({
+  useCreateSurpriseFundingMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ back }),
@@ -23,7 +23,7 @@ const funding: FriendFundingResponse = {
   type: "BIRTHDAY",
   productName: "소니 WH-1000 XM4",
   productImageUrl: null,
-  deadline: "2026-10-13",
+  deadline: "2026-10-13T23:59:59.999999",
   remainingDays: 7,
   participantCount: 2,
   firstParticipantName: "민지",
@@ -134,6 +134,6 @@ describe("FriendProfileContainer", () => {
 
     await userEvent.setup().click(screen.getByRole("button", { name: "뒤로가기" }));
 
-    expect(back).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
   });
 });

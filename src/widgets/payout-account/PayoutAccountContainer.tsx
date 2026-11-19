@@ -7,8 +7,10 @@ import { useRouter } from "next/navigation";
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
+import PageExitMotion from "@/components/effects/PageExitMotion";
 import type { BankCode } from "@/constants/bank";
 import { DEFAULT_ERROR_MESSAGE } from "@/constants/errorMessages";
+import { usePageExit } from "@/hooks/usePageExit";
 import { useCompleteOnboardingMutation } from "@/hooks/mutations/user/useCompleteOnboardingMutation";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { getSignupFlow } from "@/utils/auth/signupFlowStorage";
@@ -18,6 +20,7 @@ import IconLeft from "@/assets/icons/icon-left.svg?react";
 
 export default function PayoutAccountContainer() {
   const router = useRouter();
+  const { pageExit, exitPage } = usePageExit();
   const { mutate: completeOnboarding, isPending } = useCompleteOnboardingMutation();
   const [accountNumber, setAccountNumber] = useState("");
   const [selectedBank, setSelectedBank] = useState<BankCode | null>(null);
@@ -45,13 +48,13 @@ export default function PayoutAccountContainer() {
   };
 
   return (
-    <>
+    <PageExitMotion exit={pageExit}>
       <Header
         title="회원가입"
         leftItem={{
           icon: <IconLeft />,
           ariaLabel: "뒤로 가기",
-          onClick: () => router.push("/auth/profile-check"),
+          onClick: () => exitPage("slide", () => router.push("/auth/profile-check")),
         }}
       />
       <main className="px-5">
@@ -79,6 +82,6 @@ export default function PayoutAccountContainer() {
           시작하기
         </Button>
       </BottomCTA>
-    </>
+    </PageExitMotion>
   );
 }

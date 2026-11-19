@@ -19,15 +19,13 @@ type FundingOpenCompleteSheetProps = {
   variant: "surprise" | "funding";
   recipientName: string;
   wish: FundingWish;
-  info: FundingInfoValues;
+  info: Pick<FundingInfoValues, "targetAmount" | "deadline">;
+  fundingId: number;
   /** funding variant에서 카드에 보여줄 달성률(%) */
   progress?: number;
   onClose: () => void;
   className?: string;
 };
-
-// TODO(API): 펀딩 생성 API 응답의 fundingId로 교체한다
-export const MOCK_FUNDING_ID = "1";
 
 export default function FundingOpenCompleteSheet({
   open,
@@ -35,6 +33,7 @@ export default function FundingOpenCompleteSheet({
   recipientName,
   wish,
   info,
+  fundingId,
   progress,
   onClose,
   className,
@@ -42,7 +41,7 @@ export default function FundingOpenCompleteSheet({
   const { data: profile } = useMyProfileQuery();
   const { toast, share, copyLink } = useShareLink();
   const isSurprise = variant === "surprise";
-  const shareUrl = () => `${window.location.origin}/share/${MOCK_FUNDING_ID}`;
+  const shareUrl = () => `${window.location.origin}/share/${fundingId}`;
 
   const handleShare = () =>
     share({
