@@ -77,11 +77,12 @@ export default function FundingOpenSheet({
     setEditing(null);
     setDraftInfo(null);
     setDraftAccount(null);
-    setSubmitting(false);
     onClose();
   };
 
   const handleConfirmClose = () => {
+    // 요청 중에 닫으면 취소한 줄 아는 사용자가 성공 뒤 갑자기 이동하게 된다
+    if (submitting) return;
     setConfirmOpen(false);
     setDraftInfo(null);
     setDraftAccount(null);

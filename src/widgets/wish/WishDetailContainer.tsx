@@ -82,7 +82,10 @@ export default function WishDetailContainer() {
       />
       <FundingOpenSheet
         open={fundingSheetOpen}
-        initialWish={wish}
+        initialWish={{
+          ...wish,
+          productImageUrl: isValidUrl(wish.productImageUrl) ? wish.productImageUrl : undefined,
+        }}
         onClose={() => setFundingSheetOpen(false)}
       />
       <Dialog

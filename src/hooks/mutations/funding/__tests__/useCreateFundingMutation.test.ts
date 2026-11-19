@@ -6,6 +6,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { fundingService } from "@/apis/funding/fundingService";
 import { useCreateFundingMutation } from "@/hooks/mutations/funding/useCreateFundingMutation";
 import { homeQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
+import { wishQueryKey } from "@/hooks/queries/wish/useWishQuery";
 import { homeWishesQueryKey } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { wishesQueryKey } from "@/hooks/queries/wish/useWishesQuery";
 import type { CreateFundingRequest } from "@/types/funding/funding";
@@ -65,6 +66,7 @@ describe("useCreateFundingMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidate).toHaveBeenCalledWith({ queryKey: wishesQueryKey, exact: true });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: wishQueryKey("1") });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: homeWishesQueryKey });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: homeQueryKey });
   });
