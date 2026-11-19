@@ -53,7 +53,7 @@ describe("RecommendedWishContainer", () => {
     vi.clearAllMocks();
   });
 
-  it("위시에 담은 상품은 위시 상세로, 펀딩 중인 상품은 펀딩으로 연결된다", () => {
+  it("위시에 담은 상품은 펀딩 중이어도 위시 상세로 연결된다", () => {
     mockProductsQuery({
       data: [
         { ...mockProducts[0]!, wishId: 8 },
@@ -64,7 +64,7 @@ describe("RecommendedWishContainer", () => {
     render(<RecommendedWishContainer />);
 
     expect(screen.getByRole("link", { name: /에어팟 프로 3/ })).toHaveAttribute("href", "/wish/8");
-    expect(screen.getByRole("link", { name: /향수/ })).toHaveAttribute("href", "/funding/4");
+    expect(screen.getByRole("link", { name: /향수/ })).toHaveAttribute("href", "/wish/9");
   });
 
   it("각 추천 상품 카드는 해당 상품 상세 경로로 연결된다", () => {

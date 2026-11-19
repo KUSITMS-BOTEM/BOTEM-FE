@@ -112,6 +112,20 @@ describe("ProductDetailView", () => {
     expect(within(header).getByRole("button", { name: "문의하기" })).toBeInTheDocument();
   });
 
+  it("statusBadge가 있으면 뱃지를 렌더하고 없으면 렌더하지 않는다", () => {
+    const { rerender } = render(<ProductDetailView {...baseProps} statusBadge="펀딩중" />);
+    expect(screen.getByText("펀딩중")).toBeInTheDocument();
+
+    rerender(<ProductDetailView {...baseProps} />);
+    expect(screen.queryByText("펀딩중")).not.toBeInTheDocument();
+  });
+
+  it("ctaHelperText가 있으면 CTA 아래에 안내 문구를 렌더한다", () => {
+    render(<ProductDetailView {...baseProps} ctaHelperText="삭제할 수 없어요" />);
+
+    expect(screen.getByText("삭제할 수 없어요")).toBeInTheDocument();
+  });
+
   it("rightItems가 없으면 헤더에 뒤로 가기 버튼만 렌더된다", () => {
     render(<ProductDetailView {...baseProps} />);
 

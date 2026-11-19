@@ -12,7 +12,7 @@ describe("getRecommendedProductHref", () => {
     expect(getRecommendedProductHref({ id: 3, wishId: 8, fundingId: null })).toBe("/wish/8");
   });
 
-  it("펀딩 진행 중이면 위시보다 펀딩 경로를 우선한다", () => {
-    expect(getRecommendedProductHref({ id: 3, wishId: 8, fundingId: 5 })).toBe("/funding/5");
+  it("펀딩 진행 중인 상품도 위시 상세 경로로 보낸다", () => {
+    expect(getRecommendedProductHref({ id: 3, wishId: 8, fundingId: 5 })).toBe("/wish/8");
   });
 });
