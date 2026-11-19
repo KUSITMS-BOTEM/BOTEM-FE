@@ -2,26 +2,119 @@ import { faker } from "@faker-js/faker";
 import { delay, http, HttpResponse } from "msw";
 
 import type { ClosedFundingListResponse } from "@/types/funding/closedFunding";
-import type { FundingRevealResponse } from "@/types/funding/funding";
+import type {
+  FundingManagementResponse,
+  FundingResultContributionResponse,
+  FundingResultResponse,
+} from "@/types/funding/funding";
 
-// 목록에 없는 펀딩 id는 보탠 사람이 없는 마감(참여자 0명 화면)으로 응답한다
-const MOCK_REVEALS: Record<number, FundingRevealResponse> = {
+const toContributions = (names: string[]): FundingResultContributionResponse[] =>
+  names.map((name, index) => ({
+    contributionId: index + 1,
+    name,
+    profileImageUrl: null,
+    status: "CONFIRMED",
+    participatedAt: "2026-11-10T14:20:00",
+    hasMessage: true,
+    hasPhoto: false,
+    hasVoice: false,
+    thankCardSent: false,
+  }));
+
+const MOCK_PRODUCT = {
+  productName: "소니 WH-1000XM5",
+  productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
+  targetAmount: 364000,
+  pendingContributionCount: 0,
+  pendingCleanupRequired: false,
+  resultOpenedAt: null,
+};
+
+// 12는 미달, 13은 달성. 목록에 없는 펀딩 id는 보탠 사람이 없는 마감(참여자 0명 화면)으로 응답한다
+const MOCK_RESULTS: Record<number, FundingResultResponse> = {
   12: {
-    contributorNames: ["하린이", "도윤이", "서준이", "지아", "민서"],
-    totalAmount: 215000,
-    goalAchieved: false,
+    ...MOCK_PRODUCT,
+    fundingId: 12,
+    confirmedAmount: 215000,
+    achievementPercentage: 59,
+    targetReached: false,
+    participantCount: 5,
+    messageCount: 5,
+    contributions: toContributions(["하린이", "도윤이", "서준이", "지아", "민서"]),
   },
   13: {
-    contributorNames: ["지민", "서연", "도윤", "하은", "민준", "수아", "예준", "지우"],
-    totalAmount: 429000,
-    goalAchieved: true,
+    ...MOCK_PRODUCT,
+    fundingId: 13,
+    confirmedAmount: 429000,
+    achievementPercentage: 117,
+    targetReached: true,
+    participantCount: 8,
+    messageCount: 8,
+    contributions: toContributions([
+      "지민",
+      "서연",
+      "도윤",
+      "하은",
+      "민준",
+      "수아",
+      "예준",
+      "지우",
+    ]),
   },
 };
 
-const EMPTY_REVEAL: FundingRevealResponse = {
-  contributorNames: [],
-  totalAmount: 0,
-  goalAchieved: false,
+const getMockResult = (fundingId: number): FundingResultResponse =>
+  MOCK_RESULTS[fundingId] ?? {
+    ...MOCK_PRODUCT,
+    fundingId,
+    confirmedAmount: 0,
+    achievementPercentage: 0,
+    targetReached: false,
+    participantCount: 0,
+    messageCount: 0,
+    contributions: [],
+  };
+
+// 결과 화면이 쓰는 상품·마감일·연장 가능 여부를 위해 결과 mock과 같은 펀딩으로 맞춘다
+const getMockManagement = (fundingId: number): FundingManagementResponse => {
+  const result = getMockResult(fundingId);
+  return {
+    fundingId,
+    type: "BIRTHDAY",
+    title: null,
+    story: "올해 생일에는 오래 사용한 헤드폰을 바꾸고 싶어요.",
+    promise: null,
+    product: {
+      name: result.productName,
+      imageUrl: result.productImageUrl,
+      price: result.targetAmount,
+      url: "https://www.coupang.com/vp/products/7334036476",
+    },
+    productChanged: false,
+    productChangedAt: null,
+    targetAmount: result.targetAmount,
+    deadline: "2026-11-13T23:59:59.999999",
+    revealAt: null,
+    remainingDays: null,
+    confirmedPercentage: result.achievementPercentage,
+    pendingPercentage: 0,
+    pendingContributionCount: 0,
+    targetReached: result.targetReached,
+    extended: false,
+    earlyClosedAt: null,
+    giftPreparedAt: null,
+    participantCount: result.participantCount,
+    participants: [],
+    messageCount: result.messageCount,
+    managementState: result.participantCount === 0 ? "NO_PARTICIPANTS" : "CLOSED",
+    actions: {
+      canCloseEarly: false,
+      // 생일 펀딩이 마감 후 목표에 못 미쳤고 연장한 적이 없을 때만 연장할 수 있다
+      canExtend: !result.targetReached,
+      canChangeProduct: false,
+      canReissueShareCard: false,
+    },
+  };
 };
 
 const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
@@ -67,9 +160,22 @@ export const fundingHandlers = [
     await delay(300);
     return HttpResponse.json({ success: true, data: MOCK_CLOSED_FUNDINGS, error: null });
   }),
-  http.get("*/api/fundings/:fundingId/reveal", async ({ params }) => {
+  http.get("*/api/fundings/:fundingId/result", async ({ params }) => {
     await delay(300);
-    const data = MOCK_REVEALS[Number(params.fundingId)] ?? EMPTY_REVEAL;
+    const data = getMockResult(Number(params.fundingId));
+    return HttpResponse.json({ success: true, data, error: null });
+  }),
+  http.get("*/api/fundings/:fundingId/management", async ({ params }) => {
+    await delay(300);
+    const data = getMockManagement(Number(params.fundingId));
+    return HttpResponse.json({ success: true, data, error: null });
+  }),
+  http.post("*/api/fundings/:fundingId/result/open", async ({ params }) => {
+    await delay(300);
+    const data = {
+      ...getMockResult(Number(params.fundingId)),
+      resultOpenedAt: "2026-11-15T00:00:00",
+    };
     return HttpResponse.json({ success: true, data, error: null });
   }),
   // 확인 시트의 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다
