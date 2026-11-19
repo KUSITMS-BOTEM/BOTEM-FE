@@ -9,7 +9,6 @@ import {
 const deposit = (id: number, depositedAt: string): DepositItem => ({
   id,
   senderName: `보낸이${id}`,
-  amount: 45000,
   depositedAt,
 });
 

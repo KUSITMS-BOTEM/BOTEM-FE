@@ -1,7 +1,8 @@
 import { clientApi } from "@/apis/client";
 import type {
+  ConfirmAllContributionsResponse,
+  ContributionDecisionResponse,
   PendingContributionListResponse,
-  UpdateContributionStatusRequest,
 } from "@/types/contribution/contribution";
 
 export const contributionService = {
@@ -9,6 +10,16 @@ export const contributionService = {
     clientApi.get<PendingContributionListResponse>(
       `/api/fundings/${fundingId}/contributions/pending`,
     ),
-  updateContributionStatus: (fundingId: number, body: UpdateContributionStatusRequest) =>
-    clientApi.patch<null>(`/api/fundings/${fundingId}/contributions/status`, body),
+  confirmContribution: (fundingId: number, contributionId: number) =>
+    clientApi.post<ContributionDecisionResponse>(
+      `/api/fundings/${fundingId}/contributions/${contributionId}/confirm`,
+    ),
+  rejectContribution: (fundingId: number, contributionId: number) =>
+    clientApi.post<ContributionDecisionResponse>(
+      `/api/fundings/${fundingId}/contributions/${contributionId}/reject`,
+    ),
+  confirmAllContributions: (fundingId: number) =>
+    clientApi.post<ConfirmAllContributionsResponse>(
+      `/api/fundings/${fundingId}/contributions/confirm-all`,
+    ),
 };

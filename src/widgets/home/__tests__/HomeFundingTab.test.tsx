@@ -26,22 +26,9 @@ const push = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
 }));
-vi.mock("@/widgets/home/PendingContributionBottomSheet", () => ({
-  default: ({
-    open,
-    fundingId,
-    onAllConfirmed,
-  }: {
-    open: boolean;
-    fundingId: number | null;
-    onAllConfirmed: () => void;
-  }) =>
-    open ? (
-      <div role="dialog">
-        입금 확인 {fundingId}
-        <button onClick={onAllConfirmed}>모두 확인</button>
-      </div>
-    ) : null,
+vi.mock("@/widgets/funding/DepositConfirmSheet", () => ({
+  default: ({ open, fundingId }: { open: boolean; fundingId: number | null }) =>
+    open ? <div role="dialog">입금 확인 {fundingId}</div> : null,
 }));
 
 const fundingCard: HomeFundingCardResponse = {
@@ -354,20 +341,5 @@ describe("HomeFundingTab", () => {
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
-  it("입금 확인을 모두 마치면 입금 확인 시트가 닫히고 공개 시트는 열리지 않는다", async () => {
-    mockQueries({
-      data: fundingList([
-        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 2 },
-      ]),
-    });
-
-    renderTab();
-    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
-    await userEvent.click(screen.getByRole("button", { name: "모두 확인" }));
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.queryByText(/펀딩 공개/)).not.toBeInTheDocument();
   });
 });

@@ -7,15 +7,21 @@ import { fundingRevealQueryOptions } from "@/hooks/queries/funding/useFundingRev
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useHomeNoFundingQuery } from "@/hooks/queries/home/useHomeNoFundingQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
+import type { BottomSheetEnterTransition } from "@/components/BottomSheet";
 import { toFundingCardData } from "@/utils/home/toFundingCardData";
 import { getDisplayName } from "@/utils/user/getDisplayName";
 import HomeEmptyView from "@/widgets/home/HomeEmptyView";
 import HomeFundingView from "@/widgets/home/HomeFundingView";
 import HomeLoadError from "@/widgets/home/HomeLoadError";
 import HomeWishRecommendation from "@/widgets/home/HomeWishRecommendation";
-import PendingContributionBottomSheet from "@/widgets/home/PendingContributionBottomSheet";
+import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
 
 const REVEAL_PREFETCH_TIMEOUT_MS = 1500;
+// Pending 카드 탭 전환 스펙: 카드 눌림(0–0.32s)이 먼저 보이도록 딤(0.25–0.6s)·시트(0.28–0.85s, 오버슈트 없음) 진입을 늦춘다
+const PENDING_SHEET_ENTER: BottomSheetEnterTransition = {
+  dim: { delay: 0.25, duration: 0.35, ease: [0.4, 0, 0.2, 1] },
+  sheet: { delay: 0.28, duration: 0.57, ease: [0.32, 0.72, 0, 1] },
+};
 
 type HomeFundingTabProps = {
   onAddWish: () => void;
@@ -75,11 +81,11 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding, banner }: Hom
     return (
       <>
         <HomeFundingView cards={cards} banner={banner} />
-        <PendingContributionBottomSheet
+        <DepositConfirmSheet
           open={isSheetOpen}
           fundingId={sheetFundingId}
+          enterTransition={PENDING_SHEET_ENTER}
           onClose={() => setIsSheetOpen(false)}
-          onAllConfirmed={() => setIsSheetOpen(false)}
         />
       </>
     );
