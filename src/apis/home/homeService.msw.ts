@@ -47,7 +47,7 @@ const MOCK_FUNDING_CARDS = [
     remainingDays: null,
     confirmedPercentage: 80,
     pendingPercentage: 20,
-    pendingContributionCount: 0,
+    pendingContributionCount: 2,
   },
   {
     fundingId: 13,
