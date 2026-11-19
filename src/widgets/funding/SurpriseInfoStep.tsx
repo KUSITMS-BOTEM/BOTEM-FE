@@ -14,6 +14,7 @@ import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
 import { addDays } from "@/utils/funding/addDays";
 import { formatDeadline, getTodayDate } from "@/utils/funding/formatDeadline";
+import { getBirthdayReveal } from "@/utils/funding/getBirthdayReveal";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
 
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
@@ -80,13 +81,11 @@ export default function SurpriseInfoStep({
   const today = getTodayDate();
   // 백엔드는 공개 시각을 마감일 다음 날 안에서만 허용하고 공개 시간이 자정이라 고를 수 있는 날짜는 하루뿐이다
   const allowedRevealDate = deadline ? addDays(deadline, 1) : undefined;
-  const birthdayRevealDate =
-    recipientBirthday && recipientBirthdayDday != null
-      ? addDays(today, recipientBirthdayDday)
-      : undefined;
-  // 생일 전날이 오늘보다 앞이면(생일이 오늘이면) 마감일을 만들 수 없다
-  const canUseBirthday =
-    birthdayRevealDate !== undefined && addDays(birthdayRevealDate, -1) >= today;
+  const { revealDate: birthdayRevealDate, canUse: canUseBirthday } = getBirthdayReveal(
+    today,
+    recipientBirthday,
+    recipientBirthdayDday,
+  );
 
   const revealDeadline = () => {
     if (Number(targetAmount) > 0) setShowDeadline(true);
@@ -106,7 +105,13 @@ export default function SurpriseInfoStep({
     targetAmount !== initialValues.targetAmount ||
     deadline !== initialValues.deadline ||
     revealDate !== initialValues.revealDate;
-  const canSubmit = Number(targetAmount) > 0 && deadline !== "" && revealDate !== "" && isChanged;
+  // 날짜 선택 뒤 자정이 지나 마감일이 과거가 될 수 있어 제출 가능 여부도 오늘 기준으로 다시 본다
+  const canSubmit =
+    Number(targetAmount) > 0 &&
+    deadline !== "" &&
+    deadline >= today &&
+    revealDate !== "" &&
+    isChanged;
   const showCta = revealDate !== "";
 
   // 수정 모드에서는 시트가 열리자마자 키보드가 올라오지 않게 자동 포커스를 하지 않는다
@@ -231,7 +236,9 @@ export default function SurpriseInfoStep({
               color="brand"
               size="xlarge"
               disabled={!canSubmit}
-              onClick={() => onNext({ targetAmount, deadline, revealDate })}
+              onClick={() => {
+                if (deadline >= getTodayDate()) onNext({ targetAmount, deadline, revealDate });
+              }}
               className="flex-1">
               {submitLabel}
             </Button>

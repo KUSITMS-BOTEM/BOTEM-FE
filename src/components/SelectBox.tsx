@@ -79,6 +79,12 @@ export default function SelectBox({
   const hasDatePicker = variant !== "select";
   // 화면엔 월·일만 보여주지만, 같은 세션에서 다시 열었을 때 이전에 고른 연도까지 캘린더에 남아있도록 내부적으로만 기억한다. null이면 아직 고르지 않은 상태
   const [pickedDate, setPickedDate] = useState<string | null>(null);
+  // 부모가 사용자가 고른 것과 다른 날짜로 바꾸면(예: 생일 칩) 기억해 둔 선택값을 버리고 부모 값을 따른다
+  const [prevDateValue, setPrevDateValue] = useState(dateValue);
+  if (dateValue !== prevDateValue) {
+    setPrevDateValue(dateValue);
+    if (pickedDate !== null && toPickerDate(variant, dateValue) !== pickedDate) setPickedDate(null);
+  }
   const currentDate = pickedDate ?? toPickerDate(variant, dateValue);
 
   const isCoarsePointer = useIsCoarsePointer();
