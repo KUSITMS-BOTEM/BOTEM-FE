@@ -2,9 +2,9 @@ export type RecommendedProductCategory =
   | "EARPHONE_HEADPHONE"
   | "SMART_DEVICE_GAME"
   | "HAIR_BEAUTY_DEVICE"
-  | "SKINCARE_MAKEUP"
+  | "SKINCARE"
   | "PERFUME"
-  | "TUMBLER_LIVING";
+  | "LIVING_APPLIANCE";
 
 export type RecommendedProductStatus = "ON_SALE" | "DISCONTINUED";
 

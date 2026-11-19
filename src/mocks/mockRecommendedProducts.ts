@@ -43,7 +43,7 @@ export const MOCK_RECOMMENDED_PRODUCTS = [
     imageUrl: faker.image.urlPicsumPhotos({ width: 400, height: 400, blur: 0 }),
     price: 59000,
     sellerName: "스탠리 공식 스토어",
-    category: "TUMBLER_LIVING",
+    category: "LIVING_APPLIANCE",
     status: "ON_SALE",
   },
   {
@@ -52,7 +52,7 @@ export const MOCK_RECOMMENDED_PRODUCTS = [
     imageUrl: faker.image.urlPicsumPhotos({ width: 400, height: 400, blur: 0 }),
     price: 45000,
     sellerName: "라네즈 공식 스토어",
-    category: "SKINCARE_MAKEUP",
+    category: "SKINCARE",
     status: "ON_SALE",
   },
 ];
