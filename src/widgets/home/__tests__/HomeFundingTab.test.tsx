@@ -356,6 +356,29 @@ describe("HomeFundingTab", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("마감 전 100% 달성 카드(earlyComplete)를 누르면 상세가 아니라 공개 화면으로 이동한다", async () => {
+    mockQueries({
+      data: fundingList([
+        {
+          ...fundingCard,
+          fundingId: 42,
+          cardType: "IN_PROGRESS",
+          fundingType: "BIRTHDAY",
+          confirmedPercentage: 100,
+          pendingPercentage: 0,
+          pendingContributionCount: 0,
+          participantCount: 3,
+        },
+      ]),
+    });
+
+    renderTab();
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
+    expect(push).not.toHaveBeenCalledWith("/funding/42");
+  });
+
   it("입금 확인을 모두 마치면 입금 확인 시트가 닫히고 공개 시트는 열리지 않는다", async () => {
     mockQueries({
       data: fundingList([

@@ -10,11 +10,12 @@ import ProfileBox, { type ProfileBoxItem } from "@/components/ProfileBox";
 import ProgressBar from "@/widgets/home/ProgressBar";
 import IconLock from "@/assets/icons/icon-lock.svg?react";
 
-export type FundingCardType = "default" | "notification" | "complete" | "open";
+export type FundingCardType = "default" | "notification" | "complete" | "earlyComplete" | "open";
 
 const FX_LABEL: Partial<Record<FundingCardType, (pendingCount: number) => string>> = {
   notification: count => `확인 대기 ${count}건을 확인하면 열어볼 수 있어요`,
   complete: () => "다 모였어요. 팡! 열어볼까요?",
+  earlyComplete: () => "마감일이 아직 안지났지만 지금 펑! 열까요?",
   open: () => "기간이 만료되었어요.",
 };
 
@@ -63,7 +64,7 @@ export default function FundingCard({
   const handleClick = () => {
     if (!fxLabel || !fxAnimate) return onClick?.();
     if (fxPhase !== "idle") return;
-    if (type === "complete") return setFxPhase("burst");
+    if (type === "complete" || type === "earlyComplete") return setFxPhase("burst");
     if (type === "open") return setFxPhase("press");
     setFxPhase("press");
     onClick?.();
