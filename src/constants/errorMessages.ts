@@ -20,6 +20,9 @@ export const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   // --- 공통 ---
   COMMON_001: { message: "입력값을 다시 확인해주세요.", action: "dialog" }, // Toast 전환 검토 대상
 
+  // --- 펀딩 ---
+  FUNDING_019: { message: "진행 중인 펀딩은 최대 5개까지 열 수 있어요.", action: "dialog" },
+
   // --- 홈 ---
   HOME_001: { message: "홈에 표시할 펀딩이 존재합니다.", action: "none" }, // 에러가 아닌 정상 분기 신호, useHomeNoFundingQuery에서 로컬 처리
 

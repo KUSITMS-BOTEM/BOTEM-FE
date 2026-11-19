@@ -30,6 +30,7 @@ type ProductDetailViewProps = {
   ctaLabel: string;
   onCtaClick?: () => void;
   ctaPending?: boolean;
+  ctaDisabled?: boolean;
   ctaColor?: "brand" | "neutral";
   statusBadge?: string;
   ctaHelperText?: string;
@@ -47,6 +48,7 @@ export default function ProductDetailView({
   ctaLabel,
   onCtaClick,
   ctaPending = false,
+  ctaDisabled = false,
   ctaColor = "brand",
   statusBadge,
   ctaHelperText,
@@ -151,6 +153,7 @@ export default function ProductDetailView({
           color={ctaColor}
           size="xlarge"
           states={ctaPending ? "loading" : "default"}
+          disabled={ctaDisabled}
           onClick={onCtaClick}>
           {ctaLabel}
         </Button>

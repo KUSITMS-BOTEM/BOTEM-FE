@@ -153,6 +153,26 @@ describe("BottomSheet", () => {
     expect(handleLeft).not.toHaveBeenCalled();
   });
 
+  it("rightLoading이면 오른쪽 버튼이 로딩 상태가 되어 클릭해도 onRightClick이 호출되지 않는다", async () => {
+    const handleRight = vi.fn();
+    render(
+      <BottomSheet
+        {...baseProps}
+        open
+        height="auto"
+        buttons={{ rightLabel: "확인", rightLoading: true, onRightClick: handleRight }}>
+        본문 내용
+      </BottomSheet>,
+    );
+    const button = screen.getByRole("button", { name: "확인" });
+
+    await userEvent.setup().click(button);
+
+    expect(button).toHaveAttribute("aria-busy", "true");
+    expect(button).toBeDisabled();
+    expect(handleRight).not.toHaveBeenCalled();
+  });
+
   it("buttons를 넘기지 않으면 버튼 영역이 렌더되지 않는다", () => {
     render(
       <BottomSheet open height="auto" title="타이틀" onClose={vi.fn()}>

@@ -11,6 +11,7 @@ import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import ProductDetailFallback from "@/components/ProductDetailFallback";
 import ToastMessage from "@/components/ToastMessage";
 import { useWishToast } from "@/hooks/useWishToast";
+import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
 import ProductDetailView from "@/components/ProductDetailView";
 import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
 import { isValidUrl } from "@/utils/isValidUrl";
@@ -22,6 +23,7 @@ export default function WishDetailContainer() {
   const { wishId } = useParams<{ wishId: string }>();
   const { data: wish, error, isLoading, refetch } = useWishQuery(wishId);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [fundingSheetOpen, setFundingSheetOpen] = useState(false);
   const { mutate: deleteWish, isPending: isDeletePending } = useDeleteWishMutation(wishId);
   const errorAction = resolveWishErrorAction(error);
   const showAddedToast = useWishToast("added");
@@ -73,8 +75,20 @@ export default function WishDetailContainer() {
         onBack={() => router.back()}
         statusBadge={isFunding ? "펀딩 중" : undefined}
         ctaLabel={isFunding ? "해당 상품 펀딩 보러가기" : "이 상품으로 펀딩 열기"}
-        onCtaClick={isFunding ? () => router.push(`/funding/${fundingId}`) : undefined}
+        onCtaClick={
+          isFunding ? () => router.push(`/funding/${fundingId}`) : () => setFundingSheetOpen(true)
+        }
+        // 개설할 수 없는 상태(DISCONTINUED, fundingId 없는 FUNDING)는 입력을 마친 뒤에야 실패하지 않도록 진입을 막는다
+        ctaDisabled={!isFunding && wish.status !== "AVAILABLE"}
         ctaHelperText={isFunding ? "펀딩 진행중인 위시 상품은 삭제할 수 없어요" : undefined}
+      />
+      <FundingOpenSheet
+        open={fundingSheetOpen}
+        initialWish={{
+          ...wish,
+          productImageUrl: isValidUrl(wish.productImageUrl) ? wish.productImageUrl : undefined,
+        }}
+        onClose={() => setFundingSheetOpen(false)}
       />
       <Dialog
         open={isDeleteDialogOpen}

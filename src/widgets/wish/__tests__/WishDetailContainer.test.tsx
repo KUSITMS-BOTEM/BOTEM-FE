@@ -10,6 +10,9 @@ import { ApiError } from "@/types/api";
 import type { WishResponse } from "@/types/wish/wish";
 import WishDetailContainer from "@/widgets/wish/WishDetailContainer";
 
+vi.mock("@/hooks/mutations/funding/useCreateFundingMutation", () => ({
+  useCreateFundingMutation: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 vi.mock("@/hooks/queries/wish/useWishQuery", () => ({ useWishQuery: vi.fn() }));
 vi.mock("@/hooks/mutations/wish/useDeleteWishMutation", () => ({
   useDeleteWishMutation: vi.fn(),
@@ -78,6 +81,18 @@ describe("WishDetailContainer", () => {
     expect(screen.getByRole("button", { name: "이 상품으로 펀딩 열기" })).toBeInTheDocument();
   });
 
+  it("'이 상품으로 펀딩 열기'를 누르면 펀딩 정보 시트가 열린다", async () => {
+    const user = userEvent.setup();
+    mockWishQuery({ data: mockWish });
+
+    render(<WishDetailContainer />);
+    expect(screen.queryByRole("dialog", { name: "펀딩 정보" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "이 상품으로 펀딩 열기" }));
+
+    expect(screen.getByRole("dialog", { name: "펀딩 정보" })).toHaveAttribute("open");
+  });
+
   it("판매처를 누르면 상품 링크를 새 탭으로 연다", async () => {
     const user = userEvent.setup();
     const open = vi.spyOn(window, "open").mockImplementation(() => null);
@@ -127,7 +142,9 @@ describe("WishDetailContainer", () => {
     mockWishQuery({ data: mockWish });
 
     render(<WishDetailContainer />);
-    expect(screen.getByRole("dialog", { hidden: true })).not.toHaveAttribute("open");
+    expect(screen.getByText("내 위시에서 제거할까요?").closest("dialog")).not.toHaveAttribute(
+      "open",
+    );
 
     await user.click(screen.getByRole("button", { name: "삭제" }));
     expect(screen.getByRole("dialog", { name: "내 위시에서 제거할까요?" })).toHaveAttribute("open");
@@ -144,7 +161,9 @@ describe("WishDetailContainer", () => {
     await user.click(screen.getByRole("button", { name: "삭제" }));
     await user.click(screen.getByRole("button", { name: "아니오" }));
 
-    expect(screen.getByRole("dialog", { hidden: true })).not.toHaveAttribute("open");
+    expect(screen.getByText("내 위시에서 제거할까요?").closest("dialog")).not.toHaveAttribute(
+      "open",
+    );
     expect(deleteWish).not.toHaveBeenCalled();
   });
 

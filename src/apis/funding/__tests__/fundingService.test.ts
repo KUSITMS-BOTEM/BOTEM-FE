@@ -1,10 +1,11 @@
 import { clientApi } from "@/apis/client";
 import { fundingService } from "@/apis/funding/fundingService";
-import type { FundingRevealResponse } from "@/types/funding/funding";
+import type { CreateFundingRequest, FundingRevealResponse } from "@/types/funding/funding";
 
 vi.mock("@/apis/client", () => ({
   clientApi: {
     get: vi.fn(),
+    post: vi.fn(),
   },
 }));
 
@@ -31,5 +32,31 @@ describe("fundingService.getReveal", () => {
     vi.mocked(clientApi.get).mockRejectedValue(error);
 
     await expect(fundingService.getReveal(12)).rejects.toBe(error);
+  });
+});
+
+describe("fundingService.postFunding", () => {
+  const body: CreateFundingRequest = {
+    wishId: 1,
+    bank: "TOSS_BANK",
+    accountNumber: "100159014821",
+    targetAmount: 350000,
+    deadline: "2026-11-30",
+    story: "생일 선물",
+  };
+
+  it("clientApi.post를 /api/fundings로 body와 함께 호출하고 반환값을 그대로 돌려준다", async () => {
+    const created = { fundingId: 7, type: "BIRTHDAY", status: "FUNDING", shareUrl: "https://x/7" };
+    vi.mocked(clientApi.post).mockResolvedValue(created);
+
+    await expect(fundingService.postFunding(body)).resolves.toEqual(created);
+    expect(clientApi.post).toHaveBeenCalledWith("/api/fundings", body);
+  });
+
+  it("clientApi.post가 실패하면 에러를 그대로 전파한다", async () => {
+    const error = new Error("펀딩 개설 실패");
+    vi.mocked(clientApi.post).mockRejectedValue(error);
+
+    await expect(fundingService.postFunding(body)).rejects.toBe(error);
   });
 });
