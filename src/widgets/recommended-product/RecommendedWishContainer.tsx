@@ -73,6 +73,7 @@ export default function RecommendedWishContainer() {
                 {recommendedProducts.map(product => (
                   <Link key={product.id} href={getRecommendedProductHref(product)}>
                     <WishCard
+                      type={product.fundingId != null ? "funding" : "default"}
                       productName={product.name}
                       price={product.price}
                       productImageUrl={product.imageUrl}

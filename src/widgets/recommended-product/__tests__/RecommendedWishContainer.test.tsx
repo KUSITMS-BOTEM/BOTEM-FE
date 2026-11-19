@@ -67,6 +67,17 @@ describe("RecommendedWishContainer", () => {
     expect(screen.getByRole("link", { name: /향수/ })).toHaveAttribute("href", "/wish/9");
   });
 
+  it("펀딩 진행 중인 상품에만 '펀딩 중' 뱃지를 보여준다", () => {
+    mockProductsQuery({
+      data: [mockProducts[0]!, { ...mockProducts[1]!, wishId: 9, fundingId: 4 }],
+    });
+
+    render(<RecommendedWishContainer />);
+
+    expect(screen.getAllByText("펀딩 중")).toHaveLength(1);
+    expect(screen.getByRole("link", { name: /향수/ })).toHaveTextContent("펀딩 중");
+  });
+
   it("각 추천 상품 카드는 해당 상품 상세 경로로 연결된다", () => {
     mockProductsQuery({ data: mockProducts });
 
