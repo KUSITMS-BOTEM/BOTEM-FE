@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test";
 
-import { EXISTING_USER_KAKAO_CODE } from "@/apis/auth/authService.msw";
+import { EXISTING_USER_KAKAO_CODE, NEW_USER_KAKAO_CODE } from "@/apis/auth/authService.msw";
 
 import { gotoKakaoCallback } from "./helpers";
 
 test.describe("카카오 로그인 온보딩", () => {
   test("신규 유저는 카카오 로그인 후 온보딩을 마치면 메인으로 이동한다", async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("button", { name: "카카오로 이용하기" }).click();
+    // 로그인 버튼의 목 응답은 기존 유저 code라, 신규 유저는 콜백에 직접 진입한다.
+    await gotoKakaoCallback(page, NEW_USER_KAKAO_CODE);
 
     await expect(page).toHaveURL("/auth/profile-check");
     await page.getByRole("button", { name: "다음으로" }).click();
