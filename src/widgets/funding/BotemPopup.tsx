@@ -152,7 +152,8 @@ export default function BotemPopup({
             }
             title={unconfirmedText.title}
             description={unconfirmedText.description}
-            onClick={hasUnconfirmed ? onUnconfirmedClick : undefined}
+            // 입금을 확인하는 쪽(개설자·주인)은 0건이어도 시트를 열어 확인 완료 상태를 볼 수 있다
+            onClick={hasUnconfirmed || isHost || isOwner ? onUnconfirmedClick : undefined}
           />
           {isOwner ? (
             <BotemPopupRow
