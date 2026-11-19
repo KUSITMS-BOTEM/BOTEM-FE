@@ -56,7 +56,10 @@ export default function FundingConfirmSheet({
           description="열고 나면 펀딩 정보를 바꿀 수 없어요."
         />
         <div className="flex w-full flex-col">
-          <ListHeader title="펀딩 정보" rightItem={{ label: "변경하기", onClick: onEditInfo }} />
+          <ListHeader
+            title="펀딩 정보"
+            rightItem={{ label: "변경하기", onClick: onEditInfo, disabled: submitting }}
+          />
           <List
             type="product"
             thumbnailSrc={wish.productImageUrl}
@@ -68,7 +71,10 @@ export default function FundingConfirmSheet({
         </div>
         <div aria-hidden className="bg-semantic-border-weak -mx-5 h-2.5" />
         <div className="flex w-full flex-col">
-          <ListHeader title="펀딩 계좌" rightItem={{ label: "변경하기", onClick: onEditAccount }} />
+          <ListHeader
+            title="펀딩 계좌"
+            rightItem={{ label: "변경하기", onClick: onEditAccount, disabled: submitting }}
+          />
           <List leading={bank?.logo} title={bank?.name ?? ""} description={account.accountNumber} />
         </div>
       </div>

@@ -78,6 +78,8 @@ export default function WishDetailContainer() {
         onCtaClick={
           isFunding ? () => router.push(`/funding/${fundingId}`) : () => setFundingSheetOpen(true)
         }
+        // 개설할 수 없는 상태(DISCONTINUED, fundingId 없는 FUNDING)는 입력을 마친 뒤에야 실패하지 않도록 진입을 막는다
+        ctaDisabled={!isFunding && wish.status !== "AVAILABLE"}
         ctaHelperText={isFunding ? "펀딩 진행중인 위시 상품은 삭제할 수 없어요" : undefined}
       />
       <FundingOpenSheet

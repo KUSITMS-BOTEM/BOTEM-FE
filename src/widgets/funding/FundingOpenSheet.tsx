@@ -9,6 +9,7 @@ import OpenSheet from "@/components/OpenSheet";
 import { useCreateFundingMutation } from "@/hooks/mutations/funding/useCreateFundingMutation";
 import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
+import { toCreateFundingRequest } from "@/utils/funding/toCreateFundingRequest";
 import FundingAccountStep, {
   type FundingAccountValues,
 } from "@/widgets/funding/FundingAccountStep";
@@ -77,6 +78,8 @@ export default function FundingOpenSheet({
     setEditing(null);
     setDraftInfo(null);
     setDraftAccount(null);
+    // 시트가 항상 마운트돼 있어, 성공 뒤에 풀지 않으면 다시 열었을 때 버튼이 잠긴 채 남는다
+    setSubmitting(false);
     onClose();
   };
 
@@ -115,15 +118,7 @@ export default function FundingOpenSheet({
     if (recipientName) return setCompleteOpen(true);
     setSubmitting(true);
     try {
-      await createFunding({
-        wishId: selectedWish.id,
-        bank: confirmAccount.bank,
-        accountNumber: confirmAccount.accountNumber,
-        targetAmount: Number(confirmInfo.targetAmount),
-        deadline: confirmInfo.deadline,
-        story: confirmInfo.story,
-        promise: confirmInfo.pledge || undefined,
-      });
+      await createFunding(toCreateFundingRequest(selectedWish.id, confirmInfo, confirmAccount));
     } catch {
       // 에러 안내는 전역 MutationCache onError가 처리하므로 여기서는 재시도할 수 있게 잠금만 푼다
       setSubmitting(false);
