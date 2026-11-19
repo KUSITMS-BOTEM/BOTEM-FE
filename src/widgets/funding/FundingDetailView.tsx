@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 
 import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
+import PageExitMotion from "@/components/effects/PageExitMotion";
 import ProfileBox from "@/components/ProfileBox";
 import Tooltip from "@/components/Tooltip";
+import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import type { DepositItem } from "@/utils/funding/depositConfirm";
 import { getClosedLabel } from "@/utils/funding/fundingProgress";
@@ -30,8 +32,8 @@ import ProfilePink from "@/assets/icons/multicolor/profile-pink.svg?react";
 
 type FundingDetailViewProps = {
   fundingId: string;
-  // guest: 비회원 공유 링크 / surprise: 친구 몰래 연 개설자 화면
-  variant?: "guest" | "surprise";
+  // guest: 비회원 공유 링크 / surprise: 친구 몰래 연 개설자 화면 / owner: 내 펀딩을 연 주인 화면
+  variant?: "guest" | "surprise" | "owner";
   // 있으면 헤더 왼쪽에 뒤로가기 버튼을 보여준다
   onBack?: () => void;
 };
@@ -57,9 +59,11 @@ const MOCK_FUNDING = {
     { id: 2, senderName: "도윤이", amount: 30000, depositedAt: "2026-11-16T09:05:00" },
     { id: 3, senderName: "서준이", amount: 10000, depositedAt: "2026-11-16T08:00:00" },
   ] satisfies DepositItem[],
+  // TODO(API): 펀딩 주인이 받은 메세지 수·친구별 감사카드 발송 여부를 서버 값으로 교체한다
+  messageCount: 8,
   friends: [
-    { id: 1, name: "민수", contributedAt: "2026-11-10T09:00:00" },
-    { id: 2, name: "서연", contributedAt: "2026-11-12T18:30:00" },
+    { id: 1, name: "민수", contributedAt: "2026-11-10T09:00:00", thankCardSent: false },
+    { id: 2, name: "서연", contributedAt: "2026-11-12T18:30:00", thankCardSent: true },
   ],
   account: {
     bank: "TOSS_BANK",
@@ -77,9 +81,13 @@ export default function FundingDetailView({
   onBack,
 }: FundingDetailViewProps) {
   const router = useRouter();
+  const { pageExit, exitPage } = usePageExit();
   const funding = MOCK_FUNDING;
   const unconfirmedCount = funding.deposits.length;
   const isSurprise = variant === "surprise";
+  const isOwner = variant === "owner";
+  // 받은 입금을 확인해야 하는 쪽(서프라이즈 개설자·펀딩 주인)
+  const confirmsDeposits = isSurprise || isOwner;
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isContributeOpen, setIsContributeOpen] = useState(false);
@@ -120,148 +128,161 @@ export default function FundingDetailView({
   }
 
   return (
-    <main className="flex min-h-dvh flex-col">
-      <Header
-        title=""
-        leftItem={onBack && { icon: <IconLeft />, ariaLabel: "뒤로가기", onClick: onBack }}
-        rightItems={[
-          // TODO: 공유 버튼 클릭 시 동작 구현 필요 (예: 카카오톡/링크 공유)
-          { icon: <IconShare />, ariaLabel: "공유", onClick: noop },
-          // TODO: 더보기 버튼 클릭 시 동작 구현 필요 (예: 메뉴/바텀시트 노출)
-          { icon: <IconDotVertical />, ariaLabel: "더보기", onClick: noop },
-        ]}
-      />
-      <div className="flex flex-col gap-4 px-5 pb-[calc(var(--padding-large)+env(safe-area-inset-bottom))]">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2.5 py-1">
-            <ProfilePink aria-hidden className="size-6 shrink-0" />
-            <h1 className="text-semantic-text-strong min-w-0 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-title-a2-z-large)]">
-              {funding.title}
-            </h1>
-            {isSurprise && (
-              <IconLock role="img" aria-label="서프라이즈 펀딩" className="size-6 shrink-0" />
-            )}
-          </div>
-          <FundingMessage story={funding.story} pledge={funding.pledge} />
-        </div>
-        <FundingProgressCard
-          fundingId={fundingId}
-          productImageUrl={funding.productImageUrl}
-          productName={funding.productName}
-          deadline={funding.deadline}
-          currentAmount={funding.currentAmount}
-          targetAmount={funding.targetAmount}
-          locked={isSurprise}
+    <PageExitMotion exit={pageExit}>
+      <main className="flex min-h-dvh flex-col">
+        <Header
+          title=""
+          leftItem={
+            onBack && {
+              icon: <IconLeft />,
+              ariaLabel: "뒤로가기",
+              onClick: () => exitPage("slide", onBack),
+            }
+          }
+          rightItems={[
+            // TODO: 공유 버튼 클릭 시 동작 구현 필요 (예: 카카오톡/링크 공유)
+            { icon: <IconShare />, ariaLabel: "공유", onClick: noop },
+            // TODO: 더보기 버튼 클릭 시 동작 구현 필요 (예: 메뉴/바텀시트 노출)
+            { icon: <IconDotVertical />, ariaLabel: "더보기", onClick: noop },
+          ]}
         />
-        <button
-          type="button"
-          onClick={() => setIsPopupOpen(true)}
-          className="flex cursor-pointer items-center gap-2 self-end">
-          <Tooltip>
-            {isSurprise
-              ? `확인 대기 ${unconfirmedCount}건이 있어요`
-              : closedLabel === "기간 마감"
-                ? "축하 메시지만 보낼 수 있어요!"
-                : isClosed
-                  ? "마감일까지 메시지로 보탤까요?"
-                  : `나도 ${funding.hostName}님께 보태볼까요?`}
-          </Tooltip>
-          <ProfileBox
-            profiles={funding.participants.map(color => ({ color }))}
-            extraCount={funding.extraParticipantCount}
-            notification={isSurprise && unconfirmedCount > 0}
-            className="bg-semantic-fill-default shadow-[0_4px_8px_0_var(--color-semantic-shadow-weak)]"
+        <div className="flex flex-col gap-4 px-5 pb-[calc(var(--padding-large)+env(safe-area-inset-bottom))]">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2.5 py-1">
+              <ProfilePink aria-hidden className="size-6 shrink-0" />
+              <h1 className="text-semantic-text-strong min-w-0 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-title-a2-z-large)]">
+                {funding.title}
+              </h1>
+              {isSurprise && (
+                <IconLock role="img" aria-label="서프라이즈 펀딩" className="size-6 shrink-0" />
+              )}
+            </div>
+            <FundingMessage story={funding.story} pledge={funding.pledge} />
+          </div>
+          <FundingProgressCard
+            fundingId={fundingId}
+            productImageUrl={funding.productImageUrl}
+            productName={funding.productName}
+            deadline={funding.deadline}
+            currentAmount={funding.currentAmount}
+            targetAmount={funding.targetAmount}
+            locked={isSurprise}
           />
-        </button>
-      </div>
-      {/* TODO: 팝업 내부 동작(미확인·수정·메세지·보태기)은 보탬 폼 디자인이 정해지면 연결한다 */}
-      <BotemPopup
-        open={isPopupOpen}
-        unconfirmedCount={unconfirmedCount}
-        friends={funding.friends}
-        ownerName={funding.hostName}
-        isClosed={isClosed}
-        isHost={isSurprise}
-        onClose={closePopup}
-        // 팝업은 닫지 않는다 — 나중에 showModal된 다이얼로그가 top layer에서 위에 쌓인다
-        onUnconfirmedClick={isSurprise ? () => setIsDepositOpen(true) : noop}
-        onEditClick={() => {
-          closePopup();
-          setIsEditOpen(true);
-        }}
-        onMessageClick={() => {
-          closePopup();
-          reset();
-          setIsMessageOnly(true);
-          setIsLetterOpen(true);
-        }}
-        onContributeClick={() => {
-          closePopup();
-          // 뒤로가기 등으로 플로우를 중간에 떠나 남은 값이 있으면 비우고 시작한다
-          reset();
-          setIsMessageOnly(false);
-          setIsContributeOpen(true);
-        }}
-      />
-      {/* TODO(API): 실제 API 연결 시 입금 처리 결과를 서버에 반영하고, 팝업의 확인 대기 건수(unconfirmedCount)와 프로필 알림 점도 그 값으로 갱신한다. 지금은 funding.deposits.length로 고정이라 처리 후에도 줄지 않는다 */}
-      <DepositConfirmSheet
-        open={isDepositOpen}
-        deposits={funding.deposits}
-        onClose={() => setIsDepositOpen(false)}
-      />
-      <BotemEditFlow
-        open={isEditOpen}
-        recipientName={funding.hostName}
-        onClose={() => setIsEditOpen(false)}
-      />
-      {/* 앞 단계 시트는 열어 둔 채 위에 다음 시트를 띄워(금액 → 편지 → 비밀번호), 이전을 누르면 직전 시트로 돌아온다 */}
-      <FundingContributeSheet
-        key={`contribute-${flowKey}`}
-        open={isContributeOpen}
-        hostName={funding.hostName}
-        maxAmount={remainingAmount}
-        onClose={() => setIsContributeOpen(false)}
-        onExit={requestExit}
-        onNext={amount => {
-          setAmount(amount);
-          setIsLetterOpen(true);
-        }}
-      />
-      {/* TODO: 쿠키가 httpOnly라 로그인 여부를 클라이언트에서 못 읽어 비회원(false)으로 둔다 */}
-      <LetterWriteSheet
-        key={`letter-${flowKey}`}
-        open={isLetterOpen}
-        recipientName={funding.hostName}
-        isLoggedIn={false}
-        onClose={() => setIsLetterOpen(false)}
-        onExit={requestExit}
-        onNext={values => {
-          setLetter(values);
-          setIsPasswordOpen(true);
-        }}
-      />
-      {/* TODO(API): 보탬 제출 API가 정해지면 여기서 스토어의 amount·letter·password를 보내고, 성공 뒤에 이동하도록 바꾼다. replace라 뒤로가기로 보태기 플로우에 돌아오지 않는다 */}
-      <FundingPasswordSheet
-        open={isPasswordOpen}
-        hostName={funding.hostName}
-        amount={contributeAmount}
-        account={funding.account}
-        messageOnly={isMessageOnly}
-        onClose={requestExit}
-        onPrev={() => setIsPasswordOpen(false)}
-        onComplete={password => {
-          setPassword(password);
-          router.replace(`/share/${fundingId}/complete`);
-        }}
-      />
-      <Dialog
-        kind="confirm"
-        open={isExitOpen}
-        title={`${funding.hostName}에게\n보태기를 그만둘까요?`}
-        confirmColor="neutral"
-        onCancel={() => setIsExitOpen(false)}
-        onConfirm={handleExitConfirm}
-      />
-    </main>
+          <button
+            type="button"
+            onClick={() => setIsPopupOpen(true)}
+            className="flex cursor-pointer items-center gap-2 self-end">
+            {/* Figma FUND-PG-008: 펀딩 주인 화면은 툴팁 없이 프로필 묶음만 보여준다 */}
+            {!isOwner && (
+              <Tooltip>
+                {isSurprise
+                  ? `확인 대기 ${unconfirmedCount}건이 있어요`
+                  : closedLabel === "기간 마감"
+                    ? "축하 메시지만 보낼 수 있어요!"
+                    : isClosed
+                      ? "마감일까지 메시지로 보탤까요?"
+                      : `나도 ${funding.hostName}님께 보태볼까요?`}
+              </Tooltip>
+            )}
+            <ProfileBox
+              profiles={funding.participants.map(color => ({ color }))}
+              extraCount={funding.extraParticipantCount}
+              notification={confirmsDeposits && unconfirmedCount > 0}
+              className="bg-semantic-fill-default shadow-[0_4px_8px_0_var(--color-semantic-shadow-weak)]"
+            />
+          </button>
+        </div>
+        {/* TODO: 팝업 내부 동작(미확인·수정·메세지·보태기)은 보탬 폼 디자인이 정해지면 연결한다 */}
+        <BotemPopup
+          open={isPopupOpen}
+          unconfirmedCount={unconfirmedCount}
+          friends={funding.friends}
+          ownerName={funding.hostName}
+          isClosed={isClosed}
+          isHost={isSurprise}
+          isOwner={isOwner}
+          messageCount={funding.messageCount}
+          onClose={closePopup}
+          // 팝업은 닫지 않는다 — 나중에 showModal된 다이얼로그가 top layer에서 위에 쌓인다
+          onUnconfirmedClick={confirmsDeposits ? () => setIsDepositOpen(true) : noop}
+          onEditClick={() => {
+            closePopup();
+            setIsEditOpen(true);
+          }}
+          onMessageClick={() => {
+            closePopup();
+            reset();
+            setIsMessageOnly(true);
+            setIsLetterOpen(true);
+          }}
+          onContributeClick={() => {
+            closePopup();
+            // 뒤로가기 등으로 플로우를 중간에 떠나 남은 값이 있으면 비우고 시작한다
+            reset();
+            setIsMessageOnly(false);
+            setIsContributeOpen(true);
+          }}
+        />
+        {/* TODO(API): 실제 API 연결 시 입금 처리 결과를 서버에 반영하고, 팝업의 확인 대기 건수(unconfirmedCount)와 프로필 알림 점도 그 값으로 갱신한다. 지금은 funding.deposits.length로 고정이라 처리 후에도 줄지 않는다 */}
+        <DepositConfirmSheet
+          open={isDepositOpen}
+          deposits={funding.deposits}
+          onClose={() => setIsDepositOpen(false)}
+        />
+        <BotemEditFlow
+          open={isEditOpen}
+          recipientName={funding.hostName}
+          onClose={() => setIsEditOpen(false)}
+        />
+        {/* 앞 단계 시트는 열어 둔 채 위에 다음 시트를 띄워(금액 → 편지 → 비밀번호), 이전을 누르면 직전 시트로 돌아온다 */}
+        <FundingContributeSheet
+          key={`contribute-${flowKey}`}
+          open={isContributeOpen}
+          hostName={funding.hostName}
+          maxAmount={remainingAmount}
+          onClose={() => setIsContributeOpen(false)}
+          onExit={requestExit}
+          onNext={amount => {
+            setAmount(amount);
+            setIsLetterOpen(true);
+          }}
+        />
+        {/* TODO: 쿠키가 httpOnly라 로그인 여부를 클라이언트에서 못 읽어 비회원(false)으로 둔다 */}
+        <LetterWriteSheet
+          key={`letter-${flowKey}`}
+          open={isLetterOpen}
+          recipientName={funding.hostName}
+          isLoggedIn={false}
+          onClose={() => setIsLetterOpen(false)}
+          onExit={requestExit}
+          onNext={values => {
+            setLetter(values);
+            setIsPasswordOpen(true);
+          }}
+        />
+        {/* TODO(API): 보탬 제출 API가 정해지면 여기서 스토어의 amount·letter·password를 보내고, 성공 뒤에 이동하도록 바꾼다. replace라 뒤로가기로 보태기 플로우에 돌아오지 않는다 */}
+        <FundingPasswordSheet
+          open={isPasswordOpen}
+          hostName={funding.hostName}
+          amount={contributeAmount}
+          account={funding.account}
+          messageOnly={isMessageOnly}
+          onClose={requestExit}
+          onPrev={() => setIsPasswordOpen(false)}
+          onComplete={password => {
+            setPassword(password);
+            router.replace(`/share/${fundingId}/complete`);
+          }}
+        />
+        <Dialog
+          kind="confirm"
+          open={isExitOpen}
+          title={`${funding.hostName}에게\n보태기를 그만둘까요?`}
+          confirmColor="neutral"
+          onCancel={() => setIsExitOpen(false)}
+          onConfirm={handleExitConfirm}
+        />
+      </main>
+    </PageExitMotion>
   );
 }

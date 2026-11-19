@@ -7,12 +7,15 @@ import Button from "@/components/Button";
 import RevealMotion from "@/components/effects/RevealMotion";
 import Header from "@/components/Header";
 import LoadingAnimation from "@/components/LoadingAnimation";
+import PageExitMotion from "@/components/effects/PageExitMotion";
+import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingRevealQuery } from "@/hooks/queries/funding/useFundingRevealQuery";
 import FundingRevealEmptyView from "@/widgets/funding/FundingRevealEmptyView";
 import IconClose from "@/assets/icons/icon-close.svg?react";
 
 export default function FundingRevealContainer() {
   const router = useRouter();
+  const { pageExit, exitPage } = usePageExit();
   const { fundingId } = useParams<{ fundingId: string }>();
   const { data: reveal, isLoading, refetch } = useFundingRevealQuery(Number(fundingId));
   const close = () => router.replace("/home");
@@ -62,9 +65,16 @@ export default function FundingRevealContainer() {
   };
 
   return (
-    <div className="bg-semantic-background-default flex min-h-dvh flex-col">
-      <Header title="" rightItems={[{ icon: <IconClose />, ariaLabel: "닫기", onClick: close }]} />
-      {renderContent()}
-    </div>
+    <PageExitMotion exit={pageExit}>
+      <div className="bg-semantic-background-default flex min-h-dvh flex-col">
+        <Header
+          title=""
+          rightItems={[
+            { icon: <IconClose />, ariaLabel: "닫기", onClick: () => exitPage("fade", close) },
+          ]}
+        />
+        {renderContent()}
+      </div>
+    </PageExitMotion>
   );
 }

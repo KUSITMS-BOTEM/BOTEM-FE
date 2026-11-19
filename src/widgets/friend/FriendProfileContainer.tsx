@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 
 import Button from "@/components/Button";
 import Header from "@/components/Header";
+import PageExitMotion from "@/components/effects/PageExitMotion";
 import { getProfileColor } from "@/components/Profile";
+import { usePageExit } from "@/hooks/usePageExit";
 import { useFriendProfileQuery } from "@/hooks/queries/friend/useFriendProfileQuery";
 import type { FriendWishResponse } from "@/types/friend/friend";
 import { getBirthdayDdayText } from "@/utils/friend/getBirthdayDdayText";
@@ -26,6 +28,7 @@ type FriendProfileContainerProps = {
 
 export default function FriendProfileContainer({ friendId }: FriendProfileContainerProps) {
   const router = useRouter();
+  const { pageExit, exitPage } = usePageExit();
   const { data, isPending, refetch } = useFriendProfileQuery(friendId);
   const [wishSheetOpen, setWishSheetOpen] = useState(false);
   const [surpriseWish, setSurpriseWish] = useState<FriendWishResponse | null>(null);
@@ -38,61 +41,67 @@ export default function FriendProfileContainer({ friendId }: FriendProfileContai
   };
 
   return (
-    <div className="bg-semantic-background-default flex min-h-dvh w-full flex-col">
-      <Header
-        title={data ? `${data.name} 프로필` : "친구 프로필"}
-        leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로가기", onClick: () => router.back() }}
-      />
-      <main className="flex w-full flex-col gap-4 px-5">
-        {isPending ? (
-          <FriendProfileSkeleton />
-        ) : !data ? (
-          <div className="flex w-full flex-col items-center gap-3 py-10">
-            <p>친구 프로필을 불러오지 못했어요.</p>
-            <Button color="brand" size="small" onClick={() => refetch()}>
-              다시 시도
-            </Button>
-          </div>
-        ) : (
-          <>
-            <FriendListItem
-              name={data.name}
-              profileColor={getProfileColor(data.userId)}
-              imageUrl={data.profileImageUrl ?? undefined}
-              birthdayText={
-                data.birthday ? `생일 ${formatBirthdayDisplay(data.birthday)}` : undefined
-              }
-              dDayText={getBirthdayDdayText(data.birthdayDday)}
-            />
-            {data.fundings.length > 0 && <FriendFundingSection fundings={data.fundings} />}
-            <div aria-hidden className="bg-semantic-border-weak -mx-5 h-px" />
-            <FriendWishSection
-              friendId={friendId}
-              wishes={data.wishes}
-              onSurpriseOpen={() => setWishSheetOpen(true)}
-            />
-            <FriendSurpriseWishSheet
-              open={wishSheetOpen}
-              wishes={data.wishes}
-              onClose={() => setWishSheetOpen(false)}
-              onSelect={handleWishSelect}
-            />
-          </>
-        )}
-      </main>
-      {surpriseWish && data && (
-        // 위시는 마운트 때만 읽히므로 위시가 바뀌면 새로 마운트해 입력 상태를 초기화한다
-        <SurpriseOpenSheet
-          key={surpriseWish.wishId}
-          open={fundingSheetOpen}
-          wish={toFundingWish(surpriseWish)}
-          recipientId={friendId}
-          recipientName={data.name}
-          recipientBirthday={data.birthday}
-          recipientBirthdayDday={data.birthdayDday}
-          onClose={() => setFundingSheetOpen(false)}
+    <PageExitMotion exit={pageExit}>
+      <div className="bg-semantic-background-default flex min-h-dvh w-full flex-col">
+        <Header
+          title={data ? `${data.name} 프로필` : "친구 프로필"}
+          leftItem={{
+            icon: <IconLeft />,
+            ariaLabel: "뒤로가기",
+            onClick: () => exitPage("slide", () => router.back()),
+          }}
         />
-      )}
-    </div>
+        <main className="flex w-full flex-col gap-4 px-5">
+          {isPending ? (
+            <FriendProfileSkeleton />
+          ) : !data ? (
+            <div className="flex w-full flex-col items-center gap-3 py-10">
+              <p>친구 프로필을 불러오지 못했어요.</p>
+              <Button color="brand" size="small" onClick={() => refetch()}>
+                다시 시도
+              </Button>
+            </div>
+          ) : (
+            <>
+              <FriendListItem
+                name={data.name}
+                profileColor={getProfileColor(data.userId)}
+                imageUrl={data.profileImageUrl ?? undefined}
+                birthdayText={
+                  data.birthday ? `생일 ${formatBirthdayDisplay(data.birthday)}` : undefined
+                }
+                dDayText={getBirthdayDdayText(data.birthdayDday)}
+              />
+              {data.fundings.length > 0 && <FriendFundingSection fundings={data.fundings} />}
+              <div aria-hidden className="bg-semantic-border-weak -mx-5 h-px" />
+              <FriendWishSection
+                friendId={friendId}
+                wishes={data.wishes}
+                onSurpriseOpen={() => setWishSheetOpen(true)}
+              />
+              <FriendSurpriseWishSheet
+                open={wishSheetOpen}
+                wishes={data.wishes}
+                onClose={() => setWishSheetOpen(false)}
+                onSelect={handleWishSelect}
+              />
+            </>
+          )}
+        </main>
+        {surpriseWish && data && (
+          // 위시는 마운트 때만 읽히므로 위시가 바뀌면 새로 마운트해 입력 상태를 초기화한다
+          <SurpriseOpenSheet
+            key={surpriseWish.wishId}
+            open={fundingSheetOpen}
+            wish={toFundingWish(surpriseWish)}
+            recipientId={friendId}
+            recipientName={data.name}
+            recipientBirthday={data.birthday}
+            recipientBirthdayDday={data.birthdayDday}
+            onClose={() => setFundingSheetOpen(false)}
+          />
+        )}
+      </div>
+    </PageExitMotion>
   );
 }

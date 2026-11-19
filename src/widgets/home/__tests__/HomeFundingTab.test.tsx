@@ -226,15 +226,16 @@ describe("HomeFundingTab", () => {
     expect(screen.getByRole("dialog")).toHaveTextContent("입금 확인 42");
   });
 
-  it("진행 중(default) 카드에는 카드 버튼이 없다", () => {
+  it("진행 중(default) 카드를 누르면 펀딩 상세 화면으로 이동한다", async () => {
     mockQueries({ data: fundingList([fundingCard]) });
 
     renderTab();
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
 
-    expect(screen.queryByRole("button", { name: "지유님의 생일 펀딩" })).not.toBeInTheDocument();
+    expect(push).toHaveBeenCalledWith("/funding/1");
   });
 
-  it("참여자가 없는 마감 카드(open)를 누르면 시트 없이 마감 공개 화면으로 이동한다", async () => {
+  it("참여자가 없는 마감 카드(open)를 누르면 결과 조회 없이 펀딩 상세 화면으로 이동한다", async () => {
     mockQueries({
       data: fundingList([
         { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
@@ -244,7 +245,8 @@ describe("HomeFundingTab", () => {
     renderTab();
     await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
 
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
+    expect(push).toHaveBeenCalledWith("/funding/42");
+    expect(fundingService.getReveal).not.toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
@@ -259,7 +261,13 @@ describe("HomeFundingTab", () => {
     );
     mockQueries({
       data: fundingList([
-        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
+        {
+          ...fundingCard,
+          fundingId: 42,
+          cardType: "CLOSED_UNOPENED",
+          pendingContributionCount: 0,
+          participantCount: 3,
+        },
       ]),
     });
 
@@ -278,7 +286,13 @@ describe("HomeFundingTab", () => {
     vi.mocked(fundingService.getReveal).mockReturnValue(new Promise(() => {}));
     mockQueries({
       data: fundingList([
-        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
+        {
+          ...fundingCard,
+          fundingId: 42,
+          cardType: "CLOSED_UNOPENED",
+          pendingContributionCount: 0,
+          participantCount: 3,
+        },
       ]),
     });
 
@@ -302,7 +316,13 @@ describe("HomeFundingTab", () => {
     );
     mockQueries({
       data: fundingList([
-        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
+        {
+          ...fundingCard,
+          fundingId: 42,
+          cardType: "CLOSED_UNOPENED",
+          pendingContributionCount: 0,
+          participantCount: 3,
+        },
       ]),
     });
 

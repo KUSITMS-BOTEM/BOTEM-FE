@@ -2,9 +2,11 @@
 
 import { useEffect, useId, useRef, type SyntheticEvent } from "react";
 
+import Badge from "@/components/Badge";
 import Button from "@/components/Button";
 import IconButton from "@/components/IconButton";
 import Profile, { getProfileColor } from "@/components/Profile";
+import { cn } from "@/utils/cn";
 import { formatContributedDate } from "@/utils/funding/formatContributedDate";
 import { withSubjectParticle } from "@/utils/withSubjectParticle";
 import BotemPopupRow from "@/widgets/funding/BotemPopupRow";
@@ -17,6 +19,8 @@ export type BotemPopupFriend = {
   name: string;
   contributedAt: string;
   profileImageUrl?: string;
+  // 펀딩 주인 팝업에서 감사카드를 아직 안 보낸 친구에게만 배지를 띄운다
+  thankCardSent?: boolean;
 };
 
 type BotemPopupProps = {
@@ -27,11 +31,47 @@ type BotemPopupProps = {
   isClosed: boolean;
   // 펀딩(서프라이즈) 개설자가 보는 팝업이면 첫 행을 '확인 대기'로 표시한다
   isHost?: boolean;
+  // 내 펀딩의 주인이 보는 팝업이면 받은 보탬 확인·메세지·감사카드만 보여주고 보태기 버튼은 없다
+  isOwner?: boolean;
+  messageCount?: number;
   onClose: () => void;
   onUnconfirmedClick: () => void;
   onEditClick: () => void;
   onMessageClick: () => void;
   onContributeClick: () => void;
+};
+
+const getUnconfirmedText = ({
+  count,
+  ownerName,
+  isHost,
+  isOwner,
+}: {
+  count: number;
+  ownerName: string;
+  isHost: boolean;
+  isOwner: boolean;
+}) => {
+  const hasUnconfirmed = count > 0;
+  if (isOwner) {
+    return {
+      title: `확인대기 ${count}건`,
+      description: hasUnconfirmed ? "통장에 들어왔는지 확인해주세요" : "통장에 전부 들어왔어요",
+    };
+  }
+  if (isHost) {
+    return {
+      title: `확인 대기 ${count}건`,
+      description: hasUnconfirmed ? "통장에 들어왔는지 확인해주세요" : "새로 확인할 보탬이 없어요",
+    };
+  }
+  const ownerWithParticle = withSubjectParticle(ownerName);
+  return {
+    title: `내 보탬 · 미확인 ${count}개`,
+    description: hasUnconfirmed
+      ? `${ownerWithParticle} 못 받은거 같아요. 확인해 볼까요?`
+      : `${ownerWithParticle} 전부 확인했어요`,
+  };
 };
 
 export default function BotemPopup({
@@ -41,6 +81,8 @@ export default function BotemPopup({
   ownerName,
   isClosed,
   isHost = false,
+  isOwner = false,
+  messageCount = 0,
   onClose,
   onUnconfirmedClick,
   onEditClick,
@@ -50,7 +92,12 @@ export default function BotemPopup({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const hasUnconfirmed = unconfirmedCount > 0;
-  const ownerWithParticle = withSubjectParticle(ownerName);
+  const unconfirmedText = getUnconfirmedText({
+    count: unconfirmedCount,
+    ownerName,
+    isHost,
+    isOwner,
+  });
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -80,8 +127,11 @@ export default function BotemPopup({
       aria-labelledby={titleId}
       onCancel={handleCancel}
       onClick={handleDialogClick}
-      className="bg-semantic-background-default rounded-xxx-large backdrop:bg-semantic-background-dim m-auto w-[324px] flex-col overflow-y-auto p-0 shadow-[0_4px_16px_var(--color-semantic-shadow-weak)] outline-none open:flex">
-      <div className="flex w-full flex-col">
+      className={cn(
+        "bg-semantic-background-default rounded-xxx-large backdrop:bg-semantic-background-dim m-auto w-[324px] flex-col overflow-y-auto p-0 shadow-[0_4px_16px_var(--color-semantic-shadow-weak)] outline-none open:flex",
+        isOwner && "relative h-[479px] overflow-hidden",
+      )}>
+      <div className={cn("flex w-full flex-col", isOwner && "min-h-0 flex-1")}>
         <div className="flex w-full flex-col px-4 py-3">
           <div className="flex w-full items-center justify-between">
             <h2
@@ -100,45 +150,53 @@ export default function BotemPopup({
                 }
               />
             }
-            title={
-              isHost ? `확인 대기 ${unconfirmedCount}건` : `내 보탬 · 미확인 ${unconfirmedCount}개`
-            }
-            description={
-              hasUnconfirmed
-                ? isHost
-                  ? "통장에 들어왔는지 확인해주세요"
-                  : `${ownerWithParticle} 못 받은거 같아요. 확인해 볼까요?`
-                : isHost
-                  ? "새로 확인할 보탬이 없어요"
-                  : `${ownerWithParticle} 전부 확인했어요`
-            }
+            title={unconfirmedText.title}
+            description={unconfirmedText.description}
             onClick={hasUnconfirmed ? onUnconfirmedClick : undefined}
           />
-          {!isClosed && (
+          {isOwner ? (
             <BotemPopupRow
               icon={<IconTerms />}
-              title="내 보탬 수정하기"
-              description="마감일까지 수정할 수 있어요"
-              onClick={onEditClick}
+              title={`메세지 ${messageCount}건`}
+              description="펀딩 완료 후 볼 수 있어요"
             />
+          ) : (
+            !isClosed && (
+              <BotemPopupRow
+                icon={<IconTerms />}
+                title="내 보탬 수정하기"
+                description="마감일까지 수정할 수 있어요"
+                onClick={onEditClick}
+              />
+            )
           )}
         </div>
-        <div aria-hidden className="bg-semantic-border-weak h-px w-full" />
-        <div className="flex w-full flex-col px-4 pt-3">
-          <div className="flex h-8 items-center">
+        <div aria-hidden className="bg-semantic-border-weak h-px w-full shrink-0" />
+        <div className={cn("flex w-full flex-col px-4 pt-3", isOwner && "min-h-0 flex-1")}>
+          <div className="flex h-8 shrink-0 items-center">
             <p className="text-semantic-text-tertiary [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-x-small-weak)]">
               보태준 친구들 {friends.length}명
             </p>
           </div>
           {friends.length === 0 ? (
-            <p className="text-semantic-text-secondary flex h-[178px] items-center justify-center [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-subtext-medium)]">
+            <p
+              className={cn(
+                "text-semantic-text-secondary flex items-center justify-center [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-subtext-medium)]",
+                isOwner ? "flex-1 pb-[71px]" : "h-[178px]",
+              )}>
               아직 보태준 친구가 없어요
             </p>
           ) : (
-            <ul className="h-[178px] [scrollbar-width:none] overflow-y-auto [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <ul
+              className={cn(
+                "[scrollbar-width:none] overflow-y-auto [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+                // 주인 팝업은 하단 페이드에 마지막 친구가 가리지 않도록 스크롤 끝에 여백을 둔다
+                isOwner ? "min-h-0 flex-1 pb-12" : "h-[178px]",
+              )}>
               {friends.map(friend => (
                 <li key={friend.id} className="flex items-center gap-3 py-3">
-                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <div
+                    className={cn("flex min-w-0 flex-1 items-center", isOwner ? "gap-3" : "gap-2")}>
                     <Profile
                       imageUrl={friend.profileImageUrl}
                       alt=""
@@ -146,33 +204,62 @@ export default function BotemPopup({
                       showIconButton={false}
                       className="size-9 shrink-0"
                     />
-                    <span className="text-semantic-text-primary truncate [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-small)]">
-                      {friend.name}
-                    </span>
+                    {isOwner ? (
+                      <div className="flex min-w-0 flex-1 flex-col gap-0.5 [letter-spacing:var(--letter-spacing-default)]">
+                        <span className="text-semantic-text-primary truncate [font:var(--semantic-label-small)]">
+                          {friend.name}
+                        </span>
+                        <span className="text-semantic-text-secondary truncate [font:var(--semantic-subtext-medium)]">
+                          {formatContributedDate(friend.contributedAt)} 확인
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-semantic-text-primary truncate [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-small)]">
+                        {friend.name}
+                      </span>
+                    )}
                   </div>
-                  <span className="text-semantic-text-secondary shrink-0 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-subtext-medium)]">
-                    {formatContributedDate(friend.contributedAt)}
-                  </span>
+                  {isOwner ? (
+                    // TODO: 감사카드 화면이 정해지면 배지를 보내기 동작으로 연결한다
+                    !friend.thankCardSent && (
+                      <Badge color="brand" variant="fill" label="감사카드 보내기" />
+                    )
+                  ) : (
+                    <span className="text-semantic-text-secondary shrink-0 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-subtext-medium)]">
+                      {formatContributedDate(friend.contributedAt)}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
           )}
         </div>
-        <div className="pointer-events-none relative -mt-9 flex w-full flex-col">
+        {isOwner ? (
           <div
             aria-hidden
-            className="from-semantic-background-default/0 to-semantic-background-default h-9 w-full bg-gradient-to-b"
+            className="from-semantic-background-default/0 to-semantic-background-default pointer-events-none absolute inset-x-0 bottom-0 h-[71px] bg-gradient-to-b"
           />
-          <div className="bg-semantic-background-default pointer-events-auto flex w-full gap-2 px-4 pt-6 pb-4">
-            <Button variant="weak" size="large" className="flex-1" onClick={onMessageClick}>
-              메세지 보태기
-            </Button>
-            <Button size="large" className="flex-1" disabled={isClosed} onClick={onContributeClick}>
-              보태기
-            </Button>
+        ) : (
+          <div className="pointer-events-none relative -mt-9 flex w-full flex-col">
+            <div
+              aria-hidden
+              className="from-semantic-background-default/0 to-semantic-background-default h-9 w-full bg-gradient-to-b"
+            />
+            <div className="bg-semantic-background-default pointer-events-auto flex w-full gap-2 px-4 pt-6 pb-4">
+              <Button variant="weak" size="large" className="flex-1" onClick={onMessageClick}>
+                메세지 보태기
+              </Button>
+              <Button
+                size="large"
+                className="flex-1"
+                disabled={isClosed}
+                onClick={onContributeClick}>
+                보태기
+              </Button>
+            </div>
+            <div aria-hidden className="bg-semantic-background-default h-3 w-full" />
           </div>
-          <div aria-hidden className="bg-semantic-background-default h-3 w-full" />
-        </div>
+        )}
       </div>
     </dialog>
   );
