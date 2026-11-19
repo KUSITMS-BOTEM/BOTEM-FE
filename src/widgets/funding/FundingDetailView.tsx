@@ -54,6 +54,7 @@ const MOCK_FUNDING = {
   hasGiftProof: false,
   currentAmount: 74074074,
   targetAmount: 123456789,
+  closed: false,
   participants: ["orange", "blue", "pink"] as const,
   extraParticipantCount: 99,
   // TODO(API): 서프라이즈 개설자 화면도 서버 값으로 교체한다 (owner는 ownerDetail 값을 쓴다)
@@ -117,9 +118,9 @@ export default function FundingDetailView({
     setFlowKey(key => key + 1);
   };
   const remainingAmount = funding.targetAmount - funding.currentAmount;
-  // 금액 달성(마감)·기간 마감 모두 닫힌 펀딩이다
+  // 금액 달성(마감)·기간 마감·서버가 알려준 조기 마감 모두 닫힌 펀딩이다
   const closedLabel = getClosedLabel(funding);
-  const isClosed = closedLabel !== null;
+  const isClosed = funding.closed || closedLabel !== null;
 
   if (isClosed && funding.hasGiftProof) {
     return (

@@ -55,6 +55,20 @@ describe("toOwnerFundingView", () => {
     });
   });
 
+  it("서버 관리 상태가 CLOSED면 금액·마감일과 상관없이 마감으로 옮기고, 진행 중이면 마감이 아니다", () => {
+    expect(
+      toOwnerFundingView(
+        detail({
+          managementState: "CLOSED",
+          earlyClosedAt: "2026-11-20T10:00:00",
+          confirmedPercentage: 50,
+          deadline: "2099-12-31T23:59:59",
+        }),
+      ).closed,
+    ).toBe(true);
+    expect(toOwnerFundingView(detail({ managementState: "IN_PROGRESS" })).closed).toBe(false);
+  });
+
   it("제목이 없으면 펀딩 종류로 제목을 정하고, 사연·약속이 없으면 빈 문자열로 둔다", () => {
     expect(
       toOwnerFundingView(detail({ title: null, story: null, promise: null, type: "BIRTHDAY" })),
