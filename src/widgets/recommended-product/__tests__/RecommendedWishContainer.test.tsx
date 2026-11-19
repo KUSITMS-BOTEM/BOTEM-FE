@@ -24,6 +24,8 @@ const mockProducts: RecommendedProductResponse[] = [
     sellerName: "쿠팡",
     category: "EARPHONE_HEADPHONE",
     status: "ON_SALE",
+    wishId: null,
+    fundingId: null,
   },
   {
     id: 5,
@@ -33,6 +35,8 @@ const mockProducts: RecommendedProductResponse[] = [
     sellerName: "쿠팡",
     category: "PERFUME",
     status: "ON_SALE",
+    wishId: null,
+    fundingId: null,
   },
 ];
 

@@ -14,7 +14,6 @@ const MOCK_WISHES = MOCK_RECOMMENDED_PRODUCTS.slice(0, MOCK_WISH_STATUSES.length
     sellerName: product.sellerName,
     status: MOCK_WISH_STATUSES[index],
     fundingId: MOCK_WISH_STATUSES[index] === "FUNDING" ? 1 : null,
-    recommendedProductId: product.id,
   }),
 );
 
@@ -67,7 +66,6 @@ export const wishHandlers = [
         sellerName: product?.sellerName ?? "",
         status: "AVAILABLE",
         fundingId: null,
-        recommendedProductId,
       },
       error: null,
     });

@@ -9,7 +9,7 @@ import { wishesQueryKey } from "@/hooks/queries/wish/useWishesQuery";
 import { useWishDeletedToastStore } from "@/store/wishDeletedToastStore";
 import { useWishOriginStore } from "@/store/wishOriginStore";
 
-export const useDeleteWishMutation = (wishId: string, recommendedProductId?: number | null) => {
+export const useDeleteWishMutation = (wishId: string) => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -21,9 +21,8 @@ export const useDeleteWishMutation = (wishId: string, recommendedProductId?: num
       queryClient.invalidateQueries({ queryKey: wishesQueryKey, exact: true });
       queryClient.invalidateQueries({ queryKey: homeWishesQueryKey });
       queryClient.invalidateQueries({ queryKey: recommendedProductsQueryKey });
-      // 응답의 값을 우선하고, 없으면 담을 때 기록해 둔 값을 쓴다
-      const productId =
-        recommendedProductId ?? useWishOriginStore.getState().recommendedProductIdByWishId[wishId];
+      // 위시 응답엔 추천 상품 id가 없어 담을 때 기록해 둔 값을 쓴다
+      const productId = useWishOriginStore.getState().recommendedProductIdByWishId[wishId];
       // 추천 상품 상세에서 담은 위시만 그 상세로 돌려보낸다. 그 외(목록 진입·새로고침)는 기존처럼 홈
       if (productId == null) return router.replace("/home");
       useWishDeletedToastStore.getState().markDeleted();

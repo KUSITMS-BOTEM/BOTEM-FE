@@ -21,7 +21,7 @@ type ProductDetailViewProps = {
   productImageUrl?: string;
   productName: string;
   price: number;
-  sellerName: string;
+  sellerName?: string | null;
   onSellerClick?: () => void;
   sellerDisabled?: boolean;
   rightItems?: ComponentProps<typeof Header>["rightItems"];
@@ -50,14 +50,14 @@ export default function ProductDetailView({
   statusBadge,
   ctaHelperText,
 }: ProductDetailViewProps) {
-  const sellerRow = (
+  const sellerRow = sellerName ? (
     <List
       title={sellerName}
       description="판매처"
       titleUp
       right={<Asset icon={<IconRight />} size="small" className="text-semantic-icon-default" />}
     />
-  );
+  ) : null;
 
   return (
     <div className="flex flex-col">
@@ -107,7 +107,7 @@ export default function ProductDetailView({
             </p>
           </div>
         </div>
-        {onSellerClick ? (
+        {sellerRow && onSellerClick ? (
           <button
             type="button"
             onClick={onSellerClick}

@@ -2,7 +2,6 @@ import { getRecommendedProductHref } from "@/utils/recommended-product/getRecomm
 
 describe("getRecommendedProductHref", () => {
   it("위시도 펀딩도 없으면 추천 상품 상세 경로를 돌려준다", () => {
-    expect(getRecommendedProductHref({ id: 3 })).toBe("/wish/recommended/3");
     expect(getRecommendedProductHref({ id: 3, wishId: null, fundingId: null })).toBe(
       "/wish/recommended/3",
     );

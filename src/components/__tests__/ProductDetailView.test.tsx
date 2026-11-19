@@ -45,6 +45,13 @@ describe("ProductDetailView", () => {
     expect(screen.getByText("0원")).toBeInTheDocument();
   });
 
+  it("sellerName이 null이면 판매처 영역을 렌더하지 않는다", () => {
+    render(<ProductDetailView {...baseProps} sellerName={null} onSellerClick={vi.fn()} />);
+
+    expect(screen.queryByText("판매처")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /판매처/ })).not.toBeInTheDocument();
+  });
+
   it("onSellerClick이 없으면 판매처 영역이 버튼으로 렌더되지 않는다", () => {
     render(<ProductDetailView {...baseProps} />);
 
