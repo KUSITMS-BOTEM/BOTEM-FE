@@ -1,7 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { useClosedFundingsQuery } from "@/hooks/queries/funding/useClosedFundingsQuery";
 import ClosedFundingSheet from "@/widgets/funding/ClosedFundingSheet";
+
+vi.mock("@/hooks/queries/funding/useClosedFundingsQuery");
 
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
@@ -12,15 +15,99 @@ beforeAll(() => {
   });
 });
 
+const mockQuery = (value: Record<string, unknown>) =>
+  vi.mocked(useClosedFundingsQuery).mockReturnValue({
+    isPending: false,
+    isError: false,
+    refetch: vi.fn(),
+    ...value,
+  } as unknown as ReturnType<typeof useClosedFundingsQuery>);
+
 describe("ClosedFundingSheet", () => {
-  it("API 연결 전에는 임시 펀딩 대신 빈 상태를 보여준다", () => {
+  it("로딩 중에는 스켈레톤을 보여준다", () => {
+    mockQuery({ isPending: true });
+    render(<ClosedFundingSheet open onClose={vi.fn()} />);
+
+    expect(screen.getByRole("status", { name: "마감된 펀딩 불러오는 중" })).toBeInTheDocument();
+  });
+
+  it("마감된 펀딩이 없으면 빈 상태 문구를 보여준다", () => {
+    mockQuery({ data: { fundings: [] } });
     render(<ClosedFundingSheet open onClose={vi.fn()} />);
 
     expect(screen.getByText("마감된 펀딩이 없어요.")).toBeInTheDocument();
-    expect(screen.queryByText("{상품명}")).not.toBeInTheDocument();
+  });
+
+  it("조회에 실패하면 안내와 다시 시도 버튼을 보여주고, 누르면 refetch한다", async () => {
+    const refetch = vi.fn();
+    mockQuery({ isError: true, refetch });
+    render(<ClosedFundingSheet open onClose={vi.fn()} />);
+
+    expect(screen.getByText("마감된 펀딩을 불러오지 못했어요.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+
+    expect(refetch).toHaveBeenCalled();
+  });
+
+  it("다시 시도 요청 중에는 버튼을 비활성화한다", () => {
+    mockQuery({ isError: true, isFetching: true });
+    render(<ClosedFundingSheet open onClose={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeDisabled();
+  });
+
+  it("이미 받은 목록이 있으면 refetch가 실패해도 목록을 유지한다", () => {
+    mockQuery({
+      isError: true,
+      data: {
+        fundings: [
+          {
+            fundingId: 1,
+            type: "SURPRISE",
+            productName: "에어팟 프로 2",
+            productImageUrl: "",
+            deadline: "2025-10-13T23:59:59.999999",
+            targetReached: false,
+            participantCount: 6,
+            recipientName: "서준",
+            giftVerificationStatus: null,
+          },
+        ],
+      },
+    });
+    render(<ClosedFundingSheet open onClose={vi.fn()} />);
+
+    expect(screen.getByText("에어팟 프로 2")).toBeInTheDocument();
+    expect(screen.queryByText("마감된 펀딩을 불러오지 못했어요.")).not.toBeInTheDocument();
+  });
+
+  it("마감된 펀딩이 있으면 날짜별 목록을 보여준다", () => {
+    mockQuery({
+      data: {
+        fundings: [
+          {
+            fundingId: 1,
+            type: "BIRTHDAY",
+            productName: "에어팟 프로 2",
+            productImageUrl: "",
+            deadline: "2025-10-13T23:59:59.999999",
+            targetReached: true,
+            participantCount: 8,
+            recipientName: null,
+            giftVerificationStatus: "REQUIRED",
+          },
+        ],
+      },
+    });
+    render(<ClosedFundingSheet open onClose={vi.fn()} />);
+
+    expect(screen.getByText("2025.10.13")).toBeInTheDocument();
+    expect(screen.getByText("에어팟 프로 2")).toBeInTheDocument();
+    expect(screen.getByText("인증 필요")).toBeInTheDocument();
   });
 
   it("닫기 대신 뒤로 가기 버튼이 있고, 누르면 onClose를 호출한다", async () => {
+    mockQuery({ data: { fundings: [] } });
     const onClose = vi.fn();
     render(<ClosedFundingSheet open onClose={onClose} />);
 
