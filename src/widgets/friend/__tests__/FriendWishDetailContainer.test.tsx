@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { ApiError } from "@/types/api";
 import type { FriendProfileResponse, FriendWishDetailResponse } from "@/types/friend/friend";
 import FriendWishDetailContainer from "@/widgets/friend/FriendWishDetailContainer";
 
@@ -13,8 +14,14 @@ const windowOpen = vi.fn();
 vi.mock("@/hooks/mutations/funding/useCreateSurpriseFundingMutation", () => ({
   useCreateSurpriseFundingMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
+const push = vi.fn();
+const notFound = vi.fn(() => {
+  throw new Error("NEXT_NOT_FOUND");
+});
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ back, push: vi.fn() }),
+  useRouter: () => ({ back, push }),
+  notFound: () => notFound(),
 }));
 vi.mock("@/hooks/queries/friend/useFriendProfileQuery", () => ({
   useFriendProfileQuery: (friendId: string) => useFriendProfileQuery(friendId),
@@ -70,6 +77,8 @@ describe("FriendWishDetailContainer", () => {
   beforeEach(() => {
     back.mockClear();
     refetch.mockClear();
+    push.mockClear();
+    notFound.mockClear();
     windowOpen.mockClear();
     vi.stubGlobal("open", windowOpen);
   });
@@ -96,6 +105,30 @@ describe("FriendWishDetailContainer", () => {
     await userEvent.setup().click(screen.getByRole("button", { name: "다시 시도" }));
 
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("위시 상세가 FRIEND_002(친구가 아님)로 실패하면 notFound를 호출한다", () => {
+    mockQuery({ data: profile }, {
+      data: undefined,
+      error: new ApiError("FRIEND_002"),
+    } as QueryState<FriendWishDetailResponse>);
+
+    expect(() => render(<FriendWishDetailContainer friendId="5" wishId="1" />)).toThrow(
+      "NEXT_NOT_FOUND",
+    );
+    expect(notFound).toHaveBeenCalled();
+  });
+
+  it("진행 중인 서프라이즈가 있으면 CTA가 '같이 보태기'가 되어 그 펀딩으로 이동한다", async () => {
+    mockQuery({ data: profile }, { data: { ...wishDetail, activeSurpriseFundingId: 77 } });
+    render(<FriendWishDetailContainer friendId="5" wishId="1" />);
+
+    expect(
+      screen.queryByRole("button", { name: "친구 몰래 서프라이즈 열기" }),
+    ).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole("button", { name: "같이 보태기" }));
+
+    expect(push).toHaveBeenCalledWith("/share/77");
   });
 
   it("프로필 조회에 실패해도 안내 문구를 보여준다", () => {

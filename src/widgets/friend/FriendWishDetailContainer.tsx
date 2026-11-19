@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 
-import { useRouter } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 
 import ProductDetailFallback from "@/components/ProductDetailFallback";
 import ProductDetailView from "@/components/ProductDetailView";
 import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
 import { useFriendProfileQuery } from "@/hooks/queries/friend/useFriendProfileQuery";
 import { useFriendWishQuery } from "@/hooks/queries/friend/useFriendWishQuery";
+import { ApiError } from "@/types/api";
 import { toFundingWish } from "@/utils/friend/toFundingWish";
 import { isValidUrl } from "@/utils/isValidUrl";
 import SurpriseOpenSheet from "@/widgets/funding/SurpriseOpenSheet";
@@ -31,6 +32,8 @@ export default function FriendWishDetailContainer({
   const wish = wishQuery.data;
 
   if (profileQuery.isPending || wishQuery.isPending) return <ProductDetailViewSkeleton />;
+  // FRIEND_002: 친구가 아니거나 친구의 위시가 아님 — 재시도로 풀리지 않는 영구 실패
+  if (wishQuery.error instanceof ApiError && wishQuery.error.code === "FRIEND_002") notFound();
   if (!data || !wish) {
     return (
       <ProductDetailFallback
@@ -45,6 +48,8 @@ export default function FriendWishDetailContainer({
   }
 
   const fundingWish = toFundingWish(wish);
+  // 이 친구를 위한 진행 중 서프라이즈가 있으면(친구당 1개) 새로 열지 않고 그 펀딩에 보탠다
+  const activeFundingId = wish.activeSurpriseFundingId;
 
   return (
     <div className="flex flex-col">
@@ -57,8 +62,10 @@ export default function FriendWishDetailContainer({
         sellerDisabled={!isValidUrl(wish.productUrl)}
         onSellerClick={() => window.open(wish.productUrl, "_blank", "noopener,noreferrer")}
         onBack={() => router.back()}
-        ctaLabel="친구 몰래 서프라이즈 열기"
-        onCtaClick={() => setFundingSheetOpen(true)}
+        ctaLabel={activeFundingId ? "같이 보태기" : "친구 몰래 서프라이즈 열기"}
+        onCtaClick={() =>
+          activeFundingId ? router.push(`/share/${activeFundingId}`) : setFundingSheetOpen(true)
+        }
       />
       <SurpriseOpenSheet
         open={fundingSheetOpen}
