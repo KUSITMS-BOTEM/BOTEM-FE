@@ -86,4 +86,17 @@ export const fundingHandlers = [
       error: null,
     });
   }),
+  http.post("*/api/fundings/surprise", async () => {
+    await delay(1000);
+    return HttpResponse.json({
+      success: true,
+      data: {
+        fundingId: 2,
+        type: "SURPRISE",
+        status: "FUNDING",
+        shareUrl: "https://botem.example.com/funding/2",
+      },
+      error: null,
+    });
+  }),
 ];

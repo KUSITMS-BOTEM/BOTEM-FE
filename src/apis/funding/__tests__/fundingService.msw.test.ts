@@ -63,3 +63,21 @@ describe("fundingHandlers POST /api/fundings", () => {
     });
   });
 });
+
+describe("fundingHandlers POST /api/fundings/surprise", () => {
+  it("ApiResponse 형태로 SURPRISE 타입의 fundingId·status·shareUrl을 반환한다", async () => {
+    const response = await fetch("http://localhost/api/fundings/surprise", {
+      method: "POST",
+      body: "{}",
+    });
+    const body = await response.json();
+
+    expect(body.success).toBe(true);
+    expect(body.data).toEqual({
+      fundingId: expect.any(Number),
+      type: "SURPRISE",
+      status: "FUNDING",
+      shareUrl: expect.any(String),
+    });
+  });
+});

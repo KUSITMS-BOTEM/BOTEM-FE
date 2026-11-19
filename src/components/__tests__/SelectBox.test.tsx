@@ -389,6 +389,20 @@ describe("SelectBox", () => {
       expect(screen.getByRole("gridcell", { selected: true })).toHaveTextContent("13");
     });
 
+    it("deadline은 직접 고른 뒤 부모가 dateValue를 바꾸면 달력이 부모 값을 따른다", async () => {
+      const user = userEvent.setup();
+      const { rerender } = render(<SelectBox variant="deadline" label="마감일" dateValue="" />);
+
+      await user.click(screen.getByRole("button", { name: "마감일 선택해주세요" }));
+      await user.click(screen.getByRole("button", { name: /11월 25일/ }));
+      rerender(
+        <SelectBox variant="deadline" label="마감일" value="2026.11.22" dateValue="2026-11-22" />,
+      );
+      await user.click(screen.getByRole("button", { name: "마감일 2026.11.22" }));
+
+      expect(screen.getByRole("gridcell", { selected: true })).toHaveTextContent("22");
+    });
+
     it("birth는 연도 없이 월만 보여주고 2월 29일도 고를 수 있다", async () => {
       const handleDateChange = vi.fn();
       const user = userEvent.setup();
