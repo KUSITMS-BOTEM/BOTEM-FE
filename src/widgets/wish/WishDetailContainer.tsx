@@ -9,11 +9,15 @@ import Dialog from "@/components/Dialog";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import ProductDetailFallback from "@/components/ProductDetailFallback";
+import ToastMessage from "@/components/ToastMessage";
+import { useWishAddedToastStore } from "@/store/wishAddedToastStore";
 import ProductDetailView from "@/components/ProductDetailView";
 import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
 import { isValidUrl } from "@/utils/isValidUrl";
 import { resolveWishErrorAction } from "@/utils/wish/resolveWishErrorAction";
 import IconDelete from "@/assets/icons/icon-delete.svg?react";
+
+const ADDED_TOAST_DURATION_MS = 1000;
 
 export default function WishDetailContainer() {
   const router = useRouter();
@@ -22,6 +26,21 @@ export default function WishDetailContainer() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { mutate: deleteWish, isPending: isDeletePending } = useDeleteWishMutation(wishId);
   const errorAction = resolveWishErrorAction(error);
+  // 위시 담기 직후 이동해 온 경우에만 토스트를 보여준다(초기값으로 읽고, 새로고침·재방문엔 안 뜨도록 아래서 비운다)
+  const [showAddedToast, setShowAddedToast] = useState(
+    () => useWishAddedToastStore.getState().pending,
+  );
+
+  useEffect(() => {
+    useWishAddedToastStore.getState().consume();
+  }, []);
+
+  // 소비 effect와 분리: StrictMode가 effect를 두 번 돌려도 타이머가 지워지지 않게 한다
+  useEffect(() => {
+    if (!showAddedToast) return;
+    const timer = setTimeout(() => setShowAddedToast(false), ADDED_TOAST_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [showAddedToast]);
 
   useEffect(() => {
     if (errorAction === "unauthorized") router.replace("/");
@@ -66,6 +85,12 @@ export default function WishDetailContainer() {
         isPending={isDeletePending}
         onConfirm={() => deleteWish()}
         onCancel={() => setIsDeleteDialogOpen(false)}
+      />
+      <ToastMessage
+        show={showAddedToast}
+        state
+        text="위시에 추가됐어요"
+        className="pointer-events-none fixed bottom-32 left-1/2 z-20 -translate-x-1/2"
       />
     </div>
   );
