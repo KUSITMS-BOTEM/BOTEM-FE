@@ -10,7 +10,10 @@ import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
 import PageExitMotion from "@/components/effects/PageExitMotion";
 import ProfileBox from "@/components/ProfileBox";
+import ToastMessage from "@/components/ToastMessage";
 import Tooltip from "@/components/Tooltip";
+import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
+import { useShareLink } from "@/hooks/useShareLink";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
@@ -39,9 +42,9 @@ import FundingTransferGuideSheet, {
 } from "@/widgets/funding/FundingTransferGuideSheet";
 import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
 import IconShare from "@/assets/icons/icon-share.svg?react";
+import IconDotVertical from "@/assets/icons/icon-dotvertical.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconLock from "@/assets/icons/icon-lock.svg?react";
-import IconDotVertical from "@/assets/icons/icon-dotvertical.svg?react";
 import ProfilePink from "@/assets/icons/multicolor/profile-pink.svg?react";
 
 type FundingDetailViewProps = {
@@ -121,7 +124,6 @@ const toHostData = (
     })),
 });
 
-// TODO: 공유·더보기 동작은 디자인이 정해지면 연결한다
 const noop = () => {};
 
 export default function FundingDetailView({
@@ -136,6 +138,7 @@ export default function FundingDetailView({
 }: FundingDetailViewProps) {
   const router = useRouter();
   const { pageExit, exitPage } = usePageExit();
+  const { toast, copyLink } = useShareLink();
   // 상세 응답에는 금액이 없고 달성률만 있어, 화면이 쓰던 funding 모양으로 옮겨 담는다
   const funding = {
     ...MOCK_PENDING,
@@ -262,10 +265,14 @@ export default function FundingDetailView({
             }
           }
           rightItems={[
-            // TODO: 공유 버튼 클릭 시 동작 구현 필요 (예: 카카오톡/링크 공유)
-            { icon: <IconShare />, ariaLabel: "공유", onClick: noop },
+            {
+              icon: <IconShare />,
+              ariaLabel: "공유",
+              onClick: () => copyLink(`${window.location.origin}/share/${fundingId}`),
+            },
+            // 참여자용 공유 화면(guest)에는 더보기가 없고, 개설자·주인 화면(/funding)에만 둔다
             // TODO: 더보기 버튼 클릭 시 동작 구현 필요 (예: 메뉴/바텀시트 노출)
-            { icon: <IconDotVertical />, ariaLabel: "더보기", onClick: noop },
+            ...(isGuest ? [] : [{ icon: <IconDotVertical />, ariaLabel: "더보기", onClick: noop }]),
           ]}
         />
         <div
@@ -497,6 +504,18 @@ export default function FundingDetailView({
           onCancel={() => setIsExitOpen(false)}
           onConfirm={handleExitConfirm}
         />
+        {/* BottomCTA(여백 20 + 버튼 56) 바로 위 중앙. 홈 인디케이터 영역만큼 함께 올린다 */}
+        <div
+          className={cn(
+            "pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-20 mx-auto flex w-full justify-center",
+            APP_MAX_WIDTH_CLASS,
+          )}>
+          <ToastMessage
+            show={toast !== null}
+            state={toast === "success"}
+            text={toast === "fail" ? "링크를 복사하지 못했어요" : "링크를 복사했어요"}
+          />
+        </div>
       </main>
     </PageExitMotion>
   );

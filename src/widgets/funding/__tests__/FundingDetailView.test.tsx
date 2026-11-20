@@ -364,12 +364,52 @@ describe("FundingDetailView", () => {
     });
   });
 
-  it("헤더에 공유·더보기 버튼이 있고 뒤로가기 버튼은 없다", () => {
+  it("참여자용 공유 화면 헤더에는 공유 버튼만 있고 더보기·뒤로가기 버튼은 없다", () => {
     render(<FundingDetailView detail={DETAIL} fundingId="1" />);
 
     expect(screen.getByRole("button", { name: "공유" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "더보기" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "더보기" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /뒤로/ })).not.toBeInTheDocument();
+  });
+
+  it.each(["owner", "surprise"] as const)(
+    "%s 화면 헤더에는 공유와 더보기 버튼이 함께 있다",
+    variant => {
+      render(<FundingDetailView detail={DETAIL} fundingId="1" variant={variant} />);
+
+      expect(screen.getByRole("button", { name: "공유" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "더보기" })).toBeInTheDocument();
+    },
+  );
+
+  describe("공유 버튼", () => {
+    const writeText = vi.fn();
+
+    beforeEach(() => {
+      writeText.mockReset();
+      vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+    });
+
+    afterEach(() => vi.unstubAllGlobals());
+
+    it("누르면 공유 링크를 복사하고 안내 토스트를 보여준다", async () => {
+      writeText.mockResolvedValue(undefined);
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+      await userEvent.click(screen.getByRole("button", { name: "공유" }));
+
+      expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/share/1`);
+      expect(await screen.findByText("링크를 복사했어요")).toBeInTheDocument();
+    });
+
+    it("복사에 실패하면 실패 토스트를 보여준다", async () => {
+      writeText.mockRejectedValue(new Error("denied"));
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+      await userEvent.click(screen.getByRole("button", { name: "공유" }));
+
+      expect(await screen.findByText("링크를 복사하지 못했어요")).toBeInTheDocument();
+    });
   });
 
   it("진행 카드와 사연(Message)을 함께 보여준다", () => {
