@@ -34,7 +34,7 @@ const MOCK_PARTICIPANT_PREVIEWS = [
   },
 ];
 
-const MOCK_FUNDING_CARDS = [
+export const MOCK_FUNDING_CARDS = [
   {
     fundingId: 12,
     cardType: "CLOSED_UNOPENED",
@@ -112,6 +112,34 @@ const MOCK_FUNDING_CARDS = [
     productName: product2.name,
     productImageUrl: product2.imageUrl,
     targetAmount: product2.price,
+    participantCount: 3,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS.slice(0, 1),
+    remainingDays: 14,
+    confirmedPercentage: 30,
+    pendingPercentage: 10,
+    pendingContributionCount: 2,
+  },
+  {
+    fundingId: 18,
+    cardType: "IN_PROGRESS",
+    fundingType: "BIRTHDAY",
+    productName: product3.name,
+    productImageUrl: product3.imageUrl,
+    targetAmount: product3.price,
+    participantCount: 5,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS,
+    remainingDays: 3,
+    confirmedPercentage: 100,
+    pendingPercentage: 10,
+    pendingContributionCount: 2,
+  },
+  {
+    fundingId: 19,
+    cardType: "IN_PROGRESS",
+    fundingType: "BIRTHDAY",
+    productName: product2.name,
+    productImageUrl: product2.imageUrl,
+    targetAmount: product2.price,
     participantCount: 4,
     participantPreviews: MOCK_PARTICIPANT_PREVIEWS,
     remainingDays: 5,
@@ -152,7 +180,10 @@ export const createHomeHandlers = (scenario: MockHomeScenario) => [
         card => card.cardType === "CLOSED_UNOPENED" && card.confirmedPercentage === 0,
       ),
       EARLY_COMPLETE: MOCK_FUNDING_CARDS.filter(
-        card => card.cardType === "IN_PROGRESS" && card.confirmedPercentage >= 100,
+        card =>
+          card.cardType === "IN_PROGRESS" &&
+          card.confirmedPercentage >= 100 &&
+          card.pendingContributionCount === 0,
       ),
       WISH_ONLY: [],
       EMPTY: [],

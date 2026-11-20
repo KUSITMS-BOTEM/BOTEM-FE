@@ -26,6 +26,7 @@ import type {
   SurpriseRevealResponse,
   SurpriseThankCardResponse,
 } from "@/types/funding/surprise";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 
 export const fundingService = {
   getClosedFundings: () =>
@@ -33,6 +34,8 @@ export const fundingService = {
   // TODO(API): Swagger에 없는 구 엔드포인트. 결과 API(getResult)에 참여자 이름이 추가되면 교체한다
   getReveal: (fundingId: number) =>
     clientApi.get<FundingRevealResponse>(`/api/fundings/${fundingId}/reveal`),
+  getOwnerFundingDetail: (fundingId: number) =>
+    clientApi.get<OwnerFundingDetailResponse>(`/api/fundings/${fundingId}/management`),
   postFunding: (body: CreateFundingRequest) =>
     clientApi.post<CreateFundingResponse>("/api/fundings", body),
   postSurpriseFunding: (body: CreateSurpriseFundingRequest) =>

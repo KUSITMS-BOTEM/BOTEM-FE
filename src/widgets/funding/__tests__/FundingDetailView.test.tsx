@@ -1,12 +1,13 @@
-import type { ReactElement } from "react";
+import { createElement, type ReactElement, type ReactNode } from "react";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import { MOCK_FUNDING_MANAGEMENT } from "@/apis/funding/fundingService.msw";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import FundingDetailView from "@/widgets/funding/FundingDetailView";
 
 const replaceMock = vi.fn();
@@ -17,6 +18,10 @@ vi.mock("next/image", () => ({
     // eslint-disable-next-line @next/next/no-img-element
     <img alt={alt} {...(props as Record<string, string>)} />
   ),
+}));
+
+vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
+  useMyProfileQuery: () => ({ data: { name: "민지" } }),
 }));
 
 // jsdom에 없는 dialog API를 단순 대체한다
@@ -30,32 +35,67 @@ beforeAll(() => {
   });
 });
 
-// 개설자 화면(surprise·owner)은 펀딩 관리 API로 데이터를 받아 그린다
+// 입금 확인 시트가 확인 대기 목록을 조회하므로 빈 목록 응답을 준비한다
 const server = setupServer(
-  http.get("*/api/fundings/:fundingId/management", () =>
-    HttpResponse.json({ success: true, data: MOCK_FUNDING_MANAGEMENT, error: null }),
+  http.get("*/api/fundings/:fundingId/contributions/pending", () =>
+    HttpResponse.json({
+      success: true,
+      data: { pendingContributionCount: 0, contributions: [] },
+      error: null,
+    }),
   ),
 );
+
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
-  useMyProfileQuery: () => ({ data: { name: "민지" } }),
-}));
-
 // 개설자 화면은 더보기 플로우가 mutation 훅을 쓰므로 QueryClient로 감싼다
-const render = (ui: ReactElement) =>
-  rtlRender(
-    <QueryClientProvider
-      client={
-        new QueryClient({
-          defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-        })
-      }>
-      {ui}
-    </QueryClientProvider>,
-  );
+const render = (ui: ReactElement) => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  return rtlRender(ui, { wrapper });
+};
+
+const ownerDetail: OwnerFundingDetailResponse = {
+  fundingId: 1,
+  type: "BIRTHDAY",
+  title: "서연의 졸업",
+  story: "졸업 선물로 노트북을 받고 싶어요.",
+  promise: null,
+  product: {
+    name: "맥북 에어",
+    imageUrl: "https://image.example.com/product.jpg",
+    price: 1500000,
+    url: "https://shop.example.com/product",
+  },
+  productChanged: false,
+  productChangedAt: null,
+  targetAmount: 1500000,
+  deadline: "2099-11-30T23:59:59.999999",
+  revealAt: null,
+  remainingDays: 7,
+  confirmedPercentage: 40,
+  pendingPercentage: 0,
+  pendingContributionCount: 0,
+  targetReached: false,
+  extended: true,
+  earlyClosedAt: null,
+  giftPreparedAt: null,
+  participantCount: 0,
+  participants: [],
+  messageCount: 0,
+  managementState: "IN_PROGRESS",
+  actions: {
+    canCloseEarly: false,
+    canExtend: false,
+    canChangeProduct: true,
+    canReissueShareCard: true,
+  },
+};
 
 // 앞 단계 시트는 열어 둔 채 위에 쌓이므로 같은 이름의 버튼은 마지막(가장 위) 것을 누른다
 const clickTopmost = async (user: ReturnType<typeof userEvent.setup>, name: string) =>
@@ -143,40 +183,20 @@ describe("FundingDetailView", () => {
   });
 
   describe("개설자 화면 데이터", () => {
-    it("펀딩 관리 응답의 제목을 보여준다", async () => {
-      server.use(
-        http.get("*/api/fundings/:fundingId/management", () =>
-          HttpResponse.json({
-            success: true,
-            data: { ...MOCK_FUNDING_MANAGEMENT, title: "서연의 졸업" },
-            error: null,
-          }),
-        ),
-      );
-      render(<FundingDetailView fundingId="1" variant="owner" />);
+    it("관리 상세(ownerDetail)를 넘기면 그 제목을 보여준다", () => {
+      render(<FundingDetailView fundingId="1" variant="owner" ownerDetail={ownerDetail} />);
 
-      expect(await screen.findByRole("heading", { name: "서연의 졸업" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "서연의 졸업" })).toBeInTheDocument();
     });
 
-    it("조회에 실패하면 안내와 다시 시도 버튼을 보여주고, 누르면 다시 요청한다", async () => {
+    it("더보기 시트는 관리 상세의 연장 여부·조기 마감 가능 여부를 따른다", async () => {
       const user = userEvent.setup();
-      const request = vi.fn();
-      server.use(
-        http.get("*/api/fundings/:fundingId/management", () => {
-          request();
-          return HttpResponse.json(
-            { success: false, data: null, error: { code: "INTERNAL", message: "fail" } },
-            { status: 500 },
-          );
-        }),
-      );
-      render(<FundingDetailView fundingId="1" variant="owner" />);
+      render(<FundingDetailView fundingId="1" variant="owner" ownerDetail={ownerDetail} />);
 
-      expect(await screen.findByText("펀딩을 불러오지 못했어요")).toBeInTheDocument();
-      const callsBeforeRetry = request.mock.calls.length;
-      await user.click(screen.getByRole("button", { name: "다시 시도" }));
+      await user.click(screen.getByRole("button", { name: "더보기" }));
 
-      await waitFor(() => expect(request.mock.calls.length).toBeGreaterThan(callsBeforeRetry));
+      expect(await screen.findByText("마감일은 한 번만 연장할 수 있어요")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /조기 마감하기/ })).not.toBeInTheDocument();
     });
   });
 

@@ -1,9 +1,16 @@
 import { faker } from "@faker-js/faker";
 import { delay, http, HttpResponse } from "msw";
 
+import { MOCK_FUNDING_CARDS } from "@/apis/home/homeService.msw";
+import { getMockContributionProgress, getMockContributionRecords } from "@/mocks/mockContributions";
 import type { ClosedFundingListResponse } from "@/types/funding/closedFunding";
 import type { FundingRevealResponse } from "@/types/funding/funding";
-import type { FundingManagementResponse } from "@/types/funding/fundingManagement";
+import type {
+  FundingManagementState,
+  OwnerFundingDetailResponse,
+  OwnerFundingParticipantResponse,
+} from "@/types/funding/ownerFundingDetail";
+import type { FundingType } from "@/types/home/home";
 
 // 목록에 없는 펀딩 id는 보탠 사람이 없는 마감(참여자 0명 화면)으로 응답한다
 const MOCK_REVEALS: Record<number, FundingRevealResponse> = {
@@ -63,83 +70,107 @@ const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
   ],
 };
 
-// 백엔드 DTO(OwnerFundingDetailResponse)에 예시 값이 없어 필드 타입에 맞춰 만든 값이다
-export const MOCK_FUNDING_MANAGEMENT: FundingManagementResponse = {
-  fundingId: 1,
-  type: "BIRTHDAY",
-  title: "지유의 생일",
-  story: "올해 생일엔 출퇴근길에 쓸 노캔 헤드폰이 갖고 싶어요. 조금씩 보태주면 감동할게요!",
-  promise: "펀딩이 성공하면 헤드폰 끼고 출근하는 인증샷을 꼭 올릴게요!",
-  product: {
-    name: "소니 WH-1000XM5",
-    imageUrl: "https://picsum.photos/seed/botem-product/160/160",
-    price: 468000,
-    url: "https://www.coupang.com/vp/products/1",
-  },
-  productChanged: false,
-  productChangedAt: null,
-  targetAmount: 123456789,
-  deadline: "2026-12-31T23:59:59",
-  revealAt: null,
-  remainingDays: 41,
-  confirmedPercentage: 60,
-  pendingPercentage: 5,
-  pendingContributionCount: 3,
-  targetReached: false,
-  extended: false,
-  earlyClosedAt: null,
-  giftPreparedAt: null,
-  participantCount: 5,
-  participants: [
-    {
-      contributionId: 11,
-      order: 1,
-      name: "민수",
-      profileImageUrl: null,
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const toMockDeadline = (remainingDays: number | null) =>
+  remainingDays === null
+    ? "2026-11-10T23:59:59.999999"
+    : `${new Date(Date.now() + remainingDays * DAY_MS).toISOString().slice(0, 10)}T23:59:59.999999`;
+
+// 홈 카드 목업을 원본으로 삼아 홈과 상세의 달성률·확인 대기 건수가 어긋나지 않게 한다
+const getMockOwnerFundingDetail = (fundingId: number): OwnerFundingDetailResponse | null => {
+  const card = MOCK_FUNDING_CARDS.find(item => item.fundingId === fundingId);
+  if (!card) return null;
+
+  const progress = getMockContributionProgress(fundingId);
+  const confirmedPercentage = card.confirmedPercentage + progress.confirmedAddedPercentage;
+  const isClosed = card.cardType === "CLOSED_UNOPENED";
+  const previewRows: OwnerFundingParticipantResponse[] = card.participantPreviews.map(
+    (preview, index) => ({
+      contributionId: fundingId * 100 + index,
+      order: index + 1,
+      name: preview.participantName,
+      profileImageUrl: preview.profileImageUrl,
       status: "CONFIRMED",
-      participatedAt: "2026-11-10T09:00:00",
+      participatedAt: "2026-11-15T10:00:00",
       thankCardSent: false,
       thankCardSentAt: null,
+    }),
+  );
+  const contributionRows: OwnerFundingParticipantResponse[] = getMockContributionRecords(
+    fundingId,
+  ).map((record, index) => ({
+    contributionId: record.contributionId,
+    order: previewRows.length + index + 1,
+    name: record.participantName,
+    profileImageUrl: record.profileImageUrl,
+    status: record.status,
+    participatedAt: record.participatedAt,
+    thankCardSent: false,
+    thankCardSentAt: null,
+  }));
+  const managementState: FundingManagementState =
+    card.participantCount === 0
+      ? "NO_PARTICIPANTS"
+      : isClosed
+        ? "CLOSED"
+        : confirmedPercentage >= 100
+          ? "TARGET_REACHED"
+          : "IN_PROGRESS";
+
+  return {
+    fundingId,
+    type: card.fundingType as FundingType,
+    title: null,
+    story: "올해 생일엔 꼭 갖고 싶던 선물이 있어요. 조금씩 보태주면 감동할게요!",
+    promise: null,
+    product: {
+      name: card.productName,
+      imageUrl: card.productImageUrl,
+      price: card.targetAmount,
+      url: "https://link.coupang.com/a/example",
     },
-    {
-      contributionId: 12,
-      order: 2,
-      name: "서연",
-      profileImageUrl: null,
-      status: "CONFIRMED",
-      participatedAt: "2026-11-12T18:30:00",
-      thankCardSent: true,
-      thankCardSentAt: "2026-11-13T10:00:00",
+    productChanged: false,
+    productChangedAt: null,
+    targetAmount: card.targetAmount,
+    deadline: toMockDeadline(card.remainingDays),
+    revealAt: null,
+    remainingDays: card.remainingDays,
+    confirmedPercentage,
+    pendingPercentage: progress.pendingPercentage,
+    pendingContributionCount: progress.pendingContributionCount,
+    targetReached: confirmedPercentage >= 100,
+    extended: false,
+    earlyClosedAt: null,
+    giftPreparedAt: null,
+    participantCount: card.participantCount,
+    participants: [...previewRows, ...contributionRows],
+    messageCount: card.participantCount === 0 ? 0 : 3,
+    managementState,
+    actions: {
+      canCloseEarly: !isClosed,
+      canExtend: isClosed && confirmedPercentage < 100 && card.fundingType === "BIRTHDAY",
+      canChangeProduct: !isClosed,
+      canReissueShareCard: !isClosed,
     },
-    {
-      contributionId: 13,
-      order: 3,
-      name: "하린",
-      profileImageUrl: null,
-      status: "PENDING_CONFIRMATION",
-      participatedAt: "2026-11-18T11:20:00",
-      thankCardSent: false,
-      thankCardSentAt: null,
-    },
-  ],
-  messageCount: 8,
-  managementState: "IN_PROGRESS",
-  actions: {
-    canCloseEarly: true,
-    canExtend: false,
-    canChangeProduct: true,
-    canReissueShareCard: true,
-  },
+  };
 };
 
 export const fundingHandlers = [
   http.get("*/api/fundings/:fundingId/management", async ({ params }) => {
-    await delay(300);
-    return HttpResponse.json({
-      success: true,
-      data: { ...MOCK_FUNDING_MANAGEMENT, fundingId: Number(params.fundingId) },
-      error: null,
-    });
+    await delay(500);
+    const detail = getMockOwnerFundingDetail(Number(params.fundingId));
+    if (!detail) {
+      return HttpResponse.json(
+        {
+          success: false,
+          data: null,
+          error: { code: "FUNDING_002", message: "펀딩을 찾을 수 없습니다." },
+        },
+        { status: 404 },
+      );
+    }
+    return HttpResponse.json({ success: true, data: detail, error: null });
   }),
   http.get("*/api/users/me/fundings/closed", async () => {
     await delay(300);

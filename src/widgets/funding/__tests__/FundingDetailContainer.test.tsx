@@ -1,12 +1,12 @@
-import type { ReactElement } from "react";
+import { createElement, type ReactElement, type ReactNode } from "react";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render as rtlRender, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import { MOCK_FUNDING_MANAGEMENT } from "@/apis/funding/fundingService.msw";
-
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import FundingDetailContainer from "@/widgets/funding/FundingDetailContainer";
 
 const push = vi.fn();
@@ -24,18 +24,70 @@ vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
   useMyProfileQuery: () => ({ data: { name: "민지" } }),
 }));
 
-// 개설자 화면은 더보기 플로우가 mutation 훅을 쓰므로 QueryClient로 감싼다
-const render = (ui: ReactElement) =>
-  rtlRender(<QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>);
+const ownerDetail: OwnerFundingDetailResponse = {
+  fundingId: 1,
+  type: "BIRTHDAY",
+  title: "지유의 생일",
+  story: "헤드폰을 바꾸고 싶어요.",
+  promise: null,
+  product: {
+    name: "소니 WH-1000XM5",
+    imageUrl: "https://image.example.com/product.jpg",
+    price: 459000,
+    url: "https://shop.example.com/product",
+  },
+  productChanged: false,
+  productChangedAt: null,
+  targetAmount: 459000,
+  deadline: "2099-11-30T23:59:59.999999",
+  revealAt: null,
+  remainingDays: 7,
+  confirmedPercentage: 45,
+  pendingPercentage: 15,
+  pendingContributionCount: 2,
+  targetReached: false,
+  extended: false,
+  earlyClosedAt: null,
+  giftPreparedAt: null,
+  participantCount: 1,
+  participants: [
+    {
+      contributionId: 31,
+      order: 1,
+      name: "하린",
+      profileImageUrl: null,
+      status: "PENDING_CONFIRMATION",
+      participatedAt: "2026-11-20T14:03:12",
+      thankCardSent: false,
+      thankCardSentAt: null,
+    },
+  ],
+  messageCount: 3,
+  managementState: "IN_PROGRESS",
+  actions: {
+    canCloseEarly: true,
+    canExtend: false,
+    canChangeProduct: true,
+    canReissueShareCard: true,
+  },
+};
 
-// 개설자 화면(surprise·owner)은 펀딩 관리 API로 데이터를 받아 그린다
 const server = setupServer(
   http.get("*/api/fundings/:fundingId/management", () =>
-    HttpResponse.json({ success: true, data: MOCK_FUNDING_MANAGEMENT, error: null }),
+    HttpResponse.json({ success: true, data: ownerDetail, error: null }),
   ),
 );
+
 beforeAll(() => server.listen());
 afterAll(() => server.close());
+afterEach(() => server.resetHandlers());
+
+const render = (ui: ReactElement) => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  return rtlRender(ui, { wrapper });
+};
 
 describe("FundingDetailContainer", () => {
   afterEach(() => vi.clearAllMocks());
@@ -55,12 +107,36 @@ describe("FundingDetailContainer", () => {
     await waitFor(() => expect(push).toHaveBeenCalledWith("/friends/7"));
   });
 
-  it("친구 id가 없으면 mock 역할(펀딩 주인)로 툴팁·자물쇠 없는 펀딩 화면을 보여준다", async () => {
+  it("친구 id가 없으면 펀딩 주인 화면으로 관리 상세를 불러오는 동안 스켈레톤을 보여준다", () => {
+    const { container } = render(<FundingDetailContainer fundingId="1" />);
+
+    expect(container.querySelector("[aria-busy='true']")).not.toBeNull();
+  });
+
+  it("펀딩 주인 화면은 관리 상세의 제목·달성률을 보여주고 툴팁·자물쇠는 없다", async () => {
     render(<FundingDetailContainer fundingId="1" />);
 
     expect(await screen.findByRole("heading", { name: "지유의 생일" })).toBeInTheDocument();
-    expect(screen.queryByText("아직 비밀이에요")).not.toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "45");
     expect(screen.queryByRole("img", { name: "서프라이즈 펀딩" })).not.toBeInTheDocument();
     expect(screen.queryByText("나도 지유님께 보태볼까요?")).not.toBeInTheDocument();
+  });
+
+  it("관리 상세를 불러오지 못하면 안내와 다시 시도를 보여주고, 다시 시도하면 화면이 나온다", async () => {
+    server.use(
+      http.get(
+        "*/api/fundings/:fundingId/management",
+        () => HttpResponse.json({}, { status: 500 }),
+        {
+          once: true,
+        },
+      ),
+    );
+    render(<FundingDetailContainer fundingId="1" />);
+
+    expect(await screen.findByText("펀딩 정보를 불러오지 못했어요")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+
+    expect(await screen.findByRole("heading", { name: "지유의 생일" })).toBeInTheDocument();
   });
 });

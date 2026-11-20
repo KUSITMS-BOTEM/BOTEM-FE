@@ -4,20 +4,16 @@ import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import Button from "@/components/Button";
 import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
-import LoadingAnimation from "@/components/LoadingAnimation";
 import PageExitMotion from "@/components/effects/PageExitMotion";
-import { getProfileColor } from "@/components/Profile";
 import ProfileBox from "@/components/ProfileBox";
 import Tooltip from "@/components/Tooltip";
-import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
-import type { DepositItem } from "@/utils/funding/depositConfirm";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import { calcFundingPercent, getClosedLabel } from "@/utils/funding/fundingProgress";
-import { toFundingDetailViewData } from "@/utils/funding/toFundingDetailViewData";
+import { toOwnerFundingView } from "@/utils/funding/toOwnerFundingView";
 import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
 import BotemPopup, { type BotemPopupFriend } from "@/widgets/funding/BotemPopup";
 import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
@@ -42,43 +38,37 @@ type FundingDetailViewProps = {
   variant?: "guest" | "surprise" | "owner";
   // 있으면 헤더 왼쪽에 뒤로가기 버튼을 보여준다
   onBack?: () => void;
+  // owner 화면에서 받은 개설자용 관리 상세. 오면 진행률·참여자·확인 대기 건수 등을 이 값으로 보여준다
+  ownerDetail?: OwnerFundingDetailResponse;
 };
 
-// TODO(API): 비회원 펀딩 공개 조회 API가 나오면 fundingId로 받아온 값으로 교체한다.
-// 개설자 화면(surprise·owner)은 아래 '응답에 없는 값'만 이 MOCK을 쓰고 나머지는 펀딩 관리 API 값으로 덮어쓴다
+// TODO(API): 비회원 펀딩 공개 조회 API가 나오면 fundingId로 받아온 값으로 교체한다
 const MOCK_FUNDING = {
+  hostName: "지유",
   title: "지유의 생일",
   story: "올해 생일엔 출퇴근길에 쓸 노캔 헤드폰이 갖고 싶어요. 조금씩 보태주면 감동할게요!",
   pledge: "펀딩이 성공하면 헤드폰 끼고 출근하는 인증샷을 꼭 올릴게요!",
   productName: "소니 WH-1000XM5",
   productImageUrl: SampleProduct.src,
   deadline: "2026-12-31",
-  extended: false,
+  // TODO(API): guest 화면 전용. 공유용 상세 API의 giftVerification으로 교체한다 (true면 마감 후 인증 화면)
+  hasGiftProof: false,
   currentAmount: 74074074,
   targetAmount: 123456789,
-  profiles: [{ order: 0 }, { order: 3 }, { order: 1 }] as { order: number; imageUrl?: string }[],
-  extraParticipantCount: 99,
+  closed: false,
+  // TODO(API): 서프라이즈 개설자 화면도 서버 값으로 교체한다 (owner는 ownerDetail 값을 쓴다)
+  extended: false,
   actions: { canCloseEarly: true, canReissueShareCard: true },
-  // TODO(API): 개설자의 확인 대기 입금 목록 API가 나오면 교체한다. 그 전이라도 건수(unconfirmedCount)는 펀딩 관리 응답의 pendingContributionCount로 맞출 수 있다
-  deposits: [
-    { id: 1, senderName: "하린이", amount: 45000, depositedAt: "2026-11-18T11:20:00" },
-    { id: 2, senderName: "도윤이", amount: 30000, depositedAt: "2026-11-16T09:05:00" },
-    { id: 3, senderName: "서준이", amount: 10000, depositedAt: "2026-11-16T08:00:00" },
-  ] satisfies DepositItem[],
+  participants: ["orange", "blue", "pink"] as const,
+  extraParticipantCount: 99,
+  // TODO(API): 서프라이즈 개설자 화면도 서버 값으로 교체한다 (owner는 ownerDetail 값을 쓴다)
+  pendingContributionCount: 3,
+  // TODO(API): 펀딩 주인이 받은 메세지 수·친구별 감사카드 발송 여부를 서버 값으로 교체한다
   messageCount: 8,
   friends: [
     { id: 1, name: "민수", contributedAt: "2026-11-10T09:00:00", thankCardSent: false },
     { id: 2, name: "서연", contributedAt: "2026-11-12T18:30:00", thankCardSent: true },
   ] as BotemPopupFriend[],
-};
-
-// 펀딩 관리 응답에 없는 값
-const MOCK_MISSING_FIELDS = {
-  // TODO(API): guest 화면 문구("나도 지유님께 보태볼까요?" 등)와 개설자 화면 BotemPopup의 ownerName에 쓰인다. 공유용 상세 API에 받는 사람 이름 추가를 요청할 예정
-  hostName: "지유",
-  // TODO(API): guest 화면 전용. 공유용 상세 API의 giftVerification으로 교체한다 (true면 마감 후 인증 화면)
-  hasGiftProof: false,
-  // TODO(API): guest 보태기(FundingPasswordSheet) 전용. 공유용 상세 API의 송금 계좌로 교체한다
   account: {
     bank: "TOSS_BANK",
     accountHolder: "김지유",
@@ -93,20 +83,19 @@ export default function FundingDetailView({
   fundingId,
   variant = "guest",
   onBack,
+  ownerDetail,
 }: FundingDetailViewProps) {
   const router = useRouter();
   const { pageExit, exitPage } = usePageExit();
+  const { profiles, ...ownerFunding } = ownerDetail
+    ? toOwnerFundingView(ownerDetail)
+    : { profiles: MOCK_FUNDING.participants.map(color => ({ color })) };
+  const funding = { ...MOCK_FUNDING, ...ownerFunding };
+  const unconfirmedCount = funding.pendingContributionCount;
   const isSurprise = variant === "surprise";
   const isOwner = variant === "owner";
   // 받은 입금을 확인해야 하는 쪽(서프라이즈 개설자·펀딩 주인)
   const confirmsDeposits = isSurprise || isOwner;
-  const managementQuery = useFundingManagementQuery(Number(fundingId), confirmsDeposits);
-  const funding = {
-    ...MOCK_FUNDING,
-    ...MOCK_MISSING_FIELDS,
-    ...(managementQuery.data && toFundingDetailViewData(managementQuery.data)),
-  };
-  const unconfirmedCount = funding.deposits.length;
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isContributeOpen, setIsContributeOpen] = useState(false);
@@ -134,30 +123,9 @@ export default function FundingDetailView({
     setFlowKey(key => key + 1);
   };
   const remainingAmount = funding.targetAmount - funding.currentAmount;
-  // 금액 달성(마감)·기간 마감 모두 닫힌 펀딩이다
+  // 금액 달성(마감)·기간 마감·서버가 알려준 조기 마감 모두 닫힌 펀딩이다
   const closedLabel = getClosedLabel(funding);
-  const isClosed = closedLabel !== null;
-
-  if (confirmsDeposits && managementQuery.isPending) {
-    return (
-      <div role="status" className="flex min-h-dvh items-center justify-center">
-        <LoadingAnimation size="large" />
-        <span className="sr-only">펀딩을 불러오는 중이에요</span>
-      </div>
-    );
-  }
-  if (confirmsDeposits && managementQuery.isError) {
-    return (
-      <main className="flex min-h-dvh flex-col items-center justify-center gap-4 text-center">
-        <p className="text-semantic-text-secondary [font:var(--semantic-subtext-large)]">
-          펀딩을 불러오지 못했어요
-        </p>
-        <Button disabled={managementQuery.isFetching} onClick={() => managementQuery.refetch()}>
-          다시 시도
-        </Button>
-      </main>
-    );
-  }
+  const isClosed = funding.closed || closedLabel !== null;
 
   // 공유 링크로 들어온 친구에게 마감 후 선물 인증을 보여주는 화면이라 개설자 화면은 해당하지 않는다
   if (!confirmsDeposits && isClosed && funding.hasGiftProof) {
@@ -231,10 +199,7 @@ export default function FundingDetailView({
               </Tooltip>
             )}
             <ProfileBox
-              profiles={funding.profiles.map(({ order, imageUrl }) => ({
-                color: getProfileColor(order),
-                imageUrl,
-              }))}
+              profiles={profiles}
               extraCount={funding.extraParticipantCount}
               notification={confirmsDeposits && unconfirmedCount > 0}
               className="bg-semantic-fill-default shadow-[0_4px_8px_0_var(--color-semantic-shadow-weak)]"
@@ -272,10 +237,10 @@ export default function FundingDetailView({
             setIsContributeOpen(true);
           }}
         />
-        {/* TODO(API): 실제 API 연결 시 입금 처리 결과를 서버에 반영하고, 팝업의 확인 대기 건수(unconfirmedCount)와 프로필 알림 점도 그 값으로 갱신한다. 지금은 funding.deposits.length로 고정이라 처리 후에도 줄지 않는다 */}
+        {/* 처리 뒤 관리 상세가 다시 조회돼 owner의 확인 대기 건수·알림 점이 함께 갱신된다 */}
         <DepositConfirmSheet
           open={isDepositOpen}
-          deposits={funding.deposits}
+          fundingId={Number(fundingId)}
           onClose={() => setIsDepositOpen(false)}
         />
         {confirmsDeposits && (

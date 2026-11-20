@@ -92,3 +92,20 @@ describe("fundingService.postSurpriseFunding", () => {
     await expect(fundingService.postSurpriseFunding(body)).rejects.toBe(error);
   });
 });
+
+describe("fundingService.getOwnerFundingDetail", () => {
+  it("clientApi.get을 펀딩 id가 들어간 management 경로로 호출한다", async () => {
+    vi.mocked(clientApi.get).mockResolvedValue(null);
+
+    await fundingService.getOwnerFundingDetail(12);
+
+    expect(clientApi.get).toHaveBeenCalledWith("/api/fundings/12/management");
+  });
+
+  it("clientApi.get이 실패하면 에러를 그대로 전파한다", async () => {
+    const error = new Error("관리 상세 조회 실패");
+    vi.mocked(clientApi.get).mockRejectedValue(error);
+
+    await expect(fundingService.getOwnerFundingDetail(12)).rejects.toBe(error);
+  });
+});
