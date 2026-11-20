@@ -8,6 +8,8 @@ import {
   updateMockContributionStatuses,
 } from "@/mocks/mockContributions";
 
+const THANK_CARD_MESSAGE_MAX_LENGTH = 50;
+
 const errorResponse = (status: number, code: string, message: string) =>
   HttpResponse.json({ success: false, data: null, error: { code, message } }, { status });
 
@@ -57,6 +59,29 @@ export const contributionHandlers = [
   http.post(
     "*/api/fundings/:fundingId/contributions/:contributionId/reject",
     decideContribution("REJECTED"),
+  ),
+  http.post(
+    "*/api/fundings/:fundingId/contributions/:contributionId/thank-card",
+    async ({ params, request }) => {
+      await delay(300);
+      const body = (await request.json()) as { message?: string; paperColor?: string };
+      const message = body.message?.trim() ?? "";
+      if (message.length === 0 || [...message].length > THANK_CARD_MESSAGE_MAX_LENGTH)
+        return errorResponse(400, "COMMON_001", "감사카드 메시지는 1~50자로 입력해주세요.");
+      const contributionId = Number(params.contributionId);
+      return HttpResponse.json({
+        success: true,
+        data: {
+          thankCardId: contributionId,
+          contributionId,
+          message,
+          paperColor: body.paperColor ?? "LIME",
+          sentAt: new Date().toISOString(),
+          shareUrl: `https://botem.me/thank-cards/mock-${contributionId}`,
+        },
+        error: null,
+      });
+    },
   ),
   http.post("*/api/fundings/:fundingId/contributions/confirm-all", async ({ params }) => {
     await delay(300);

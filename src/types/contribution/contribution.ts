@@ -173,14 +173,19 @@ export type UpdatedGuestContributionResponse = RollingPaperContent & {
   status: ContributionLifecycleStatus;
 };
 
+export type ThankCardPaperColor = "ORANGE" | "LIME" | "PINK" | "BLUE";
+
 export type SendContributionThankCardRequest = {
   message: string;
+  // 생략하면 서버가 LIME으로 저장한다
+  paperColor?: ThankCardPaperColor;
 };
 
 export type ContributionThankCardResponse = {
   thankCardId: number;
   contributionId: number;
   message: string;
+  paperColor: ThankCardPaperColor;
   sentAt: string;
   shareUrl: string;
 };
