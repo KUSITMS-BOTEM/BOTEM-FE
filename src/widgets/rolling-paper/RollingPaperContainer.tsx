@@ -53,11 +53,17 @@ export default function RollingPaperContainer({
     setOpened(true);
   };
 
+  // 시트를 닫아도 컴포넌트는 남아 있으므로, 다시 열었을 때 퇴장 상태가 이어지지 않게 되돌린다
+  const handleClose = () => {
+    setOpened(false);
+    onClose();
+  };
+
   return (
     <OpenSheet
       open={open}
       title=""
-      onClose={onClose}
+      onClose={handleClose}
       hideScrollbar
       overlay={
         opened && (
