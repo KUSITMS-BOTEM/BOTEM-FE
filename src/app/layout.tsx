@@ -25,6 +25,7 @@ const gaId =
 export const metadata: Metadata = {
   title: "보탬 | 작게 보태는 선물 펀딩",
   description: "선물하고 싶은 대상을 위해 함께 돈을 모으는 퍼스널 크라우드 펀딩 서비스",
+  icons: { icon: "/icon.svg" },
 };
 
 export const viewport: Viewport = {
