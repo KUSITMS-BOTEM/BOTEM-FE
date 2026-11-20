@@ -6,11 +6,20 @@ import FundingDetailView from "@/widgets/funding/FundingDetailView";
 type FundingShareContainerProps = {
   fundingId: string;
   memberIntent?: ShareMemberIntent;
+  isLoggedIn?: boolean;
 };
 
 export default function FundingShareContainer({
   fundingId,
   memberIntent,
+  isLoggedIn,
 }: FundingShareContainerProps) {
-  return <FundingDetailView fundingId={fundingId} variant="guest" memberIntent={memberIntent} />;
+  return (
+    <FundingDetailView
+      fundingId={fundingId}
+      variant="guest"
+      memberIntent={memberIntent}
+      isLoggedIn={isLoggedIn}
+    />
+  );
 }

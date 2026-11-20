@@ -12,6 +12,10 @@ vi.mock("@/hooks/mutations/auth/useKakaoLoginUriMutation", () => ({
   useKakaoLoginUriMutation: () => ({ mutate: vi.fn() }),
 }));
 
+vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
+  useMyProfileQuery: () => ({ data: { name: "민지" } }),
+}));
+
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element
@@ -42,6 +46,6 @@ describe("FundingDetailContainer", () => {
 
     expect(screen.queryByText("아직 비밀이에요")).not.toBeInTheDocument();
     expect(screen.queryByRole("img", { name: "서프라이즈 펀딩" })).not.toBeInTheDocument();
-    expect(screen.queryByText("나도 지유님께 보태볼까요?")).not.toBeInTheDocument();
+    expect(screen.queryByText("나도 민재님께 보태볼까요?")).not.toBeInTheDocument();
   });
 });

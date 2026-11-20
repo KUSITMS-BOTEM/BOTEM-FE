@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -14,6 +14,7 @@ import Tooltip from "@/components/Tooltip";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
+import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { useGuestBotemStore } from "@/store/guestBotemStore";
 import { handleKakaoLoginClick } from "@/utils/auth/handleKakaoLoginClick";
 import { getShareReturnPath, type ShareMemberIntent } from "@/utils/funding/shareMemberIntent";
@@ -49,12 +50,14 @@ type FundingDetailViewProps = {
   onBack?: () => void;
   // 공유 화면에서 로그인해 돌아온 회원이 어느 버튼에서 출발했는지
   memberIntent?: ShareMemberIntent;
+  // 서버가 쿠키로 확인한 로그인 여부. 새로고침해 복귀 쿼리가 사라져도 회원임을 유지한다
+  isLoggedIn?: boolean;
 };
 
 // TODO(API): 비회원 펀딩 공개 조회 API가 나오면 fundingId로 받아온 값으로 교체한다
 const MOCK_FUNDING = {
-  hostName: "지유",
-  title: "지유의 생일",
+  hostName: "민재",
+  title: "민재의 생일",
   story: "올해 생일엔 출퇴근길에 쓸 노캔 헤드폰이 갖고 싶어요. 조금씩 보태주면 감동할게요!",
   pledge: "펀딩이 성공하면 헤드폰 끼고 출근하는 인증샷을 꼭 올릴게요!",
   productName: "소니 WH-1000XM5",
@@ -88,7 +91,7 @@ const MOCK_FUNDING = {
   ] satisfies MyBotemSheetFriend[],
   account: {
     bank: "TOSS_BANK",
-    accountHolder: "김지유",
+    accountHolder: "김민재",
     accountNumber: "1000-1234-5678",
   } satisfies FundingTransferAccount,
 };
@@ -101,6 +104,7 @@ export default function FundingDetailView({
   variant = "guest",
   onBack,
   memberIntent,
+  isLoggedIn = false,
 }: FundingDetailViewProps) {
   const router = useRouter();
   const { pageExit, exitPage } = usePageExit();
@@ -114,16 +118,25 @@ export default function FundingDetailView({
   const [memberCheckFrom, setMemberCheckFrom] = useState<ShareMemberIntent | null>(null);
   const { mutate: requestKakaoLogin } = useKakaoLoginUriMutation();
   const [isGuestFindOpen, setIsGuestFindOpen] = useState(false);
-  const isMember = memberIntent !== undefined;
+  const isMember = memberIntent !== undefined || isLoggedIn;
   // 비회원이 '보태러가기'에서 확인을 마치거나 회원이 보태러가기로 돌아오면 하단이 '메시지 보태기'/'보태기'로 바뀐다
   const [isContributeReady, setIsContributeReady] = useState(memberIntent === "contribute");
   // 이 펀딩에서 이름·비밀번호(비회원)나 로그인(회원)으로 내 보탬을 확인하고 나면 하단은 '내 보탬 확인' 버튼만 남는다
   const hasGuestIdentity = useGuestBotemStore(state => state.fundingId === fundingId);
-  const hasConfirmedMyBotem = hasGuestIdentity || memberIntent === "myBotem";
+  // TODO(API): 로그인 회원이 이 펀딩에 보탰는지 서버 값이 없어, 보태러가기로 막 돌아온 경우가 아니면 회원은 이미 보탠 것으로 본다
+  const hasConfirmedMyBotem =
+    hasGuestIdentity || memberIntent === "myBotem" || (isLoggedIn && memberIntent !== "contribute");
+  // 비회원 화면에서는 401 요청이 나가지 않도록 로그인 복귀한 회원일 때만 조회한다
+  const { data: profile } = useMyProfileQuery(isMember);
+  const memberName = profile?.name ?? undefined;
   // 받은 입금을 확인해야 하는 쪽(서프라이즈 개설자·펀딩 주인)
   const confirmsDeposits = isSurprise || isOwner;
   // 회원이 '내 보탬 확인'으로 로그인해 돌아오면 팝업을 바로 연다. 보태러가기로 돌아오면 자동으로 열지 않는다
   const [isPopupOpen, setIsPopupOpen] = useState(memberIntent === "myBotem");
+  // 시트를 자동으로 여는 신호는 한 번만 쓴다. 쿼리가 남으면 새로고침 때마다 시트가 다시 열린다 (보태러가기 쿼리는 새로고침해도 모드가 유지되도록 둔다)
+  useEffect(() => {
+    if (memberIntent === "myBotem") window.history.replaceState(null, "", window.location.pathname);
+  }, [memberIntent]);
   const [isMemberGuideOpen, setIsMemberGuideOpen] = useState(false);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isContributeOpen, setIsContributeOpen] = useState(false);
@@ -139,7 +152,12 @@ export default function FundingDetailView({
   const [flowKey, setFlowKey] = useState(0);
   const closePopup = () => setIsPopupOpen(false);
   const requestExit = () => setIsExitOpen(true);
-  const goToComplete = () => router.replace(`/share/${fundingId}/complete`);
+  // 보태기를 마치면 돌아왔을 때 하단이 '내 보탬 확인'이 되도록 이 펀딩의 본인 확인을 기록한다 (회원은 비밀번호가 없다)
+  const goToComplete = (password = "") => {
+    const name = useFundingContributionStore.getState().letter?.name ?? "";
+    useGuestBotemStore.getState().setIdentity(fundingId, name, password);
+    router.replace(`/share/${fundingId}/complete`);
+  };
 
   // 뒤로가기 등으로 플로우를 중간에 떠나 남은 값이 있으면 비우고 시작한다
   const startMessage = () => {
@@ -360,6 +378,9 @@ export default function FundingDetailView({
         <BotemEditFlow
           open={isEditOpen}
           recipientName={funding.hostName}
+          skipIdentity={hasConfirmedMyBotem}
+          isLoggedIn={isMember}
+          memberName={memberName}
           onClose={() => setIsEditOpen(false)}
         />
         {/* 앞 단계 시트는 열어 둔 채 위에 다음 시트를 띄워(금액 → 편지 → 비밀번호), 이전을 누르면 직전 시트로 돌아온다 */}
@@ -381,6 +402,7 @@ export default function FundingDetailView({
           open={isLetterOpen}
           recipientName={funding.hostName}
           isLoggedIn={isMember}
+          memberName={memberName}
           onClose={() => setIsLetterOpen(false)}
           onExit={requestExit}
           onNext={values => {
@@ -397,7 +419,7 @@ export default function FundingDetailView({
           amount={contributeAmount}
           account={funding.account}
           onClose={() => setIsMemberGuideOpen(false)}
-          onComplete={goToComplete}
+          onComplete={() => goToComplete()}
         />
         {/* TODO(API): 보탬 제출 API가 정해지면 여기서 스토어의 amount·letter·password를 보내고, 성공 뒤에 이동하도록 바꾼다. replace라 뒤로가기로 보태기 플로우에 돌아오지 않는다 */}
         <FundingPasswordSheet
@@ -410,7 +432,7 @@ export default function FundingDetailView({
           onPrev={() => setIsPasswordOpen(false)}
           onComplete={password => {
             setPassword(password);
-            goToComplete();
+            goToComplete(password);
           }}
         />
         <Dialog

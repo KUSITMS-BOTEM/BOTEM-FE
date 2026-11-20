@@ -17,6 +17,10 @@ vi.mock("@/utils/auth/handleKakaoLoginClick", () => ({
   handleKakaoLoginClick: (...args: unknown[]) => kakaoLoginMock(...args),
 }));
 
+vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
+  useMyProfileQuery: () => ({ data: { name: "민지" } }),
+}));
+
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element
@@ -87,10 +91,10 @@ describe("FundingDetailView", () => {
   it("펀딩 제목과 하단 '내 보탬 확인'·'보태러가기' 버튼을 보여주고 프로필 묶음 버튼은 없다", () => {
     render(<FundingDetailView fundingId="1" />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "지유의 생일" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "민재의 생일" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "보태러가기" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /나도 지유님께 보태볼까요\?/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /나도 민재님께 보태볼까요\?/ })).toBeNull();
   });
 
   it("서프라이즈 개설자가 팝업의 '확인 대기' 행을 누르면 팝업을 닫지 않고 그 위에 입금 확인 시트가 열린다", async () => {
@@ -206,9 +210,8 @@ describe("FundingDetailView", () => {
       render(<FundingDetailView fundingId="1" />);
       await confirmGuestMyBotem(user);
       await user.click(await screen.findByRole("button", { name: /내 보탬 수정하기/ }));
-      await user.type((await screen.findAllByRole("textbox", { name: "이름" })).at(-1)!, "민지");
-      await user.type(screen.getAllByLabelText("비밀번호 4자리").at(-1)!, "1234");
-      await clickTopmost(user, "확인");
+      // 이미 이름·비밀번호를 입력했으므로 다시 묻지 않고 바로 편지 수정으로 간다
+      expect(screen.queryByLabelText("비밀번호 4자리")).not.toBeInTheDocument();
 
       const letter = await screen.findByRole("textbox", { name: "편지 내용" });
       expect(letter).toHaveTextContent("올해도 같이 많이 웃자");
@@ -226,6 +229,37 @@ describe("FundingDetailView", () => {
       );
       expect(screen.queryByRole("heading", { name: "보탬을 수정했어요" })).not.toBeInTheDocument();
     });
+  });
+
+  it("보태기를 마치면 돌아왔을 때 하단이 '내 보탬 확인'이 되도록 본인 확인을 기록한다", async () => {
+    const user = userEvent.setup();
+    render(<FundingDetailView fundingId="1" memberIntent="contribute" />);
+    await user.click(screen.getByRole("button", { name: "메시지 보태기" }));
+    await writeLetter(user, { withName: false });
+
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/1/complete"));
+    expect(useGuestBotemStore.getState().fundingId).toBe("1");
+  });
+
+  it("로그인 쿠키가 있는 회원은 쿼리가 없어도(새로고침) 하단에 '내 보탬 확인'만 보이고 시트는 열리지 않는다", () => {
+    render(<FundingDetailView fundingId="1" isLoggedIn />);
+
+    expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "보태러가기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+  });
+
+  it("보태러가기로 돌아온 회원은 로그인 쿠키가 있어도 '메시지 보태기'/'보태기'를 보여준다", () => {
+    render(<FundingDetailView fundingId="1" memberIntent="contribute" isLoggedIn />);
+
+    expect(screen.getByRole("button", { name: "보태기" })).toBeInTheDocument();
+  });
+
+  it("내 보탬 확인으로 돌아오면 주소에서 member 쿼리를 지워 새로고침해도 시트가 다시 열리지 않는다", () => {
+    window.history.replaceState(null, "", "/share/1?member=myBotem");
+    render(<FundingDetailView fundingId="1" memberIntent="myBotem" isLoggedIn />);
+
+    expect(window.location.search).toBe("");
   });
 
   describe("비회원 보태러가기", () => {
@@ -303,7 +337,7 @@ describe("FundingDetailView", () => {
       expect(screen.queryByRole("textbox", { name: "친구에게 보여질 이름" })).toBeNull();
       await writeLetter(user, { withName: false });
 
-      const heading = await screen.findByRole("heading", { level: 1, name: /지유의 계좌로/ });
+      const heading = await screen.findByRole("heading", { level: 1, name: /민재의 계좌로/ });
       expect(heading).toHaveTextContent("50,000원");
       expect(screen.queryByLabelText("비밀번호 4자리")).not.toBeInTheDocument();
 
@@ -376,7 +410,7 @@ describe("FundingDetailView", () => {
     await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
     await user.click(screen.getByRole("button", { name: "보태러 가기" }));
 
-    const heading = await screen.findByRole("heading", { level: 1, name: /지유의 계좌로/ });
+    const heading = await screen.findByRole("heading", { level: 1, name: /민재의 계좌로/ });
     expect(heading).toHaveTextContent("50,000원");
   });
 
@@ -386,7 +420,7 @@ describe("FundingDetailView", () => {
     await goToPasswordSheet(user);
     await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
     await user.click(screen.getByRole("button", { name: "보태러 가기" }));
-    await screen.findByRole("heading", { level: 1, name: /지유의 계좌로/ });
+    await screen.findByRole("heading", { level: 1, name: /민재의 계좌로/ });
 
     await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
     await clickTopmost(user, "완료하기");
@@ -400,7 +434,7 @@ describe("FundingDetailView", () => {
     await goToPasswordSheet(user);
     await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
     await user.click(screen.getByRole("button", { name: "보태러 가기" }));
-    await screen.findByRole("heading", { level: 1, name: /지유의 계좌로/ });
+    await screen.findByRole("heading", { level: 1, name: /민재의 계좌로/ });
 
     await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
     await clickTopmost(user, "완료하기");
@@ -427,7 +461,7 @@ describe("FundingDetailView", () => {
       await screen.findByRole("textbox", { name: "편지 내용" });
 
       const title = await openExitDialog(user);
-      expect(title).toHaveTextContent("지유에게");
+      expect(title).toHaveTextContent("민재에게");
 
       await user.click(screen.getByRole("button", { name: "아니오" }));
 

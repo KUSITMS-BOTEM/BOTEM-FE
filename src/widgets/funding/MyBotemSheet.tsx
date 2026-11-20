@@ -45,7 +45,13 @@ export default function MyBotemSheet({
   const sortedFriends = [...friends].sort((a, b) => Number(!!b.isMine) - Number(!!a.isMine));
 
   return (
-    <BottomSheet open={open} title="내 보탬 확인" height="auto" onClose={onClose}>
+    // 시트가 -bottom-6만큼 화면 아래로 내려가 있어 24px을 더해야 보이는 높이가 70%가 된다
+    <BottomSheet
+      open={open}
+      title="내 보탬 확인"
+      height="auto"
+      className="min-h-[calc(70dvh+1.5rem)]"
+      onClose={onClose}>
       <div className="flex w-full flex-col">
         <div className="flex w-full flex-col pb-2">
           <BotemPopupRow

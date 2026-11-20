@@ -10,6 +10,10 @@ import LetterWriteSheet, { type LetterWriteValues } from "@/widgets/letter-paper
 type BotemEditFlowProps = {
   open: boolean;
   recipientName: string;
+  // 이미 이름·비밀번호를 입력했거나 로그인한 회원이면 확인 시트 없이 바로 편지 수정으로 간다
+  skipIdentity?: boolean;
+  isLoggedIn?: boolean;
+  memberName?: string;
   onClose: () => void;
 };
 
@@ -21,7 +25,14 @@ const MOCK_MY_LETTER = {
   paperStyle: "vividSolid",
 } satisfies LetterWriteValues;
 
-export default function BotemEditFlow({ open, recipientName, onClose }: BotemEditFlowProps) {
+export default function BotemEditFlow({
+  open,
+  recipientName,
+  skipIdentity = false,
+  isLoggedIn = false,
+  memberName,
+  onClose,
+}: BotemEditFlowProps) {
   const [isLetterOpen, setIsLetterOpen] = useState(false);
   const [isSavedOpen, setIsSavedOpen] = useState(false);
   // 저장한 값을 다음 수정 세션의 기준으로 삼고, 확인 때 key를 올려 시트를 그 값으로 다시 마운트한다
@@ -31,15 +42,24 @@ export default function BotemEditFlow({ open, recipientName, onClose }: BotemEdi
   return (
     <>
       {/* TODO(API): 이름·비밀번호 확인(onSubmit) 뒤 동작은 보탬 수정 API가 정해지면 연결한다. 일치하는 보탬이 없으면(없는 이름·비밀번호) Toast나 Dialog로 안내하고 시트는 닫지 않아 재입력할 수 있게 한다 */}
-      <BotemEditSheet open={open} onClose={onClose} onSubmit={() => setIsLetterOpen(true)} />
+      <BotemEditSheet
+        open={open && !skipIdentity}
+        onClose={onClose}
+        onSubmit={() => setIsLetterOpen(true)}
+      />
       {/* TODO(API): 저장(onSave)은 보탬 수정 API가 정해지면 연결하고, 성공했을 때만 완료 안내를 띄운다 */}
       <LetterWriteSheet
         key={letterKey}
-        open={isLetterOpen}
+        open={isLetterOpen || (skipIdentity && open)}
         recipientName={recipientName}
-        isLoggedIn={false}
+        isLoggedIn={isLoggedIn}
+        memberName={memberName}
         initialValues={letter}
-        onClose={() => setIsLetterOpen(false)}
+        onClose={() => {
+          setIsLetterOpen(false);
+          // 확인 시트를 건너뛰면 열림 상태가 부모에 있어 부모도 닫아야 시트가 닫힌다
+          if (skipIdentity) onClose();
+        }}
         onSave={values => {
           setLetter(values);
           setIsSavedOpen(true);

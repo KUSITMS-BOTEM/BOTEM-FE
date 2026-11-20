@@ -64,6 +64,8 @@ type LetterWriteSheetProps = {
   onExit?: () => void;
   recipientName: string;
   isLoggedIn: boolean;
+  // 로그인한 회원의 이름. 있으면 편지지 보낸 사람으로 쓴다
+  memberName?: string;
   onNext?: (values: LetterWriteValues) => void;
   // 있으면 수정 모드다: 이 값으로 시작하고, 이름은 바꿀 수 없으며, 되돌리기·저장 버튼이 나온다.
   // 값은 처음 마운트될 때만 읽으므로 서버 데이터가 도착한 뒤에 마운트하거나 key로 다시 마운트한다
@@ -79,6 +81,7 @@ export default function LetterWriteSheet({
   onExit,
   recipientName,
   isLoggedIn,
+  memberName,
   onNext,
   initialValues,
   onSave,
@@ -87,7 +90,9 @@ export default function LetterWriteSheet({
   // 수정 모드에서는 보탠 사람의 이름을 바꿀 수 없어 로그인 상태처럼 이름 입력란을 두지 않는다
   const hideName = isLoggedIn || isEdit;
   const [text, setText] = useState(initialValues?.text ?? "");
-  const [name, setName] = useState(initialValues?.name ?? "");
+  const [typedName, setName] = useState(initialValues?.name ?? "");
+  // 로그인한 회원은 프로필 이름이 편지지에 채워진다. 프로필이 늦게 도착해도 따라가도록 상태에 복사하지 않는다
+  const name = (isLoggedIn && memberName) || typedName;
   const [shrunk, setShrunk] = useState(false);
   const [color, setColor] = useState<Color>(initialValues?.color ?? "orange");
   // 툴은 한 번에 하나만 열린다. photo는 툴 영역을 접고 사진 슬롯만 강조하는 상태다
