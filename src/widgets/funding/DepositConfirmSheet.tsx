@@ -65,6 +65,8 @@ export default function DepositConfirmSheet({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<DepositToast | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // 닫을 때마다 올린다. 홈은 시트 하나를 카드마다 재사용해, 닫은 뒤 도착한 응답이 다른 카드 시트를 건드리지 않게 한다
+  const sessionRef = useRef(0);
 
   const pendingDeposits: DepositItem[] = (query.data?.contributions ?? []).map(contribution => ({
     id: contribution.contributionId,
@@ -96,12 +98,14 @@ export default function DepositConfirmSheet({
     const ids = selectedIds.filter(id => pendingDeposits.some(deposit => deposit.id === id));
     if (ids.length === 0) return;
     setIsSubmitting(true);
+    const session = sessionRef.current;
     try {
       const data = await decideMutation.mutateAsync({
         fundingId,
         contributionIds: ids,
         decision: action === "received" ? "CONFIRM" : "REJECT",
       });
+      if (session !== sessionRef.current) return;
       setSelectedIds([]);
       // 이미 같은 결과였던 참여까지 되돌리면 원래 상태가 바뀌므로 이번에 바뀐 참여만 실행 취소 대상이다
       const undoIds = (data?.contributions ?? [])
@@ -132,6 +136,7 @@ export default function DepositConfirmSheet({
   };
 
   const handleClose = () => {
+    sessionRef.current += 1;
     clearTimeout(toastTimerRef.current);
     setSelectedIds([]);
     setToast(null);

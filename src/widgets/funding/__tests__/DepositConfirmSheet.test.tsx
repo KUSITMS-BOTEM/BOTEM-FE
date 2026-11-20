@@ -332,6 +332,42 @@ describe("DepositConfirmSheet 처리와 토스트", () => {
     expect(checkbox("하린이의 보탬")).toBeChecked();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
+
+  it("처리 요청 중에 시트를 닫았다 다시 열면 늦게 온 응답이 새 선택을 비우거나 토스트를 띄우지 않는다", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => (release = resolve));
+    let requested = false;
+    server.use(
+      http.post(`${BASE}/decisions`, async () => {
+        requested = true;
+        await gate;
+        return HttpResponse.json({
+          success: true,
+          data: {
+            contributions: [{ contributionId: 1, status: "CONFIRMED", changed: true }],
+            progress,
+          },
+          error: null,
+        });
+      }),
+    );
+    const { rerender } = renderSheet();
+    await waitForList();
+    await userEvent.click(checkbox("하린이의 보탬"));
+    await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
+    await waitFor(() => expect(requested).toBe(true));
+
+    await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+    rerender(<DepositConfirmSheet open={false} fundingId={FUNDING_ID} onClose={vi.fn()} />);
+    rerender(<DepositConfirmSheet open fundingId={FUNDING_ID} onClose={vi.fn()} />);
+    await userEvent.click(await screen.findByRole("checkbox", { name: /도윤이의 보탬/ }));
+    release();
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "받았어요" })).toBeEnabled());
+    expect(checkbox("도윤이의 보탬")).toBeChecked();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "실행 취소" })).not.toBeInTheDocument();
+  });
 });
 
 describe("DepositConfirmSheet 토스 확인하기", () => {
