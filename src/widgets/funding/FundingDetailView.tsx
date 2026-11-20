@@ -7,7 +7,9 @@ import { useRouter } from "next/navigation";
 import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
 import ProfileBox from "@/components/ProfileBox";
+import ToastMessage from "@/components/ToastMessage";
 import Tooltip from "@/components/Tooltip";
+import { useFundingExtendToast } from "@/hooks/useFundingExtendToast";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import type { DepositItem } from "@/utils/funding/depositConfirm";
 import { getClosedLabel } from "@/utils/funding/fundingProgress";
@@ -80,6 +82,7 @@ export default function FundingDetailView({
   const funding = MOCK_FUNDING;
   const unconfirmedCount = funding.deposits.length;
   const isSurprise = variant === "surprise";
+  const showExtendedToast = useFundingExtendToast();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isContributeOpen, setIsContributeOpen] = useState(false);
@@ -144,15 +147,23 @@ export default function FundingDetailView({
           </div>
           <FundingMessage story={funding.story} pledge={funding.pledge} />
         </div>
-        <FundingProgressCard
-          fundingId={fundingId}
-          productImageUrl={funding.productImageUrl}
-          productName={funding.productName}
-          deadline={funding.deadline}
-          currentAmount={funding.currentAmount}
-          targetAmount={funding.targetAmount}
-          locked={isSurprise}
-        />
+        <div className="relative">
+          <FundingProgressCard
+            fundingId={fundingId}
+            productImageUrl={funding.productImageUrl}
+            productName={funding.productName}
+            deadline={funding.deadline}
+            currentAmount={funding.currentAmount}
+            targetAmount={funding.targetAmount}
+            locked={isSurprise}
+          />
+          <ToastMessage
+            show={showExtendedToast}
+            state
+            text="기간이 연장됐어요"
+            className="pointer-events-none absolute inset-x-0 top-full z-20 w-full max-w-none"
+          />
+        </div>
         <button
           type="button"
           onClick={() => setIsPopupOpen(true)}

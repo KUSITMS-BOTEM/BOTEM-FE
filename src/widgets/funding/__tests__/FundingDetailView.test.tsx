@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
+import { useFundingExtendToastStore } from "@/store/fundingExtendToastStore";
 import FundingDetailView from "@/widgets/funding/FundingDetailView";
 
 const replaceMock = vi.fn();
@@ -108,6 +109,20 @@ describe("FundingDetailView", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("결과 화면에서 연장하고 돌아오면 '기간이 연장됐어요' 토스트를 보여준다", () => {
+    useFundingExtendToastStore.getState().mark();
+    render(<FundingDetailView fundingId="1" />);
+
+    expect(screen.getByText("기간이 연장됐어요")).toBeInTheDocument();
+  });
+
+  it("연장 예약 없이 들어오면 연장 토스트를 보여주지 않는다", () => {
+    useFundingExtendToastStore.setState({ pending: false });
+    render(<FundingDetailView fundingId="1" />);
+
+    expect(screen.queryByText("기간이 연장됐어요")).not.toBeInTheDocument();
   });
 
   it("헤더에 공유·더보기 버튼이 있고 뒤로가기 버튼은 없다", () => {

@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useExtendFundingMutation } from "@/hooks/mutations/funding/useExtendFundingMutation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
+import { useFundingExtendToastStore } from "@/store/fundingExtendToastStore";
 import { useGiftChangeStore } from "@/store/giftChangeStore";
 import type { FundingManagementResponse, FundingResultResponse } from "@/types/funding/funding";
 import FundingResultContainer from "@/widgets/funding/FundingResultContainer";
@@ -315,7 +316,7 @@ describe("FundingResultContainer", () => {
     expect(useGiftChangeStore.getState().fundingId).toBeNull();
   });
 
-  it("연장에 성공하면 시트를 닫고 '기간이 연장됐어요' 토스트를 잠깐 보여준다", async () => {
+  it("연장에 성공하면 펀딩 상세로 돌아가며 연장 토스트를 예약한다", async () => {
     mockQueries({
       result: { data: makeResult(50, 200000) },
       management: { data: makeManagement() },
@@ -335,9 +336,7 @@ describe("FundingResultContainer", () => {
     vi.useRealTimers();
 
     expect(extendMutate.mock.calls[0][0]).toBe("2026-11-20");
-    expect(screen.getByText("기간이 연장됐어요")).toBeInTheDocument();
-    await waitFor(() => expect(screen.queryByText("기간이 연장됐어요")).not.toBeInTheDocument(), {
-      timeout: 3000,
-    });
+    expect(replace).toHaveBeenCalledWith("/funding/7");
+    expect(useFundingExtendToastStore.getState().pending).toBe(true);
   });
 });

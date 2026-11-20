@@ -11,6 +11,7 @@ import LoadingAnimation from "@/components/LoadingAnimation";
 import { useOpenFundingResultMutation } from "@/hooks/mutations/funding/useOpenFundingResultMutation";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import type { FundingResultResponse } from "@/types/funding/funding";
+import FundingExtendFlow from "@/widgets/funding/FundingExtendFlow";
 import FundingRevealEmptyView from "@/widgets/funding/FundingRevealEmptyView";
 import RollingPaperContainer from "@/widgets/rolling-paper/RollingPaperContainer";
 import IconClose from "@/assets/icons/icon-close.svg?react";
@@ -25,6 +26,7 @@ export default function FundingRevealContainer() {
   const { mutate: openResult, isPending: isOpening } = useOpenFundingResultMutation();
   const [opening, setOpening] = useState(false);
   const [messagesOpen, setMessagesOpen] = useState(false);
+  const [extendOpen, setExtendOpen] = useState(false);
   const close = () => router.replace("/home");
 
   const showMessages = (opened: FundingResultResponse) => {
@@ -71,7 +73,19 @@ export default function FundingRevealContainer() {
         </main>
       );
     }
-    if (result.participantCount === 0) return <FundingRevealEmptyView onClose={close} />;
+    if (result.participantCount === 0) {
+      return (
+        <>
+          <FundingRevealEmptyView onExtend={() => setExtendOpen(true)} onClose={close} />
+          <FundingExtendFlow
+            fundingId={id}
+            open={extendOpen}
+            collectedAmount={result.confirmedAmount}
+            onClose={() => setExtendOpen(false)}
+          />
+        </>
+      );
+    }
 
     const amount = `${result.confirmedAmount.toLocaleString("ko-KR")}원이 모였어요`;
     const goalAchieved = result.achievementPercentage >= TARGET_PERCENTAGE;

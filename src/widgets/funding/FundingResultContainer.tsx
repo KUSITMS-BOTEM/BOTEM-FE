@@ -2,22 +2,19 @@
 
 import { useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import Button from "@/components/Button";
 import LoadingAnimation from "@/components/LoadingAnimation";
-import ToastMessage from "@/components/ToastMessage";
-import { useExtendFundingMutation } from "@/hooks/mutations/funding/useExtendFundingMutation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useGiftChangeStore } from "@/store/giftChangeStore";
 import type { FundingManagementResponse, FundingResultResponse } from "@/types/funding/funding";
 import { isValidUrl } from "@/utils/isValidUrl";
-import FundingExtendSheet from "@/widgets/funding/FundingExtendSheet";
+import FundingExtendFlow from "@/widgets/funding/FundingExtendFlow";
 import FundingResultView, { type FundingResult } from "@/widgets/funding/FundingResultView";
 
 const TARGET_PERCENTAGE = 100;
-const EXTENDED_TOAST_DURATION_MS = 1000;
 
 // 금액·친구 목록은 결과 응답, 상품·연장 가능 여부는 관리 상세 응답을 쓴다 (상품을 바꿨으면 목표 금액과 상품 가격이 다를 수 있다)
 const toFundingResult = (
@@ -45,16 +42,8 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
   const router = useRouter();
   const reduceMotion = useReducedMotion() ?? false;
   const [extendOpen, setExtendOpen] = useState(false);
-  const [showExtendedToast, setShowExtendedToast] = useState(false);
   const resultQuery = useFundingResultQuery(Number(fundingId));
   const managementQuery = useFundingManagementQuery(Number(fundingId));
-  const extendMutation = useExtendFundingMutation(Number(fundingId));
-
-  useEffect(() => {
-    if (!showExtendedToast) return;
-    const timer = setTimeout(() => setShowExtendedToast(false), EXTENDED_TOAST_DURATION_MS);
-    return () => clearTimeout(timer);
-  }, [showExtendedToast]);
 
   if (resultQuery.isLoading || managementQuery.isLoading) {
     return (
@@ -90,14 +79,6 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
     useGiftChangeStore.getState().clear();
     router.replace("/home");
   };
-  const handleExtend = (newDeadline: string) => {
-    extendMutation.mutate(newDeadline, {
-      onSuccess: () => {
-        setExtendOpen(false);
-        setShowExtendedToast(true);
-      },
-    });
-  };
 
   return (
     <>
@@ -109,20 +90,11 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
         onChangeGift={() => router.push(`/funding/${fundingId}/change-gift`)}
         onExtend={() => setExtendOpen(true)}
       />
-      <FundingExtendSheet
+      <FundingExtendFlow
+        fundingId={Number(fundingId)}
         open={extendOpen}
         collectedAmount={result.collectedAmount}
-        // 응답은 "YYYY-MM-DDTHH:mm:ss"라 시트가 받는 날짜 부분만 넘긴다
-        currentDeadline={managementQuery.data.deadline.slice(0, 10)}
-        pending={extendMutation.isPending}
-        onExtend={handleExtend}
         onClose={() => setExtendOpen(false)}
-      />
-      <ToastMessage
-        show={showExtendedToast}
-        state
-        text="기간이 연장됐어요"
-        className="pointer-events-none fixed bottom-40 left-1/2 z-20 -translate-x-1/2"
       />
     </>
   );
