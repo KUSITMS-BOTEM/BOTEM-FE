@@ -1,52 +1,108 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
+import { useParams, useRouter } from "next/navigation";
+
+import Header from "@/components/Header";
+import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
+import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
+import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
+import { useGiftChangeStore } from "@/store/giftChangeStore";
+import { findFundingWish, getChangeableWishes } from "@/utils/funding/giftChangeCandidates";
 import FundingGiftChangeView, {
   type GiftChangeProduct,
 } from "@/widgets/funding/FundingGiftChangeView";
-
-// 선물 변경 API 스펙이 아직 없어 화면 확인용 임시 데이터로 렌더한다. 스펙이 나오면 조회 훅으로 교체할 것
-const MOCK_COLLECTED_AMOUNT = 301_000;
-const MOCK_CURRENT_GIFT: GiftChangeProduct = {
-  id: 1,
-  productName: "Airpods Max Pro 3",
-  price: 329_000,
-  productImageUrl: "https://picsum.photos/seed/botem-gift-1/400",
-};
-const MOCK_WISHES: GiftChangeProduct[] = [
-  {
-    id: 2,
-    productName: "소니 WH-1000XM5",
-    price: 289_000,
-    productImageUrl: "https://picsum.photos/seed/botem-gift-2/400",
-  },
-  {
-    id: 3,
-    productName: "르크루제 머그",
-    price: 39_000,
-    productImageUrl: "https://picsum.photos/seed/botem-gift-3/400",
-  },
-  {
-    id: 4,
-    productName: "스위치 게임 타이틀",
-    price: 64_800,
-    productImageUrl: "https://picsum.photos/seed/botem-gift-4/400",
-  },
-];
+import FundingLoadState from "@/widgets/funding/FundingLoadState";
+import IconLeft from "@/assets/icons/icon-left.svg?react";
 
 export default function FundingGiftChangeContainer() {
   const router = useRouter();
+  const fundingId = Number(useParams<{ fundingId: string }>().fundingId);
+  const resultQuery = useFundingResultQuery(fundingId);
+  const managementQuery = useFundingManagementQuery(fundingId);
+  const wishesQuery = useWishesQuery();
+  const storedFundingId = useGiftChangeStore(state => state.fundingId);
+  const storedOriginalGift = useGiftChangeStore(state => state.originalGift);
+  const result = resultQuery.data;
+  const management = managementQuery.data;
+  const wishes = wishesQuery.data?.content;
+
+  // 추천 상품에서 위시를 담지 않고 돌아왔다면 이후 평소 위시 담기가 변경 화면으로 새지 않게 끈다
+  useEffect(() => {
+    useGiftChangeStore.getState().setBrowsingProducts(false);
+  }, []);
+
+  // 처음 들어올 때 아직 바꾸지 않았다면 지금 선물이 되돌아갈 기존 선물이다
+  useEffect(() => {
+    if (!management || !wishes || storedFundingId === fundingId) return;
+    const fundingWish = management.productChanged ? undefined : findFundingWish(wishes, fundingId);
+    useGiftChangeStore.getState().start(
+      fundingId,
+      fundingWish
+        ? {
+            wishId: fundingWish.id,
+            productName: fundingWish.productName,
+            price: fundingWish.price,
+            productImageUrl: fundingWish.productImageUrl,
+          }
+        : null,
+    );
+  }, [management, wishes, storedFundingId, fundingId]);
+
+  if (!result || !management || !wishes) {
+    return (
+      <div className="flex min-h-dvh flex-col">
+        <Header
+          title="다른 선물 고르기"
+          leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
+        />
+        <FundingLoadState
+          isLoading={resultQuery.isLoading || managementQuery.isLoading || wishesQuery.isLoading}
+          loadingLabel="고를 수 있는 선물을 불러오는 중이에요"
+          errorMessage="선물 정보를 불러오지 못했어요"
+          onRetry={() => {
+            if (!result) resultQuery.refetch();
+            if (!management) managementQuery.refetch();
+            if (!wishes) wishesQuery.refetch();
+          }}
+        />
+      </div>
+    );
+  }
+
+  const originalGift = storedFundingId === fundingId ? storedOriginalGift : null;
+  const currentWish = findFundingWish(wishes, fundingId);
+  const giftShownAsOriginal: GiftChangeProduct = originalGift
+    ? { ...originalGift, id: originalGift.wishId }
+    : {
+        id: currentWish?.id ?? 0,
+        productName: management.product.name,
+        price: management.product.price,
+        productImageUrl: management.product.imageUrl,
+      };
+  const excludeWishIds = [currentWish?.id, originalGift?.wishId].filter(
+    (id): id is number => id !== undefined,
+  );
+  const changeableWishes = getChangeableWishes(wishes, result.confirmedAmount, excludeWishIds);
+
+  const goToWishDetail = (wishId: number) =>
+    router.push(`/funding/${fundingId}/change-gift/wish/${wishId}`);
 
   return (
     <FundingGiftChangeView
-      collectedAmount={MOCK_COLLECTED_AMOUNT}
-      currentGift={MOCK_CURRENT_GIFT}
-      wishes={MOCK_WISHES}
+      collectedAmount={result.confirmedAmount}
+      currentGift={giftShownAsOriginal}
+      wishes={changeableWishes}
       onBack={() => router.back()}
-      onSelectCurrentGift={() => {}}
-      onSelectWish={() => {}}
-      onBrowseProducts={() => router.push("/wish/recommended")}
+      onSelectCurrentGift={
+        giftShownAsOriginal.id ? () => goToWishDetail(giftShownAsOriginal.id) : undefined
+      }
+      onSelectWish={wish => goToWishDetail(wish.id)}
+      onBrowseProducts={() => {
+        useGiftChangeStore.getState().setBrowsingProducts(true);
+        router.push("/wish/recommended");
+      }}
     />
   );
 }

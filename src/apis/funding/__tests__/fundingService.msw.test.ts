@@ -69,10 +69,11 @@ describe("fundingHandlers GET /management", () => {
     return response.json();
   };
 
-  it("결과 화면이 쓰는 구매 링크와 마감일을 반환한다", async () => {
+  it("상품 정보와 구매 링크, 마감 일시를 반환한다", async () => {
     const management = await getManagement(13);
 
     expect(management.success).toBe(true);
+    expect(management.data.product.name).toEqual(expect.any(String));
     expect(management.data.product.url).toMatch(/^https:\/\//);
     expect(management.data.deadline).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
@@ -97,6 +98,45 @@ describe("fundingHandlers POST /api/fundings", () => {
       status: "FUNDING",
       shareUrl: expect.any(String),
     });
+  });
+});
+
+describe("fundingHandlers 상품 변경·기간 연장", () => {
+  const send = (method: "PATCH" | "POST", path: string, body: unknown) =>
+    fetch(`http://localhost${path}`, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  const getManagementOf = (fundingId: number) =>
+    fetch(`http://localhost/api/fundings/${fundingId}/management`).then(response =>
+      response.json(),
+    );
+
+  it("상품을 바꾸면 관리 상세의 상품과 변경 여부에 반영된다", async () => {
+    const changed = await (await send("PATCH", "/api/fundings/16/product", { wishId: 1 })).json();
+    const management = await getManagementOf(16);
+
+    expect(changed.data.product.name).toBe("에어팟 프로 3");
+    expect(management.data.product.name).toBe("에어팟 프로 3");
+    expect(management.data.productChanged).toBe(true);
+  });
+
+  it("없는 위시로 바꾸면 404(WISH_002)를 돌려준다", async () => {
+    const response = await send("PATCH", "/api/fundings/17/product", { wishId: 999 });
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(body.error.code).toBe("WISH_002");
+  });
+
+  it("연장하면 새 마감일이 반영되고 다시 연장할 수 없다", async () => {
+    await send("POST", "/api/fundings/12/extension", { newDeadline: "2026-11-30" });
+    const management = await getManagementOf(12);
+
+    expect(management.data.deadline.startsWith("2026-11-30")).toBe(true);
+    expect(management.data.extended).toBe(true);
+    expect(management.data.actions.canExtend).toBe(false);
   });
 });
 

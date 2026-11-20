@@ -7,6 +7,7 @@ vi.mock("@/apis/client", () => ({
   clientApi: {
     get: vi.fn(),
     post: vi.fn(),
+    patch: vi.fn(),
   },
 }));
 
@@ -108,6 +109,28 @@ describe("fundingService.postFunding", () => {
   });
 });
 
+describe("fundingService.changeFundingProduct", () => {
+  it("clientApi.patch를 product 경로와 위시 id로 호출한다", async () => {
+    vi.mocked(clientApi.patch).mockResolvedValue(null);
+
+    await fundingService.changeFundingProduct(12, { wishId: 3 });
+
+    expect(clientApi.patch).toHaveBeenCalledWith("/api/fundings/12/product", { wishId: 3 });
+  });
+});
+
+describe("fundingService.extendFunding", () => {
+  it("clientApi.post를 extension 경로와 새 마감일로 호출한다", async () => {
+    vi.mocked(clientApi.post).mockResolvedValue(null);
+
+    await fundingService.extendFunding(12, { newDeadline: "2026-11-30" });
+
+    expect(clientApi.post).toHaveBeenCalledWith("/api/fundings/12/extension", {
+      newDeadline: "2026-11-30",
+    });
+  });
+});
+
 describe("fundingService.postSurpriseFunding", () => {
   const body: CreateSurpriseFundingRequest = {
     recipientId: 3,
@@ -133,22 +156,5 @@ describe("fundingService.postSurpriseFunding", () => {
     vi.mocked(clientApi.post).mockRejectedValue(error);
 
     await expect(fundingService.postSurpriseFunding(body)).rejects.toBe(error);
-  });
-});
-
-describe("fundingService.getOwnerFundingDetail", () => {
-  it("clientApi.get을 펀딩 id가 들어간 management 경로로 호출한다", async () => {
-    vi.mocked(clientApi.get).mockResolvedValue(null);
-
-    await fundingService.getOwnerFundingDetail(12);
-
-    expect(clientApi.get).toHaveBeenCalledWith("/api/fundings/12/management");
-  });
-
-  it("clientApi.get이 실패하면 에러를 그대로 전파한다", async () => {
-    const error = new Error("관리 상세 조회 실패");
-    vi.mocked(clientApi.get).mockRejectedValue(error);
-
-    await expect(fundingService.getOwnerFundingDetail(12)).rejects.toBe(error);
   });
 });

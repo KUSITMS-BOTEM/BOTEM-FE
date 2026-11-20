@@ -3,6 +3,7 @@ import { delay, http, HttpResponse } from "msw";
 
 import { MOCK_FUNDING_CARDS } from "@/apis/home/homeService.msw";
 import { getMockContributionProgress, getMockContributionRecords } from "@/mocks/mockContributions";
+import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
 import type { ClosedFundingListResponse } from "@/types/funding/closedFunding";
 import type {
   FundingResultContributionResponse,
@@ -81,6 +82,24 @@ const getMockResult = (fundingId: number): FundingResultResponse =>
     messageCount: 0,
     contributions: [],
   };
+
+// 상품 변경·기간 연장 요청이 바꾼 값. 재조회한 관리 상세에 반영된다
+const mockFundingOverrides: Record<
+  number,
+  Partial<Pick<OwnerFundingDetailResponse, "product" | "productChangedAt" | "deadline">>
+> = {};
+
+// 위시 목(wishService.msw)과 같은 id 체계라 wishId로 추천 상품 목을 찾아 펀딩 상품 스냅샷을 만든다
+const toFundingProduct = (wishId: number): OwnerFundingDetailResponse["product"] | null => {
+  const product = MOCK_RECOMMENDED_PRODUCTS.find(item => item.id === wishId);
+  if (!product) return null;
+  return {
+    name: product.name,
+    imageUrl: product.imageUrl,
+    price: product.price,
+    url: "https://link.coupang.com/a/example",
+  };
+};
 
 const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
   fundings: [
@@ -206,10 +225,25 @@ const getMockOwnerFundingDetail = (fundingId: number): OwnerFundingDetailRespons
   };
 };
 
+// 상품 변경·기간 연장 요청이 바꾼 값을 관리 상세에 덧입힌다
+const getMockManagement = (fundingId: number): OwnerFundingDetailResponse | null => {
+  const detail = getMockOwnerFundingDetail(fundingId);
+  const override = mockFundingOverrides[fundingId];
+  if (!detail || !override) return detail;
+  const extended = detail.extended || override.deadline !== undefined;
+  return {
+    ...detail,
+    ...override,
+    productChanged: detail.productChanged || override.productChangedAt !== undefined,
+    extended,
+    actions: { ...detail.actions, canExtend: detail.actions.canExtend && !extended },
+  };
+};
+
 export const fundingHandlers = [
   http.get("*/api/fundings/:fundingId/management", async ({ params }) => {
     await delay(500);
-    const detail = getMockOwnerFundingDetail(Number(params.fundingId));
+    const detail = getMockManagement(Number(params.fundingId));
     if (!detail) {
       return HttpResponse.json(
         {
@@ -238,6 +272,52 @@ export const fundingHandlers = [
       resultOpenedAt: "2026-11-15T00:00:00",
     };
     return HttpResponse.json({ success: true, data, error: null });
+  }),
+  // 버튼 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다. 실서버는 마감 후 변경을 409(FUNDING_043)로 막는다
+  http.patch("*/api/fundings/:fundingId/product", async ({ params, request }) => {
+    await delay(800);
+    const fundingId = Number(params.fundingId);
+    const { wishId } = (await request.json()) as { wishId: number };
+    const product = toFundingProduct(wishId);
+    if (!product) {
+      return HttpResponse.json(
+        {
+          success: false,
+          data: null,
+          error: { code: "WISH_002", message: "위시를 찾을 수 없습니다.", detail: null },
+        },
+        { status: 404 },
+      );
+    }
+    const productChangedAt = new Date().toISOString();
+    mockFundingOverrides[fundingId] = {
+      ...mockFundingOverrides[fundingId],
+      product,
+      productChangedAt,
+    };
+    return HttpResponse.json({
+      success: true,
+      data: { fundingId, product, productChangedAt },
+      error: null,
+    });
+  }),
+  http.post("*/api/fundings/:fundingId/extension", async ({ params, request }) => {
+    await delay(800);
+    const fundingId = Number(params.fundingId);
+    const { newDeadline } = (await request.json()) as { newDeadline: string };
+    const deadline = `${newDeadline}T23:59:59.999999`;
+    mockFundingOverrides[fundingId] = { ...mockFundingOverrides[fundingId], deadline };
+    return HttpResponse.json({
+      success: true,
+      data: {
+        fundingId,
+        status: "FUNDING",
+        deadline,
+        extensionCount: 1,
+        extendedAt: new Date().toISOString(),
+      },
+      error: null,
+    });
   }),
   // 조기 마감 확인 Dialog의 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다
   http.post("*/api/fundings/:fundingId/close", async ({ params }) => {

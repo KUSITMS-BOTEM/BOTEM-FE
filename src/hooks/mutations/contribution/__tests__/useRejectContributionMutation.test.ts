@@ -6,7 +6,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { contributionService } from "@/apis/contribution/contributionService";
 import { useRejectContributionMutation } from "@/hooks/mutations/contribution/useRejectContributionMutation";
 import { pendingContributionsQueryKey } from "@/hooks/queries/contribution/usePendingContributionsQuery";
-import { ownerFundingDetailQueryKey } from "@/hooks/queries/funding/useOwnerFundingDetailQuery";
+import { fundingManagementQueryKey } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { homeFundingsQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
 
 vi.mock("@/apis/contribution/contributionService", () => ({
@@ -61,7 +61,7 @@ describe("useRejectContributionMutation", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: pendingContributionsQueryKey(5) });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: homeFundingsQueryKey });
-    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ownerFundingDetailQueryKey(5) });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: fundingManagementQueryKey(5) });
   });
 
   it("pending 목록 재조회가 끝날 때까지 isPending을 유지한다", async () => {

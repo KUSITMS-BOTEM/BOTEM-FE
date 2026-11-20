@@ -1,6 +1,6 @@
 "use client";
 
-import { type ComponentProps } from "react";
+import { type ComponentProps, type ReactNode } from "react";
 
 import Image from "next/image";
 
@@ -36,6 +36,9 @@ type ProductDetailViewProps = {
   ctaColor?: "brand" | "neutral";
   statusBadge?: string;
   ctaHelperText?: string;
+  // CTA 위 안내 문구와 CTA 아래 보조 동작(예: 기존 선물 보기). ctaLower가 있으면 ctaHelperText 대신 그린다
+  ctaUpper?: ReactNode;
+  ctaLower?: ReactNode;
 };
 
 export default function ProductDetailView({
@@ -54,8 +57,18 @@ export default function ProductDetailView({
   ctaColor = "brand",
   statusBadge,
   ctaHelperText,
+  ctaUpper,
+  ctaLower,
 }: ProductDetailViewProps) {
   const { pageExit, exitPage } = usePageExit();
+  const lower =
+    ctaLower ??
+    (ctaHelperText && (
+      <p className="text-semantic-text-secondary [font:var(--semantic-subtext-medium)]">
+        {ctaHelperText}
+      </p>
+    ));
+
   const sellerRow = sellerName ? (
     <List
       title={sellerName}
@@ -143,17 +156,12 @@ export default function ProductDetailView({
           aria-hidden
           className={cn(
             "h-[calc(36px+var(--padding-large)+56px+env(safe-area-inset-bottom))]",
-            ctaHelperText && "mb-[42px]",
+            lower && "mb-[42px]",
+            // upper 영역(pb-6 24px + 안내 문구 한 줄)도 같은 높이라 그만큼 더 비운다
+            ctaUpper && "mt-[42px]",
           )}
         />
-        <BottomCTA
-          lower={
-            ctaHelperText && (
-              <p className="text-semantic-text-secondary [font:var(--semantic-subtext-medium)]">
-                {ctaHelperText}
-              </p>
-            )
-          }>
+        <BottomCTA upper={ctaUpper} lower={lower}>
           <Button
             color={ctaColor}
             size="xlarge"

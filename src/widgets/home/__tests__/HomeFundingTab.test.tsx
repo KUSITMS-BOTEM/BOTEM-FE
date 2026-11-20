@@ -249,6 +249,7 @@ describe("HomeFundingTab", () => {
     await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
 
     expect(push).toHaveBeenCalledWith("/funding/1");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("참여자가 없는 마감 카드(open)를 누르면 결과 데이터를 받은 뒤 공개 화면으로 이동한다", async () => {

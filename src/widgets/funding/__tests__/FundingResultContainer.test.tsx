@@ -1,9 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { useExtendFundingMutation } from "@/hooks/mutations/funding/useExtendFundingMutation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
-import type { FundingManagementResponse } from "@/types/funding/fundingManagement";
+import { useFundingExtendToastStore } from "@/store/fundingExtendToastStore";
+import { useGiftChangeStore } from "@/store/giftChangeStore";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import FundingResultContainer from "@/widgets/funding/FundingResultContainer";
 
@@ -17,6 +20,9 @@ vi.mock("@/hooks/queries/funding/useFundingResultQuery", () => ({
 }));
 vi.mock("@/hooks/queries/funding/useFundingManagementQuery", () => ({
   useFundingManagementQuery: vi.fn(),
+}));
+vi.mock("@/hooks/mutations/funding/useExtendFundingMutation", () => ({
+  useExtendFundingMutation: vi.fn(),
 }));
 vi.mock("@/widgets/funding/FundingResultCelebration", () => ({
   default: ({ contributors }: { contributors: unknown[] }) => (
@@ -35,6 +41,7 @@ beforeAll(() => {
 });
 
 const refetchResult = vi.fn();
+const extendMutate = vi.fn();
 const refetchManagement = vi.fn();
 
 type QueryState<T> = { data?: T; isLoading?: boolean };
@@ -44,7 +51,7 @@ const mockQueries = ({
   management = {},
 }: {
   result?: QueryState<FundingResultResponse>;
-  management?: QueryState<FundingManagementResponse>;
+  management?: QueryState<OwnerFundingDetailResponse>;
 }) => {
   vi.mocked(useFundingResultQuery).mockReturnValue({
     data: undefined,
@@ -58,6 +65,10 @@ const mockQueries = ({
     refetch: refetchManagement,
     ...management,
   } as unknown as ReturnType<typeof useFundingManagementQuery>);
+  vi.mocked(useExtendFundingMutation).mockReturnValue({
+    mutate: extendMutate,
+    isPending: false,
+  } as unknown as ReturnType<typeof useExtendFundingMutation>);
 };
 
 const makeResult = (
@@ -90,8 +101,8 @@ const makeResult = (
 });
 
 const makeManagement = (
-  overrides: Partial<FundingManagementResponse> = {},
-): FundingManagementResponse => ({
+  overrides: Partial<OwnerFundingDetailResponse> = {},
+): OwnerFundingDetailResponse => ({
   fundingId: 7,
   type: "BIRTHDAY",
   title: null,
@@ -291,5 +302,42 @@ describe("FundingResultContainer", () => {
 
     expect(open).not.toHaveBeenCalled();
     open.mockRestore();
+  });
+
+  it("닫기를 누르면 다른 선물 고르기에서 기억해 둔 상태를 비운다", async () => {
+    mockQueries({
+      result: { data: makeResult(50, 200000) },
+      management: { data: makeManagement() },
+    });
+    useGiftChangeStore.getState().start(7, null);
+    render(<FundingResultContainer fundingId="7" />);
+
+    await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+    expect(useGiftChangeStore.getState().fundingId).toBeNull();
+  });
+
+  it("연장에 성공하면 펀딩 상세로 돌아가며 연장 토스트를 예약한다", async () => {
+    mockQueries({
+      result: { data: makeResult(50, 200000) },
+      management: { data: makeManagement() },
+    });
+    extendMutate.mockImplementation((_date: string, options: { onSuccess: () => void }) =>
+      options.onSuccess(),
+    );
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 13));
+    const user = userEvent.setup();
+    render(<FundingResultContainer fundingId="7" />);
+
+    await user.click(screen.getByRole("button", { name: "기간연장 (1회)" }));
+    await user.click(screen.getByRole("button", { name: "새 마감일 날짜를 선택해주세요" }));
+    await user.click(screen.getByRole("button", { name: /11월 20일/ }));
+    await user.click(screen.getByRole("button", { name: "연장하기" }));
+    vi.useRealTimers();
+
+    expect(extendMutate.mock.calls[0][0]).toBe("2026-11-20");
+    expect(replace).toHaveBeenCalledWith("/funding/7");
+    expect(useFundingExtendToastStore.getState().pending).toBe(true);
   });
 });

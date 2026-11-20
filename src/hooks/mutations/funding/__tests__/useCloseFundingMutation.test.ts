@@ -5,7 +5,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 
 import { fundingService } from "@/apis/funding/fundingService";
 import { useCloseFundingMutation } from "@/hooks/mutations/funding/useCloseFundingMutation";
-import { ownerFundingDetailQueryKey } from "@/hooks/queries/funding/useOwnerFundingDetailQuery";
+import { fundingManagementQueryKey } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { homeQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
 
 vi.mock("@/apis/funding/fundingService", () => ({
@@ -52,7 +52,7 @@ describe("useCloseFundingMutation", () => {
     result.current.mutate(7);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ownerFundingDetailQueryKey(7) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: fundingManagementQueryKey(7) });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: homeQueryKey });
   });
 

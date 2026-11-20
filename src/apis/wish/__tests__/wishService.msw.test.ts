@@ -29,7 +29,7 @@ describe("wishHandlers GET /api/wishes", () => {
     const funding = await (await fetch("http://localhost/api/wishes/2")).json();
     const available = await (await fetch("http://localhost/api/wishes/1")).json();
 
-    expect(funding.data).toMatchObject({ id: 2, status: "FUNDING", fundingId: 1 });
+    expect(funding.data).toMatchObject({ id: 2, status: "FUNDING", fundingId: 12 });
     expect(available.data).toMatchObject({ id: 1, status: "AVAILABLE", fundingId: null });
   });
 

@@ -12,7 +12,6 @@ import type {
   CloseFundingResponse,
   ExtendFundingRequest,
   ExtendFundingResponse,
-  FundingManagementResponse,
 } from "@/types/funding/fundingManagement";
 import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import type {
@@ -30,8 +29,6 @@ import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDet
 export const fundingService = {
   getClosedFundings: () =>
     clientApi.get<ClosedFundingListResponse>("/api/users/me/fundings/closed"),
-  getOwnerFundingDetail: (fundingId: number) =>
-    clientApi.get<OwnerFundingDetailResponse>(`/api/fundings/${fundingId}/management`),
   postFunding: (body: CreateFundingRequest) =>
     clientApi.post<CreateFundingResponse>("/api/fundings", body),
   postSurpriseFunding: (body: CreateSurpriseFundingRequest) =>
@@ -40,7 +37,7 @@ export const fundingService = {
   getFundingDetail: (fundingId: number) =>
     clientApi.get<FundingDetailResponse>(`/api/fundings/${fundingId}`),
   getFundingManagement: (fundingId: number) =>
-    clientApi.get<FundingManagementResponse>(`/api/fundings/${fundingId}/management`),
+    clientApi.get<OwnerFundingDetailResponse>(`/api/fundings/${fundingId}/management`),
   closeFunding: (fundingId: number) =>
     clientApi.post<CloseFundingResponse>(`/api/fundings/${fundingId}/close`),
   extendFunding: (fundingId: number, body: ExtendFundingRequest) =>

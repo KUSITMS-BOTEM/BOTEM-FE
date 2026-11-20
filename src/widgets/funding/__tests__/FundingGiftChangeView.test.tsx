@@ -68,15 +68,23 @@ describe("FundingGiftChangeView", () => {
     expect(screen.getByText("위시 상품을 찾아볼까요?")).toBeInTheDocument();
   });
 
-  it("선택 버튼을 누르면 해당 선물의 콜백이 호출된다", async () => {
+  it("선택 버튼 없이 상품 행을 누르면 해당 선물의 콜백이 호출된다", async () => {
     const user = userEvent.setup();
     const { onSelectCurrentGift, onSelectWish } = renderView();
 
-    await user.click(screen.getByRole("button", { name: "에어팟 맥스 선택" }));
-    await user.click(screen.getByRole("button", { name: "르크루제 머그 선택" }));
+    expect(screen.queryByRole("button", { name: /선택/ })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /에어팟 맥스/ }));
+    await user.click(screen.getByRole("button", { name: /르크루제 머그/ }));
 
     expect(onSelectCurrentGift).toHaveBeenCalledTimes(1);
     expect(onSelectWish).toHaveBeenCalledWith(wish);
+  });
+
+  it("기존 선물 콜백이 없으면 기존 선물 행은 누를 수 없다", () => {
+    renderView({ onSelectCurrentGift: undefined });
+
+    expect(screen.queryByRole("button", { name: /에어팟 맥스/ })).not.toBeInTheDocument();
   });
 
   it("'상품 보기'를 누르면 onBrowseProducts가 호출된다", async () => {

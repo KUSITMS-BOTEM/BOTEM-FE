@@ -1,4 +1,3 @@
-import Button from "@/components/Button";
 import Header from "@/components/Header";
 import InfoBox from "@/components/InfoBox";
 import List from "@/components/List";
@@ -22,7 +21,8 @@ type FundingGiftChangeViewProps = {
   currentGift: GiftChangeProduct;
   wishes: GiftChangeProduct[];
   onBack: () => void;
-  onSelectCurrentGift: () => void;
+  // 기존 선물의 위시를 찾지 못하면 넘겨주지 않아 행을 누를 수 없게 한다
+  onSelectCurrentGift?: () => void;
   onSelectWish: (wish: GiftChangeProduct) => void;
   onBrowseProducts: () => void;
 };
@@ -38,12 +38,6 @@ export default function FundingGiftChangeView({
 }: FundingGiftChangeViewProps) {
   const { pageExit, exitPage } = usePageExit();
   const shortfall = getShortfall(currentGift.price, collectedAmount);
-
-  const renderSelectButton = (ariaLabel: string, onClick: () => void) => (
-    <Button size="small" aria-label={ariaLabel} onClick={onClick}>
-      선택
-    </Button>
-  );
 
   return (
     <PageExitMotion exit={pageExit}>
@@ -75,7 +69,7 @@ export default function FundingGiftChangeView({
               caption="기존 선물"
               titleUp
               textType="price"
-              right={renderSelectButton(`${currentGift.productName} 선택`, onSelectCurrentGift)}
+              onClick={onSelectCurrentGift}
             />
           </div>
           {wishes.length > 0 && (
@@ -91,7 +85,7 @@ export default function FundingGiftChangeView({
                   caption={`남는 금액 ${formatWon(getRemainingAmount(collectedAmount, wish.price))}`}
                   titleUp
                   textType="price"
-                  right={renderSelectButton(`${wish.productName} 선택`, () => onSelectWish(wish))}
+                  onClick={() => onSelectWish(wish)}
                 />
               ))}
             </section>

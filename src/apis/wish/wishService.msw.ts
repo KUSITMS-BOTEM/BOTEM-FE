@@ -13,7 +13,7 @@ const MOCK_WISHES = MOCK_RECOMMENDED_PRODUCTS.slice(0, MOCK_WISH_STATUSES.length
     productUrl: "https://link.coupang.com/a/example",
     sellerName: product.sellerName,
     status: MOCK_WISH_STATUSES[index],
-    fundingId: MOCK_WISH_STATUSES[index] === "FUNDING" ? 1 : null,
+    fundingId: MOCK_WISH_STATUSES[index] === "FUNDING" ? 12 : null,
   }),
 );
 

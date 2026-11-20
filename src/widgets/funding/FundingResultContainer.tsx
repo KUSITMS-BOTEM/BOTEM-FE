@@ -8,10 +8,11 @@ import Button from "@/components/Button";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
-import type { FundingManagementResponse } from "@/types/funding/fundingManagement";
+import { useGiftChangeStore } from "@/store/giftChangeStore";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import { isValidUrl } from "@/utils/isValidUrl";
-import FundingExtendSheet from "@/widgets/funding/FundingExtendSheet";
+import FundingExtendFlow from "@/widgets/funding/FundingExtendFlow";
 import FundingResultView, { type FundingResult } from "@/widgets/funding/FundingResultView";
 
 const TARGET_PERCENTAGE = 100;
@@ -19,7 +20,7 @@ const TARGET_PERCENTAGE = 100;
 // 금액·친구 목록은 결과 응답, 상품·연장 가능 여부는 관리 상세 응답을 쓴다 (상품을 바꿨으면 목표 금액과 상품 가격이 다를 수 있다)
 const toFundingResult = (
   result: FundingResultResponse,
-  management: FundingManagementResponse,
+  management: OwnerFundingDetailResponse,
 ): FundingResult => ({
   goalAchieved: result.achievementPercentage >= TARGET_PERCENTAGE,
   collectedAmount: result.confirmedAmount,
@@ -74,25 +75,26 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
     if (!isValidUrl(productUrl)) return;
     window.open(productUrl, "_blank", "noopener,noreferrer");
   };
+  // 선물 확인을 떠나면 다른 선물 고르기에서 기억해 둔 기존 선물도 더는 필요 없다
+  const handleClose = () => {
+    useGiftChangeStore.getState().clear();
+    router.replace("/home");
+  };
 
   return (
     <>
       <FundingResultView
         result={result}
         reduceMotion={reduceMotion}
-        onClose={() => router.replace("/home")}
+        onClose={handleClose}
         onBuy={handleBuy}
-        // TODO(API): change-gift 라우트가 아직 없다. 화면을 만들 때 fundingService.changeFundingProduct(PATCH /api/fundings/{id}/product)를 연결한다
         onChangeGift={() => router.push(`/funding/${fundingId}/change-gift`)}
         onExtend={() => setExtendOpen(true)}
       />
-      <FundingExtendSheet
+      <FundingExtendFlow
+        fundingId={Number(fundingId)}
         open={extendOpen}
         collectedAmount={result.collectedAmount}
-        // 응답은 "YYYY-MM-DDTHH:mm:ss"라 시트가 받는 날짜 부분만 넘긴다
-        currentDeadline={managementQuery.data.deadline.slice(0, 10)}
-        // TODO(API): fundingService.extendFunding(POST /api/fundings/{id}/extension)은 있다. mutation 훅을 만들어 연결하고 성공 시 결과·관리·홈 캐시를 무효화한다
-        onExtend={() => setExtendOpen(false)}
         onClose={() => setExtendOpen(false)}
       />
     </>

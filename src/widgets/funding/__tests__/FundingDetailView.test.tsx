@@ -7,6 +7,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
+import { useFundingExtendToastStore } from "@/store/fundingExtendToastStore";
 import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import FundingDetailView from "@/widgets/funding/FundingDetailView";
 
@@ -180,6 +181,20 @@ describe("FundingDetailView", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("결과 화면에서 연장하고 돌아오면 '기간이 연장됐어요' 토스트를 보여준다", () => {
+    useFundingExtendToastStore.getState().mark();
+    render(<FundingDetailView fundingId="1" />);
+
+    expect(screen.getByText("기간이 연장됐어요")).toBeInTheDocument();
+  });
+
+  it("연장 예약 없이 들어오면 연장 토스트를 보여주지 않는다", () => {
+    useFundingExtendToastStore.setState({ pending: false });
+    render(<FundingDetailView fundingId="1" />);
+
+    expect(screen.queryByText("기간이 연장됐어요")).not.toBeInTheDocument();
   });
 
   describe("개설자 화면 데이터", () => {

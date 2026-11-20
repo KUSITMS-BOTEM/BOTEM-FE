@@ -4,7 +4,7 @@ import { useState, type ComponentProps } from "react";
 
 import Dialog from "@/components/Dialog";
 import { useCloseFundingMutation } from "@/hooks/mutations/funding/useCloseFundingMutation";
-import type { FundingManagementActions } from "@/types/funding/fundingManagement";
+import type { FundingManagementActionsResponse } from "@/types/funding/ownerFundingDetail";
 import FundingMoreSheet from "@/widgets/funding/FundingMoreSheet";
 import FundingOpenCompleteSheet from "@/widgets/funding/FundingOpenCompleteSheet";
 
@@ -13,7 +13,7 @@ type FundingMoreFlowProps = {
   open: boolean;
   fundingId: number;
   extended: boolean;
-  actions: Pick<FundingManagementActions, "canCloseEarly" | "canReissueShareCard">;
+  actions: Pick<FundingManagementActionsResponse, "canCloseEarly" | "canReissueShareCard">;
   shareCard: Pick<
     Extract<ComponentProps<typeof FundingOpenCompleteSheet>, { variant: "funding" }>,
     "cardTitle" | "wish" | "info" | "progress"

@@ -14,13 +14,14 @@ beforeAll(() => {
   });
 });
 
-const renderSheet = () => {
+const renderSheet = ({ currentDeadline = "2026-10-13", pending = false } = {}) => {
   const onExtend = vi.fn();
   render(
     <FundingExtendSheet
       open
       collectedAmount={301000}
-      currentDeadline="2026-10-13"
+      currentDeadline={currentDeadline}
+      pending={pending}
       onExtend={onExtend}
       onClose={vi.fn()}
     />,
@@ -78,5 +79,26 @@ describe("FundingExtendSheet", () => {
     await user.click(screen.getByRole("button", { name: "연장하기" }));
 
     expect(onExtend).toHaveBeenCalledWith("2026-10-20");
+  });
+
+  it("마감일이 지난 뒤 열면 오늘부터 오늘 기준 14일 뒤까지만 고를 수 있다", async () => {
+    const { user } = renderSheet({ currentDeadline: "2026-10-05" });
+
+    await openCalendar(user);
+
+    expect(screen.getByRole("button", { name: /10월 12일/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /10월 13일/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /10월 27일/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /10월 28일/ })).toBeDisabled();
+  });
+
+  it("연장 요청 중이면 '연장하기'를 다시 누를 수 없다", async () => {
+    const { onExtend, user } = renderSheet({ pending: true });
+
+    await openCalendar(user);
+    await user.click(screen.getByRole("button", { name: /10월 20일/ }));
+
+    expect(screen.getByRole("button", { name: /연장하기/ })).toBeDisabled();
+    expect(onExtend).not.toHaveBeenCalled();
   });
 });

@@ -1,16 +1,10 @@
-export type FundingResultContributionStatus =
-  | "AWAITING_TRANSFER"
-  | "PENDING_CONFIRMATION"
-  | "CONFIRMED"
-  | "REJECTED"
-  | "CANCELLED"
-  | "MESSAGE_ONLY";
+import type { ContributionLifecycleStatus } from "@/types/contribution/contribution";
 
 export type FundingResultContributionResponse = {
   contributionId: number;
   name: string;
   profileImageUrl: string | null;
-  status: FundingResultContributionStatus;
+  status: ContributionLifecycleStatus;
   participatedAt: string;
   hasMessage: boolean;
   hasPhoto: boolean;

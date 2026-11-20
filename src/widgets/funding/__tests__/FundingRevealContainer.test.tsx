@@ -20,6 +20,24 @@ vi.mock("@/components/effects/RevealMotion", () => ({
 vi.mock("@/components/effects/EmptyIllustration", () => ({
   default: () => <div data-testid="empty-illustration" />,
 }));
+vi.mock("@/widgets/funding/FundingExtendFlow", () => ({
+  default: ({
+    open,
+    fundingId,
+    collectedAmount,
+  }: {
+    open: boolean;
+    fundingId: number;
+    collectedAmount: number;
+  }) =>
+    open ? (
+      <div
+        data-testid="extend-flow"
+        data-funding-id={fundingId}
+        data-collected-amount={collectedAmount}
+      />
+    ) : null,
+}));
 vi.mock("@/widgets/rolling-paper/RollingPaperContainer", () => ({
   default: ({ open, count, fundingId }: { open: boolean; count: number; fundingId: number }) =>
     open ? (
@@ -144,6 +162,19 @@ describe("FundingRevealContainer", () => {
     expect(screen.getByRole("heading", { name: "이번엔 조용히 지나갔어요" })).toBeInTheDocument();
     expect(screen.queryByTestId("reveal-motion")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "메시지 열어보기" })).not.toBeInTheDocument();
+  });
+
+  it("빈 화면에서 '기간 연장하러 가기'를 누르면 모인 금액과 함께 기간 연장 시트를 연다", async () => {
+    mockQuery({ data: makeResult(0, 0, 0) });
+
+    render(<FundingRevealContainer />);
+    expect(screen.queryByTestId("extend-flow")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "기간 연장하러 가기" }));
+
+    const flow = screen.getByTestId("extend-flow");
+    expect(flow).toHaveAttribute("data-funding-id", "12");
+    expect(flow).toHaveAttribute("data-collected-amount", "0");
   });
 
   it("달성률이 100% 미만이면 친구 수와 확정 금액만 보여주고 '목표 달성'은 붙이지 않는다", () => {
