@@ -5,6 +5,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 
 import { wishService } from "@/apis/wish/wishService";
 import { useAddWishMutation } from "@/hooks/mutations/wish/useAddWishMutation";
+import { useGiftChangeStore } from "@/store/giftChangeStore";
 import { useWishOriginStore } from "@/store/wishOriginStore";
 import { useWishToastStore } from "@/store/wishToastStore";
 import type { WishResponse } from "@/types/wish/wish";
@@ -46,6 +47,31 @@ describe("useAddWishMutation", () => {
     queryClient.clear();
     useWishToastStore.setState({ pending: null });
     useWishOriginStore.setState({ recommendedProductIdByWishId: {} });
+    useGiftChangeStore.getState().clear();
+  });
+
+  it("다른 선물 고르기에서 '상품 보기'로 왔다면 위시 상세 대신 그 펀딩의 위시 변경 화면으로 보낸다", async () => {
+    useGiftChangeStore.getState().start(12, null);
+    useGiftChangeStore.getState().setBrowsingProducts(true);
+    vi.mocked(wishService.addWish).mockResolvedValue({ ...mockWish, id: 7 });
+    const { result } = renderHook(() => useAddWishMutation(), { wrapper: createWrapper() });
+
+    result.current.mutate({ recommendedProductId: 1 });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(replace).toHaveBeenCalledWith("/funding/12/change-gift/wish/7");
+    expect(useGiftChangeStore.getState().browsingProducts).toBe(false);
+  });
+
+  it("바꾸는 중인 펀딩이 있어도 '상품 보기'로 온 게 아니면 평소처럼 위시 상세로 보낸다", async () => {
+    useGiftChangeStore.getState().start(12, null);
+    vi.mocked(wishService.addWish).mockResolvedValue({ ...mockWish, id: 7 });
+    const { result } = renderHook(() => useAddWishMutation(), { wrapper: createWrapper() });
+
+    result.current.mutate({ recommendedProductId: 1 });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(replace).toHaveBeenCalledWith("/wish/7");
   });
 
   it("mutate 호출 시 wishService.addWish가 전달받은 body로 호출된다", async () => {

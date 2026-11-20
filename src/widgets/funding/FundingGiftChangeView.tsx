@@ -19,6 +19,7 @@ type FundingGiftChangeViewProps = {
   collectedAmount: number;
   currentGift: GiftChangeProduct;
   wishes: GiftChangeProduct[];
+  currentGiftPending?: boolean;
   onBack: () => void;
   onSelectCurrentGift: () => void;
   onSelectWish: (wish: GiftChangeProduct) => void;
@@ -29,6 +30,7 @@ export default function FundingGiftChangeView({
   collectedAmount,
   currentGift,
   wishes,
+  currentGiftPending = false,
   onBack,
   onSelectCurrentGift,
   onSelectWish,
@@ -36,8 +38,13 @@ export default function FundingGiftChangeView({
 }: FundingGiftChangeViewProps) {
   const shortfall = getShortfall(currentGift.price, collectedAmount);
 
-  const renderSelectButton = (ariaLabel: string, onClick: () => void) => (
-    <Button size="small" aria-label={ariaLabel} onClick={onClick}>
+  const renderSelectButton = (ariaLabel: string, onClick: () => void, pending = false) => (
+    <Button
+      size="small"
+      aria-label={ariaLabel}
+      states={pending ? "loading" : "default"}
+      disabled={pending}
+      onClick={onClick}>
       선택
     </Button>
   );
@@ -67,7 +74,11 @@ export default function FundingGiftChangeView({
             caption="기존 선물"
             titleUp
             textType="price"
-            right={renderSelectButton(`${currentGift.productName} 선택`, onSelectCurrentGift)}
+            right={renderSelectButton(
+              `${currentGift.productName} 선택`,
+              onSelectCurrentGift,
+              currentGiftPending,
+            )}
           />
         </div>
         {wishes.length > 0 && (
