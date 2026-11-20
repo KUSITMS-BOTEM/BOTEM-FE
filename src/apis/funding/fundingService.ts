@@ -1,4 +1,6 @@
-import { clientApi } from "@/apis/client";
+import { clientApi, reissue } from "@/apis/client";
+import { useAuthStore } from "@/store/authStore";
+import { ApiError, REISSUE_UNAVAILABLE } from "@/types/api";
 import type { ClosedFundingListResponse } from "@/types/funding/closedFunding";
 import type {
   CreateFundingRequest,
@@ -40,6 +42,19 @@ export const fundingService = {
 
   getFundingDetail: (fundingId: number) =>
     clientApi.get<FundingDetailResponse>(`/api/fundings/${fundingId}`),
+  // 로그인 여부로 응답(ownerPreview)이 갈리는 선택 인증 API라, 새로고침으로 메모리 토큰이 비었으면 먼저 재발급해 헤더를 붙인다.
+  // 토큰이 없으면 401 없이 비로그인 응답이 와서 clientApi의 재발급이 동작하지 않기 때문이다
+  getFundingDetailAsMember: async (fundingId: number) => {
+    if (!useAuthStore.getState().accessToken) {
+      try {
+        useAuthStore.getState().setAccessToken((await reissue()).accessToken);
+      } catch (error) {
+        // 일시 장애는 호출부가 다시 시도하게 둔다. 인증이 거부된 경우(refreshToken 만료)는 공개 화면이라 비로그인으로 조회한다
+        if (error instanceof ApiError && error.code === REISSUE_UNAVAILABLE) throw error;
+      }
+    }
+    return fundingService.getFundingDetail(fundingId);
+  },
   getFundingManagement: (fundingId: number) =>
     clientApi.get<FundingManagementResponse>(`/api/fundings/${fundingId}/management`),
   closeFunding: (fundingId: number) =>

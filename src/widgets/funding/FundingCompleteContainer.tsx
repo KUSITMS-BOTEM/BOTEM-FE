@@ -16,6 +16,7 @@ import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
 import FundingBragCard from "@/widgets/funding/FundingBragCard";
 import FundingCompleteConfetti from "@/widgets/funding/FundingCompleteConfetti";
 import FundingCompleteTitle from "@/widgets/funding/FundingCompleteTitle";
+import { calcFundingPercent } from "@/utils/funding/fundingProgress";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
 import FundingRiseBubble from "@/widgets/funding/FundingRiseBubble";
 import SampleProduct from "@/assets/images/samples/sample-product.png";
@@ -144,7 +145,7 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
                     productImageUrl={funding.productImageUrl}
                     productName={funding.productName}
                     deadline={funding.deadline}
-                    currentAmount={funding.currentAmount}
+                    percent={calcFundingPercent(funding.currentAmount, funding.targetAmount)}
                     targetAmount={funding.targetAmount}
                     popStatus>
                     {!isMessageOnly && <FundingRiseBubble risePercent={funding.risePercent} />}

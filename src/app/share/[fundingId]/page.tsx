@@ -1,6 +1,13 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { cache } from "react";
 
+import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+
+import { fundingServerService } from "@/apis/funding/fundingServerService";
+import { fundingDetailQueryKey } from "@/hooks/queries/funding/useFundingDetailQuery";
+import { ApiError } from "@/types/api";
 import { parseShareMemberIntent, SHARE_MEMBER_PARAM } from "@/utils/funding/shareMemberIntent";
 import FundingShareContainer from "@/widgets/funding/FundingShareContainer";
 
@@ -9,22 +16,55 @@ type FundingSharePageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-// TODO(API): 펀딩 조회 API가 내려주는 개설자 여부로 교체한다. 판별 수단이 없어 지금은 항상 true라 로그인한 사용자는 모두 개설자로 본다
-const isFundingHost = async () => true;
+const FUNDING_NOT_FOUND = "FUNDING_002";
+
+// generateMetadata와 페이지가 같은 요청을 한 번만 하도록 묶는다. 없는·취소된 펀딩은 404로 보낸다
+const getFunding = cache(async (fundingId: string) => {
+  const id = Number(fundingId);
+  if (!Number.isInteger(id) || id <= 0) notFound();
+  try {
+    const funding = await fundingServerService.getFundingDetail(id);
+    if (!funding) notFound();
+    return funding;
+  } catch (error) {
+    if (error instanceof ApiError && error.code === FUNDING_NOT_FOUND) notFound();
+    throw error;
+  }
+});
+
+// 카톡 공유 미리보기용. 조회에 실패하면 기본 메타를 쓴다
+export async function generateMetadata({ params }: FundingSharePageProps): Promise<Metadata> {
+  try {
+    const funding = await getFunding((await params).fundingId);
+    const title = `${funding.celebrantName}님의 보탬`;
+    const description = funding.story ?? `${funding.product.name} 펀딩에 함께 보태주세요`;
+    return {
+      title,
+      description,
+      openGraph: { title, description, images: [funding.product.imageUrl] },
+    };
+  } catch {
+    return {};
+  }
+}
 
 export default async function FundingSharePage({ params, searchParams }: FundingSharePageProps) {
   const { fundingId } = await params;
   const memberIntent = parseShareMemberIntent((await searchParams)[SHARE_MEMBER_PARAM]);
-  // 참여 회원은 share에 머물고, 로그인한 개설자만 기존 펀딩 화면으로 보낸다
+  // 참여 회원은 share에 머문다. 개설자는 토큰이 있어야 알 수 있어, 클라이언트가 재조회한 ownerPreview로 기존 펀딩 화면에 보낸다
   const isLoggedIn = (await cookies()).get("isLoggedIn")?.value === "true";
-  if (isLoggedIn && (await isFundingHost())) redirect(`/funding/${fundingId}`);
-  // TODO(API): 비회원 펀딩 공개 조회 API가 나오면 여기서 서버 prefetch(server.ts 공개 GET)를 한다. generateMetadata도 같은 응답으로 카톡 OG 미리보기(진행률·상품 이미지)를 만든다
+  const funding = await getFunding(fundingId);
+
+  const queryClient = new QueryClient();
+  queryClient.setQueryData(fundingDetailQueryKey(funding.fundingId), funding);
 
   return (
-    <FundingShareContainer
-      fundingId={fundingId}
-      memberIntent={memberIntent}
-      isLoggedIn={isLoggedIn}
-    />
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <FundingShareContainer
+        fundingId={fundingId}
+        memberIntent={memberIntent}
+        isLoggedIn={isLoggedIn}
+      />
+    </HydrationBoundary>
   );
 }

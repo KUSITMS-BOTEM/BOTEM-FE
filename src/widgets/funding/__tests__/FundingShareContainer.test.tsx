@@ -9,6 +9,18 @@ vi.mock("@/hooks/mutations/auth/useKakaoLoginUriMutation", () => ({
 vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
   useMyProfileQuery: () => ({ data: { name: "민지" } }),
 }));
+vi.mock("@/hooks/queries/funding/useFundingDetailQuery", async () => {
+  const { FUNDING_DETAIL } = await import("@/widgets/funding/__tests__/fixtures/fundingDetail");
+  return {
+    useFundingDetailQuery: () => ({
+      data: FUNDING_DETAIL,
+      isError: false,
+      isFetchedAfterMount: true,
+      refetch: vi.fn(),
+    }),
+  };
+});
+
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element

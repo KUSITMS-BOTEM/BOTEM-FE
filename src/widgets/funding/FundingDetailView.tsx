@@ -20,6 +20,9 @@ import { handleKakaoLoginClick } from "@/utils/auth/handleKakaoLoginClick";
 import { getShareReturnPath, type ShareMemberIntent } from "@/utils/funding/shareMemberIntent";
 import { cn } from "@/utils/cn";
 import type { DepositItem } from "@/utils/funding/depositConfirm";
+import type { PendingContributionItemResponse } from "@/types/contribution/contribution";
+import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
+import type { FundingManagementResponse } from "@/types/funding/fundingManagement";
 import { getClosedLabel } from "@/utils/funding/fundingProgress";
 import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
 import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
@@ -35,7 +38,6 @@ import FundingTransferGuideSheet, {
   type FundingTransferAccount,
 } from "@/widgets/funding/FundingTransferGuideSheet";
 import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
-import SampleProduct from "@/assets/images/samples/sample-product.png";
 import IconShare from "@/assets/icons/icon-share.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconLock from "@/assets/icons/icon-lock.svg?react";
@@ -44,6 +46,10 @@ import ProfilePink from "@/assets/icons/multicolor/profile-pink.svg?react";
 
 type FundingDetailViewProps = {
   fundingId: string;
+  detail: FundingDetailResponse;
+  // 개설자 화면(owner·surprise)에서만 내려온다. 없으면 목을 쓴다
+  management?: FundingManagementResponse;
+  pendingItems?: PendingContributionItemResponse[];
   // guest: 비회원 공유 링크 / surprise: 친구 몰래 연 개설자 화면 / owner: 내 펀딩을 연 주인 화면
   variant?: "guest" | "surprise" | "owner";
   // 있으면 헤더 왼쪽에 뒤로가기 버튼을 보여준다
@@ -54,22 +60,12 @@ type FundingDetailViewProps = {
   isLoggedIn?: boolean;
 };
 
-// TODO(API): 비회원 펀딩 공개 조회 API가 나오면 fundingId로 받아온 값으로 교체한다
-const MOCK_FUNDING = {
-  hostName: "민재",
-  title: "민재의 생일",
-  story: "올해 생일엔 출퇴근길에 쓸 노캔 헤드폰이 갖고 싶어요. 조금씩 보태주면 감동할게요!",
-  pledge: "펀딩이 성공하면 헤드폰 끼고 출근하는 인증샷을 꼭 올릴게요!",
-  productName: "소니 WH-1000XM5",
-  productImageUrl: SampleProduct.src,
-  deadline: "2026-12-31",
-  // TODO(API): 개설자가 선물 인증 사진을 올렸는지 서버 값으로 교체한다 (true면 마감 후 인증 화면)
-  hasGiftProof: false,
-  currentAmount: 74074074,
-  targetAmount: 123456789,
-  participants: ["orange", "blue", "pink"] as const,
-  extraParticipantCount: 99,
-  // TODO(API): 개설자의 확인 대기 입금 목록 API가 나오면 교체한다 (건수도 이 목록 길이로 맞춘다)
+// 프로필 묶음에 보여줄 최대 인원. 나머지는 +N으로 묶는다
+const MAX_PROFILES = 3;
+const PROFILE_COLORS = ["orange", "blue", "pink", "lime"] as const;
+
+// TODO(API): 아래 값은 펀딩 상세 응답에 없어 목으로 남긴다. 개설자 화면(owner·surprise)의 deposits·messageCount·friends는 toHostData가 서버 값으로 덮어쓴다
+const MOCK_PENDING = {
   deposits: [
     { id: 1, senderName: "하린이", amount: 45000, depositedAt: "2026-11-18T11:20:00" },
     { id: 2, senderName: "도윤이", amount: 30000, depositedAt: "2026-11-16T09:05:00" },
@@ -96,11 +92,43 @@ const MOCK_FUNDING = {
   } satisfies FundingTransferAccount,
 };
 
+// 개설자 화면의 확인 대기 입금·메시지 수·참여자를 서버 값으로 옮긴다
+const toHostData = (
+  management: FundingManagementResponse,
+  pendingItems: PendingContributionItemResponse[],
+) => ({
+  deposits: pendingItems.map(
+    ({ contributionId, participantName, amount, participatedAt }): DepositItem => ({
+      id: contributionId,
+      senderName: participantName,
+      amount,
+      depositedAt: participatedAt,
+    }),
+  ),
+  messageCount: management.messageCount,
+  // 같은 회원이 여러 번 보태면 order가 같아 첫 줄만 보여준다
+  friends: management.participants
+    .filter(
+      (participant, index, all) =>
+        all.findIndex(item => item.order === participant.order) === index,
+    )
+    .map((participant): MyBotemSheetFriend => ({
+      id: participant.contributionId,
+      name: participant.name,
+      contributedAt: participant.participatedAt,
+      profileImageUrl: participant.profileImageUrl ?? undefined,
+      thankCardSent: participant.thankCardSent,
+    })),
+});
+
 // TODO: 공유·더보기 동작은 디자인이 정해지면 연결한다
 const noop = () => {};
 
 export default function FundingDetailView({
   fundingId,
+  detail,
+  management,
+  pendingItems,
   variant = "guest",
   onBack,
   memberIntent,
@@ -108,7 +136,27 @@ export default function FundingDetailView({
 }: FundingDetailViewProps) {
   const router = useRouter();
   const { pageExit, exitPage } = usePageExit();
-  const funding = MOCK_FUNDING;
+  // 상세 응답에는 금액이 없고 달성률만 있어, 화면이 쓰던 funding 모양으로 옮겨 담는다
+  const funding = {
+    ...MOCK_PENDING,
+    ...(management && pendingItems && toHostData(management, pendingItems)),
+    hostName: detail.celebrantName,
+    title: detail.title ?? `${detail.celebrantName}의 생일`,
+    story: detail.story ?? undefined,
+    pledge: detail.promise ?? undefined,
+    productName: detail.product.name,
+    productImageUrl: detail.product.imageUrl,
+    // 응답은 "YYYY-MM-DDTHH:mm:ss"라 날짜만 쓴다
+    deadline: detail.deadline.slice(0, 10),
+    percent: detail.confirmedPercentage,
+    targetAmount: detail.targetAmount,
+    hasGiftProof: detail.giftVerification !== null,
+    participants: detail.participants.slice(0, MAX_PROFILES).map((participant, index) => ({
+      color: PROFILE_COLORS[index % PROFILE_COLORS.length],
+      imageUrl: participant.profileImageUrl ?? undefined,
+    })),
+    extraParticipantCount: Math.max(0, detail.participantCount - MAX_PROFILES),
+  };
   const unconfirmedCount = funding.deposits.length;
   const isSurprise = variant === "surprise";
   const isOwner = variant === "owner";
@@ -181,7 +229,13 @@ export default function FundingDetailView({
     reset();
     setFlowKey(key => key + 1);
   };
-  const remainingAmount = funding.targetAmount - funding.currentAmount;
+  // 서버가 남은 금액을 주지 않아 목표 금액에서 확정·확인 대기 달성률을 뺀 값으로 근사한다 (서버가 최종 검증)
+  const remainingAmount = Math.max(
+    0,
+    Math.round(
+      (funding.targetAmount * (100 - detail.confirmedPercentage - detail.pendingPercentage)) / 100,
+    ),
+  );
   // 금액 달성(마감)·기간 마감 모두 닫힌 펀딩이다
   const closedLabel = getClosedLabel(funding);
   const isClosed = closedLabel !== null;
@@ -189,7 +243,7 @@ export default function FundingDetailView({
   if (isClosed && funding.hasGiftProof) {
     return (
       <FundingGiftProofView
-        contributorCount={funding.friends.length}
+        contributorCount={detail.participantCount}
         productName={funding.productName}
       />
     );
@@ -237,7 +291,7 @@ export default function FundingDetailView({
             productImageUrl={funding.productImageUrl}
             productName={funding.productName}
             deadline={funding.deadline}
-            currentAmount={funding.currentAmount}
+            percent={funding.percent}
             targetAmount={funding.targetAmount}
             locked={isSurprise}
           />
@@ -259,7 +313,7 @@ export default function FundingDetailView({
                 </Tooltip>
               )}
               <ProfileBox
-                profiles={funding.participants.map(color => ({ color }))}
+                profiles={funding.participants}
                 extraCount={funding.extraParticipantCount}
                 notification={confirmsDeposits && unconfirmedCount > 0}
                 className="bg-semantic-fill-default shadow-[0_4px_8px_0_var(--color-semantic-shadow-weak)]"

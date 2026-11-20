@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
-import FundingDetailView from "@/widgets/funding/FundingDetailView";
+import FundingDetailLoader from "@/widgets/funding/FundingDetailLoader";
 import FundingLockedView from "@/widgets/funding/FundingLockedView";
 
 type FundingDetailContainerProps = {
@@ -28,11 +28,11 @@ export default function FundingDetailContainer({
   const role: ViewerRole = friendId ? "host" : MOCK_VIEWER_ROLE;
 
   if (role === "recipient") return <FundingLockedView revealDateLabel={MOCK_REVEAL_DATE_LABEL} />;
-  if (role === "guest") return <FundingDetailView fundingId={fundingId} variant="guest" />;
-  if (role === "owner") return <FundingDetailView fundingId={fundingId} variant="owner" />;
+  if (role === "guest") return <FundingDetailLoader fundingId={fundingId} variant="guest" />;
+  if (role === "owner") return <FundingDetailLoader fundingId={fundingId} variant="owner" />;
 
   return (
-    <FundingDetailView
+    <FundingDetailLoader
       fundingId={fundingId}
       variant="surprise"
       onBack={() => router.push(`/friends/${friendId}`)}

@@ -80,4 +80,25 @@ describe("fundingHandlers POST /api/fundings/surprise", () => {
       shareUrl: expect.any(String),
     });
   });
+
+  describe("펀딩 상세 조회", () => {
+    const getDetail = async (fundingId: number, headers?: HeadersInit) => {
+      const response = await fetch(`http://localhost/api/fundings/${fundingId}`, { headers });
+      return response.json();
+    };
+
+    it("요청한 펀딩 id를 돌려주고 토큰이 없으면 ownerPreview는 false다", async () => {
+      const body = await getDetail(99);
+
+      expect(body.data.fundingId).toBe(99);
+      expect(body.data.ownerPreview).toBe(false);
+    });
+
+    it("토큰을 붙인 id 99 조회만 ownerPreview가 true다", async () => {
+      const headers = { Authorization: "Bearer token" };
+
+      expect((await getDetail(99, headers)).data.ownerPreview).toBe(true);
+      expect((await getDetail(12, headers)).data.ownerPreview).toBe(false);
+    });
+  });
 });

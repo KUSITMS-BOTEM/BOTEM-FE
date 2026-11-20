@@ -32,12 +32,17 @@ export type FundingDetailResponse = {
   fundingId: number;
   type: FundingType;
   title: string | null;
+  // '{이름}의 생일' 제목의 주인공. 생일 펀딩은 개설자, 서프라이즈는 받는 사람 (이름이 없으면 닉네임)
+  celebrantName: string;
+  celebrantProfileImageUrl: string | null;
+  targetAmount: number;
   product: FundingProduct;
   productChanged: boolean;
   productChangedAt: string | null;
   story: string | null;
   promise: string | null;
   deadline: string;
+  extended: boolean;
   remainingDays: number | null;
   confirmedPercentage: number;
   pendingPercentage: number;

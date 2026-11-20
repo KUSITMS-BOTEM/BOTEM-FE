@@ -1,7 +1,7 @@
 "use client";
 
 import type { ShareMemberIntent } from "@/utils/funding/shareMemberIntent";
-import FundingDetailView from "@/widgets/funding/FundingDetailView";
+import FundingDetailLoader from "@/widgets/funding/FundingDetailLoader";
 
 type FundingShareContainerProps = {
   fundingId: string;
@@ -15,7 +15,7 @@ export default function FundingShareContainer({
   isLoggedIn,
 }: FundingShareContainerProps) {
   return (
-    <FundingDetailView
+    <FundingDetailLoader
       fundingId={fundingId}
       variant="guest"
       memberIntent={memberIntent}

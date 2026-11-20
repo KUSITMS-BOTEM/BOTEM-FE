@@ -1,0 +1,37 @@
+import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
+
+export const FUNDING_DETAIL: FundingDetailResponse = {
+  fundingId: 1,
+  type: "BIRTHDAY",
+  title: null,
+  celebrantName: "민재",
+  celebrantProfileImageUrl: null,
+  targetAmount: 123456789,
+  product: {
+    name: "소니 WH-1000XM5",
+    imageUrl: "/a.png",
+    price: 123456789,
+    url: "https://example.com",
+  },
+  productChanged: false,
+  productChangedAt: null,
+  story: "올해 생일엔 출퇴근길에 쓸 노캔 헤드폰이 갖고 싶어요. 조금씩 보태주면 감동할게요!",
+  promise: "펀딩이 성공하면 헤드폰 끼고 출근하는 인증샷을 꼭 올릴게요!",
+  deadline: "2026-12-31T23:59:59",
+  extended: false,
+  remainingDays: 41,
+  confirmedPercentage: 60,
+  pendingPercentage: 0,
+  participantCount: 3,
+  participants: [
+    { order: 1, name: "하린이", profileImageUrl: null },
+    { order: 2, name: "도윤이", profileImageUrl: null },
+    { order: 3, name: "서준이", profileImageUrl: null },
+  ],
+  displayStatus: "IN_PROGRESS",
+  canContributeAmount: true,
+  canParticipate: true,
+  ownerPreview: false,
+  giftVerification: null,
+  thankCard: null,
+};
