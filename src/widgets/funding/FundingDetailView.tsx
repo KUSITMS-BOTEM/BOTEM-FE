@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
+import BottomCTA from "@/components/BottomCTA";
+import Button from "@/components/Button";
 import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
 import PageExitMotion from "@/components/effects/PageExitMotion";
@@ -11,9 +13,12 @@ import ProfileBox from "@/components/ProfileBox";
 import Tooltip from "@/components/Tooltip";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
+import { useGuestBotemStore } from "@/store/guestBotemStore";
+import { cn } from "@/utils/cn";
 import type { DepositItem } from "@/utils/funding/depositConfirm";
 import { getClosedLabel } from "@/utils/funding/fundingProgress";
 import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
+import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
 import BotemPopup from "@/widgets/funding/BotemPopup";
 import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
@@ -86,6 +91,13 @@ export default function FundingDetailView({
   const unconfirmedCount = funding.deposits.length;
   const isSurprise = variant === "surprise";
   const isOwner = variant === "owner";
+  const isGuest = variant === "guest";
+  // 하단 CTA 버튼을 누르면 회원/비회원 구분 Dialog를 띄운다. 값은 어느 버튼에서 왔는지
+  // TODO: Dialog '예'(로그인) 이후와 '보태러가기'의 '아니오'(비회원)는 후속 작업에서 이 값으로 분기한다
+  const [memberCheckFrom, setMemberCheckFrom] = useState<"myBotem" | "contribute" | null>(null);
+  const [isGuestFindOpen, setIsGuestFindOpen] = useState(false);
+  // 비회원이 이름·비밀번호로 내 보탬을 확인하고 나면 하단은 '내 보탬 확인' 버튼만 남는다
+  const hasGuestIdentity = useGuestBotemStore(state => state.name !== null);
   // 받은 입금을 확인해야 하는 쪽(서프라이즈 개설자·펀딩 주인)
   const confirmsDeposits = isSurprise || isOwner;
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -146,7 +158,12 @@ export default function FundingDetailView({
             { icon: <IconDotVertical />, ariaLabel: "더보기", onClick: noop },
           ]}
         />
-        <div className="flex flex-col gap-4 px-5 pb-[calc(var(--padding-large)+env(safe-area-inset-bottom))]">
+        <div
+          className={cn(
+            "flex flex-col gap-4 px-5 pb-[calc(var(--padding-large)+env(safe-area-inset-bottom))]",
+            // fixed 하단 CTA(그라데이션 36 + 버튼 56 + 여백)에 내용이 가려지지 않게 비운다
+            isGuest && "pb-[calc(8rem+env(safe-area-inset-bottom))]",
+          )}>
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2.5 py-1">
               <ProfilePink aria-hidden className="size-6 shrink-0" />
@@ -168,30 +185,75 @@ export default function FundingDetailView({
             targetAmount={funding.targetAmount}
             locked={isSurprise}
           />
-          <button
-            type="button"
-            onClick={() => setIsPopupOpen(true)}
-            className="flex cursor-pointer items-center gap-2 self-end">
-            {/* Figma FUND-PG-008: 펀딩 주인 화면은 툴팁 없이 프로필 묶음만 보여준다 */}
-            {!isOwner && (
-              <Tooltip>
-                {isSurprise
-                  ? `확인 대기 ${unconfirmedCount}건이 있어요`
-                  : closedLabel === "기간 마감"
-                    ? "축하 메시지만 보낼 수 있어요!"
-                    : isClosed
-                      ? "마감일까지 메시지로 보탤까요?"
-                      : `나도 ${funding.hostName}님께 보태볼까요?`}
-              </Tooltip>
-            )}
-            <ProfileBox
-              profiles={funding.participants.map(color => ({ color }))}
-              extraCount={funding.extraParticipantCount}
-              notification={confirmsDeposits && unconfirmedCount > 0}
-              className="bg-semantic-fill-default shadow-[0_4px_8px_0_var(--color-semantic-shadow-weak)]"
-            />
-          </button>
+          {!isGuest && (
+            <button
+              type="button"
+              onClick={() => setIsPopupOpen(true)}
+              className="flex cursor-pointer items-center gap-2 self-end">
+              {/* Figma FUND-PG-008: 펀딩 주인 화면은 툴팁 없이 프로필 묶음만 보여준다 */}
+              {!isOwner && (
+                <Tooltip>
+                  {isSurprise
+                    ? `확인 대기 ${unconfirmedCount}건이 있어요`
+                    : closedLabel === "기간 마감"
+                      ? "축하 메시지만 보낼 수 있어요!"
+                      : isClosed
+                        ? "마감일까지 메시지로 보탤까요?"
+                        : `나도 ${funding.hostName}님께 보태볼까요?`}
+                </Tooltip>
+              )}
+              <ProfileBox
+                profiles={funding.participants.map(color => ({ color }))}
+                extraCount={funding.extraParticipantCount}
+                notification={confirmsDeposits && unconfirmedCount > 0}
+                className="bg-semantic-fill-default shadow-[0_4px_8px_0_var(--color-semantic-shadow-weak)]"
+              />
+            </button>
+          )}
         </div>
+        {isGuest && (
+          <BottomCTA>
+            {hasGuestIdentity ? (
+              <Button size="xlarge" variant="fill" onClick={() => setIsPopupOpen(true)}>
+                내 보탬 확인
+              </Button>
+            ) : (
+              <>
+                <Button size="xlarge" variant="weak" onClick={() => setMemberCheckFrom("myBotem")}>
+                  내 보탬 확인
+                </Button>
+                <Button
+                  size="xlarge"
+                  variant="fill"
+                  onClick={() => setMemberCheckFrom("contribute")}>
+                  보태러가기
+                </Button>
+              </>
+            )}
+          </BottomCTA>
+        )}
+        {/* TODO(API): 이름·비밀번호로 일치하는 보탬을 조회하는 API가 나오면 여기서 검증하고, 없으면 안내 후 시트를 닫지 않는다. 지금은 입력만 하면 통과한다 */}
+        <BotemEditSheet
+          open={isGuestFindOpen}
+          onClose={() => setIsGuestFindOpen(false)}
+          onSubmit={(name, password) => {
+            useGuestBotemStore.getState().setIdentity(name, password);
+            setIsGuestFindOpen(false);
+            setIsPopupOpen(true);
+          }}
+        />
+        <Dialog
+          kind="confirm"
+          open={memberCheckFrom !== null}
+          title="이미 보탬 회원이신가요?"
+          description="비회원이여도 보태러갈 수 있어요"
+          confirmColor="neutral"
+          onCancel={() => {
+            if (memberCheckFrom === "myBotem") setIsGuestFindOpen(true);
+            setMemberCheckFrom(null);
+          }}
+          onConfirm={() => setMemberCheckFrom(null)}
+        />
         {/* TODO: 팝업 내부 동작(미확인·수정·메세지·보태기)은 보탬 폼 디자인이 정해지면 연결한다 */}
         <BotemPopup
           open={isPopupOpen}
