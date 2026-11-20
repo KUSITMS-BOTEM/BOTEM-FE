@@ -8,7 +8,8 @@ import Button from "@/components/Button";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
-import type { FundingManagementResponse, FundingResultResponse } from "@/types/funding/funding";
+import type { FundingManagementResponse } from "@/types/funding/fundingManagement";
+import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import { isValidUrl } from "@/utils/isValidUrl";
 import FundingExtendSheet from "@/widgets/funding/FundingExtendSheet";
 import FundingResultView, { type FundingResult } from "@/widgets/funding/FundingResultView";
@@ -81,6 +82,7 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
         reduceMotion={reduceMotion}
         onClose={() => router.replace("/home")}
         onBuy={handleBuy}
+        // TODO(API): change-gift 라우트가 아직 없다. 화면을 만들 때 fundingService.changeFundingProduct(PATCH /api/fundings/{id}/product)를 연결한다
         onChangeGift={() => router.push(`/funding/${fundingId}/change-gift`)}
         onExtend={() => setExtendOpen(true)}
       />
@@ -89,7 +91,7 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
         collectedAmount={result.collectedAmount}
         // 응답은 "YYYY-MM-DDTHH:mm:ss"라 시트가 받는 날짜 부분만 넘긴다
         currentDeadline={managementQuery.data.deadline.slice(0, 10)}
-        // TODO(API): 마감일 연장 API가 생기면 연결한다
+        // TODO(API): fundingService.extendFunding(POST /api/fundings/{id}/extension)은 있다. mutation 훅을 만들어 연결하고 성공 시 결과·관리·홈 캐시를 무효화한다
         onExtend={() => setExtendOpen(false)}
         onClose={() => setExtendOpen(false)}
       />

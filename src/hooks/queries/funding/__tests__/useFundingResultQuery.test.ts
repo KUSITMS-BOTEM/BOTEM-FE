@@ -8,7 +8,7 @@ import {
   fundingResultQueryKey,
   useFundingResultQuery,
 } from "@/hooks/queries/funding/useFundingResultQuery";
-import type { FundingResultResponse } from "@/types/funding/funding";
+import type { FundingResultResponse } from "@/types/funding/fundingResult";
 
 vi.mock("@/apis/funding/fundingService", () => ({
   fundingService: {

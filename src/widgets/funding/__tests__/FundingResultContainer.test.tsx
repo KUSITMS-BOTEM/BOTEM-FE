@@ -3,7 +3,8 @@ import userEvent from "@testing-library/user-event";
 
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
-import type { FundingManagementResponse, FundingResultResponse } from "@/types/funding/funding";
+import type { FundingManagementResponse } from "@/types/funding/fundingManagement";
+import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import FundingResultContainer from "@/widgets/funding/FundingResultContainer";
 
 const replace = vi.fn();

@@ -4,10 +4,8 @@ import { useState } from "react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { getHomePath } from "@/utils/home/getHomePath";
 import MyMenuSheet from "@/widgets/user/MyMenuSheet";
-
-export const MY_MENU_OPEN_PATH = "/home?menu=open";
-const MY_MENU_CLOSED_PATH = "/home";
 
 type HomeMyMenuSheetProps = {
   closedFundingCount: number;
@@ -21,7 +19,7 @@ export default function HomeMyMenuSheet({ closedFundingCount }: HomeMyMenuSheetP
 
   const close = () => {
     setIsRestored(false);
-    router.replace(MY_MENU_CLOSED_PATH, { scroll: false });
+    router.replace(getHomePath(searchParams, { menu: null }), { scroll: false });
   };
 
   return (

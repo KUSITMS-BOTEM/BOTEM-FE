@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { wishService } from "@/apis/wish/wishService";
+import { homeNoFundingQueryKey } from "@/hooks/queries/home/useHomeNoFundingQuery";
 import { recommendedProductsQueryKey } from "@/hooks/queries/recommended-product/useRecommendedProductsQuery";
 import { homeWishesQueryKey } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { wishesQueryKey } from "@/hooks/queries/wish/useWishesQuery";
@@ -20,6 +21,8 @@ export const useDeleteWishMutation = (wishId: string) => {
       // 이동할 화면(추천 상품 목록·상세, 홈, 위시 목록)이 삭제 전 wishId를 들고 있지 않게 목록 키만 무효화한다
       queryClient.invalidateQueries({ queryKey: wishesQueryKey, exact: true });
       queryClient.invalidateQueries({ queryKey: homeWishesQueryKey });
+      // 펀딩 없는 홈 응답에도 위시 목록이 들어 있어 함께 다시 받는다
+      queryClient.invalidateQueries({ queryKey: homeNoFundingQueryKey });
       queryClient.invalidateQueries({ queryKey: recommendedProductsQueryKey });
       // 위시 응답엔 추천 상품 id가 없어 담을 때 기록해 둔 값을 쓴다
       const { recommendedProductIdByWishId, clearOrigin } = useWishOriginStore.getState();

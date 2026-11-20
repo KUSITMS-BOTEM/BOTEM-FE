@@ -1,6 +1,7 @@
 import { clientApi } from "@/apis/client";
 import { fundingService } from "@/apis/funding/fundingService";
-import type { CreateFundingRequest, FundingResultResponse } from "@/types/funding/funding";
+import type { CreateFundingRequest, CreateSurpriseFundingRequest } from "@/types/funding/funding";
+import type { FundingResultResponse } from "@/types/funding/fundingResult";
 
 vi.mock("@/apis/client", () => ({
   clientApi: {
@@ -45,12 +46,12 @@ describe("fundingService.getResult", () => {
   });
 });
 
-describe("fundingService.getManagement", () => {
+describe("fundingService.getFundingManagement", () => {
   it("clientApi.get을 펀딩 id가 들어간 management 경로로 호출하고 반환값을 그대로 돌려준다", async () => {
     const management = { fundingId: 12, deadline: "2026-11-30T23:59:59.999999" };
     vi.mocked(clientApi.get).mockResolvedValue(management);
 
-    await expect(fundingService.getManagement(12)).resolves.toEqual(management);
+    await expect(fundingService.getFundingManagement(12)).resolves.toEqual(management);
     expect(clientApi.get).toHaveBeenCalledWith("/api/fundings/12/management");
   });
 
@@ -58,24 +59,26 @@ describe("fundingService.getManagement", () => {
     const error = new Error("관리 상세 조회 실패");
     vi.mocked(clientApi.get).mockRejectedValue(error);
 
-    await expect(fundingService.getManagement(12)).rejects.toBe(error);
+    await expect(fundingService.getFundingManagement(12)).rejects.toBe(error);
   });
 });
 
-describe("fundingService.postResultOpen", () => {
+describe("fundingService.openResult", () => {
   it("clientApi.post를 펀딩 id가 들어간 result/open 경로로 호출하고 반환값을 그대로 돌려준다", async () => {
     const opened = { ...mockResult, resultOpenedAt: "2026-11-15T00:00:00" };
     vi.mocked(clientApi.post).mockResolvedValue(opened);
 
-    await expect(fundingService.postResultOpen(12)).resolves.toEqual(opened);
-    expect(clientApi.post).toHaveBeenCalledWith("/api/fundings/12/result/open");
+    await expect(fundingService.openResult(12)).resolves.toEqual(opened);
+    expect(clientApi.post).toHaveBeenCalledWith("/api/fundings/12/result/open", undefined, {
+      searchParams: { excludePendingContributions: false },
+    });
   });
 
   it("clientApi.post가 실패하면 에러를 그대로 전파한다", async () => {
     const error = new Error("팡 열기 실패");
     vi.mocked(clientApi.post).mockRejectedValue(error);
 
-    await expect(fundingService.postResultOpen(12)).rejects.toBe(error);
+    await expect(fundingService.openResult(12)).rejects.toBe(error);
   });
 });
 
@@ -102,5 +105,50 @@ describe("fundingService.postFunding", () => {
     vi.mocked(clientApi.post).mockRejectedValue(error);
 
     await expect(fundingService.postFunding(body)).rejects.toBe(error);
+  });
+});
+
+describe("fundingService.postSurpriseFunding", () => {
+  const body: CreateSurpriseFundingRequest = {
+    recipientId: 3,
+    wishId: 9,
+    bank: "TOSS_BANK",
+    accountNumber: "100159014821",
+    targetAmount: 350000,
+    deadline: "2026-11-30",
+    revealAt: "2026-12-01T00:00:00",
+    showOnRecipientProfile: true,
+  };
+
+  it("clientApi.post를 /api/fundings/surprise로 body와 함께 호출하고 반환값을 그대로 돌려준다", async () => {
+    const created = { fundingId: 8, type: "SURPRISE", status: "FUNDING", shareUrl: "https://x/8" };
+    vi.mocked(clientApi.post).mockResolvedValue(created);
+
+    await expect(fundingService.postSurpriseFunding(body)).resolves.toEqual(created);
+    expect(clientApi.post).toHaveBeenCalledWith("/api/fundings/surprise", body);
+  });
+
+  it("clientApi.post가 실패하면 에러를 그대로 전파한다", async () => {
+    const error = new Error("서프라이즈 개설 실패");
+    vi.mocked(clientApi.post).mockRejectedValue(error);
+
+    await expect(fundingService.postSurpriseFunding(body)).rejects.toBe(error);
+  });
+});
+
+describe("fundingService.getOwnerFundingDetail", () => {
+  it("clientApi.get을 펀딩 id가 들어간 management 경로로 호출한다", async () => {
+    vi.mocked(clientApi.get).mockResolvedValue(null);
+
+    await fundingService.getOwnerFundingDetail(12);
+
+    expect(clientApi.get).toHaveBeenCalledWith("/api/fundings/12/management");
+  });
+
+  it("clientApi.get이 실패하면 에러를 그대로 전파한다", async () => {
+    const error = new Error("관리 상세 조회 실패");
+    vi.mocked(clientApi.get).mockRejectedValue(error);
+
+    await expect(fundingService.getOwnerFundingDetail(12)).rejects.toBe(error);
   });
 });

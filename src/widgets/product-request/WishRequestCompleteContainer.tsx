@@ -8,17 +8,19 @@ import { useRouter } from "next/navigation";
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
+import PageExitMotion from "@/components/effects/PageExitMotion";
 import Title from "@/components/Title";
 import IconClose from "@/assets/icons/icon-close.svg?react";
 import { WISH_REQUEST_SENT_KEY } from "@/constants/wishRequest";
+import { usePageExit } from "@/hooks/usePageExit";
 
-// 홈 랜딩과 같은 모션이다. framer-motion과 모션 데이터를 첫 번들에서 분리한다
 const HeroMotion = dynamic(() => import("@/components/effects/hero-motion/HeroMotion"), {
   ssr: false,
 });
 
 export default function WishRequestCompleteContainer() {
   const router = useRouter();
+  const { pageExit, exitPage } = usePageExit();
   const isAllowed = useSyncExternalStore(
     () => () => {},
     () => {
@@ -50,14 +52,14 @@ export default function WishRequestCompleteContainer() {
   if (!isAllowed) return null;
 
   return (
-    <>
+    <PageExitMotion exit={pageExit}>
       <Header
         title=""
         rightItems={[
           {
             icon: <IconClose />,
             ariaLabel: "닫기",
-            onClick: () => leave(() => router.replace("/home")),
+            onClick: () => exitPage("fade", () => leave(() => router.replace("/home"))),
           },
         ]}
       />
@@ -67,7 +69,6 @@ export default function WishRequestCompleteContainer() {
           title={"상품 추가 요청을\n보냈어요"}
           description={"쿠팡에 있는 상품이면\n확인 후 위시 상품에 추가해드려요"}
         />
-        {/* 하단 고정 CTA(약 154px)를 뺀 남은 공간의 정중앙에 모션을 둔다 */}
         <div className="flex flex-1 items-center justify-center pb-40">
           <HeroMotion />
         </div>
@@ -85,6 +86,6 @@ export default function WishRequestCompleteContainer() {
           위시 상품 둘러보기
         </Button>
       </BottomCTA>
-    </>
+    </PageExitMotion>
   );
 }

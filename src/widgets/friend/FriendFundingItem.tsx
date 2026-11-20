@@ -9,7 +9,6 @@ import type { FriendFundingResponse } from "@/types/friend/friend";
 import { cn } from "@/utils/cn";
 import { formatParticipantCaption } from "@/utils/friend/formatParticipantCaption";
 import { formatDeadlineShort } from "@/utils/funding/formatDeadline";
-import { calcFundingPercent } from "@/utils/funding/fundingProgress";
 import { getDDayLabel } from "@/utils/funding/getDDayLabel";
 import { isValidUrl } from "@/utils/isValidUrl";
 import FriendSurpriseInfoButton from "@/widgets/friend/FriendSurpriseInfoButton";
@@ -22,11 +21,14 @@ type FriendFundingItemProps = {
 
 export default function FriendFundingItem({ funding }: FriendFundingItemProps) {
   const productNameId = useId();
-  const percent = calcFundingPercent(funding.currentAmount, funding.targetAmount);
-  const dDay = getDDayLabel(funding.deadline);
-  const deadlineText = `펀딩 마감 ${formatDeadlineShort(funding.deadline)}${dDay ? ` · ${dDay}` : ""}`;
+  const isSurprise = funding.type === "SURPRISE";
+  const percent = funding.confirmedPercentage;
+  // deadline은 시각이 붙은 ISO 문자열이라 날짜 유틸이 받는 "YYYY-MM-DD"로 자른다
+  const deadlineDate = funding.deadline.slice(0, 10);
+  const dDay = getDDayLabel(deadlineDate);
+  const deadlineText = `펀딩 마감 ${formatDeadlineShort(deadlineDate)}${dDay ? ` · ${dDay}` : ""}`;
   const participantCaption = formatParticipantCaption(
-    funding.representativeParticipantName,
+    funding.firstParticipantName,
     funding.participantCount,
   );
   const imageUrl =
@@ -44,14 +46,14 @@ export default function FriendFundingItem({ funding }: FriendFundingItemProps) {
             )}
           </div>
           <div className="flex min-w-0 flex-1 flex-col gap-0.5 [letter-spacing:var(--letter-spacing-default)] [&>p]:truncate">
-            {funding.isSurprise ? (
+            {isSurprise ? (
               <p className="text-base-orange-500 flex items-center gap-0.5 [font:var(--semantic-label-x-small)]">
                 <IconSurprise aria-hidden className="shrink-0" />
                 서프라이즈
               </p>
             ) : (
               <p className="text-semantic-text-secondary [font:var(--semantic-subtext-medium)]">
-                {funding.title}
+                생일 펀딩
               </p>
             )}
             <p
@@ -61,7 +63,7 @@ export default function FriendFundingItem({ funding }: FriendFundingItemProps) {
             </p>
             <p
               className={cn(
-                funding.isSurprise
+                isSurprise
                   ? "text-semantic-text-secondary [font:var(--semantic-subtext-medium)]"
                   : "text-semantic-text-tertiary [font:var(--semantic-subtext-small)]",
               )}>
@@ -69,7 +71,7 @@ export default function FriendFundingItem({ funding }: FriendFundingItemProps) {
             </p>
           </div>
           {/* ⓘ 버튼은 링크 안에 중첩할 수 없어 바깥에 겹쳐 두고, 그 자리만 비워 둔다 */}
-          {funding.isSurprise && <span aria-hidden className="size-5 shrink-0" />}
+          {isSurprise && <span aria-hidden className="size-5 shrink-0" />}
         </div>
         <div className="flex w-full flex-col gap-0.5">
           <ProgressBar progress={percent} aria-labelledby={productNameId} />
@@ -79,9 +81,7 @@ export default function FriendFundingItem({ funding }: FriendFundingItemProps) {
           </div>
         </div>
       </Link>
-      {funding.isSurprise && (
-        <FriendSurpriseInfoButton className="absolute top-[26.5px] -right-1" />
-      )}
+      {isSurprise && <FriendSurpriseInfoButton className="absolute top-[26.5px] -right-1" />}
     </div>
   );
 }

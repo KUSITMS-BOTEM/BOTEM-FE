@@ -1,12 +1,19 @@
 import { faker } from "@faker-js/faker";
 import { delay, http, HttpResponse } from "msw";
 
+import { MOCK_FUNDING_CARDS } from "@/apis/home/homeService.msw";
+import { getMockContributionProgress, getMockContributionRecords } from "@/mocks/mockContributions";
 import type { ClosedFundingListResponse } from "@/types/funding/closedFunding";
 import type {
-  FundingManagementResponse,
   FundingResultContributionResponse,
   FundingResultResponse,
-} from "@/types/funding/funding";
+} from "@/types/funding/fundingResult";
+import type {
+  FundingManagementState,
+  OwnerFundingDetailResponse,
+  OwnerFundingParticipantResponse,
+} from "@/types/funding/ownerFundingDetail";
+import type { FundingType } from "@/types/home/home";
 
 const toContributions = (names: string[]): FundingResultContributionResponse[] =>
   names.map((name, index) => ({
@@ -75,48 +82,6 @@ const getMockResult = (fundingId: number): FundingResultResponse =>
     contributions: [],
   };
 
-// 결과 화면이 쓰는 상품·마감일·연장 가능 여부를 위해 결과 mock과 같은 펀딩으로 맞춘다
-const getMockManagement = (fundingId: number): FundingManagementResponse => {
-  const result = getMockResult(fundingId);
-  return {
-    fundingId,
-    type: "BIRTHDAY",
-    title: null,
-    story: "올해 생일에는 오래 사용한 헤드폰을 바꾸고 싶어요.",
-    promise: null,
-    product: {
-      name: result.productName,
-      imageUrl: result.productImageUrl,
-      price: result.targetAmount,
-      url: "https://www.coupang.com/vp/products/7334036476",
-    },
-    productChanged: false,
-    productChangedAt: null,
-    targetAmount: result.targetAmount,
-    deadline: "2026-11-13T23:59:59.999999",
-    revealAt: null,
-    remainingDays: null,
-    confirmedPercentage: result.achievementPercentage,
-    pendingPercentage: 0,
-    pendingContributionCount: 0,
-    targetReached: result.targetReached,
-    extended: false,
-    earlyClosedAt: null,
-    giftPreparedAt: null,
-    participantCount: result.participantCount,
-    participants: [],
-    messageCount: result.messageCount,
-    managementState: result.participantCount === 0 ? "NO_PARTICIPANTS" : "CLOSED",
-    actions: {
-      canCloseEarly: false,
-      // 생일 펀딩이 마감 후 목표에 못 미쳤고 연장한 적이 없을 때만 연장할 수 있다
-      canExtend: !result.targetReached,
-      canChangeProduct: false,
-      canReissueShareCard: false,
-    },
-  };
-};
-
 const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
   fundings: [
     {
@@ -155,7 +120,108 @@ const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
   ],
 };
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const toMockDeadline = (remainingDays: number | null) =>
+  remainingDays === null
+    ? "2026-11-10T23:59:59.999999"
+    : `${new Date(Date.now() + remainingDays * DAY_MS).toISOString().slice(0, 10)}T23:59:59.999999`;
+
+// 홈 카드 목업을 원본으로 삼아 홈과 상세의 달성률·확인 대기 건수가 어긋나지 않게 한다
+const getMockOwnerFundingDetail = (fundingId: number): OwnerFundingDetailResponse | null => {
+  const card = MOCK_FUNDING_CARDS.find(item => item.fundingId === fundingId);
+  if (!card) return null;
+
+  const progress = getMockContributionProgress(fundingId);
+  const confirmedPercentage = card.confirmedPercentage + progress.confirmedAddedPercentage;
+  const isClosed = card.cardType === "CLOSED_UNOPENED";
+  const previewRows: OwnerFundingParticipantResponse[] = card.participantPreviews.map(
+    (preview, index) => ({
+      contributionId: fundingId * 100 + index,
+      order: index + 1,
+      name: preview.participantName,
+      profileImageUrl: preview.profileImageUrl,
+      status: "CONFIRMED",
+      participatedAt: "2026-11-15T10:00:00",
+      thankCardSent: false,
+      thankCardSentAt: null,
+    }),
+  );
+  const contributionRows: OwnerFundingParticipantResponse[] = getMockContributionRecords(
+    fundingId,
+  ).map((record, index) => ({
+    contributionId: record.contributionId,
+    order: previewRows.length + index + 1,
+    name: record.participantName,
+    profileImageUrl: record.profileImageUrl,
+    status: record.status,
+    participatedAt: record.participatedAt,
+    thankCardSent: false,
+    thankCardSentAt: null,
+  }));
+  const managementState: FundingManagementState =
+    card.participantCount === 0
+      ? "NO_PARTICIPANTS"
+      : isClosed
+        ? "CLOSED"
+        : confirmedPercentage >= 100
+          ? "TARGET_REACHED"
+          : "IN_PROGRESS";
+
+  return {
+    fundingId,
+    type: card.fundingType as FundingType,
+    title: null,
+    story: "올해 생일엔 꼭 갖고 싶던 선물이 있어요. 조금씩 보태주면 감동할게요!",
+    promise: null,
+    product: {
+      name: card.productName,
+      imageUrl: card.productImageUrl,
+      price: card.targetAmount,
+      url: "https://link.coupang.com/a/example",
+    },
+    productChanged: false,
+    productChangedAt: null,
+    targetAmount: card.targetAmount,
+    deadline: toMockDeadline(card.remainingDays),
+    revealAt: null,
+    remainingDays: card.remainingDays,
+    confirmedPercentage,
+    pendingPercentage: progress.pendingPercentage,
+    pendingContributionCount: progress.pendingContributionCount,
+    targetReached: confirmedPercentage >= 100,
+    extended: false,
+    earlyClosedAt: null,
+    giftPreparedAt: null,
+    participantCount: card.participantCount,
+    participants: [...previewRows, ...contributionRows],
+    messageCount: card.participantCount === 0 ? 0 : 3,
+    managementState,
+    actions: {
+      canCloseEarly: !isClosed,
+      canExtend: isClosed && confirmedPercentage < 100 && card.fundingType === "BIRTHDAY",
+      canChangeProduct: !isClosed,
+      canReissueShareCard: !isClosed,
+    },
+  };
+};
+
 export const fundingHandlers = [
+  http.get("*/api/fundings/:fundingId/management", async ({ params }) => {
+    await delay(500);
+    const detail = getMockOwnerFundingDetail(Number(params.fundingId));
+    if (!detail) {
+      return HttpResponse.json(
+        {
+          success: false,
+          data: null,
+          error: { code: "FUNDING_002", message: "펀딩을 찾을 수 없습니다." },
+        },
+        { status: 404 },
+      );
+    }
+    return HttpResponse.json({ success: true, data: detail, error: null });
+  }),
   http.get("*/api/users/me/fundings/closed", async () => {
     await delay(300);
     return HttpResponse.json({ success: true, data: MOCK_CLOSED_FUNDINGS, error: null });
@@ -165,11 +231,6 @@ export const fundingHandlers = [
     const data = getMockResult(Number(params.fundingId));
     return HttpResponse.json({ success: true, data, error: null });
   }),
-  http.get("*/api/fundings/:fundingId/management", async ({ params }) => {
-    await delay(300);
-    const data = getMockManagement(Number(params.fundingId));
-    return HttpResponse.json({ success: true, data, error: null });
-  }),
   http.post("*/api/fundings/:fundingId/result/open", async ({ params }) => {
     await delay(300);
     const data = {
@@ -177,6 +238,22 @@ export const fundingHandlers = [
       resultOpenedAt: "2026-11-15T00:00:00",
     };
     return HttpResponse.json({ success: true, data, error: null });
+  }),
+  // 조기 마감 확인 Dialog의 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다
+  http.post("*/api/fundings/:fundingId/close", async ({ params }) => {
+    await delay(1000);
+    return HttpResponse.json({
+      success: true,
+      data: {
+        fundingId: Number(params.fundingId),
+        type: "BIRTHDAY",
+        status: "CLOSED",
+        deadline: "2026-12-31",
+        revealAt: null,
+        earlyClosedAt: new Date().toISOString(),
+      },
+      error: null,
+    });
   }),
   // 확인 시트의 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다
   http.post("*/api/fundings", async () => {
@@ -188,6 +265,19 @@ export const fundingHandlers = [
         type: "BIRTHDAY",
         status: "FUNDING",
         shareUrl: "https://botem.example.com/funding/1",
+      },
+      error: null,
+    });
+  }),
+  http.post("*/api/fundings/surprise", async () => {
+    await delay(1000);
+    return HttpResponse.json({
+      success: true,
+      data: {
+        fundingId: 2,
+        type: "SURPRISE",
+        status: "FUNDING",
+        shareUrl: "https://botem.example.com/funding/2",
       },
       error: null,
     });

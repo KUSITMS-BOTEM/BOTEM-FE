@@ -7,7 +7,7 @@ import Button from "@/components/Button";
 import List from "@/components/List";
 import TextArea from "@/components/TextArea";
 import Title from "@/components/Title";
-import { withObjectParticle } from "@/utils/withSubjectParticle";
+import { withDirectionalParticle, withObjectParticle } from "@/utils/withSubjectParticle";
 import AddImage from "@/widgets/wish/AddImage";
 
 // 선물 인증 이미지 업로드 API가 허용하는 형식·용량
@@ -19,6 +19,7 @@ export type GiftVerifySubmitValues = { image: File; thankYouMessage: string };
 
 type FundingGiftVerifyViewProps = {
   productName: string;
+  replacementProductName: string | null;
   productImageUrl: string;
   isSubmitting: boolean;
   onSubmit: (values: GiftVerifySubmitValues) => void;
@@ -26,13 +27,17 @@ type FundingGiftVerifyViewProps = {
 
 export default function FundingGiftVerifyView({
   productName,
+  replacementProductName,
   productImageUrl,
   isSubmitting,
   onSubmit,
 }: FundingGiftVerifyViewProps) {
   const [image, setImage] = useState<File | null>(null);
   const [thankYouMessage, setThankYouMessage] = useState("");
-  const canSubmit = image !== null && thankYouMessage.length <= THANK_YOU_MESSAGE_MAX_LENGTH;
+  const canSubmit =
+    image !== null &&
+    thankYouMessage.trim() !== "" &&
+    thankYouMessage.length <= THANK_YOU_MESSAGE_MAX_LENGTH;
 
   return (
     <>
@@ -42,10 +47,17 @@ export default function FundingGiftVerifyView({
           <List
             type="product"
             thumbnailSrc={productImageUrl}
-            thumbnailAlt={productName}
+            thumbnailAlt={replacementProductName || productName}
             titleUp
-            description="위시 상품이였던"
-            title={`${withObjectParticle(productName)} 받았어요`}
+            {...(replacementProductName
+              ? {
+                  description: `기존 선물 ${productName}에서`,
+                  title: `${withDirectionalParticle(replacementProductName)} 받았어요`,
+                }
+              : {
+                  description: "위시 상품이였던",
+                  title: `${withObjectParticle(productName)} 받았어요`,
+                })}
           />
         </div>
         <AddImage

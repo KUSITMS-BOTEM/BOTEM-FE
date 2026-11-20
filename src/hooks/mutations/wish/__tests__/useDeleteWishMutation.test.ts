@@ -6,6 +6,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { wishService } from "@/apis/wish/wishService";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
 import { recommendedProductsQueryKey } from "@/hooks/queries/recommended-product/useRecommendedProductsQuery";
+import { homeNoFundingQueryKey } from "@/hooks/queries/home/useHomeNoFundingQuery";
 import { homeWishesQueryKey } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { wishesQueryKey } from "@/hooks/queries/wish/useWishesQuery";
 import { useWishOriginStore } from "@/store/wishOriginStore";
@@ -63,7 +64,7 @@ describe("useDeleteWishMutation", () => {
     expect(replace).toHaveBeenCalledWith("/home");
   });
 
-  it("성공 시 추천 상품·위시 목록 쿼리를 무효화한다", async () => {
+  it("성공 시 추천 상품·위시 목록·펀딩 없는 홈 쿼리를 무효화한다", async () => {
     vi.mocked(wishService.deleteWish).mockResolvedValue(null);
     const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
@@ -79,6 +80,7 @@ describe("useDeleteWishMutation", () => {
     expect(keys).toContainEqual(recommendedProductsQueryKey);
     expect(keys).toContainEqual(wishesQueryKey);
     expect(keys).toContainEqual(homeWishesQueryKey);
+    expect(keys).toContainEqual(homeNoFundingQueryKey);
   });
 
   it("추천 상품 상세에서 담은 위시면 그 상세로 이동하고 삭제 토스트를 예약한다", async () => {

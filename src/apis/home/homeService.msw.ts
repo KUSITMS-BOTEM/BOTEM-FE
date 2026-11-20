@@ -12,11 +12,12 @@ type MockHomeScenario =
   | "CLOSED_PENDING"
   | "CLOSED_OPEN"
   | "CLOSED_EMPTY"
+  | "EARLY_COMPLETE"
   | "WISH_ONLY"
   | "EMPTY";
 
-// 홈 분기(마감·진행 중 / 진행 중만 / 1개 / 마감+확인 대기 / 마감+확인 대기 없음 / 마감+참여자 0명 / 위시만 / 빈 홈)를 눈으로 확인할 때 이 값만 바꾼다
-const MOCK_HOME_SCENARIO = "CLOSED_EMPTY" as MockHomeScenario;
+// 홈 분기(마감·진행 중 / 진행 중만 / 1개 / 마감+확인 대기 / 마감+확인 대기 없음 / 마감+참여자 0명 / 마감 전 100% 달성 / 위시만 / 빈 홈)를 눈으로 확인할 때 이 값만 바꾼다
+const MOCK_HOME_SCENARIO = "IN_PROGRESS" as MockHomeScenario;
 
 const [product1, product2, product3, product4] = MOCK_RECOMMENDED_PRODUCTS;
 
@@ -33,7 +34,7 @@ const MOCK_PARTICIPANT_PREVIEWS = [
   },
 ];
 
-const MOCK_FUNDING_CARDS = [
+export const MOCK_FUNDING_CARDS = [
   {
     fundingId: 12,
     cardType: "CLOSED_UNOPENED",
@@ -104,6 +105,48 @@ const MOCK_FUNDING_CARDS = [
     pendingPercentage: 0,
     pendingContributionCount: 0,
   },
+  {
+    fundingId: 17,
+    cardType: "IN_PROGRESS",
+    fundingType: "BIRTHDAY",
+    productName: product2.name,
+    productImageUrl: product2.imageUrl,
+    targetAmount: product2.price,
+    participantCount: 3,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS.slice(0, 1),
+    remainingDays: 14,
+    confirmedPercentage: 30,
+    pendingPercentage: 10,
+    pendingContributionCount: 2,
+  },
+  {
+    fundingId: 18,
+    cardType: "IN_PROGRESS",
+    fundingType: "BIRTHDAY",
+    productName: product3.name,
+    productImageUrl: product3.imageUrl,
+    targetAmount: product3.price,
+    participantCount: 5,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS,
+    remainingDays: 3,
+    confirmedPercentage: 100,
+    pendingPercentage: 10,
+    pendingContributionCount: 2,
+  },
+  {
+    fundingId: 19,
+    cardType: "IN_PROGRESS",
+    fundingType: "BIRTHDAY",
+    productName: product2.name,
+    productImageUrl: product2.imageUrl,
+    targetAmount: product2.price,
+    participantCount: 4,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS,
+    remainingDays: 5,
+    confirmedPercentage: 100,
+    pendingPercentage: 0,
+    pendingContributionCount: 0,
+  },
 ];
 
 const MOCK_HOME_WISHES = MOCK_RECOMMENDED_PRODUCTS.slice(0, 3).map(product => ({
@@ -135,6 +178,12 @@ export const createHomeHandlers = (scenario: MockHomeScenario) => [
       ),
       CLOSED_EMPTY: MOCK_FUNDING_CARDS.filter(
         card => card.cardType === "CLOSED_UNOPENED" && card.confirmedPercentage === 0,
+      ),
+      EARLY_COMPLETE: MOCK_FUNDING_CARDS.filter(
+        card =>
+          card.cardType === "IN_PROGRESS" &&
+          card.confirmedPercentage >= 100 &&
+          card.pendingContributionCount === 0,
       ),
       WISH_ONLY: [],
       EMPTY: [],

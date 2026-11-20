@@ -41,6 +41,8 @@ type SelectBoxOwnProps = {
   minDate?: string;
   // 날짜 선택 variant에서 고를 수 있는 가장 늦은 날짜("YYYY-MM-DD"). 이후 날짜는 캘린더에서 선택할 수 없다.
   maxDate?: string;
+  // 날짜 선택 시트(터치)·달력(마우스)의 제목. 없으면 variant에 맞는 기본 제목
+  pickerTitle?: string;
   // 날짜 선택 variant에서 캘린더에 선택돼 있을 날짜. deadline은 "YYYY-MM-DD", birth는 "MM-DD". 이미 정해진 값이 있을 때 넘긴다.
   // 사용자가 아직 날짜를 고르지 않았다면 이 값을 따라가므로 프로필처럼 비동기로 도착하는 값도 반영된다.
   dateValue?: string;
@@ -60,6 +62,7 @@ export default function SelectBox({
   onDeadlineChange,
   minDate,
   maxDate,
+  pickerTitle,
   dateValue = "",
   id,
   disabled,
@@ -76,6 +79,12 @@ export default function SelectBox({
   const hasDatePicker = variant !== "select";
   // 화면엔 월·일만 보여주지만, 같은 세션에서 다시 열었을 때 이전에 고른 연도까지 캘린더에 남아있도록 내부적으로만 기억한다. null이면 아직 고르지 않은 상태
   const [pickedDate, setPickedDate] = useState<string | null>(null);
+  // 부모가 사용자가 고른 것과 다른 날짜로 바꾸면(예: 생일 칩) 기억해 둔 선택값을 버리고 부모 값을 따른다
+  const [prevDateValue, setPrevDateValue] = useState(dateValue);
+  if (dateValue !== prevDateValue) {
+    setPrevDateValue(dateValue);
+    if (pickedDate !== null && toPickerDate(variant, dateValue) !== pickedDate) setPickedDate(null);
+  }
   const currentDate = pickedDate ?? toPickerDate(variant, dateValue);
 
   const isCoarsePointer = useIsCoarsePointer();
@@ -119,6 +128,7 @@ export default function SelectBox({
         {variant !== "select" && !isCoarsePointer ? (
           <DatePickerPopover
             variant={variant}
+            title={pickerTitle}
             value={currentDate}
             minDate={minDate}
             maxDate={maxDate}
@@ -172,6 +182,7 @@ export default function SelectBox({
       {hasDatePicker && isCoarsePointer && (
         <DateWheelSheet
           variant={variant}
+          title={pickerTitle}
           open={wheelOpen}
           value={currentDate}
           minDate={minDate}

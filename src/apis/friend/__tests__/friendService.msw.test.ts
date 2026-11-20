@@ -11,8 +11,8 @@ const server = setupServer(...friendHandlers);
 beforeAll(() => server.listen());
 afterAll(() => server.close());
 
-const getProfile = async (friendId: number) => {
-  const response = await fetch(`${BASE_URL}/${friendId}`);
+const getJson = async (url: string) => {
+  const response = await fetch(url);
   return { status: response.status, body: await response.json() };
 };
 
@@ -37,58 +37,73 @@ describe("friendHandlers - GET /api/friends", () => {
   });
 });
 
-describe("friendHandlers - GET /api/friends/:friendId", () => {
+describe("friendHandlers - GET /api/friends/:friendId/profile", () => {
   it("펀딩·위시가 모두 있는 친구는 펀딩 5개(첫 번째만 서프라이즈)와 위시 2개를 응답한다", async () => {
-    const { status, body } = await getProfile(2);
+    const { status, body } = await getJson(`${BASE_URL}/2/profile`);
     const data = body.data as FriendProfileResponse;
 
     expect(status).toBe(200);
     expect(data.name).toBe("민지");
-    expect(data.fundings).toHaveLength(5);
-    expect(data.fundings.map(funding => funding.isSurprise)).toEqual([
-      true,
-      false,
-      false,
-      false,
-      false,
+    expect(data.fundings.map(funding => funding.type)).toEqual([
+      "SURPRISE",
+      "BIRTHDAY",
+      "BIRTHDAY",
+      "BIRTHDAY",
+      "BIRTHDAY",
     ]);
+    expect(data.wishesVisible).toBe(true);
+    expect(data.wishCount).toBe(2);
     expect(data.wishes).toHaveLength(2);
-    expect(data).not.toHaveProperty("wishCount");
   });
 
   it("펀딩·위시가 모두 없는 친구는 빈 배열을 응답한다", async () => {
-    const { body } = await getProfile(5);
+    const { body } = await getJson(`${BASE_URL}/5/profile`);
 
     expect(body.data.fundings).toEqual([]);
     expect(body.data.wishes).toEqual([]);
   });
 
-  it("목록에 없는 친구는 404와 FRIEND_NOT_FOUND 에러를 응답한다", async () => {
-    const { status, body } = await getProfile(999);
+  it("목록에 없는 친구는 404와 FRIEND_002 에러를 응답한다", async () => {
+    const { status, body } = await getJson(`${BASE_URL}/999/profile`);
 
     expect(status).toBe(404);
-    expect(body).toMatchObject({ success: false, data: null, error: { code: "FRIEND_NOT_FOUND" } });
+    expect(body).toMatchObject({ success: false, data: null, error: { code: "FRIEND_002" } });
   });
 });
 
-describe("friendHandlers - GET /api/friends/:userId/public", () => {
-  const getPublicProfile = async (userId: number) => {
-    const response = await fetch(`${BASE_URL}/${userId}/public`);
-    return { status: response.status, body: await response.json() };
-  };
+describe("friendHandlers - GET /api/friends/:friendId/wishes/:wishId", () => {
+  it("친구 프로필에 있는 위시면 판매처·상품 링크를 포함한 상세를 응답한다", async () => {
+    const { body: profileBody } = await getJson(`${BASE_URL}/2/profile`);
+    const wishId = (profileBody.data as FriendProfileResponse).wishes[0].wishId;
 
-  it("위시 목록 없이 위시 개수만 응답한다", async () => {
-    const { body } = await getPublicProfile(2);
+    const { status, body } = await getJson(`${BASE_URL}/2/wishes/${wishId}`);
 
+    expect(status).toBe(200);
+    expect(body.data).toMatchObject({ wishId, activeSurpriseFundingId: null });
+    expect(body.data.sellerName).toEqual(expect.any(String));
+  });
+
+  it("없는 위시는 404를 응답한다", async () => {
+    const { status } = await getJson(`${BASE_URL}/2/wishes/999`);
+
+    expect(status).toBe(404);
+  });
+});
+
+describe("friendHandlers - GET /api/wish-profiles/:wishProfileKey", () => {
+  it("위시 내용 없이 위시 개수만 응답한다", async () => {
+    const { body } = await getJson("http://localhost/api/wish-profiles/2");
+
+    expect(body.data.wishesVisible).toBe(false);
     expect(body.data.wishCount).toBe(2);
-    expect(body.data).not.toHaveProperty("wishes");
+    expect(body.data.wishes).toEqual([]);
     expect(body.data.fundings).toHaveLength(5);
   });
 
-  it("목록에 없는 사용자는 404와 USER_NOT_FOUND 에러를 응답한다", async () => {
-    const { status, body } = await getPublicProfile(999);
+  it("없는 위시 프로필은 404와 FRIEND_003 에러를 응답한다", async () => {
+    const { status, body } = await getJson("http://localhost/api/wish-profiles/999");
 
     expect(status).toBe(404);
-    expect(body).toMatchObject({ success: false, data: null, error: { code: "USER_NOT_FOUND" } });
+    expect(body).toMatchObject({ success: false, data: null, error: { code: "FRIEND_003" } });
   });
 });

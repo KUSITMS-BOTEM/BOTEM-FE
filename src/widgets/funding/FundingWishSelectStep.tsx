@@ -68,6 +68,7 @@ export default function FundingWishSelectStep({ onSelect }: FundingWishSelectSte
       </div>
       <ListHeader
         bg
+        boxClickable
         title="위시 상품을 찾아볼까요?"
         rightItem={{ label: "상품 보기", onClick: () => router.push("/wish/recommended") }}
       />

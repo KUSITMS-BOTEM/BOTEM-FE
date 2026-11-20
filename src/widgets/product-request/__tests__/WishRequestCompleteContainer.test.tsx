@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import WishRequestCompleteContainer from "@/widgets/product-request/WishRequestCompleteContainer";
@@ -35,7 +35,7 @@ describe("WishRequestCompleteContainer", () => {
   it("닫기 버튼을 누르면 /home으로 이동하고 플래그를 지운다", async () => {
     render(<WishRequestCompleteContainer />);
     await userEvent.click(screen.getByRole("button", { name: "닫기" }));
-    expect(replace).toHaveBeenCalledWith("/home");
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/home"));
     expect(sessionStorage.getItem("wishRequestSent")).toBeNull();
   });
 

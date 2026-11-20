@@ -81,6 +81,8 @@ type FundingProgressCardProps = {
   deadline: string;
   currentAmount: number;
   targetAmount: number;
+  /** 서버가 달성률(%)을 직접 줄 때 넘긴다. 없으면 금액으로 계산한다 */
+  progress?: number;
   /** true면 문구·달성률·목표 금액 묶음이 한 번 커졌다 돌아온다 (보태기 완료 페이지 연출) */
   popStatus?: boolean;
   /** 서프라이즈 펀딩이면 마감일 옆에 자물쇠를 보여준다 */
@@ -97,6 +99,7 @@ export default function FundingProgressCard({
   deadline,
   currentAmount,
   targetAmount,
+  progress,
   popStatus = false,
   locked = false,
   children,
@@ -104,7 +107,7 @@ export default function FundingProgressCard({
 }: FundingProgressCardProps) {
   const color: FundingCardColor = currentAmount === 0 ? "disabled" : getFundingCardColor(fundingId);
   const theme = CARD_THEME[color];
-  const percent = calcFundingPercent(currentAmount, targetAmount);
+  const percent = progress ?? calcFundingPercent(currentAmount, targetAmount);
   // 금액을 다 채운 마감이 기간 마감보다 우선한다
   const closedLabel = getClosedLabel({ currentAmount, targetAmount, deadline });
 

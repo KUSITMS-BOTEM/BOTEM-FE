@@ -26,20 +26,20 @@ const push = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
 }));
-vi.mock("@/widgets/home/PendingContributionBottomSheet", () => ({
+vi.mock("@/widgets/funding/DepositConfirmSheet", () => ({
   default: ({
     open,
     fundingId,
-    onAllConfirmed,
+    onReveal,
   }: {
     open: boolean;
     fundingId: number | null;
-    onAllConfirmed: () => void;
+    onReveal?: () => void;
   }) =>
     open ? (
       <div role="dialog">
         입금 확인 {fundingId}
-        <button onClick={onAllConfirmed}>모두 확인</button>
+        {onReveal && <button onClick={onReveal}>팡! 열어보기</button>}
       </div>
     ) : null,
 }));
@@ -226,15 +226,32 @@ describe("HomeFundingTab", () => {
     expect(screen.getByRole("dialog")).toHaveTextContent("입금 확인 42");
   });
 
-  it("진행 중(default) 카드에는 카드 버튼이 없다", () => {
+  it("입금 확인 시트에서 팡! 열어보기를 누르면 그 펀딩의 결과 데이터를 받은 뒤 공개 화면으로 이동한다", async () => {
+    vi.mocked(fundingService.getResult).mockResolvedValue(null);
+    mockQueries({
+      data: fundingList([
+        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 2 },
+      ]),
+    });
+
+    renderTab();
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    await userEvent.click(screen.getByRole("button", { name: "팡! 열어보기" }));
+
+    expect(fundingService.getResult).toHaveBeenCalledWith(42);
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
+  });
+
+  it("진행 중(default) 카드를 누르면 펀딩 상세 화면으로 이동한다", async () => {
     mockQueries({ data: fundingList([fundingCard]) });
 
     renderTab();
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
 
-    expect(screen.queryByRole("button", { name: "지유님의 생일 펀딩" })).not.toBeInTheDocument();
+    expect(push).toHaveBeenCalledWith("/funding/1");
   });
 
-  it("참여자가 없는 마감 카드(open)를 누르면 시트 없이 마감 공개 화면으로 이동한다", async () => {
+  it("참여자가 없는 마감 카드(open)를 누르면 결과 데이터를 받은 뒤 공개 화면으로 이동한다", async () => {
     mockQueries({
       data: fundingList([
         { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
@@ -244,6 +261,7 @@ describe("HomeFundingTab", () => {
     renderTab();
     await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
 
+    expect(fundingService.getResult).toHaveBeenCalledWith(42);
     await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
@@ -259,7 +277,13 @@ describe("HomeFundingTab", () => {
     );
     mockQueries({
       data: fundingList([
-        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
+        {
+          ...fundingCard,
+          fundingId: 42,
+          cardType: "CLOSED_UNOPENED",
+          pendingContributionCount: 0,
+          participantCount: 3,
+        },
       ]),
     });
 
@@ -278,7 +302,13 @@ describe("HomeFundingTab", () => {
     vi.mocked(fundingService.getResult).mockReturnValue(new Promise(() => {}));
     mockQueries({
       data: fundingList([
-        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
+        {
+          ...fundingCard,
+          fundingId: 42,
+          cardType: "CLOSED_UNOPENED",
+          pendingContributionCount: 0,
+          participantCount: 3,
+        },
       ]),
     });
 
@@ -289,6 +319,36 @@ describe("HomeFundingTab", () => {
     await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"), {
       timeout: 2500,
     });
+  });
+
+  it("결과 데이터를 기다리는 동안 홈을 떠나면 늦게 끝나도 공개 화면으로 이동하지 않는다", async () => {
+    let resolveReveal: (
+      value: Awaited<ReturnType<typeof fundingService.getResult>>,
+    ) => void = () => {};
+    vi.mocked(fundingService.getResult).mockReturnValue(
+      new Promise(resolve => {
+        resolveReveal = resolve;
+      }),
+    );
+    mockQueries({
+      data: fundingList([
+        {
+          ...fundingCard,
+          fundingId: 42,
+          cardType: "CLOSED_UNOPENED",
+          pendingContributionCount: 0,
+          participantCount: 3,
+        },
+      ]),
+    });
+
+    const { unmount } = renderTab();
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    unmount();
+    resolveReveal(null);
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("결과 데이터를 받는 동안 마감 카드를 연타해도 요청과 이동은 한 번만 한다", async () => {
@@ -302,7 +362,13 @@ describe("HomeFundingTab", () => {
     );
     mockQueries({
       data: fundingList([
-        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
+        {
+          ...fundingCard,
+          fundingId: 42,
+          cardType: "CLOSED_UNOPENED",
+          pendingContributionCount: 0,
+          participantCount: 3,
+        },
       ]),
     });
 
@@ -336,18 +402,26 @@ describe("HomeFundingTab", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("입금 확인을 모두 마치면 입금 확인 시트가 닫히고 공개 시트는 열리지 않는다", async () => {
+  it("마감 전 100% 달성 카드(earlyComplete)를 누르면 상세가 아니라 공개 화면으로 이동한다", async () => {
     mockQueries({
       data: fundingList([
-        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 2 },
+        {
+          ...fundingCard,
+          fundingId: 42,
+          cardType: "IN_PROGRESS",
+          fundingType: "BIRTHDAY",
+          confirmedPercentage: 100,
+          pendingPercentage: 0,
+          pendingContributionCount: 0,
+          participantCount: 3,
+        },
       ]),
     });
 
     renderTab();
     await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
-    await userEvent.click(screen.getByRole("button", { name: "모두 확인" }));
 
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.queryByText(/펀딩 공개/)).not.toBeInTheDocument();
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
+    expect(push).not.toHaveBeenCalledWith("/funding/42");
   });
 });

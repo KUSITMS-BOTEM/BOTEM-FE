@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { giftVerificationService } from "@/apis/gift-verification/giftVerificationService";
 import { giftVerificationBannerQueryKey } from "@/hooks/queries/home/useGiftVerificationBannerQuery";
 import { giftVerificationTargetsQueryKey } from "@/hooks/queries/home/useGiftVerificationTargetsQuery";
+import { homeFundingsQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
 
 type CompleteGiftVerificationVariables = {
   giftVerificationId: number;
@@ -45,7 +46,7 @@ export const useCompleteGiftVerificationMutation = () => {
       });
       // 업로드 중 닫기로 홈에 먼저 와 있으면 배너가 이미 떠 있으므로 그때만 바로 다시 받는다 (인증 화면은 배너를 구독하지 않는다)
       queryClient.invalidateQueries({ queryKey: giftVerificationBannerQueryKey });
-      queryClient.invalidateQueries({ queryKey: ["home", "fundings"] });
+      queryClient.invalidateQueries({ queryKey: homeFundingsQueryKey });
     },
   });
 };

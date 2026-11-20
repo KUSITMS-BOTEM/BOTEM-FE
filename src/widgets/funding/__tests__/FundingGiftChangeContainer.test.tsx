@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import FundingGiftChangeContainer from "@/widgets/funding/FundingGiftChangeContainer";
@@ -27,7 +27,7 @@ describe("FundingGiftChangeContainer", () => {
 
     await user.click(screen.getByRole("button", { name: "뒤로 가기" }));
 
-    expect(back).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
   });
 
   it("'상품 보기'를 누르면 추천 상품 목록으로 이동한다", async () => {

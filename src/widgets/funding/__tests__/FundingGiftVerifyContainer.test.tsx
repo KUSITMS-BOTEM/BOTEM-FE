@@ -13,6 +13,7 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/hooks/queries/home/useGiftVerificationTargetsQuery");
 vi.mock("@/hooks/mutations/gift-verification/useCompleteGiftVerificationMutation");
+vi.mock("@/components/effects/hero-motion/HeroMotion", () => ({ default: () => null }));
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element
@@ -100,7 +101,30 @@ describe("FundingGiftVerifyContainer", () => {
     expect(replace).toHaveBeenCalledWith("/home");
   });
 
-  it("제출이 성공한 뒤 홈으로 넘어가는 동안에는 보내기 버튼을 잠근다", () => {
+  it("사진과 감사 메세지를 채워 보내면 대상 정보로 인증을 요청한다", async () => {
+    mockQuery({ targets: [target] });
+    const { container } = render(<FundingGiftVerifyContainer />);
+    const photo = new File(["dummy"], "gift.png", { type: "image/png" });
+    await userEvent.upload(
+      container.querySelector('input[type="file"]') as HTMLInputElement,
+      photo,
+    );
+    await userEvent.type(screen.getByRole("textbox"), "고마워!");
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "선물 도착 인증 보내기" })).toBeEnabled(),
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "선물 도착 인증 보내기" }));
+
+    expect(mutate).toHaveBeenCalledWith({
+      giftVerificationId: 101,
+      image: photo,
+      thankYouMessage: "고마워!",
+      replacementProductName: null,
+    });
+  });
+
+  it("인증을 보내고 나면 완료 화면과 '친구에게 공유하기'를 보여준다", () => {
     mockQuery({ targets: [target] });
     vi.mocked(useCompleteGiftVerificationMutation).mockReturnValue({
       mutate,
@@ -110,30 +134,8 @@ describe("FundingGiftVerifyContainer", () => {
 
     render(<FundingGiftVerifyContainer />);
 
-    expect(screen.getByRole("button", { name: "선물 도착 인증 보내기" })).toBeDisabled();
-  });
-
-  it("제출이 성공하면 /home으로 replace한다", async () => {
-    mockQuery({ targets: [target] });
-    mutate.mockImplementation((_variables, options: { onSuccess?: () => void }) =>
-      options.onSuccess?.(),
-    );
-    const { container } = render(<FundingGiftVerifyContainer />);
-    const photo = new File(["dummy"], "gift.png", { type: "image/png" });
-    await userEvent.upload(
-      container.querySelector('input[type="file"]') as HTMLInputElement,
-      photo,
-    );
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "선물 도착 인증 보내기" })).toBeEnabled(),
-    );
-
-    await userEvent.click(screen.getByRole("button", { name: "선물 도착 인증 보내기" }));
-
-    expect(mutate).toHaveBeenCalledWith(
-      expect.objectContaining({ giftVerificationId: 101, image: photo }),
-      expect.anything(),
-    );
-    expect(replace).toHaveBeenCalledWith("/home");
+    expect(screen.getByText(/선물 도착 인증을 보냈어요!/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "친구에게 공유하기" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "선물 도착 인증 보내기" })).not.toBeInTheDocument();
   });
 });

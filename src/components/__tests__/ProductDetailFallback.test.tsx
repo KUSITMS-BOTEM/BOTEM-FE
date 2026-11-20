@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import ProductDetailFallback from "@/components/ProductDetailFallback";
@@ -22,7 +22,7 @@ describe("ProductDetailFallback", () => {
 
     await user.click(screen.getByRole("button", { name: "뒤로 가기" }));
 
-    expect(handleBack).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(handleBack).toHaveBeenCalledTimes(1));
   });
 
   it("onRetry가 없으면 '다시 시도' 버튼이 렌더되지 않는다", () => {

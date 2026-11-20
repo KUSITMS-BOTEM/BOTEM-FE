@@ -8,5 +8,5 @@ export const fundingManagementQueryKey = (fundingId: number) =>
 export const useFundingManagementQuery = (fundingId: number) =>
   useQuery({
     queryKey: fundingManagementQueryKey(fundingId),
-    queryFn: () => fundingService.getManagement(fundingId),
+    queryFn: () => fundingService.getFundingManagement(fundingId),
   });

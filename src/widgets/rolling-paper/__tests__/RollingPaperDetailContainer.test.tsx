@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
@@ -47,7 +47,7 @@ describe("RollingPaperDetailContainer", () => {
 
     await user.click(screen.getByRole("button", { name: "뒤로 가기" }));
 
-    expect(backMock).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(backMock).toHaveBeenCalledTimes(1));
   });
 
   it("결과의 메세지 개수만큼 편지지 휠을 그린다", () => {

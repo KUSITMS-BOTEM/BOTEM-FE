@@ -26,6 +26,7 @@ const renderView = (props: Partial<Parameters<typeof FundingGiftVerifyView>[0]> 
   render(
     <FundingGiftVerifyView
       productName="에어팟"
+      replacementProductName={null}
       productImageUrl="/airpods.png"
       isSubmitting={false}
       onSubmit={vi.fn()}
@@ -47,7 +48,38 @@ describe("FundingGiftVerifyView", () => {
     expect(screen.getByRole("button", { name: "선물 도착 인증 보내기" })).toBeDisabled();
   });
 
-  it("사진을 고른 뒤 보내기를 누르면 사진과 감사 메세지로 onSubmit을 호출한다", async () => {
+  it("사진만 고르고 감사 메세지가 비어 있거나 공백뿐이면 비활성이다", async () => {
+    const { container } = renderView();
+    await uploadPhoto(container);
+    const button = screen.getByRole("button", { name: "선물 도착 인증 보내기" });
+
+    expect(button).toBeDisabled();
+    await userEvent.type(screen.getByRole("textbox"), "   ");
+    expect(button).toBeDisabled();
+  });
+
+  it("감사 메세지만 쓰고 사진이 없으면 비활성이다", async () => {
+    renderView();
+    await userEvent.type(screen.getByRole("textbox"), "고마워!");
+
+    expect(screen.getByRole("button", { name: "선물 도착 인증 보내기" })).toBeDisabled();
+  });
+
+  it("상품이 바뀌지 않았으면 위시 상품을 받았다고 안내한다", () => {
+    renderView();
+
+    expect(screen.getByText("위시 상품이였던")).toBeInTheDocument();
+    expect(screen.getByText("에어팟을 받았어요")).toBeInTheDocument();
+  });
+
+  it("다른 상품으로 바꿔 받았으면 기존 선물에서 바뀐 상품을 안내한다", () => {
+    renderView({ replacementProductName: "갤럭시 버즈" });
+
+    expect(screen.getByText("기존 선물 에어팟에서")).toBeInTheDocument();
+    expect(screen.getByText("갤럭시 버즈로 받았어요")).toBeInTheDocument();
+  });
+
+  it("사진과 감사 메세지를 모두 채운 뒤 보내기를 누르면 사진과 감사 메세지로 onSubmit을 호출한다", async () => {
     const onSubmit = vi.fn();
     const { container } = renderView({ onSubmit });
     await uploadPhoto(container);
@@ -58,9 +90,10 @@ describe("FundingGiftVerifyView", () => {
     expect(onSubmit).toHaveBeenCalledWith({ image: photo, thankYouMessage: "고마워!" });
   });
 
-  it("제출 중이면 사진을 골라도 보내기 버튼이 비활성이다", async () => {
+  it("제출 중이면 사진과 메세지를 채워도 보내기 버튼이 비활성이다", async () => {
     const { container } = renderView({ isSubmitting: true });
     await uploadPhoto(container);
+    await userEvent.type(screen.getByRole("textbox"), "고마워!");
 
     expect(screen.getByRole("button", { name: /선물 도착 인증 보내기/ })).toBeDisabled();
   });

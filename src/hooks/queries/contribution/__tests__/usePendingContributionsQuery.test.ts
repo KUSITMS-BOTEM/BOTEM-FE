@@ -17,7 +17,15 @@ vi.mock("@/apis/contribution/contributionService", () => ({
 }));
 
 const mockList: PendingContributionListResponse = {
-  contributions: [{ contributionId: 1, senderName: "하린이", depositMethod: "토스뱅크 계좌" }],
+  pendingContributionCount: 1,
+  contributions: [
+    {
+      contributionId: 1,
+      participantName: "하린이",
+      profileImageUrl: null,
+      participatedAt: "2026-11-18T11:20:00",
+    },
+  ],
 };
 
 const createWrapper = () => {

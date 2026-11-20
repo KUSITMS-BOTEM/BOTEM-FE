@@ -69,11 +69,10 @@ describe("fundingHandlers GET /management", () => {
     return response.json();
   };
 
-  it("결과 mock과 같은 상품 정보와 구매 링크를 반환한다", async () => {
-    const [management, result] = await Promise.all([getManagement(13), getResult(13)]);
+  it("결과 화면이 쓰는 구매 링크와 마감일을 반환한다", async () => {
+    const management = await getManagement(13);
 
     expect(management.success).toBe(true);
-    expect(management.data.product.name).toBe(result.data.productName);
     expect(management.data.product.url).toMatch(/^https:\/\//);
     expect(management.data.deadline).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
@@ -98,5 +97,57 @@ describe("fundingHandlers POST /api/fundings", () => {
       status: "FUNDING",
       shareUrl: expect.any(String),
     });
+  });
+});
+
+describe("fundingHandlers POST /api/fundings/surprise", () => {
+  it("ApiResponse 형태로 SURPRISE 타입의 fundingId·status·shareUrl을 반환한다", async () => {
+    const response = await fetch("http://localhost/api/fundings/surprise", {
+      method: "POST",
+      body: "{}",
+    });
+    const body = await response.json();
+
+    expect(body.success).toBe(true);
+    expect(body.data).toEqual({
+      fundingId: expect.any(Number),
+      type: "SURPRISE",
+      status: "FUNDING",
+      shareUrl: expect.any(String),
+    });
+  });
+});
+
+describe("GET management 핸들러", () => {
+  const getManagement = async (fundingId: number) => {
+    const response = await fetch(`http://localhost/api/fundings/${fundingId}/management`);
+    return { status: response.status, body: await response.json() };
+  };
+
+  it.each([
+    [18, "TARGET_REACHED", 100, 2],
+    [17, "IN_PROGRESS", 30, 2],
+    [13, "CLOSED", 100, 0],
+    [16, "IN_PROGRESS", 10, 0],
+    [14, "NO_PARTICIPANTS", 0, 0],
+  ])(
+    "펀딩 %i는 %s 상태, 확정 %i%%, 확인 대기 %i건으로 응답한다",
+    async (fundingId, state, confirmed, pending) => {
+      const { body } = await getManagement(fundingId);
+
+      expect(body.data).toMatchObject({
+        fundingId,
+        managementState: state,
+        confirmedPercentage: confirmed,
+        pendingContributionCount: pending,
+      });
+    },
+  );
+
+  it("목업에 없는 펀딩은 404 FUNDING_002를 반환한다", async () => {
+    const { status, body } = await getManagement(999);
+
+    expect(status).toBe(404);
+    expect(body.error.code).toBe("FUNDING_002");
   });
 });
