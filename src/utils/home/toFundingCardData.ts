@@ -17,17 +17,8 @@ const FUNDING_TYPE_LABEL: Record<FundingType, string> = {
 // 미리보기 응답에 참여자 id가 없어 순서로 색을 정한다 (Figma 순서)
 const PARTICIPANT_COLORS: Color[] = ["orange", "lime", "pink", "blue"];
 
-// 마감 전이라도 생일 펀딩이 목표에 닿았고 확인 대기가 없으면 미리 열 수 있다
-function isEarlyComplete(card: HomeFundingCardResponse) {
-  return (
-    card.fundingType === "BIRTHDAY" &&
-    card.pendingContributionCount === 0 &&
-    card.confirmedPercentage + card.pendingPercentage >= 100
-  );
-}
-
 function toCardType(card: HomeFundingCardResponse): FundingCardType {
-  if (card.cardType === "IN_PROGRESS") return isEarlyComplete(card) ? "earlyComplete" : "default";
+  if (card.cardType === "IN_PROGRESS") return card.earlyOpenable ? "earlyComplete" : "default";
   if (card.pendingContributionCount > 0) return "notification";
   return card.participantCount > 0 ? "complete" : "open";
 }
