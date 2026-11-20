@@ -93,11 +93,13 @@ export default function FundingDetailView({
   const isOwner = variant === "owner";
   const isGuest = variant === "guest";
   // 하단 CTA 버튼을 누르면 회원/비회원 구분 Dialog를 띄운다. 값은 어느 버튼에서 왔는지
-  // TODO: Dialog '예'(로그인) 이후와 '보태러가기'의 '아니오'(비회원)는 후속 작업에서 이 값으로 분기한다
+  // TODO: Dialog '예'(로그인) 이후는 후속 작업에서 이 값으로 분기한다
   const [memberCheckFrom, setMemberCheckFrom] = useState<"myBotem" | "contribute" | null>(null);
   const [isGuestFindOpen, setIsGuestFindOpen] = useState(false);
-  // 비회원이 이름·비밀번호로 내 보탬을 확인하고 나면 하단은 '내 보탬 확인' 버튼만 남는다
-  const hasGuestIdentity = useGuestBotemStore(state => state.name !== null);
+  // 비회원이 '보태러가기'에서 확인을 마치면 하단이 '메시지 보태기'/'보태기'로 바뀐다
+  const [isContributeReady, setIsContributeReady] = useState(false);
+  // 비회원이 이 펀딩에서 이름·비밀번호로 내 보탬을 확인하고 나면 하단은 '내 보탬 확인' 버튼만 남는다
+  const hasGuestIdentity = useGuestBotemStore(state => state.fundingId === fundingId);
   // 받은 입금을 확인해야 하는 쪽(서프라이즈 개설자·펀딩 주인)
   const confirmsDeposits = isSurprise || isOwner;
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -115,6 +117,18 @@ export default function FundingDetailView({
   const [flowKey, setFlowKey] = useState(0);
   const closePopup = () => setIsPopupOpen(false);
   const requestExit = () => setIsExitOpen(true);
+
+  // 뒤로가기 등으로 플로우를 중간에 떠나 남은 값이 있으면 비우고 시작한다
+  const startMessage = () => {
+    reset();
+    setIsMessageOnly(true);
+    setIsLetterOpen(true);
+  };
+  const startContribute = () => {
+    reset();
+    setIsMessageOnly(false);
+    setIsContributeOpen(true);
+  };
 
   // 보태기 플로우에서 입력한 값을 모두 버리고 열려 있는 시트를 닫는다
   const handleExitConfirm = () => {
@@ -217,6 +231,15 @@ export default function FundingDetailView({
               <Button size="xlarge" variant="fill" onClick={() => setIsPopupOpen(true)}>
                 내 보탬 확인
               </Button>
+            ) : isContributeReady ? (
+              <>
+                <Button size="xlarge" variant="weak" onClick={startMessage}>
+                  메시지 보태기
+                </Button>
+                <Button size="xlarge" variant="fill" onClick={startContribute}>
+                  보태기
+                </Button>
+              </>
             ) : (
               <>
                 <Button size="xlarge" variant="weak" onClick={() => setMemberCheckFrom("myBotem")}>
@@ -237,7 +260,7 @@ export default function FundingDetailView({
           open={isGuestFindOpen}
           onClose={() => setIsGuestFindOpen(false)}
           onSubmit={(name, password) => {
-            useGuestBotemStore.getState().setIdentity(name, password);
+            useGuestBotemStore.getState().setIdentity(fundingId, name, password);
             setIsGuestFindOpen(false);
             setIsPopupOpen(true);
           }}
@@ -250,6 +273,7 @@ export default function FundingDetailView({
           confirmColor="neutral"
           onCancel={() => {
             if (memberCheckFrom === "myBotem") setIsGuestFindOpen(true);
+            else setIsContributeReady(true);
             setMemberCheckFrom(null);
           }}
           onConfirm={() => setMemberCheckFrom(null)}
@@ -273,16 +297,11 @@ export default function FundingDetailView({
           }}
           onMessageClick={() => {
             closePopup();
-            reset();
-            setIsMessageOnly(true);
-            setIsLetterOpen(true);
+            startMessage();
           }}
           onContributeClick={() => {
             closePopup();
-            // 뒤로가기 등으로 플로우를 중간에 떠나 남은 값이 있으면 비우고 시작한다
-            reset();
-            setIsMessageOnly(false);
-            setIsContributeOpen(true);
+            startContribute();
           }}
         />
         {/* TODO(API): 실제 API 연결 시 입금 처리 결과를 서버에 반영하고, 팝업의 확인 대기 건수(unconfirmedCount)와 프로필 알림 점도 그 값으로 갱신한다. 지금은 funding.deposits.length로 고정이라 처리 후에도 줄지 않는다 */}
