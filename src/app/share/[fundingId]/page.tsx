@@ -9,8 +9,8 @@ type FundingSharePageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-// TODO(API): 펀딩 조회 API가 내려주는 개설자 여부로 교체한다. 판별 수단이 없어 지금은 항상 false라 개설자도 이동하지 않는다
-const isFundingHost = async () => false;
+// TODO(API): 펀딩 조회 API가 내려주는 개설자 여부로 교체한다. 판별 수단이 없어 지금은 항상 true라 로그인한 사용자는 모두 개설자로 본다
+const isFundingHost = async () => true;
 
 export default async function FundingSharePage({ params, searchParams }: FundingSharePageProps) {
   const { fundingId } = await params;
