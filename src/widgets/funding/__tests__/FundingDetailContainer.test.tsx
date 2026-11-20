@@ -12,6 +12,17 @@ vi.mock("@/hooks/mutations/auth/useKakaoLoginUriMutation", () => ({
   useKakaoLoginUriMutation: () => ({ mutate: vi.fn() }),
 }));
 
+vi.mock("@/hooks/queries/contribution/useMyContributionsQuery", () => ({
+  useMyContributionsQuery: () => ({ data: undefined, isPending: false }),
+}));
+vi.mock("@/hooks/mutations/contribution/useAccessGuestContributionMutation", () => ({
+  useAccessGuestContributionMutation: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+    error: null,
+    reset: vi.fn(),
+  }),
+}));
 vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
   useMyProfileQuery: () => ({ data: { name: "민지" } }),
 }));

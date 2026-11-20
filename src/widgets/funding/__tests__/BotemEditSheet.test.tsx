@@ -18,15 +18,19 @@ beforeAll(() => {
 type HarnessProps = {
   onSubmit?: (name: string, password: string) => void;
   closeOnSubmit?: boolean;
+  errorMessage?: string;
+  isPending?: boolean;
 };
 
-function Harness({ onSubmit = vi.fn(), closeOnSubmit }: HarnessProps) {
+function Harness({ onSubmit = vi.fn(), closeOnSubmit, errorMessage, isPending }: HarnessProps) {
   const [open, setOpen] = useState(true);
   return (
     <>
       <button onClick={() => setOpen(true)}>열기</button>
       <BotemEditSheet
         open={open}
+        errorMessage={errorMessage}
+        isPending={isPending}
         onClose={() => setOpen(false)}
         onSubmit={(name, password) => {
           onSubmit(name, password);
@@ -143,5 +147,25 @@ describe("BotemEditSheet", () => {
     expect(getName()).toHaveValue("");
     expect(getPassword()).toHaveValue("");
     expect(getSubmit()).toBeDisabled();
+  });
+
+  it("errorMessage가 있으면 비밀번호 입력란 아래에 안내를 보여주고 시트를 닫지 않는다", () => {
+    render(<Harness errorMessage="일치하는 보탬이 없어요" />);
+
+    expect(screen.getByText("일치하는 보탬이 없어요")).toBeInTheDocument();
+    expect(getPassword()).toBeInvalid();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("확인 요청 중(isPending)에는 입력을 채워도 확인이 비활성이고 Enter로도 제출되지 않는다", async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup();
+    render(<Harness isPending onSubmit={onSubmit} />);
+
+    await user.type(getName(), "민지");
+    await user.type(getPassword(), "1234{Enter}");
+
+    expect(getSubmit()).toBeDisabled();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

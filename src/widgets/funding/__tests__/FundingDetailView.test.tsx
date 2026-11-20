@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { ApiError } from "@/types/api";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import { useGuestBotemStore } from "@/store/guestBotemStore";
 import { FUNDING_DETAIL as DETAIL } from "@/widgets/funding/__tests__/fixtures/fundingDetail";
@@ -21,6 +22,41 @@ vi.mock("@/utils/auth/handleKakaoLoginClick", () => ({
 vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
   useMyProfileQuery: () => ({ data: { name: "민지" } }),
 }));
+
+// 회원의 '이 펀딩에 보탠 내역'(GET /me). 기본은 조회 실패와 같은 상태(data 없음, 대기 아님)라 두 버튼이 보인다
+type MyContributionsState = { data?: { contributions: unknown[] }; isPending: boolean };
+let myContributions: MyContributionsState = { isPending: false };
+const myContributionsQueryMock = vi.fn((fundingId: number, enabled: boolean) => {
+  void fundingId;
+  void enabled;
+  return myContributions;
+});
+vi.mock("@/hooks/queries/contribution/useMyContributionsQuery", () => ({
+  useMyContributionsQuery: (fundingId: number, enabled: boolean) =>
+    myContributionsQueryMock(fundingId, enabled),
+}));
+
+// 비회원 보탬 확인(POST guest/access). 실패는 훅처럼 error 상태로 돌려줘 시트 안내를 그리게 한다
+let accessGuestFailure: Error | null = null;
+const accessGuestMock = vi.fn();
+vi.mock("@/hooks/mutations/contribution/useAccessGuestContributionMutation", async () => {
+  const { useState } = await import("react");
+  return {
+    useAccessGuestContributionMutation: () => {
+      const [error, setError] = useState<Error | null>(null);
+      return {
+        error,
+        isPending: false,
+        reset: () => setError(null),
+        mutate: (body: unknown, options?: { onSuccess?: () => void }) => {
+          accessGuestMock(body);
+          if (accessGuestFailure) setError(accessGuestFailure);
+          else options?.onSuccess?.();
+        },
+      };
+    },
+  };
+});
 
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
@@ -87,6 +123,10 @@ describe("FundingDetailView", () => {
     useGuestBotemStore.getState().reset();
     replaceMock.mockClear();
     kakaoLoginMock.mockClear();
+    accessGuestMock.mockClear();
+    myContributionsQueryMock.mockClear();
+    myContributions = { isPending: false };
+    accessGuestFailure = null;
   });
 
   it("펀딩 제목과 하단 '내 보탬 확인'·'보태러가기' 버튼을 보여주고 프로필 묶음 버튼은 없다", () => {
@@ -174,6 +214,40 @@ describe("FundingDetailView", () => {
       });
     });
 
+    it("일치하는 보탬이 없으면 시트에 안내만 띄우고 닫지 않으며 보태러 가기로 바뀌지 않는다", async () => {
+      accessGuestFailure = new ApiError("FUNDING_025");
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+      await confirmGuestMyBotem(user);
+
+      expect(await screen.findByText(/일치하는 보탬이 없어요/)).toBeInTheDocument();
+      expect(screen.getByRole("textbox", { name: "이름" })).toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+      expect(useGuestBotemStore.getState().fundingId).toBeNull();
+      expect(accessGuestMock).toHaveBeenCalledWith({
+        participantName: "민지",
+        guestPassword: "1234",
+      });
+    });
+
+    it("비밀번호를 여러 번 틀려 잠기면 10분 뒤 다시 시도하라는 문구를 보여준다", async () => {
+      accessGuestFailure = new ApiError("FUNDING_029");
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+      await confirmGuestMyBotem(user);
+
+      expect(await screen.findByText(/10분 후 다시 시도/)).toBeInTheDocument();
+      expect(useGuestBotemStore.getState().fundingId).toBeNull();
+    });
+
+    it("비회원 화면은 회원 보탬 조회를 켜지 않는다", () => {
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+      expect(myContributionsQueryMock).toHaveBeenLastCalledWith(1, false);
+    });
+
     it("이미 확인한 뒤에는 남은 '내 보탬 확인' 버튼으로 시트를 다시 연다", async () => {
       const user = userEvent.setup();
       render(<FundingDetailView detail={DETAIL} fundingId="1" />);
@@ -244,7 +318,8 @@ describe("FundingDetailView", () => {
     expect(useGuestBotemStore.getState().fundingId).toBe("1");
   });
 
-  it("로그인 쿠키가 있는 회원은 쿼리가 없어도(새로고침) 하단에 '내 보탬 확인'만 보이고 시트는 열리지 않는다", () => {
+  it("로그인 쿠키가 있는 회원은 쿼리가 없어도(새로고침) 서버에 보탬이 있으면 하단에 '내 보탬 확인'만 보이고 시트는 열리지 않는다", () => {
+    myContributions = { data: { contributions: [{}] }, isPending: false };
     render(<FundingDetailView detail={DETAIL} fundingId="1" isLoggedIn />);
 
     expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
@@ -261,6 +336,7 @@ describe("FundingDetailView", () => {
   });
 
   it("내 보탬 확인으로 돌아오면 주소에서 member 쿼리를 지워 새로고침해도 시트가 다시 열리지 않는다", () => {
+    myContributions = { data: { contributions: [{}] }, isPending: false };
     window.history.replaceState(null, "", "/share/1?member=myBotem");
     render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="myBotem" isLoggedIn />);
 
@@ -316,11 +392,53 @@ describe("FundingDetailView", () => {
 
   describe("회원 (공유 화면에서 로그인해 돌아온 경우)", () => {
     it("내 보탬 확인으로 돌아오면 하단에 '내 보탬 확인'만 남기고 시트를 자동으로 연다", async () => {
+      myContributions = { data: { contributions: [{}] }, isPending: false };
       render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="myBotem" />);
 
       expect(await screen.findByRole("dialog", { name: "내 보탬 확인" })).toBeInTheDocument();
       expect(screen.getAllByRole("button", { name: "내 보탬 확인" })).toHaveLength(1);
       expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
+    });
+
+    it("서버에 보탠 내역이 없으면 구분 Dialog 없이 바로 '메시지 보태기'/'보태기'만 보인다", () => {
+      myContributions = { data: { contributions: [] }, isPending: false };
+      render(<FundingDetailView detail={DETAIL} fundingId="1" isLoggedIn />);
+
+      expect(screen.getByRole("button", { name: "메시지 보태기" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "보태기" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+      expect(myContributionsQueryMock).toHaveBeenLastCalledWith(1, true);
+    });
+
+    it("보태러가기로 돌아왔어도 서버에 보탠 내역이 있으면 '내 보탬 확인'만 보인다", () => {
+      myContributions = { data: { contributions: [{}] }, isPending: false };
+      render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="contribute" />);
+
+      expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "보태기" })).not.toBeInTheDocument();
+    });
+
+    it("보탠 내역을 조회하는 동안에는 하단 버튼을 보여주지 않는다", () => {
+      myContributions = { isPending: true };
+      render(<FundingDetailView detail={DETAIL} fundingId="1" isLoggedIn />);
+
+      expect(screen.queryByRole("button", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "보태기" })).not.toBeInTheDocument();
+    });
+
+    it("보탠 내역이 없는 회원이 내 보탬 확인으로 돌아오면 안내만 띄우고 시트는 열지 않는다", async () => {
+      myContributions = { data: { contributions: [] }, isPending: false };
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="myBotem" />);
+
+      expect(
+        await screen.findByRole("heading", { name: "이 펀딩에 보탠 내역이 없어요" }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "확인" }));
+
+      expect(screen.getByRole("button", { name: "보태기" })).toBeInTheDocument();
     });
 
     it("보태러가기로 돌아오면 '메시지 보태기'/'보태기'를 보여주고 시트는 자동으로 열지 않는다", () => {

@@ -17,7 +17,11 @@ import { useShareLink } from "@/hooks/useShareLink";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
+import { useAccessGuestContributionMutation } from "@/hooks/mutations/contribution/useAccessGuestContributionMutation";
+import { useMyContributionsQuery } from "@/hooks/queries/contribution/useMyContributionsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
+import { DEFAULT_ERROR_MESSAGE, ERROR_MESSAGES } from "@/constants/errorMessages";
+import { ApiError } from "@/types/api";
 import { useGuestBotemStore } from "@/store/guestBotemStore";
 import { handleKakaoLoginClick } from "@/utils/auth/handleKakaoLoginClick";
 import { getShareReturnPath, type ShareMemberIntent } from "@/utils/funding/shareMemberIntent";
@@ -169,14 +173,27 @@ export default function FundingDetailView({
   const [memberCheckFrom, setMemberCheckFrom] = useState<ShareMemberIntent | null>(null);
   const { mutate: requestKakaoLogin } = useKakaoLoginUriMutation();
   const [isGuestFindOpen, setIsGuestFindOpen] = useState(false);
+  const accessGuest = useAccessGuestContributionMutation(Number(fundingId));
+  const guestFindError = accessGuest.error
+    ? (accessGuest.error instanceof ApiError && ERROR_MESSAGES[accessGuest.error.code]?.message) ||
+      DEFAULT_ERROR_MESSAGE.message
+    : undefined;
   const isMember = memberIntent !== undefined || isLoggedIn;
   // 비회원이 '보태러가기'에서 확인을 마치거나 회원이 보태러가기로 돌아오면 하단이 '메시지 보태기'/'보태기'로 바뀐다
   const [isContributeReady, setIsContributeReady] = useState(memberIntent === "contribute");
   // 이 펀딩에서 이름·비밀번호(비회원)나 로그인(회원)으로 내 보탬을 확인하고 나면 하단은 '내 보탬 확인' 버튼만 남는다
   const hasGuestIdentity = useGuestBotemStore(state => state.fundingId === fundingId);
-  // TODO(API): 로그인 회원이 이 펀딩에 보탰는지 서버 값이 없어, 보태러가기로 막 돌아온 경우가 아니면 회원은 이미 보탠 것으로 본다
-  const hasConfirmedMyBotem =
-    hasGuestIdentity || memberIntent === "myBotem" || (isLoggedIn && memberIntent !== "contribute");
+  // 회원은 서버가 이 펀딩에 보탠 내역이 있는지 알려준다. 비로그인 화면에서는 401이 나가지 않도록 조회하지 않는다
+  const myContributions = useMyContributionsQuery(Number(fundingId), isGuest && isMember);
+  const memberHasBotem = myContributions.data && myContributions.data.contributions.length > 0;
+  const memberHasNoBotem = myContributions.data && myContributions.data.contributions.length === 0;
+  // 회원 조회가 끝나기 전에는 하단 버튼을 정할 수 없어 비워 둔다. 조회에 실패하면 두 버튼을 보여주고 중복은 서버가 막는다
+  const isCheckingMember = isGuest && isMember && myContributions.isPending;
+  const hasConfirmedMyBotem = hasGuestIdentity || !!memberHasBotem;
+  // 보탠 내역이 없는 회원이 '내 보탬 확인'으로 돌아오면 안내만 하고 시트는 열지 않는다
+  const [isNoBotemNoticeClosed, setIsNoBotemNoticeClosed] = useState(false);
+  const showNoBotemNotice =
+    memberIntent === "myBotem" && !!memberHasNoBotem && !isNoBotemNoticeClosed;
   // 비회원 화면에서는 401 요청이 나가지 않도록 로그인 복귀한 회원일 때만 조회한다
   const { data: profile } = useMyProfileQuery(isMember);
   const memberName = profile?.name ?? undefined;
@@ -328,13 +345,13 @@ export default function FundingDetailView({
             </button>
           )}
         </div>
-        {isGuest && (
+        {isGuest && !isCheckingMember && (
           <BottomCTA>
             {hasConfirmedMyBotem ? (
               <Button size="xlarge" variant="fill" onClick={() => setIsPopupOpen(true)}>
                 내 보탬 확인
               </Button>
-            ) : isContributeReady ? (
+            ) : isContributeReady || memberHasNoBotem ? (
               <>
                 <Button size="xlarge" variant="weak" onClick={startMessage}>
                   메시지 보태기
@@ -358,15 +375,33 @@ export default function FundingDetailView({
             )}
           </BottomCTA>
         )}
-        {/* TODO(API): 이름·비밀번호로 일치하는 보탬을 조회하는 API가 나오면 여기서 검증하고, 없으면 안내 후 시트를 닫지 않는다. 지금은 입력만 하면 통과한다 */}
+        {/* 일치하는 보탬이 있을 때만 확인 완료로 본다. 없으면 시트를 닫지 않고 안내해 재입력하게 한다 */}
         <BotemEditSheet
           open={isGuestFindOpen}
-          onClose={() => setIsGuestFindOpen(false)}
-          onSubmit={(name, password) => {
-            useGuestBotemStore.getState().setIdentity(fundingId, name, password);
+          isPending={accessGuest.isPending}
+          errorMessage={guestFindError}
+          onClose={() => {
+            accessGuest.reset();
             setIsGuestFindOpen(false);
-            setIsPopupOpen(true);
           }}
+          onSubmit={(name, password) =>
+            accessGuest.mutate(
+              { participantName: name, guestPassword: password },
+              {
+                onSuccess: () => {
+                  useGuestBotemStore.getState().setIdentity(fundingId, name, password);
+                  setIsGuestFindOpen(false);
+                  setIsPopupOpen(true);
+                },
+              },
+            )
+          }
+        />
+        <Dialog
+          kind="alert"
+          open={showNoBotemNotice}
+          title="이 펀딩에 보탠 내역이 없어요"
+          onConfirm={() => setIsNoBotemNoticeClosed(true)}
         />
         <Dialog
           kind="confirm"
@@ -391,7 +426,7 @@ export default function FundingDetailView({
         />
         {isGuest ? (
           <MyBotemSheet
-            open={isPopupOpen}
+            open={isPopupOpen && hasConfirmedMyBotem}
             unconfirmedCount={unconfirmedCount}
             friends={funding.friends}
             ownerName={funding.hostName}
