@@ -19,14 +19,15 @@ export type ContributionRequestVariables = {
 };
 
 // 업로드에 성공한 파일은 fileUrl을 기억해, 뒤 단계가 실패해 재시도할 때 같은 파일을 S3에 다시 올려 고아 파일을 늘리지 않는다
-const uploadedUrls = new WeakMap<Blob, string>();
+// fileUrl은 발급받은 펀딩에서만 유효할 수 있어 shareKey도 함께 기억한다
+const uploadedUrls = new WeakMap<Blob, { shareKey: string; fileUrl: string }>();
 
 // 첨부 업로드는 보탬 생성·수정이 함께 쓴다
 export const useAttachmentUploader = (shareKey: string) => {
   // 발급 → S3 PUT까지 묶어 올리고 보탬 요청에 넣을 fileUrl을 돌려준다
   const upload = async (attachmentType: RollingPaperAttachmentType, file: Blob) => {
     const cached = uploadedUrls.get(file);
-    if (cached) return cached;
+    if (cached?.shareKey === shareKey) return cached.fileUrl;
     const issued = await fundingService.createRollingPaperAttachmentUploadUrl(shareKey, {
       attachmentType,
       contentType: file.type,
@@ -35,7 +36,7 @@ export const useAttachmentUploader = (shareKey: string) => {
     if (!issued) throw new Error("업로드 URL 발급에 실패했습니다.");
     const { uploadUrl, fileUrl } = issued;
     await fundingService.uploadRollingPaperAttachment(uploadUrl, file);
-    uploadedUrls.set(file, fileUrl);
+    uploadedUrls.set(file, { shareKey, fileUrl });
     return fileUrl;
   };
 

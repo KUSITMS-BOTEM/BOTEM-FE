@@ -41,16 +41,20 @@ export default function BotemEditFlow({
   const [isLetterOpen, setIsLetterOpen] = useState(false);
   const [isSavedOpen, setIsSavedOpen] = useState(false);
   // 저장한 값을 다음 수정 세션의 기준으로 삼고, 확인 때 key를 올려 시트를 그 값으로 다시 마운트한다
-  const [savedLetter, setSavedLetter] = useState<LetterWriteValues | null>(null);
+  // 다른 보탬으로 바뀌면 이전 보탬의 편지를 쓰지 않도록 contributionId와 함께 기억한다
+  const [saved, setSaved] = useState<{ contributionId: number; values: LetterWriteValues } | null>(
+    null,
+  );
   const [letterKey, setLetterKey] = useState(0);
   const updateMy = useUpdateMyContributionMutation(shareKey);
   const updateGuest = useUpdateGuestContributionMutation(shareKey);
+  const savedLetter = saved?.contributionId === contribution?.contributionId ? saved?.values : null;
   const initialLetter = savedLetter ?? (contribution && toLetterValues(contribution));
 
   const save = (values: LetterWriteValues) => {
     if (!contribution) return;
     const onSuccess = () => {
-      setSavedLetter(values);
+      setSaved({ contributionId: contribution.contributionId, values });
       setIsSavedOpen(true);
     };
     if ("accessToken" in contribution) {

@@ -48,9 +48,12 @@ export async function generateMetadata({ params }: FundingSharePageProps): Promi
 
 export default async function FundingSharePage({ params, searchParams }: FundingSharePageProps) {
   const { shareKey } = await params;
-  const memberIntent = parseShareMemberIntent((await searchParams)[SHARE_MEMBER_PARAM]);
   // 참여 회원은 share에 머문다. 개설자는 토큰이 있어야 알 수 있어, 클라이언트가 재조회한 ownerPreview로 기존 펀딩 화면에 보낸다
   const isLoggedIn = (await cookies()).get("isLoggedIn")?.value === "true";
+  // 로그인하지 않은 방문자가 복귀 URL을 직접 열어도 회원 흐름으로 들어가지 못하게 한다
+  const memberIntent = isLoggedIn
+    ? parseShareMemberIntent((await searchParams)[SHARE_MEMBER_PARAM])
+    : undefined;
   const funding = await getFunding(shareKey);
 
   const queryClient = new QueryClient();
