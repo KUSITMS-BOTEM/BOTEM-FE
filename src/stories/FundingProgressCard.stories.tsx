@@ -31,7 +31,7 @@ const meta = {
     productImageUrl: SampleProduct.src,
     productName: "소니 WH-1000XM5",
     deadline: addDays(getTodayDate(), 7),
-    currentAmount: 74074074,
+    percent: 60,
     targetAmount: 123456789,
   },
 } satisfies Meta<typeof FundingProgressCard>;
@@ -48,11 +48,11 @@ export const Lime: Story = { args: { fundingId: 2 } };
 
 export const Blue: Story = { args: { fundingId: 3 } };
 
-export const Disabled: Story = { args: { currentAmount: 0 } };
+export const Disabled: Story = { args: { percent: 0 } };
 
-export const AlmostDone: Story = { args: { currentAmount: 120000000 } };
+export const AlmostDone: Story = { args: { percent: 97 } };
 
 // 마감 상태: 기간이 지나면 D-0 + "기간 마감", 기간이 남아도 목표를 채우면 D-n 유지 + "마감"
 export const PeriodClosed: Story = { args: { deadline: addDays(getTodayDate(), -1) } };
 
-export const AmountClosed: Story = { args: { currentAmount: 123456789 } };
+export const AmountClosed: Story = { args: { percent: 100 } };
