@@ -4,7 +4,10 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { contributionService } from "@/apis/contribution/contributionService";
 import Button from "@/components/Button";
-import type { PendingContributionResponse } from "@/types/contribution/contribution";
+import type {
+  ContributionDecisionResult,
+  PendingContributionResponse,
+} from "@/types/contribution/contribution";
 import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
 
 const meta: Meta<typeof DepositConfirmSheet> = {
@@ -27,18 +30,20 @@ const contribution = (
   contributionId: number,
   participantName: string,
   participatedAt: string,
+  amount = 45000,
 ): PendingContributionResponse => ({
   contributionId,
   participantName,
   profileImageUrl: null,
   participatedAt,
+  amount,
 });
 
 const CONTRIBUTIONS = [
   contribution(1, "김하린이", "2026-11-18T11:20:00"),
   contribution(2, "김하린이", "2026-11-16T11:20:00"),
   contribution(3, "김하린이", "2026-11-16T09:10:00"),
-  contribution(4, "박도윤", "2026-11-14T21:45:00"),
+  contribution(4, "박도윤", "2026-11-14T21:45:00", 30000),
 ];
 
 const PROGRESS = {
@@ -58,18 +63,22 @@ const installStubs = (pending: PendingContributionResponse[]) => {
     const contributions = pending.filter(c => waitingIds.has(c.contributionId));
     return { pendingContributionCount: contributions.length, contributions };
   };
-  contributionService.confirmContribution = async (_fundingId, contributionId) => {
-    waitingIds.delete(contributionId);
-    return { contributionId, status: "CONFIRMED", progress: PROGRESS };
+  contributionService.decideContributions = async (_fundingId, { contributionIds, decision }) => {
+    const status = decision === "CONFIRM" ? "CONFIRMED" : "REJECTED";
+    const contributions = contributionIds.map(contributionId => ({
+      contributionId,
+      status,
+      changed: waitingIds.delete(contributionId),
+    })) satisfies ContributionDecisionResult[];
+    return { contributions, progress: PROGRESS };
   };
-  contributionService.rejectContribution = async (_fundingId, contributionId) => {
-    waitingIds.delete(contributionId);
-    return { contributionId, status: "REJECTED", progress: PROGRESS };
-  };
-  contributionService.confirmAllContributions = async () => {
-    const confirmedCount = waitingIds.size;
-    waitingIds.clear();
-    return { confirmedCount, progress: PROGRESS };
+  contributionService.undoContributionDecisions = async (_fundingId, { contributionIds }) => {
+    const contributions = contributionIds.map(contributionId => {
+      const changed = !waitingIds.has(contributionId);
+      waitingIds.add(contributionId);
+      return { contributionId, status: "PENDING_CONFIRMATION" as const, changed };
+    });
+    return { contributions, progress: PROGRESS };
   };
 };
 
