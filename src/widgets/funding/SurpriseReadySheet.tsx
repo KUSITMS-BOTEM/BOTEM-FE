@@ -20,7 +20,7 @@ const SAVE_FAIL_TOAST_MS = 2000;
 
 type SurpriseReadySheetProps = {
   open: boolean;
-  fundingId: string;
+  shareKey: string;
   recipientName: string;
   /** 받는 사람에게 공개되는 시각. 예: "10월 13일 0시" */
   revealDateLabel: string;
@@ -42,7 +42,7 @@ type SurpriseReadySheetProps = {
 // TODO: 아직 스토리·테스트에서만 쓰인다. 마감 후 개설자 진입점(홈 카드 등)이 정해지면 연결한다
 export default function SurpriseReadySheet({
   open,
-  fundingId,
+  shareKey,
   recipientName,
   revealDateLabel,
   contributorCount,
@@ -75,7 +75,7 @@ export default function SurpriseReadySheet({
   const handleShare = () =>
     share({
       title: `${recipientName}님 서프라이즈 펀딩`,
-      url: `${window.location.origin}/share/${fundingId}`,
+      url: `${window.location.origin}/share/${shareKey}`,
     });
 
   return (

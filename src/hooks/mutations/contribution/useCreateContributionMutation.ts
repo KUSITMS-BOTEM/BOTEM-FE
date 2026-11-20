@@ -10,17 +10,16 @@ import { myContributionsQueryKey } from "@/hooks/queries/contribution/useMyContr
 type CreateContributionVariables = ContributionRequestVariables & { amount: number };
 
 // 송금 대기(AWAITING_TRANSFER)로 저장하고 송금 계좌를 돌려준다. 송금 확인은 useMarkTransferSentMutation이 맡는다
-export const useCreateContributionMutation = (fundingId: number) => {
+export const useCreateContributionMutation = (shareKey: string) => {
   const queryClient = useQueryClient();
-  const buildRequest = useContributionRequestBuilder(fundingId);
+  const buildRequest = useContributionRequestBuilder(shareKey);
 
   return useMutation({
     mutationFn: async ({ amount, ...variables }: CreateContributionVariables) =>
-      contributionService.createContribution(fundingId, {
+      contributionService.createContribution(shareKey, {
         ...(await buildRequest(variables)),
         amount,
       }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: myContributionsQueryKey(fundingId) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: myContributionsQueryKey(shareKey) }),
   });
 };

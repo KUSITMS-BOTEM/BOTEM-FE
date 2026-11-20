@@ -7,5 +7,5 @@ export type ShareMemberIntent = "myBotem" | "contribute";
 export const parseShareMemberIntent = (value: unknown): ShareMemberIntent | undefined =>
   value === "myBotem" || value === "contribute" ? value : undefined;
 
-export const getShareReturnPath = (fundingId: string, intent: ShareMemberIntent) =>
-  `/share/${encodeURIComponent(fundingId)}?${SHARE_MEMBER_PARAM}=${intent}`;
+export const getShareReturnPath = (shareKey: string, intent: ShareMemberIntent) =>
+  `/share/${encodeURIComponent(shareKey)}?${SHARE_MEMBER_PARAM}=${intent}`;

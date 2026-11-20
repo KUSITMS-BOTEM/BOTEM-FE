@@ -19,10 +19,10 @@ export type ContributionRequestVariables = {
 };
 
 // 금액·메시지 보태기가 같은 편지 본문을 보내므로 첨부 업로드와 요청 body 조립을 함께 쓴다
-export const useContributionRequestBuilder = (fundingId: number) => {
+export const useContributionRequestBuilder = (shareKey: string) => {
   // 발급 → S3 PUT까지 묶어 올리고 보탬 요청에 넣을 fileUrl을 돌려준다
   const upload = async (attachmentType: RollingPaperAttachmentType, file: Blob) => {
-    const issued = await fundingService.createRollingPaperAttachmentUploadUrl(fundingId, {
+    const issued = await fundingService.createRollingPaperAttachmentUploadUrl(shareKey, {
       attachmentType,
       contentType: file.type,
       contentLength: file.size,

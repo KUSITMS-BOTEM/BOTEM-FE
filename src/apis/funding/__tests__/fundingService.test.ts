@@ -169,38 +169,42 @@ describe("fundingService.getFundingDetailAsMember", () => {
     vi.mocked(reissue).mockResolvedValue({ accessToken: "new-token" });
     vi.mocked(clientApi.get).mockResolvedValue({ fundingId: 12 });
 
-    await expect(fundingService.getFundingDetailAsMember(12)).resolves.toEqual({ fundingId: 12 });
+    await expect(fundingService.getFundingDetailAsMember("share-key-12")).resolves.toEqual({
+      fundingId: 12,
+    });
 
     expect(reissue).toHaveBeenCalledTimes(1);
     expect(useAuthStore.getState().accessToken).toBe("new-token");
-    expect(clientApi.get).toHaveBeenCalledWith("/api/fundings/12");
+    expect(clientApi.get).toHaveBeenCalledWith("/api/fundings/share/share-key-12");
   });
 
   it("메모리 토큰이 있으면 재발급 없이 바로 조회한다", async () => {
     useAuthStore.getState().setAccessToken("token");
     vi.mocked(clientApi.get).mockResolvedValue({ fundingId: 12 });
 
-    await fundingService.getFundingDetailAsMember(12);
+    await fundingService.getFundingDetailAsMember("share-key-12");
 
     expect(reissue).not.toHaveBeenCalled();
-    expect(clientApi.get).toHaveBeenCalledWith("/api/fundings/12");
+    expect(clientApi.get).toHaveBeenCalledWith("/api/fundings/share/share-key-12");
   });
 
   it("refreshToken이 거부돼 재발급이 실패하면 비로그인으로 상세를 조회한다", async () => {
     vi.mocked(reissue).mockRejectedValue(new ApiError("REISSUE_FAILED", "재발급 실패"));
     vi.mocked(clientApi.get).mockResolvedValue({ fundingId: 12 });
 
-    await expect(fundingService.getFundingDetailAsMember(12)).resolves.toEqual({ fundingId: 12 });
+    await expect(fundingService.getFundingDetailAsMember("share-key-12")).resolves.toEqual({
+      fundingId: 12,
+    });
 
     expect(useAuthStore.getState().accessToken).toBeNull();
-    expect(clientApi.get).toHaveBeenCalledWith("/api/fundings/12");
+    expect(clientApi.get).toHaveBeenCalledWith("/api/fundings/share/share-key-12");
   });
 
   it("재발급이 일시 장애로 실패하면 조회하지 않고 에러를 전파한다", async () => {
     const error = new ApiError(REISSUE_UNAVAILABLE, "일시 장애");
     vi.mocked(reissue).mockRejectedValue(error);
 
-    await expect(fundingService.getFundingDetailAsMember(12)).rejects.toBe(error);
+    await expect(fundingService.getFundingDetailAsMember("share-key-12")).rejects.toBe(error);
     expect(clientApi.get).not.toHaveBeenCalled();
   });
 });

@@ -31,12 +31,14 @@ describe("useAccessGuestContributionMutation", () => {
   it("펀딩 id와 이름·비밀번호로 서비스를 호출하고 보탬을 돌려준다", async () => {
     const response = { contributionId: 31, accessToken: "token" } as GuestContributionResponse;
     vi.mocked(contributionService.accessGuestContribution).mockResolvedValue(response);
-    const { result } = renderHook(() => useAccessGuestContributionMutation(5), { wrapper });
+    const { result } = renderHook(() => useAccessGuestContributionMutation("share-key-5"), {
+      wrapper,
+    });
 
     result.current.mutate(body);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(contributionService.accessGuestContribution).toHaveBeenCalledWith(5, body);
+    expect(contributionService.accessGuestContribution).toHaveBeenCalledWith("share-key-5", body);
     expect(result.current.data).toEqual(response);
   });
 
@@ -44,7 +46,9 @@ describe("useAccessGuestContributionMutation", () => {
     vi.mocked(contributionService.accessGuestContribution).mockRejectedValue(
       new ApiError("FUNDING_025"),
     );
-    const { result } = renderHook(() => useAccessGuestContributionMutation(5), { wrapper });
+    const { result } = renderHook(() => useAccessGuestContributionMutation("share-key-5"), {
+      wrapper,
+    });
 
     result.current.mutate(body);
 

@@ -20,6 +20,7 @@ vi.mock("@/hooks/queries/friend/useFriendProfileQuery", () => ({
 
 const funding: FriendFundingResponse = {
   fundingId: 1,
+  shareKey: "share-key-1",
   type: "BIRTHDAY",
   productName: "소니 WH-1000 XM4",
   productImageUrl: null,

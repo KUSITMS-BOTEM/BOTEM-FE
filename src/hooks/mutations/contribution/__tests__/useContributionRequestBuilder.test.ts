@@ -13,7 +13,7 @@ vi.mock("@/apis/funding/fundingService", () => ({
 const letter = { text: "축하해", name: "민지", color: "orange", paperStyle: "vividSolid" };
 
 const build = (variables: Parameters<ReturnType<typeof useContributionRequestBuilder>>[0]) =>
-  renderHook(() => useContributionRequestBuilder(5)).result.current(variables);
+  renderHook(() => useContributionRequestBuilder("share-key-5")).result.current(variables);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -42,11 +42,14 @@ describe("useContributionRequestBuilder", () => {
 
     const body = await build({ letter: { ...letter, photo }, requestKey: "k" });
 
-    expect(fundingService.createRollingPaperAttachmentUploadUrl).toHaveBeenCalledWith(5, {
-      attachmentType: "PHOTO",
-      contentType: "image/png",
-      contentLength: 1,
-    });
+    expect(fundingService.createRollingPaperAttachmentUploadUrl).toHaveBeenCalledWith(
+      "share-key-5",
+      {
+        attachmentType: "PHOTO",
+        contentType: "image/png",
+        contentLength: 1,
+      },
+    );
     expect(fundingService.uploadRollingPaperAttachment).toHaveBeenCalledWith(
       "https://s3/PHOTO",
       photo,

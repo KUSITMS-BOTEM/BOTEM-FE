@@ -43,14 +43,14 @@ beforeEach(() => {
 describe("useCreateContributionMutation", () => {
   it("금액과 편지를 함께 제출하고 내 보탬 캐시를 무효화한다", async () => {
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
-    const { result } = renderHook(() => useCreateContributionMutation(5), { wrapper });
+    const { result } = renderHook(() => useCreateContributionMutation("share-key-5"), { wrapper });
 
     result.current.mutate({ letter, requestKey: "k", guestPassword: "1234", amount: 30000 });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(fundingService.createRollingPaperAttachmentUploadUrl).not.toHaveBeenCalled();
     expect(contributionService.createContribution).toHaveBeenCalledWith(
-      5,
+      "share-key-5",
       expect.objectContaining({
         requestKey: "k",
         amount: 30000,
@@ -59,18 +59,18 @@ describe("useCreateContributionMutation", () => {
         guestPassword: "1234",
       }),
     );
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: myContributionsQueryKey(5) });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: myContributionsQueryKey("share-key-5") });
   });
 
   it("사진을 올린 뒤 fileUrl과 금액을 함께 보낸다", async () => {
     const photo = new File(["p"], "p.png", { type: "image/png" });
-    const { result } = renderHook(() => useCreateContributionMutation(5), { wrapper });
+    const { result } = renderHook(() => useCreateContributionMutation("share-key-5"), { wrapper });
 
     result.current.mutate({ letter: { ...letter, photo }, requestKey: "k", amount: 1000 });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(contributionService.createContribution).toHaveBeenCalledWith(
-      5,
+      "share-key-5",
       expect.objectContaining({ photoUrl: "https://cdn/PHOTO", amount: 1000 }),
     );
   });
@@ -78,7 +78,7 @@ describe("useCreateContributionMutation", () => {
   it("업로드가 실패하면 보탬을 제출하지 않는다", async () => {
     vi.mocked(fundingService.uploadRollingPaperAttachment).mockRejectedValue(new Error("fail"));
     const photo = new File(["p"], "p.png", { type: "image/png" });
-    const { result } = renderHook(() => useCreateContributionMutation(5), { wrapper });
+    const { result } = renderHook(() => useCreateContributionMutation("share-key-5"), { wrapper });
 
     result.current.mutate({ letter: { ...letter, photo }, requestKey: "k", amount: 1000 });
 

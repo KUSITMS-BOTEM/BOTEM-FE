@@ -3,6 +3,7 @@ import { toFundingCardData } from "@/utils/home/toFundingCardData";
 
 const makeCard = (overrides: Partial<HomeFundingCardResponse> = {}): HomeFundingCardResponse => ({
   fundingId: 1,
+  shareKey: "share-key-1",
   cardType: "IN_PROGRESS",
   fundingType: "BIRTHDAY",
   productName: "무선 헤드폰",

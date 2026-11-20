@@ -44,14 +44,16 @@ beforeEach(() => {
 describe("useCreateMessageContributionMutation", () => {
   it("첨부가 없으면 업로드 없이 바로 제출하고 내 보탬 캐시를 무효화한다", async () => {
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
-    const { result } = renderHook(() => useCreateMessageContributionMutation(5), { wrapper });
+    const { result } = renderHook(() => useCreateMessageContributionMutation("share-key-5"), {
+      wrapper,
+    });
 
     result.current.mutate({ letter, requestKey: "k", guestPassword: "1234" });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(fundingService.createRollingPaperAttachmentUploadUrl).not.toHaveBeenCalled();
     expect(contributionService.createMessageContribution).toHaveBeenCalledWith(
-      5,
+      "share-key-5",
       expect.objectContaining({
         requestKey: "k",
         paperTemplateCode: "ORANGE_VIVID_SOLID",
@@ -59,7 +61,7 @@ describe("useCreateMessageContributionMutation", () => {
         guestPassword: "1234",
       }),
     );
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: myContributionsQueryKey(5) });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: myContributionsQueryKey("share-key-5") });
   });
 
   it("사진·음성을 올린 뒤 fileUrl과 녹음 길이를 함께 보낸다", async () => {
@@ -69,18 +71,23 @@ describe("useCreateMessageContributionMutation", () => {
       durationSeconds: 7,
       transcript: "안녕",
     };
-    const { result } = renderHook(() => useCreateMessageContributionMutation(5), { wrapper });
+    const { result } = renderHook(() => useCreateMessageContributionMutation("share-key-5"), {
+      wrapper,
+    });
 
     result.current.mutate({ letter: { ...letter, photo, voice }, requestKey: "k" });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(fundingService.createRollingPaperAttachmentUploadUrl).toHaveBeenCalledWith(5, {
-      attachmentType: "VOICE",
-      contentType: "audio/webm",
-      contentLength: 1,
-    });
+    expect(fundingService.createRollingPaperAttachmentUploadUrl).toHaveBeenCalledWith(
+      "share-key-5",
+      {
+        attachmentType: "VOICE",
+        contentType: "audio/webm",
+        contentLength: 1,
+      },
+    );
     expect(contributionService.createMessageContribution).toHaveBeenCalledWith(
-      5,
+      "share-key-5",
       expect.objectContaining({
         photoUrl: "https://cdn/PHOTO",
         voiceUrl: "https://cdn/VOICE",
@@ -93,7 +100,9 @@ describe("useCreateMessageContributionMutation", () => {
   it("업로드가 실패하면 보탬을 제출하지 않는다", async () => {
     vi.mocked(fundingService.uploadRollingPaperAttachment).mockRejectedValue(new Error("fail"));
     const photo = new File(["p"], "p.png", { type: "image/png" });
-    const { result } = renderHook(() => useCreateMessageContributionMutation(5), { wrapper });
+    const { result } = renderHook(() => useCreateMessageContributionMutation("share-key-5"), {
+      wrapper,
+    });
 
     result.current.mutate({ letter: { ...letter, photo }, requestKey: "k" });
 

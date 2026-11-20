@@ -11,7 +11,7 @@ import FundingDetailView from "@/widgets/funding/FundingDetailView";
 import FundingDetailViewSkeleton from "@/widgets/funding/skeleton/FundingDetailViewSkeleton";
 
 type FundingDetailLoaderProps = {
-  fundingId: string;
+  shareKey: string;
   onBack?: () => void;
   memberIntent?: ShareMemberIntent;
   isLoggedIn?: boolean;
@@ -19,14 +19,14 @@ type FundingDetailLoaderProps = {
 
 // 공유 링크로 열린 참여자(guest) 화면의 공개 상세 조회를 맡는다. 개설자 화면은 관리 상세를 따로 조회한다
 export default function FundingDetailLoader({
-  fundingId,
+  shareKey,
   isLoggedIn = false,
   ...viewProps
 }: FundingDetailLoaderProps) {
   const router = useRouter();
   // 회원은 토큰을 붙여 조회해야 개설자 여부(ownerPreview)를 알 수 있다
   const { data, isError, isFetchedAfterMount, refetch } = useFundingDetailQuery(
-    Number(fundingId),
+    shareKey,
     isLoggedIn,
   );
   // 서버가 받아 둔 값은 토큰 없이 조회한 것이라, 회원은 마운트 뒤 재조회가 끝나야 개설자 여부가 확정된다
@@ -35,14 +35,19 @@ export default function FundingDetailLoader({
   const isHostOnShare = data?.ownerPreview === true;
 
   useEffect(() => {
-    if (isHostOnShare) router.replace(`/funding/${fundingId}`);
-  }, [isHostOnShare, router, fundingId]);
+    if (isHostOnShare && data) router.replace(`/funding/${data.fundingId}`);
+  }, [isHostOnShare, router, data]);
 
   if (isError)
     return <ErrorView onRetry={() => void refetch()} onClose={() => router.replace("/")} />;
   if (!data || verifying || isHostOnShare) return <FundingDetailViewSkeleton />;
 
   return (
-    <FundingDetailView fundingId={fundingId} isLoggedIn={isLoggedIn} detail={data} {...viewProps} />
+    <FundingDetailView
+      fundingId={String(data.fundingId)}
+      isLoggedIn={isLoggedIn}
+      detail={data}
+      {...viewProps}
+    />
   );
 }

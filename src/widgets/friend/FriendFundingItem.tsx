@@ -38,7 +38,7 @@ export default function FriendFundingItem({ funding }: FriendFundingItemProps) {
 
   return (
     <div className="relative w-full">
-      <Link href={`/share/${funding.fundingId}`} className="flex w-full flex-col">
+      <Link href={`/share/${funding.shareKey}`} className="flex w-full flex-col">
         <div className="flex w-full items-center gap-3 py-3">
           <div className="border-semantic-border-weak bg-semantic-fill-neutral-weak rounded-large relative size-14 shrink-0 overflow-hidden border">
             {imageUrl && (

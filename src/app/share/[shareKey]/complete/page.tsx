@@ -1,11 +1,11 @@
 import FundingCompleteContainer from "@/widgets/funding/FundingCompleteContainer";
 
 type FundingCompletePageProps = {
-  params: Promise<{ fundingId: string }>;
+  params: Promise<{ shareKey: string }>;
 };
 
 export default async function FundingCompletePage({ params }: FundingCompletePageProps) {
-  const { fundingId } = await params;
+  const { shareKey } = await params;
 
-  return <FundingCompleteContainer fundingId={fundingId} />;
+  return <FundingCompleteContainer shareKey={shareKey} />;
 }

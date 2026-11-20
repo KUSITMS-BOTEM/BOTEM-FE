@@ -23,7 +23,7 @@ type FundingOpenCompleteSheetProps = {
   open: boolean;
   wish: FundingWish;
   info: Pick<FundingInfoValues, "targetAmount" | "deadline">;
-  fundingId: number;
+  shareKey: string;
   onClose: () => void;
   className?: string;
 } &
@@ -43,7 +43,7 @@ export default function FundingOpenCompleteSheet({
   open,
   wish,
   info,
-  fundingId,
+  shareKey,
   onClose,
   className,
   ...props
@@ -63,7 +63,7 @@ export default function FundingOpenCompleteSheet({
     if (props.variant !== "surprise") return;
     share({
       title: `${props.recipientName}님 서프라이즈 펀딩`,
-      url: `${window.location.origin}/share/${fundingId}`,
+      url: `${window.location.origin}/share/${shareKey}`,
     });
   };
 

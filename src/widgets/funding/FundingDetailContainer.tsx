@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
-import FundingDetailLoader from "@/widgets/funding/FundingDetailLoader";
 import FundingDetailView from "@/widgets/funding/FundingDetailView";
 import FundingLockedView from "@/widgets/funding/FundingLockedView";
 import FundingProgressCardSkeleton from "@/widgets/funding/skeleton/FundingProgressCardSkeleton";
@@ -62,5 +61,6 @@ export default function FundingDetailContainer({
 
   if (role === "recipient") return <FundingLockedView revealDateLabel={MOCK_REVEAL_DATE_LABEL} />;
 
-  return <FundingDetailLoader fundingId={fundingId} />;
+  // 참여자 상세는 숫자 ID 조회가 사라져 /share/{shareKey}에서만 열린다. 이 mock 분기는 viewer 역할 API가 생기면 정리한다
+  return null;
 }

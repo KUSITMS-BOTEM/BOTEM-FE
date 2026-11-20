@@ -91,7 +91,7 @@ beforeAll(() => {
 type User = ReturnType<typeof userEvent.setup>;
 // 입금 확인 시트가 확인 대기 목록을 조회하므로 빈 목록 응답을 준비한다. 보태기 제출·송금 확인은 성공 응답을 준다
 const server = setupServer(
-  http.post("*/api/fundings/:fundingId/contributions", () =>
+  http.post("*/api/fundings/share/:shareKey/contributions", () =>
     HttpResponse.json({
       success: true,
       data: {
@@ -109,14 +109,14 @@ const server = setupServer(
       error: null,
     }),
   ),
-  http.post("*/api/fundings/:fundingId/contributions/:contributionId/transfer-sent", () =>
+  http.post("*/api/fundings/share/:shareKey/contributions/:contributionId/transfer-sent", () =>
     HttpResponse.json({
       success: true,
       data: { contributionId: 2, status: "PENDING_CONFIRMATION" },
       error: null,
     }),
   ),
-  http.post("*/api/fundings/:fundingId/contributions/message-only", () =>
+  http.post("*/api/fundings/share/:shareKey/contributions/message-only", () =>
     HttpResponse.json({
       success: true,
       data: { contributionId: 1, participantName: "민지", status: "MESSAGE_ONLY" },
@@ -148,6 +148,7 @@ const render = (ui: ReactElement) => {
 
 const ownerDetail: OwnerFundingDetailResponse = {
   fundingId: 1,
+  shareKey: "share-key-1",
   type: "BIRTHDAY",
   title: "서연의 졸업",
   story: "졸업 선물로 노트북을 받고 싶어요.",
@@ -305,7 +306,10 @@ describe("FundingDetailView", () => {
 
       await user.click(screen.getByRole("button", { name: "예" }));
 
-      expect(kakaoLoginMock).toHaveBeenCalledWith(expect.anything(), "/share/1?member=myBotem");
+      expect(kakaoLoginMock).toHaveBeenCalledWith(
+        expect.anything(),
+        "/share/share-key-1?member=myBotem",
+      );
     });
 
     it("'보태러가기'에서 예를 누르면 보태러가기 복귀 경로로 카카오 로그인을 요청한다", async () => {
@@ -315,7 +319,10 @@ describe("FundingDetailView", () => {
 
       await user.click(screen.getByRole("button", { name: "예" }));
 
-      expect(kakaoLoginMock).toHaveBeenCalledWith(expect.anything(), "/share/1?member=contribute");
+      expect(kakaoLoginMock).toHaveBeenCalledWith(
+        expect.anything(),
+        "/share/share-key-1?member=contribute",
+      );
     });
   });
 
@@ -331,7 +338,7 @@ describe("FundingDetailView", () => {
       expect(screen.getAllByRole("button", { name: "내 보탬 확인" })).toHaveLength(1);
       expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
       expect(useGuestBotemStore.getState()).toMatchObject({
-        fundingId: "1",
+        shareKey: "share-key-1",
         name: "민지",
         password: "1234",
       });
@@ -347,7 +354,7 @@ describe("FundingDetailView", () => {
       expect(await screen.findByText(/일치하는 보탬이 없어요/)).toBeInTheDocument();
       expect(screen.getByRole("textbox", { name: "이름" })).toBeInTheDocument();
       expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
-      expect(useGuestBotemStore.getState().fundingId).toBeNull();
+      expect(useGuestBotemStore.getState().shareKey).toBeNull();
       expect(accessGuestMock).toHaveBeenCalledWith({
         participantName: "민지",
         guestPassword: "1234",
@@ -362,13 +369,13 @@ describe("FundingDetailView", () => {
       await confirmGuestMyBotem(user);
 
       expect(await screen.findByText(/10분 후 다시 시도/)).toBeInTheDocument();
-      expect(useGuestBotemStore.getState().fundingId).toBeNull();
+      expect(useGuestBotemStore.getState().shareKey).toBeNull();
     });
 
     it("비회원 화면은 회원 보탬 조회를 켜지 않는다", () => {
       render(<FundingDetailView detail={DETAIL} fundingId="1" />);
 
-      expect(myContributionsQueryMock).toHaveBeenLastCalledWith(1, false);
+      expect(myContributionsQueryMock).toHaveBeenLastCalledWith("share-key-1", false);
     });
 
     it("이미 확인한 뒤에는 남은 '내 보탬 확인' 버튼으로 시트를 다시 연다", async () => {
@@ -437,8 +444,8 @@ describe("FundingDetailView", () => {
     await user.click(screen.getByRole("button", { name: "메시지 보태기" }));
     await writeLetter(user, { withName: false });
 
-    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/1/complete"));
-    expect(useGuestBotemStore.getState().fundingId).toBe("1");
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/share-key-1/complete"));
+    expect(useGuestBotemStore.getState().shareKey).toBe("share-key-1");
   });
 
   it("로그인 쿠키가 있는 회원은 쿼리가 없어도(새로고침) 서버에 보탬이 있으면 하단에 '내 보탬 확인'만 보이고 시트는 열리지 않는다", () => {
@@ -460,7 +467,7 @@ describe("FundingDetailView", () => {
 
   it("내 보탬 확인으로 돌아오면 주소에서 member 쿼리를 지워 새로고침해도 시트가 다시 열리지 않는다", () => {
     myContributions = { data: { contributions: [{}] }, isPending: false };
-    window.history.replaceState(null, "", "/share/1?member=myBotem");
+    window.history.replaceState(null, "", "/share/share-key-1?member=myBotem");
     render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="myBotem" isLoggedIn />);
 
     expect(window.location.search).toBe("");
@@ -505,7 +512,7 @@ describe("FundingDetailView", () => {
       expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "완료하기" }));
 
-      await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/1/complete"));
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/share-key-1/complete"));
       const store = useFundingContributionStore.getState();
       expect(store.amount).toBe(0);
       expect(store.password).toBe("1234");
@@ -530,7 +537,7 @@ describe("FundingDetailView", () => {
       expect(screen.getByRole("button", { name: "메시지 보태기" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "보태기" })).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "내 보탬 확인" })).not.toBeInTheDocument();
-      expect(myContributionsQueryMock).toHaveBeenLastCalledWith(1, true);
+      expect(myContributionsQueryMock).toHaveBeenLastCalledWith("share-key-1", true);
     });
 
     it("보태러가기로 돌아왔어도 서버에 보탠 내역이 있으면 '내 보탬 확인'만 보인다", () => {
@@ -590,7 +597,7 @@ describe("FundingDetailView", () => {
       await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
       await clickTopmost(user, "완료하기");
 
-      await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/1/complete"));
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/share-key-1/complete"));
     });
 
     it("메시지 보태기는 편지 다음에 비밀번호 없이 바로 완료 페이지로 이동한다", async () => {
@@ -600,7 +607,7 @@ describe("FundingDetailView", () => {
 
       await writeLetter(user, { withName: false });
 
-      await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/1/complete"));
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/share-key-1/complete"));
       expect(screen.queryByLabelText("비밀번호 4자리")).not.toBeInTheDocument();
     });
   });
@@ -747,7 +754,7 @@ describe("FundingDetailView", () => {
 
       await userEvent.click(screen.getByRole("button", { name: "공유" }));
 
-      expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/share/1`);
+      expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/share/share-key-1`);
       expect(await screen.findByText("링크를 복사했어요")).toBeInTheDocument();
     });
 
@@ -819,14 +826,14 @@ describe("FundingDetailView", () => {
     await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
     await clickTopmost(user, "완료하기");
 
-    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/1/complete"));
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/share-key-1/complete"));
   });
 
   it("보태러 가기는 금액 보태기를 제출하고 응답 계좌를 송금 안내에 보여준다", async () => {
     const user = userEvent.setup();
     const submitted = vi.fn();
     server.use(
-      http.post("*/api/fundings/:fundingId/contributions", async ({ request }) => {
+      http.post("*/api/fundings/share/:shareKey/contributions", async ({ request }) => {
         submitted(await request.json());
         return HttpResponse.json({
           success: true,
@@ -862,7 +869,7 @@ describe("FundingDetailView", () => {
     const sent = vi.fn();
     server.use(
       http.post(
-        "*/api/fundings/:fundingId/contributions/:contributionId/transfer-sent",
+        "*/api/fundings/share/:shareKey/contributions/:contributionId/transfer-sent",
         async ({ params, request }) => {
           sent(params.contributionId, await request.json());
           return HttpResponse.json({
@@ -887,7 +894,7 @@ describe("FundingDetailView", () => {
   it("송금 확인이 실패하면 완료 페이지로 이동하지 않고 다시 누를 수 있다", async () => {
     const user = userEvent.setup();
     server.use(
-      http.post("*/api/fundings/:fundingId/contributions/:contributionId/transfer-sent", () =>
+      http.post("*/api/fundings/share/:shareKey/contributions/:contributionId/transfer-sent", () =>
         HttpResponse.json(
           { success: false, data: null, error: { code: "COMMON_500", message: "fail" } },
           { status: 500 },

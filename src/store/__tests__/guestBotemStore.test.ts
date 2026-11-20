@@ -5,17 +5,17 @@ describe("guestBotemStore", () => {
 
   it("처음에는 아무 값도 담겨 있지 않다", () => {
     expect(useGuestBotemStore.getState()).toMatchObject({
-      fundingId: null,
+      shareKey: null,
       name: null,
       password: null,
     });
   });
 
-  it("setIdentity는 펀딩 id와 이름·비밀번호를 함께 저장한다", () => {
+  it("setIdentity는 공유 키와 이름·비밀번호를 함께 저장한다", () => {
     useGuestBotemStore.getState().setIdentity("7", "민지", "1234");
 
     expect(useGuestBotemStore.getState()).toMatchObject({
-      fundingId: "7",
+      shareKey: "7",
       name: "민지",
       password: "1234",
     });
@@ -27,7 +27,7 @@ describe("guestBotemStore", () => {
     useGuestBotemStore.getState().reset();
 
     expect(useGuestBotemStore.getState()).toMatchObject({
-      fundingId: null,
+      shareKey: null,
       name: null,
       password: null,
     });

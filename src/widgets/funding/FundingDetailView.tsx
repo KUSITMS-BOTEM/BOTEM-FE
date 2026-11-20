@@ -147,6 +147,8 @@ export default function FundingDetailView({
     ? toHostFundingView(source.ownerDetail)
     : toShareFundingView(source.detail);
   const funding = { ...MOCK_FUNDING, ...view };
+  // 참여자용 API와 공유 링크는 shareKey로, 개설자용 API는 fundingId로 호출한다
+  const { shareKey } = source.ownerDetail ?? source.detail;
   const unconfirmedCount = funding.pendingContributionCount;
   const isSurprise = variant === "surprise";
   const isOwner = variant === "owner";
@@ -156,7 +158,7 @@ export default function FundingDetailView({
   const [memberCheckFrom, setMemberCheckFrom] = useState<ShareMemberIntent | null>(null);
   const { mutate: requestKakaoLogin } = useKakaoLoginUriMutation();
   const [isGuestFindOpen, setIsGuestFindOpen] = useState(false);
-  const accessGuest = useAccessGuestContributionMutation(Number(fundingId));
+  const accessGuest = useAccessGuestContributionMutation(shareKey);
   const guestFindError = accessGuest.error
     ? (accessGuest.error instanceof ApiError && ERROR_MESSAGES[accessGuest.error.code]?.message) ||
       DEFAULT_ERROR_MESSAGE.message
@@ -165,9 +167,9 @@ export default function FundingDetailView({
   // 비회원이 '보태러가기'에서 확인을 마치거나 회원이 보태러가기로 돌아오면 하단이 '메시지 보태기'/'보태기'로 바뀐다
   const [isContributeReady, setIsContributeReady] = useState(memberIntent === "contribute");
   // 이 펀딩에서 이름·비밀번호(비회원)나 로그인(회원)으로 내 보탬을 확인하고 나면 하단은 '내 보탬 확인' 버튼만 남는다
-  const hasGuestIdentity = useGuestBotemStore(state => state.fundingId === fundingId);
+  const hasGuestIdentity = useGuestBotemStore(state => state.shareKey === shareKey);
   // 회원은 서버가 이 펀딩에 보탠 내역이 있는지 알려준다. 비로그인 화면에서는 401이 나가지 않도록 조회하지 않는다
-  const myContributions = useMyContributionsQuery(Number(fundingId), isGuest && isMember);
+  const myContributions = useMyContributionsQuery(shareKey, isGuest && isMember);
   const memberHasBotem = myContributions.data && myContributions.data.contributions.length > 0;
   const memberHasNoBotem = myContributions.data && myContributions.data.contributions.length === 0;
   // 회원 조회가 끝나기 전에는 하단 버튼을 정할 수 없어 비워 둔다. 조회에 실패하면 두 버튼을 보여주고 중복은 서버가 막는다
@@ -203,9 +205,9 @@ export default function FundingDetailView({
   const [isMessageOnly, setIsMessageOnly] = useState(false);
   // 올리면 금액·편지 시트가 새로 마운트되어 입력값이 모두 초기화된다
   const [flowKey, setFlowKey] = useState(0);
-  const createMessage = useCreateMessageContributionMutation(Number(fundingId));
-  const createContribution = useCreateContributionMutation(Number(fundingId));
-  const markTransferSent = useMarkTransferSentMutation(Number(fundingId));
+  const createMessage = useCreateMessageContributionMutation(shareKey);
+  const createContribution = useCreateContributionMutation(shareKey);
+  const markTransferSent = useMarkTransferSentMutation(shareKey);
   const isSubmitting = createMessage.isPending || createContribution.isPending;
   // 금액 보태기를 저장한 응답. 송금 안내 시트의 계좌와 송금 확인 호출에 쓴다
   const [submitted, setSubmitted] = useState<{
@@ -219,8 +221,8 @@ export default function FundingDetailView({
   // 보태기를 마치면 돌아왔을 때 하단이 '내 보탬 확인'이 되도록 이 펀딩의 본인 확인을 기록한다 (회원은 비밀번호가 없다)
   const goToComplete = (password = "") => {
     const name = useFundingContributionStore.getState().letter?.name ?? "";
-    useGuestBotemStore.getState().setIdentity(fundingId, name, password);
-    router.replace(`/share/${fundingId}/complete`);
+    useGuestBotemStore.getState().setIdentity(shareKey, name, password);
+    router.replace(`/share/${shareKey}/complete`);
   };
 
   // 뒤로가기 등으로 플로우를 중간에 떠나 남은 값이 있으면 비우고 시작한다
@@ -323,7 +325,7 @@ export default function FundingDetailView({
             {
               icon: <IconShare />,
               ariaLabel: "공유",
-              onClick: () => copyLink(`${window.location.origin}/share/${fundingId}`),
+              onClick: () => copyLink(`${window.location.origin}/share/${shareKey}`),
             },
             // 참여자용 공유 화면(guest)에는 더보기가 없다. 개설자 화면의 더보기는 공유 카드 다시 받기·조기 마감이다
             ...(isGuest
@@ -442,7 +444,7 @@ export default function FundingDetailView({
               { participantName: name, guestPassword: password },
               {
                 onSuccess: () => {
-                  useGuestBotemStore.getState().setIdentity(fundingId, name, password);
+                  useGuestBotemStore.getState().setIdentity(shareKey, name, password);
                   setIsGuestFindOpen(false);
                   setIsPopupOpen(true);
                 },
@@ -471,7 +473,7 @@ export default function FundingDetailView({
             if (memberCheckFrom) {
               handleKakaoLoginClick(
                 requestKakaoLogin,
-                getShareReturnPath(fundingId, memberCheckFrom),
+                getShareReturnPath(shareKey, memberCheckFrom),
               );
             }
             setMemberCheckFrom(null);
@@ -528,6 +530,7 @@ export default function FundingDetailView({
           <FundingMoreFlow
             open={isMoreOpen}
             fundingId={Number(fundingId)}
+            shareKey={shareKey}
             extended={funding.extended}
             actions={funding.actions}
             shareCard={{

@@ -12,6 +12,7 @@ import FundingOpenCompleteSheet from "@/widgets/funding/FundingOpenCompleteSheet
 type FundingMoreFlowProps = {
   open: boolean;
   fundingId: number;
+  shareKey: string;
   extended: boolean;
   actions: Pick<FundingManagementActionsResponse, "canCloseEarly" | "canReissueShareCard">;
   shareCard: Pick<
@@ -24,6 +25,7 @@ type FundingMoreFlowProps = {
 export default function FundingMoreFlow({
   open,
   fundingId,
+  shareKey,
   extended,
   actions,
   shareCard,
@@ -56,7 +58,7 @@ export default function FundingMoreFlow({
       <FundingOpenCompleteSheet
         open={isShareCardOpen}
         variant="funding"
-        fundingId={fundingId}
+        shareKey={shareKey}
         {...shareCard}
         onClose={() => setIsShareCardOpen(false)}
       />

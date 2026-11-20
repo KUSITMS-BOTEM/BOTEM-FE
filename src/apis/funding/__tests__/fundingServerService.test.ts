@@ -22,22 +22,24 @@ afterAll(() => {
 });
 
 describe("fundingServerService.getFundingDetail", () => {
-  it("펀딩 id 경로를 토큰 없이 호출하고 data를 반환한다", async () => {
+  it("공유 키 경로를 토큰 없이 호출하고 data를 반환한다", async () => {
     let authorization: string | null = "unset";
     server.use(
-      http.get(`${BASE_URL}/api/fundings/12`, ({ request }) => {
+      http.get(`${BASE_URL}/api/fundings/share/share-key-12`, ({ request }) => {
         authorization = request.headers.get("Authorization");
         return HttpResponse.json({ success: true, data: { fundingId: 12 }, error: null });
       }),
     );
 
-    await expect(fundingServerService.getFundingDetail(12)).resolves.toEqual({ fundingId: 12 });
+    await expect(fundingServerService.getFundingDetail("share-key-12")).resolves.toEqual({
+      fundingId: 12,
+    });
     expect(authorization).toBeNull();
   });
 
   it("없는 펀딩이면 서버 에러 코드를 담은 ApiError로 reject한다", async () => {
     server.use(
-      http.get(`${BASE_URL}/api/fundings/404`, () =>
+      http.get(`${BASE_URL}/api/fundings/share/share-key-404`, () =>
         HttpResponse.json(
           {
             success: false,
@@ -49,7 +51,7 @@ describe("fundingServerService.getFundingDetail", () => {
       ),
     );
 
-    const error = await fundingServerService.getFundingDetail(404).catch(e => e);
+    const error = await fundingServerService.getFundingDetail("share-key-404").catch(e => e);
 
     expect(error).toBeInstanceOf(ApiError);
     expect(error.code).toBe("FUNDING_002");

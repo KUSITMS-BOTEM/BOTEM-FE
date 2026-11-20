@@ -45,10 +45,10 @@ const SAVE_FAIL_TOAST_MS = 2000;
 const EASE: Easing = [0.87, 0, 0.13, 1];
 
 type FundingCompleteContainerProps = {
-  fundingId: string;
+  shareKey: string;
 };
 
-export default function FundingCompleteContainer({ fundingId }: FundingCompleteContainerProps) {
+export default function FundingCompleteContainer({ shareKey }: FundingCompleteContainerProps) {
   const router = useRouter();
   const { pageExit, exitPage } = usePageExit();
   const reduceMotion = useReducedMotion() ?? false;
@@ -98,7 +98,7 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
               icon: <IconClose />,
               ariaLabel: "닫기",
               // 완료 페이지를 히스토리에서 지워 뒤로가기로 돌아오지 않게 한다
-              onClick: () => exitPage("fade", () => router.replace(`/share/${fundingId}`)),
+              onClick: () => exitPage("fade", () => router.replace(`/share/${shareKey}`)),
             },
           ]}
         />
@@ -141,7 +141,7 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
                   exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.55, ease: "linear" } }}
                   className="relative col-start-1 row-start-1">
                   <FundingProgressCard
-                    fundingId={fundingId}
+                    fundingId={shareKey}
                     productImageUrl={funding.productImageUrl}
                     productName={funding.productName}
                     deadline={funding.deadline}

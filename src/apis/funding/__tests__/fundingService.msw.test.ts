@@ -1,4 +1,5 @@
 import { setupServer } from "msw/node";
+import { toMockShareKey } from "@/mocks/mockShareKey";
 
 import { fundingHandlers } from "@/apis/funding/fundingService.msw";
 
@@ -94,6 +95,7 @@ describe("fundingHandlers POST /api/fundings", () => {
     expect(body.success).toBe(true);
     expect(body.data).toEqual({
       fundingId: expect.any(Number),
+      shareKey: expect.any(String),
       type: "BIRTHDAY",
       status: "FUNDING",
       shareUrl: expect.any(String),
@@ -151,6 +153,7 @@ describe("fundingHandlers POST /api/fundings/surprise", () => {
     expect(body.success).toBe(true);
     expect(body.data).toEqual({
       fundingId: expect.any(Number),
+      shareKey: expect.any(String),
       type: "SURPRISE",
       status: "FUNDING",
       shareUrl: expect.any(String),
@@ -159,7 +162,10 @@ describe("fundingHandlers POST /api/fundings/surprise", () => {
 
   describe("펀딩 상세 조회", () => {
     const getDetail = async (fundingId: number, headers?: HeadersInit) => {
-      const response = await fetch(`http://localhost/api/fundings/${fundingId}`, { headers });
+      const response = await fetch(
+        `http://localhost/api/fundings/share/${toMockShareKey(fundingId)}`,
+        { headers },
+      );
       return response.json();
     };
 

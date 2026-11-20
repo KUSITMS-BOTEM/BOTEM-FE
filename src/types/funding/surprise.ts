@@ -27,6 +27,7 @@ export type SurpriseRevealResponse = {
 
 export type SurpriseGiftPreparationResponse = {
   fundingId: number;
+  shareKey: string;
   recipientName: string;
   productName: string;
   productImageUrl: string;

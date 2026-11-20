@@ -58,6 +58,7 @@ vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
 
 const ownerDetail: OwnerFundingDetailResponse = {
   fundingId: 1,
+  shareKey: "share-key-1",
   type: "BIRTHDAY",
   title: "지유의 생일",
   story: "헤드폰을 바꾸고 싶어요.",

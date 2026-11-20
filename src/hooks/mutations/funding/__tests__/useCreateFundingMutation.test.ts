@@ -42,6 +42,7 @@ describe("useCreateFundingMutation", () => {
       fundingId: 7,
       type: "BIRTHDAY",
       status: "FUNDING",
+      shareKey: "share-key-7",
       shareUrl: "https://example.com/funding/7",
     });
     const { result } = renderHook(() => useCreateFundingMutation(), { wrapper: createWrapper() });
@@ -57,6 +58,7 @@ describe("useCreateFundingMutation", () => {
       fundingId: 7,
       type: "BIRTHDAY",
       status: "FUNDING",
+      shareKey: "share-key-7",
       shareUrl: "https://example.com/funding/7",
     });
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");

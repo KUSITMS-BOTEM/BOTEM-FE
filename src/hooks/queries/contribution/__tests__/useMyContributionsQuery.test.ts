@@ -34,17 +34,17 @@ describe("useMyContributionsQuery", () => {
   it("보탬이 없으면 에러가 아니라 빈 배열을 그대로 돌려준다", async () => {
     vi.mocked(contributionService.getMyContributions).mockResolvedValue(noContributions);
 
-    const { result } = renderHook(() => useMyContributionsQuery(12, true), {
+    const { result } = renderHook(() => useMyContributionsQuery("share-key-12", true), {
       wrapper: createWrapper(),
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(contributionService.getMyContributions).toHaveBeenCalledWith(12);
+    expect(contributionService.getMyContributions).toHaveBeenCalledWith("share-key-12");
     expect(result.current.data?.contributions).toEqual([]);
   });
 
   it("enabled가 false면 요청하지 않는다 (비로그인 401 방지)", () => {
-    renderHook(() => useMyContributionsQuery(12, false), { wrapper: createWrapper() });
+    renderHook(() => useMyContributionsQuery("share-key-12", false), { wrapper: createWrapper() });
 
     expect(contributionService.getMyContributions).not.toHaveBeenCalled();
   });
@@ -52,7 +52,7 @@ describe("useMyContributionsQuery", () => {
   it("서비스가 실패하면 재시도 없이 isError가 true가 된다", async () => {
     vi.mocked(contributionService.getMyContributions).mockRejectedValue(new Error("fail"));
 
-    const { result } = renderHook(() => useMyContributionsQuery(12, true), {
+    const { result } = renderHook(() => useMyContributionsQuery("share-key-12", true), {
       wrapper: createWrapper(),
     });
 
@@ -61,6 +61,12 @@ describe("useMyContributionsQuery", () => {
   });
 
   it("쿼리 키는 Swagger 경로 순서를 따른다", () => {
-    expect(myContributionsQueryKey(12)).toEqual(["fundings", 12, "contributions", "me"]);
+    expect(myContributionsQueryKey("share-key-12")).toEqual([
+      "fundings",
+      "share",
+      "share-key-12",
+      "contributions",
+      "me",
+    ]);
   });
 });

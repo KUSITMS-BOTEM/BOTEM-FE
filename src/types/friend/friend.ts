@@ -21,6 +21,7 @@ export type FriendFundingType = "BIRTHDAY" | "SURPRISE";
 
 export type FriendFundingResponse = {
   fundingId: number;
+  shareKey: string;
   type: FriendFundingType;
   productName: string;
   productImageUrl: string | null;

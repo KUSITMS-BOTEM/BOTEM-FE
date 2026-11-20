@@ -27,6 +27,7 @@ const created = {
   fundingId: 8,
   type: "SURPRISE",
   status: "FUNDING",
+  shareKey: "share-key-8",
   shareUrl: "https://x/8",
 } as const;
 

@@ -6,6 +6,7 @@ import FriendFundingSection from "@/widgets/friend/FriendFundingSection";
 
 const funding = (fundingId: number): FriendFundingResponse => ({
   fundingId,
+  shareKey: `share-key-${fundingId}`,
   type: "BIRTHDAY",
   productName: `상품 ${fundingId}`,
   productImageUrl: null,

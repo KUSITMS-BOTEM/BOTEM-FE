@@ -2,6 +2,7 @@ import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
 
 export const FUNDING_DETAIL: FundingDetailResponse = {
   fundingId: 1,
+  shareKey: "share-key-1",
   type: "BIRTHDAY",
   title: null,
   celebrantName: "민재",

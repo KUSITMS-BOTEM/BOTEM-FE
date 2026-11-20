@@ -36,7 +36,7 @@ const SHARE_BUTTON = { name: "공유하기" };
 describe("FundingCompleteContainer 입력값 정리", () => {
   it("완료 페이지를 떠나면 보태기 플로우 입력값이 초기화된다", () => {
     useFundingContributionStore.getState().setPassword("1234");
-    const { unmount } = render(<FundingCompleteContainer fundingId="1" />);
+    const { unmount } = render(<FundingCompleteContainer shareKey="1" />);
 
     unmount();
 
@@ -49,13 +49,13 @@ describe("FundingCompleteContainer 올랐어요 뱃지", () => {
 
   it("금액을 보탠 경우에는 올랐어요 뱃지를 보여준다", () => {
     useFundingContributionStore.getState().setAmount(50000);
-    render(<FundingCompleteContainer fundingId="1" />);
+    render(<FundingCompleteContainer shareKey="1" />);
 
     expect(screen.getByText("올랐어요")).toBeInTheDocument();
   });
 
   it("메시지만 보탠 경우(금액 0)에는 올랐어요 뱃지를 숨긴다", () => {
-    render(<FundingCompleteContainer fundingId="1" />);
+    render(<FundingCompleteContainer shareKey="1" />);
 
     expect(screen.queryByText("올랐어요")).not.toBeInTheDocument();
   });
@@ -72,7 +72,7 @@ describe("FundingCompleteContainer", () => {
     afterEach(() => vi.useRealTimers());
 
     it("처음에는 진행률 장면 제목을 보여주고 공유하기 버튼은 없다", () => {
-      render(<FundingCompleteContainer fundingId="1" />);
+      render(<FundingCompleteContainer shareKey="1" />);
 
       expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
         "민재에게 보탬이 되었어요",
@@ -81,7 +81,7 @@ describe("FundingCompleteContainer", () => {
     });
 
     it("2.3초 뒤에는 3번째로 보탬 제목으로 바뀌지만 공유하기 버튼은 아직 없다", () => {
-      render(<FundingCompleteContainer fundingId="1" />);
+      render(<FundingCompleteContainer shareKey="1" />);
 
       act(() => {
         vi.advanceTimersByTime(2300);
@@ -92,7 +92,7 @@ describe("FundingCompleteContainer", () => {
     });
 
     it("4.6초 뒤에 공유하기 버튼이 나타난다", () => {
-      render(<FundingCompleteContainer fundingId="1" />);
+      render(<FundingCompleteContainer shareKey="1" />);
 
       act(() => {
         vi.advanceTimersByTime(4600);
@@ -106,27 +106,27 @@ describe("FundingCompleteContainer", () => {
     beforeEach(() => vi.mocked(useReducedMotion).mockReturnValue(true));
 
     it("처음부터 자랑 장면 제목과 공유하기 버튼을 보여준다", () => {
-      render(<FundingCompleteContainer fundingId="1" />);
+      render(<FundingCompleteContainer shareKey="1" />);
 
       expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("3번째로 보탬!");
       expect(screen.getByRole("button", SHARE_BUTTON)).toBeInTheDocument();
     });
 
     it("컨페티를 그리지 않는다", () => {
-      render(<FundingCompleteContainer fundingId="1" />);
+      render(<FundingCompleteContainer shareKey="1" />);
 
       expect(screen.queryByTestId("confetti")).not.toBeInTheDocument();
     });
   });
 
   it("모션 감소가 아니면 컨페티를 그린다", () => {
-    render(<FundingCompleteContainer fundingId="1" />);
+    render(<FundingCompleteContainer shareKey="1" />);
 
     expect(screen.getByTestId("confetti")).toBeInTheDocument();
   });
 
   it("닫기 버튼을 누르면 push가 아니라 replace로 공유 페이지에 이동한다", async () => {
-    render(<FundingCompleteContainer fundingId="7" />);
+    render(<FundingCompleteContainer shareKey="7" />);
 
     fireEvent.click(screen.getByRole("button", { name: "닫기" }));
 
@@ -138,7 +138,7 @@ describe("FundingCompleteContainer", () => {
     beforeEach(() => vi.mocked(useReducedMotion).mockReturnValue(true));
 
     it("누르면 자랑 카드를 이미지로 저장·공유한다", async () => {
-      render(<FundingCompleteContainer fundingId="7" />);
+      render(<FundingCompleteContainer shareKey="7" />);
 
       fireEvent.click(screen.getByRole("button", SHARE_BUTTON));
 
@@ -149,7 +149,7 @@ describe("FundingCompleteContainer", () => {
 
     it("이미지 저장에 실패하면 안내 토스트를 보여준다", async () => {
       vi.mocked(saveNodeAsImage).mockRejectedValueOnce(new Error("fail"));
-      render(<FundingCompleteContainer fundingId="7" />);
+      render(<FundingCompleteContainer shareKey="7" />);
 
       fireEvent.click(screen.getByRole("button", SHARE_BUTTON));
 

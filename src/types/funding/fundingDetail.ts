@@ -30,6 +30,7 @@ export type FundingDetailThankCard = {
 
 export type FundingDetailResponse = {
   fundingId: number;
+  shareKey: string;
   type: FundingType;
   title: string | null;
   // '{이름}의 펀딩' 제목의 주인공. 생일 펀딩은 개설자, 서프라이즈는 받는 사람 (이름이 없으면 닉네임)

@@ -4,6 +4,7 @@ export type GiftVerificationStatus = "REQUIRED" | "COMPLETED";
 
 export type ClosedFundingResponse = {
   fundingId: number;
+  shareKey: string;
   type: FundingType;
   productName: string;
   productImageUrl: string;

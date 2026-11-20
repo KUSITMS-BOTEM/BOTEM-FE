@@ -13,7 +13,7 @@ vi.mock("@/hooks/mutations/auth/useKakaoLoginUriMutation", () => ({
 let myContributionCount = 0;
 vi.mock("@/hooks/queries/contribution/useMyContributionsQuery", () => ({
   // 실제 훅처럼 꺼져 있으면(비로그인) 데이터가 없다
-  useMyContributionsQuery: (_fundingId: number, enabled: boolean) => ({
+  useMyContributionsQuery: (_shareKey: string, enabled: boolean) => ({
     data: enabled
       ? { contributions: Array.from({ length: myContributionCount }, () => ({})) }
       : undefined,
@@ -60,7 +60,7 @@ const render = (ui: ReactElement) => {
 
 describe("FundingShareContainer", () => {
   it("비회원 공유 화면으로 렌더되어 하단에 '내 보탬 확인'·'보태러가기'가 보인다", () => {
-    render(<FundingShareContainer fundingId="1" />);
+    render(<FundingShareContainer shareKey="1" />);
 
     expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "보태러 가기" })).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe("FundingShareContainer", () => {
 
   it("로그인 회원이 이 펀딩에 보탰으면 '내 보탬 확인'만 보인다", () => {
     myContributionCount = 1;
-    render(<FundingShareContainer fundingId="1" isLoggedIn />);
+    render(<FundingShareContainer shareKey="1" isLoggedIn />);
 
     expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
@@ -76,7 +76,7 @@ describe("FundingShareContainer", () => {
 
   it("로그인 회원이 이 펀딩에 보태지 않았으면 '메시지 보태기'/'보태기'만 보인다", () => {
     myContributionCount = 0;
-    render(<FundingShareContainer fundingId="1" isLoggedIn />);
+    render(<FundingShareContainer shareKey="1" isLoggedIn />);
 
     expect(screen.getByRole("button", { name: "보태기" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "내 보탬 확인" })).not.toBeInTheDocument();

@@ -3,6 +3,7 @@ import { delay, http, HttpResponse } from "msw";
 
 import { MOCK_FUNDING_CARDS } from "@/apis/home/homeService.msw";
 import { getMockContributionProgress, getMockContributionRecords } from "@/mocks/mockContributions";
+import { fromMockShareKey, toMockShareKey } from "@/mocks/mockShareKey";
 import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
 import type { ClosedFundingListResponse } from "@/types/funding/closedFunding";
 import type {
@@ -106,6 +107,7 @@ const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
   fundings: [
     {
       fundingId: 12,
+      shareKey: toMockShareKey(12),
       type: "BIRTHDAY",
       productName: "에어팟 프로 2",
       productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
@@ -117,6 +119,7 @@ const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
     },
     {
       fundingId: 11,
+      shareKey: toMockShareKey(11),
       type: "BIRTHDAY",
       productName: "에어팟 프로 2",
       productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
@@ -128,6 +131,7 @@ const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
     },
     {
       fundingId: 9,
+      shareKey: toMockShareKey(9),
       type: "SURPRISE",
       productName: "에어팟 프로 2",
       productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
@@ -142,6 +146,7 @@ const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
 
 const MOCK_FUNDING_DETAIL: FundingDetailResponse = {
   fundingId: 12,
+  shareKey: toMockShareKey(12),
   type: "BIRTHDAY",
   title: null,
   celebrantName: "민재",
@@ -226,6 +231,7 @@ const getMockOwnerFundingDetail = (fundingId: number): OwnerFundingDetailRespons
 
   return {
     fundingId,
+    shareKey: toMockShareKey(fundingId),
     type: card.fundingType as FundingType,
     title: null,
     story: "올해 생일엔 꼭 갖고 싶던 선물이 있어요. 조금씩 보태주면 감동할게요!",
@@ -297,13 +303,15 @@ export const fundingHandlers = [
     await delay(300);
     return HttpResponse.json({ success: true, data: MOCK_CLOSED_FUNDINGS, error: null });
   }),
-  http.get("*/api/fundings/:fundingId", async ({ params, request }) => {
+  http.get("*/api/fundings/share/:shareKey", async ({ params, request }) => {
     await delay(300);
+    const shareKey = String(params.shareKey);
+    const fundingId = fromMockShareKey(shareKey);
     // 토큰이 붙은 조회는 개설자 본인으로 보고 ownerPreview를 true로 응답한다 (id 99는 개설자 화면 확인용)
-    const ownerPreview = request.headers.has("Authorization") && params.fundingId === "99";
+    const ownerPreview = request.headers.has("Authorization") && fundingId === 99;
     return HttpResponse.json({
       success: true,
-      data: { ...MOCK_FUNDING_DETAIL, fundingId: Number(params.fundingId), ownerPreview },
+      data: { ...MOCK_FUNDING_DETAIL, fundingId, shareKey, ownerPreview },
       error: null,
     });
   }),
@@ -389,6 +397,7 @@ export const fundingHandlers = [
       success: true,
       data: {
         fundingId: 1,
+        shareKey: toMockShareKey(1),
         type: "BIRTHDAY",
         status: "FUNDING",
         shareUrl: "https://botem.example.com/funding/1",
@@ -402,6 +411,7 @@ export const fundingHandlers = [
       success: true,
       data: {
         fundingId: 2,
+        shareKey: toMockShareKey(2),
         type: "SURPRISE",
         status: "FUNDING",
         shareUrl: "https://botem.example.com/funding/2",

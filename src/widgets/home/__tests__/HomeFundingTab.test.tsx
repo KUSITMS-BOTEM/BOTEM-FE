@@ -46,6 +46,7 @@ vi.mock("@/widgets/funding/DepositConfirmSheet", () => ({
 
 const fundingCard: HomeFundingCardResponse = {
   fundingId: 1,
+  shareKey: "share-key-1",
   cardType: "IN_PROGRESS",
   fundingType: "BIRTHDAY",
   productName: "무선 헤드폰",

@@ -51,7 +51,7 @@ export const contributionHandlers = [
     });
   }),
   // 로컬 개발용: 로그인 회원은 보탠 내역이 있다. 비어 있는 상태(보태기 버튼)는 이 핸들러를 바꿔 확인한다
-  http.get("*/api/fundings/:fundingId/contributions/me", async () => {
+  http.get("*/api/fundings/share/:shareKey/contributions/me", async () => {
     await delay(400);
     return HttpResponse.json({
       success: true,
@@ -79,7 +79,7 @@ export const contributionHandlers = [
     });
   }),
   // 로컬 개발용: 이름 "민지" + 비밀번호 "1234"만 일치한다. 다른 값은 서버처럼 FUNDING_025(403)
-  http.post("*/api/fundings/:fundingId/contributions/guest/access", async ({ request }) => {
+  http.post("*/api/fundings/share/:shareKey/contributions/guest/access", async ({ request }) => {
     await delay(400);
     const { participantName, guestPassword } = (await request.json()) as {
       participantName: string;
@@ -116,7 +116,7 @@ export const contributionHandlers = [
   }),
   // 로컬 개발용: 업로드 URL과 S3 PUT(userService.msw의 mock-s3 핸들러)까지 모두 모킹한다. 실제 S3 업로드는 MSW를 끄고 확인한다. MSW 서비스 워커가 실제 S3 PUT을 대신 보내면 요청이 달라져 403이 난다
   http.post(
-    "*/api/fundings/:fundingId/rolling-paper-attachments/upload-url",
+    "*/api/fundings/share/:shareKey/rolling-paper-attachments/upload-url",
     async ({ request }) => {
       const { attachmentType } = (await request.json()) as { attachmentType: string };
       const url = `https://mock-s3.botem.local/rolling-paper/${attachmentType.toLowerCase()}/mock-upload-token`;
@@ -127,7 +127,7 @@ export const contributionHandlers = [
       });
     },
   ),
-  http.post("*/api/fundings/:fundingId/contributions/message-only", async ({ request }) => {
+  http.post("*/api/fundings/share/:shareKey/contributions/message-only", async ({ request }) => {
     await delay(500);
     const { participantName } = (await request.json()) as { participantName?: string };
     return HttpResponse.json({
@@ -140,7 +140,7 @@ export const contributionHandlers = [
       error: null,
     });
   }),
-  http.post("*/api/fundings/:fundingId/contributions", async ({ request }) => {
+  http.post("*/api/fundings/share/:shareKey/contributions", async ({ request }) => {
     await delay(500);
     const { participantName, amount } = (await request.json()) as {
       participantName?: string;
@@ -163,14 +163,17 @@ export const contributionHandlers = [
       error: null,
     });
   }),
-  http.post("*/api/fundings/:fundingId/contributions/:contributionId/transfer-sent", async () => {
-    await delay(300);
-    return HttpResponse.json({
-      success: true,
-      data: { contributionId: 98, status: "PENDING_CONFIRMATION" },
-      error: null,
-    });
-  }),
+  http.post(
+    "*/api/fundings/share/:shareKey/contributions/:contributionId/transfer-sent",
+    async () => {
+      await delay(300);
+      return HttpResponse.json({
+        success: true,
+        data: { contributionId: 98, status: "PENDING_CONFIRMATION" },
+        error: null,
+      });
+    },
+  ),
   http.post(
     "*/api/fundings/:fundingId/contributions/:contributionId/confirm",
     decideContribution("CONFIRMED"),
