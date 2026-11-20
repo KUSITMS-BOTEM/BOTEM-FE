@@ -75,10 +75,10 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding, banner }: Hom
     if (!profile) return null;
     const cards = fundingCards.map(card => {
       const data = toFundingCardData(card, getDisplayName(profile));
-      if (data.type === "default" || data.type === "open") {
+      if (data.type === "default") {
         return { ...data, onClick: () => router.push(`/funding/${card.fundingId}`) };
       }
-      if (data.type === "complete" || data.type === "earlyComplete") {
+      if (data.type === "open" || data.type === "complete" || data.type === "earlyComplete") {
         return { ...data, onClick: () => openReveal(card.fundingId) };
       }
       const openCardSheet = () => {

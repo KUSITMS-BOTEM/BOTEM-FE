@@ -252,7 +252,7 @@ describe("HomeFundingTab", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("참여자가 없는 마감 카드(open)를 누르면 결과 조회 없이 펀딩 상세 화면으로 이동한다", async () => {
+  it("참여자가 없는 마감 카드(open)를 누르면 결과 데이터를 받은 뒤 공개 화면으로 이동한다", async () => {
     mockQueries({
       data: fundingList([
         { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
@@ -262,8 +262,8 @@ describe("HomeFundingTab", () => {
     renderTab();
     await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
 
-    expect(push).toHaveBeenCalledWith("/funding/42");
-    expect(fundingService.getResult).not.toHaveBeenCalled();
+    expect(fundingService.getResult).toHaveBeenCalledWith(42);
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 

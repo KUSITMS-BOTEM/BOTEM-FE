@@ -98,6 +98,20 @@ describe("RollingPaperContainer", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it("편지지를 누른 직후 시트를 닫았다 다시 열면 편지지를 다시 누를 수 있다", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <RollingPaperContainer fundingId={1} count={5} open onClose={onClose} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "편지지 크게 보기" }));
+    await user.click(screen.getByRole("button", { name: "닫기" }));
+    rerender(<RollingPaperContainer fundingId={1} count={5} open={false} onClose={onClose} />);
+    rerender(<RollingPaperContainer fundingId={1} count={5} open onClose={onClose} />);
+
+    expect(await screen.findByRole("button", { name: "편지지 크게 보기" })).toBeEnabled();
+  });
+
   it("open이 false면 시트가 열리지 않는다", () => {
     const { container } = render(
       <RollingPaperContainer fundingId={1} count={5} open={false} onClose={onClose} />,

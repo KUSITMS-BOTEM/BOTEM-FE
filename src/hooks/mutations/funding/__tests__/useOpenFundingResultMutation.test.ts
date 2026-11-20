@@ -68,6 +68,30 @@ describe("useOpenFundingResultMutation", () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: homeQueryKey });
   });
 
+  it("공개 전에 시작된 결과 조회가 늦게 끝나도 공개 응답을 덮어쓰지 않는다", async () => {
+    vi.mocked(fundingService.openResult).mockResolvedValue(opened);
+    let resolveStale: (value: FundingResultResponse) => void = () => {};
+    const staleFetch = queryClient
+      .fetchQuery({
+        queryKey: fundingResultQueryKey(12),
+        queryFn: () =>
+          new Promise<FundingResultResponse>(resolve => {
+            resolveStale = resolve;
+          }),
+      })
+      .catch(() => undefined);
+    const { result } = renderHook(() => useOpenFundingResultMutation(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate(12);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    resolveStale({ ...opened, resultOpenedAt: null });
+    await staleFetch;
+
+    expect(queryClient.getQueryData(fundingResultQueryKey(12))).toEqual(opened);
+  });
+
   it("실패하면 결과 조회 캐시를 건드리지 않는다", async () => {
     vi.mocked(fundingService.openResult).mockRejectedValue(new Error("FUNDING_007"));
     const { result } = renderHook(() => useOpenFundingResultMutation(), {
