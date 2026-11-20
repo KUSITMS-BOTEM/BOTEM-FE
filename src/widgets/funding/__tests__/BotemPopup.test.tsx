@@ -228,4 +228,23 @@ describe("BotemPopup 펀딩 주인", () => {
     expect(screen.getAllByText("감사카드 보내기")).toHaveLength(1);
     expect(screen.getByText("이동현").closest("li")).toHaveTextContent("감사카드 보내기");
   });
+
+  it("감사카드 배지는 '{이름}에게 감사카드 보내기' 이름의 버튼이고 안 보낸 친구에게만 있다", () => {
+    renderPopup({ isOwner: true, friends: OWNER_FRIENDS });
+
+    expect(screen.getByRole("button", { name: "이동현에게 감사카드 보내기" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "김서진에게 감사카드 보내기" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("감사카드 배지를 클릭하면 onThankCardClick이 해당 친구로 호출된다", () => {
+    const onThankCardClick = vi.fn();
+    renderPopup({ isOwner: true, friends: OWNER_FRIENDS, onThankCardClick });
+
+    fireEvent.click(screen.getByRole("button", { name: "이동현에게 감사카드 보내기" }));
+
+    expect(onThankCardClick).toHaveBeenCalledTimes(1);
+    expect(onThankCardClick).toHaveBeenCalledWith(OWNER_FRIENDS[0]);
+  });
 });

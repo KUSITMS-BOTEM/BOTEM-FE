@@ -25,6 +25,7 @@ import FundingMessage from "@/widgets/funding/FundingMessage";
 import FundingMoreFlow from "@/widgets/funding/FundingMoreFlow";
 import FundingPasswordSheet from "@/widgets/funding/FundingPasswordSheet";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
+import ThankCardSheet from "@/widgets/funding/ThankCardSheet";
 import type { FundingTransferAccount } from "@/widgets/funding/FundingTransferGuideSheet";
 import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
 import SampleProduct from "@/assets/images/samples/sample-product.png";
@@ -107,6 +108,7 @@ export default function FundingDetailView({
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [thankCardFriend, setThankCardFriend] = useState<BotemPopupFriend | null>(null);
   const contributeAmount = useFundingContributionStore(state => state.amount);
   const { setAmount, setLetter, setPassword, reset } = useFundingContributionStore.getState();
   const [isExitOpen, setIsExitOpen] = useState(false);
@@ -249,7 +251,21 @@ export default function FundingDetailView({
             setIsMessageOnly(false);
             setIsContributeOpen(true);
           }}
+          onThankCardClick={friend => {
+            closePopup();
+            setThankCardFriend(friend);
+          }}
         />
+        {/* 닫으면 언마운트돼 다음 친구에게는 빈 카드로 다시 시작한다. owner 친구의 id는 contributionId다 */}
+        {isOwner && thankCardFriend && (
+          <ThankCardSheet
+            open
+            fundingId={Number(fundingId)}
+            contributionId={thankCardFriend.id}
+            recipientName={thankCardFriend.name}
+            onClose={() => setThankCardFriend(null)}
+          />
+        )}
         {/* 처리 뒤 관리 상세가 다시 조회돼 owner의 확인 대기 건수·알림 점이 함께 갱신된다 */}
         <DepositConfirmSheet
           open={isDepositOpen}
