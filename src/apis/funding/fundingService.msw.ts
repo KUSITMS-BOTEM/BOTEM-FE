@@ -3,6 +3,7 @@ import { delay, http, HttpResponse } from "msw";
 
 import { MOCK_FUNDING_CARDS } from "@/apis/home/homeService.msw";
 import { getMockContributionProgress, getMockContributionRecords } from "@/mocks/mockContributions";
+import { fromMockShareKey, toMockShareKey } from "@/mocks/mockShareKey";
 import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
 import type { ClosedFundingListResponse } from "@/types/funding/closedFunding";
 import type {
@@ -14,6 +15,7 @@ import type {
   OwnerFundingDetailResponse,
   OwnerFundingParticipantResponse,
 } from "@/types/funding/ownerFundingDetail";
+import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
 import type { FundingType } from "@/types/home/home";
 
 const toContributions = (names: string[]): FundingResultContributionResponse[] =>
@@ -105,6 +107,7 @@ const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
   fundings: [
     {
       fundingId: 12,
+      shareKey: toMockShareKey(12),
       type: "BIRTHDAY",
       productName: "에어팟 프로 2",
       productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
@@ -116,6 +119,7 @@ const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
     },
     {
       fundingId: 11,
+      shareKey: toMockShareKey(11),
       type: "BIRTHDAY",
       productName: "에어팟 프로 2",
       productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
@@ -127,6 +131,7 @@ const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
     },
     {
       fundingId: 9,
+      shareKey: toMockShareKey(9),
       type: "SURPRISE",
       productName: "에어팟 프로 2",
       productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
@@ -137,6 +142,44 @@ const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
       giftVerificationStatus: null,
     },
   ],
+};
+
+const MOCK_FUNDING_DETAIL: FundingDetailResponse = {
+  fundingId: 12,
+  shareKey: toMockShareKey(12),
+  type: "BIRTHDAY",
+  title: null,
+  celebrantName: "민재",
+  celebrantProfileImageUrl: null,
+  targetAmount: 300000,
+  product: {
+    name: "소니 WH-1000XM5",
+    imageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
+    price: 300000,
+    url: "https://www.coupang.com/vp/products/1",
+  },
+  productChanged: false,
+  productChangedAt: null,
+  story: "올해 생일엔 출퇴근길에 쓸 노캔 헤드폰이 갖고 싶어요. 조금씩 보태주면 감동할게요!",
+  promise: "펀딩이 성공하면 헤드폰 끼고 출근하는 인증샷을 꼭 올릴게요!",
+  deadline: "2026-12-31T23:59:59",
+  extended: false,
+  remainingDays: 41,
+  confirmedPercentage: 40,
+  pendingPercentage: 10,
+  participantCount: 4,
+  participants: [
+    { order: 1, name: "하린이", profileImageUrl: null, contributedDate: "2026-11-10" },
+    { order: 2, name: "도윤이", profileImageUrl: null, contributedDate: "2026-11-12" },
+    { order: 3, name: "서준이", profileImageUrl: null, contributedDate: "2026-11-15" },
+    { order: 4, name: "민지", profileImageUrl: null, contributedDate: "2026-11-16" },
+  ],
+  displayStatus: "IN_PROGRESS",
+  canContributeAmount: true,
+  canParticipate: true,
+  ownerPreview: false,
+  giftVerification: null,
+  thankCard: null,
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -189,6 +232,7 @@ const getMockOwnerFundingDetail = (fundingId: number): OwnerFundingDetailRespons
 
   return {
     fundingId,
+    shareKey: toMockShareKey(fundingId),
     type: card.fundingType as FundingType,
     title: null,
     story: "올해 생일엔 꼭 갖고 싶던 선물이 있어요. 조금씩 보태주면 감동할게요!",
@@ -259,6 +303,18 @@ export const fundingHandlers = [
   http.get("*/api/users/me/fundings/closed", async () => {
     await delay(300);
     return HttpResponse.json({ success: true, data: MOCK_CLOSED_FUNDINGS, error: null });
+  }),
+  http.get("*/api/fundings/share/:shareKey", async ({ params, request }) => {
+    await delay(300);
+    const shareKey = String(params.shareKey);
+    const fundingId = fromMockShareKey(shareKey);
+    // 토큰이 붙은 조회는 개설자 본인으로 보고 ownerPreview를 true로 응답한다 (id 99는 개설자 화면 확인용)
+    const ownerPreview = request.headers.has("Authorization") && fundingId === 99;
+    return HttpResponse.json({
+      success: true,
+      data: { ...MOCK_FUNDING_DETAIL, fundingId, shareKey, ownerPreview },
+      error: null,
+    });
   }),
   http.get("*/api/fundings/:fundingId/result", async ({ params }) => {
     await delay(300);
@@ -342,6 +398,7 @@ export const fundingHandlers = [
       success: true,
       data: {
         fundingId: 1,
+        shareKey: toMockShareKey(1),
         type: "BIRTHDAY",
         status: "FUNDING",
         shareUrl: "https://botem.example.com/funding/1",
@@ -355,6 +412,7 @@ export const fundingHandlers = [
       success: true,
       data: {
         fundingId: 2,
+        shareKey: toMockShareKey(2),
         type: "SURPRISE",
         status: "FUNDING",
         shareUrl: "https://botem.example.com/funding/2",

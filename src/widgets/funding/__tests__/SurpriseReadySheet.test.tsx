@@ -25,7 +25,7 @@ beforeAll(() => {
 
 const baseProps = {
   open: true,
-  fundingId: "1",
+  shareKey: "1",
   recipientName: "지유",
   revealDateLabel: "10월 13일 0시",
   contributorCount: 7,

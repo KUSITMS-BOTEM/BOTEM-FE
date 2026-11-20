@@ -45,6 +45,7 @@ yarn-error.log*
 
 # 세션 인계 문서는 로컬 전용
 HANDOFF.md
+HANDOFF[0-9]*.md
 
 # vercel
 .vercel

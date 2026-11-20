@@ -5,6 +5,7 @@ import FriendFundingItem from "@/widgets/friend/FriendFundingItem";
 
 const base: FriendFundingResponse = {
   fundingId: 10,
+  shareKey: "share-key-10",
   type: "BIRTHDAY",
   productName: "소니 WH-1000 XM4",
   productImageUrl: "https://example.com/product.png",
@@ -29,7 +30,7 @@ describe("FriendFundingItem", () => {
   it("펀딩 참여 화면(/share/{fundingId})으로 가는 링크다", () => {
     render(<FriendFundingItem funding={base} />);
 
-    expect(screen.getByRole("link")).toHaveAttribute("href", "/share/10");
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/share/share-key-10");
   });
 
   it("마감일·D-day·달성률·참여자 문구를 보여준다", () => {

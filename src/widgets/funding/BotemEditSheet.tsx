@@ -21,6 +21,10 @@ type BotemEditSheetProps = {
   onClose: () => void;
   // 이름·비밀번호를 모두 채운 뒤 확인을 누르면 입력값과 함께 호출된다
   onSubmit: (name: string, password: string) => void;
+  // 일치하는 보탬이 없을 때처럼 시트를 닫지 않고 재입력을 안내할 문구
+  errorMessage?: string;
+  // 확인 요청 중에는 중복 제출을 막는다
+  isPending?: boolean;
   className?: string;
 };
 
@@ -28,6 +32,8 @@ export default function BotemEditSheet({
   open,
   onClose,
   onSubmit,
+  errorMessage,
+  isPending = false,
   className,
 }: BotemEditSheetProps) {
   const [name, setName] = useState("");
@@ -51,7 +57,7 @@ export default function BotemEditSheet({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (canSubmit) onSubmit(trimmedName, password);
+    if (canSubmit && !isPending) onSubmit(trimmedName, password);
   };
 
   return (
@@ -97,6 +103,8 @@ export default function BotemEditSheet({
               autoComplete="off"
               enterKeyHint="done"
               maxLength={NUMBER_FIELD_LENGTH}
+              error={errorMessage !== undefined}
+              helperText={errorMessage}
               value={password}
               onChange={event => setPassword(event.target.value.replace(/\D/g, ""))}
               onClear={() => setPassword("")}
@@ -105,7 +113,7 @@ export default function BotemEditSheet({
         </div>
         {/* 키보드가 올라온 터치 기기에서는 CTA가 키보드 위에 떠 입력을 가리므로 숨긴다 */}
         <BottomCTA className={cn(isTyping && "pointer-coarse:hidden")}>
-          <Button color="brand" size="xlarge" type="submit" disabled={!canSubmit}>
+          <Button color="brand" size="xlarge" type="submit" disabled={!canSubmit || isPending}>
             확인
           </Button>
         </BottomCTA>

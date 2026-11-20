@@ -16,11 +16,11 @@ const PROGRESS_MESSAGES = [
   [0, "첫 보탬을 기다려요."],
 ] as const;
 
-type ClosedLabelParams = { currentAmount: number; targetAmount: number; deadline: string };
+type ClosedLabelParams = { percent: number; deadline: string };
 
-// 금액을 다 채우면 "마감", 아니고 기간이 지났으면 "기간 마감", 진행 중이면 null
-export function getClosedLabel({ currentAmount, targetAmount, deadline }: ClosedLabelParams) {
-  if (targetAmount > 0 && currentAmount >= targetAmount) return "마감";
+// 달성률 100%면 "마감", 아니고 기간이 지났으면 "기간 마감", 진행 중이면 null
+export function getClosedLabel({ percent, deadline }: ClosedLabelParams) {
+  if (percent >= 100) return "마감";
   return isDeadlinePassed(deadline) ? "기간 마감" : null;
 }
 

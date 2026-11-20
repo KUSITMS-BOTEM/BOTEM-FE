@@ -13,6 +13,38 @@ const push = vi.fn();
 const back = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back, replace: vi.fn() }) }));
 
+// 로그인 뮤테이션은 QueryClient가 필요하므로 대체한다
+vi.mock("@/hooks/mutations/auth/useKakaoLoginUriMutation", () => ({
+  useKakaoLoginUriMutation: () => ({ mutate: vi.fn() }),
+}));
+
+vi.mock("@/hooks/queries/contribution/useMyContributionsQuery", () => ({
+  useMyContributionsQuery: () => ({ data: undefined, isPending: false }),
+}));
+vi.mock("@/hooks/mutations/contribution/useAccessGuestContributionMutation", () => ({
+  useAccessGuestContributionMutation: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+    error: null,
+    reset: vi.fn(),
+  }),
+}));
+vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
+  useMyProfileQuery: () => ({ data: { name: "민지" } }),
+}));
+
+vi.mock("@/hooks/queries/funding/useFundingDetailQuery", async () => {
+  const { FUNDING_DETAIL } = await import("@/widgets/funding/__tests__/fixtures/fundingDetail");
+  return {
+    useFundingDetailQuery: () => ({
+      data: FUNDING_DETAIL,
+      isError: false,
+      isFetchedAfterMount: true,
+      refetch: vi.fn(),
+    }),
+  };
+});
+
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element
@@ -26,6 +58,7 @@ vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
 
 const ownerDetail: OwnerFundingDetailResponse = {
   fundingId: 1,
+  shareKey: "share-key-1",
   type: "BIRTHDAY",
   title: "지유의 생일",
   story: "헤드폰을 바꾸고 싶어요.",
@@ -96,7 +129,7 @@ describe("FundingDetailContainer", () => {
     render(<FundingDetailContainer fundingId="1" friendId="7" />);
 
     expect(await screen.findByRole("img", { name: "서프라이즈 펀딩" })).toBeInTheDocument();
-    expect(screen.getByText("확인 대기 3건이 있어요")).toBeInTheDocument();
+    expect(screen.getByText("확인 대기 2건이 있어요")).toBeInTheDocument();
   });
 
   it("뒤로가기를 누르면 친구 프로필로 이동한다", async () => {
@@ -119,7 +152,7 @@ describe("FundingDetailContainer", () => {
     expect(await screen.findByRole("heading", { name: "지유의 생일" })).toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "45");
     expect(screen.queryByRole("img", { name: "서프라이즈 펀딩" })).not.toBeInTheDocument();
-    expect(screen.queryByText("나도 지유님께 보태볼까요?")).not.toBeInTheDocument();
+    expect(screen.queryByText("나도 민재님께 보태볼까요?")).not.toBeInTheDocument();
   });
 
   it("관리 상세를 불러오지 못하면 안내와 다시 시도를 보여주고, 다시 시도하면 화면이 나온다", async () => {

@@ -1,4 +1,6 @@
-import { clientApi } from "@/apis/client";
+import { clientApi, reissue } from "@/apis/client";
+import { useAuthStore } from "@/store/authStore";
+import { ApiError, REISSUE_UNAVAILABLE } from "@/types/api";
 import type { ClosedFundingListResponse } from "@/types/funding/closedFunding";
 import type {
   CreateFundingRequest,
@@ -34,8 +36,21 @@ export const fundingService = {
   postSurpriseFunding: (body: CreateSurpriseFundingRequest) =>
     clientApi.post<CreateFundingResponse>("/api/fundings/surprise", body),
 
-  getFundingDetail: (fundingId: number) =>
-    clientApi.get<FundingDetailResponse>(`/api/fundings/${fundingId}`),
+  getFundingDetail: (shareKey: string) =>
+    clientApi.get<FundingDetailResponse>(`/api/fundings/share/${shareKey}`),
+  // 로그인 여부로 응답(ownerPreview)이 갈리는 선택 인증 API라, 새로고침으로 메모리 토큰이 비었으면 먼저 재발급해 헤더를 붙인다.
+  // 토큰이 없으면 401 없이 비로그인 응답이 와서 clientApi의 재발급이 동작하지 않기 때문이다
+  getFundingDetailAsMember: async (shareKey: string) => {
+    if (!useAuthStore.getState().accessToken) {
+      try {
+        useAuthStore.getState().setAccessToken((await reissue()).accessToken);
+      } catch (error) {
+        // 일시 장애는 호출부가 다시 시도하게 둔다. 인증이 거부된 경우(refreshToken 만료)는 공개 화면이라 비로그인으로 조회한다
+        if (error instanceof ApiError && error.code === REISSUE_UNAVAILABLE) throw error;
+      }
+    }
+    return fundingService.getFundingDetail(shareKey);
+  },
   getFundingManagement: (fundingId: number) =>
     clientApi.get<OwnerFundingDetailResponse>(`/api/fundings/${fundingId}/management`),
   closeFunding: (fundingId: number) =>
@@ -73,11 +88,20 @@ export const fundingService = {
     ),
 
   createRollingPaperAttachmentUploadUrl: (
-    fundingId: number,
+    shareKey: string,
     body: CreateRollingPaperAttachmentUploadUrlRequest,
   ) =>
     clientApi.post<RollingPaperAttachmentUploadUrlResponse>(
-      `/api/fundings/${fundingId}/rolling-paper-attachments/upload-url`,
+      `/api/fundings/share/${shareKey}/rolling-paper-attachments/upload-url`,
       body,
     ),
+  // uploadUrl은 S3 presigned PUT이라 Authorization 헤더가 붙으면 서명이 깨진다 — ky 대신 raw fetch. 발급 때 보낸 Content-Type과 같아야 하고, 덮어쓰기는 막혀 있다
+  uploadRollingPaperAttachment: async (uploadUrl: string, file: Blob) => {
+    const response = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type, "If-None-Match": "*" },
+      body: file,
+    });
+    if (!response.ok) throw new Error("첨부 파일 업로드에 실패했습니다.");
+  },
 };

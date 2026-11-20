@@ -36,6 +36,7 @@ const renderFlow = (onClose = vi.fn()) =>
       <FundingMoreFlow
         open
         fundingId={1}
+        shareKey="share-key-1"
         extended={false}
         actions={{ canCloseEarly: true, canReissueShareCard: true }}
         shareCard={shareCard}

@@ -35,6 +35,7 @@ export type CreateSurpriseFundingRequest = {
 
 export type CreateFundingResponse = {
   fundingId: number;
+  shareKey: string;
   type: FundingType;
   status: string;
   shareUrl: string;

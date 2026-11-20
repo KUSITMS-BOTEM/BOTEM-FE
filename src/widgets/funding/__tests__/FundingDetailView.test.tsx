@@ -6,13 +6,82 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
+import { ApiError } from "@/types/api";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
+import { useGuestBotemStore } from "@/store/guestBotemStore";
+import { FUNDING_DETAIL as DETAIL } from "@/widgets/funding/__tests__/fixtures/fundingDetail";
 import { useFundingExtendToastStore } from "@/store/fundingExtendToastStore";
 import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import FundingDetailView from "@/widgets/funding/FundingDetailView";
 
 const replaceMock = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: replaceMock }) }));
+
+// 로그인 뮤테이션은 QueryClient가 필요하므로 대체하고, 카카오 로그인 요청은 호출 인자만 확인한다
+const kakaoLoginMock = vi.fn();
+vi.mock("@/hooks/mutations/auth/useKakaoLoginUriMutation", () => ({
+  useKakaoLoginUriMutation: () => ({ mutate: vi.fn() }),
+}));
+vi.mock("@/utils/auth/handleKakaoLoginClick", () => ({
+  handleKakaoLoginClick: (...args: unknown[]) => kakaoLoginMock(...args),
+}));
+
+vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
+  useMyProfileQuery: () => ({ data: { name: "민지" } }),
+}));
+
+// 회원의 '이 펀딩에 보탠 내역'(GET /me). 기본은 조회 실패와 같은 상태(data 없음, 대기 아님)라 두 버튼이 보인다
+type MyContributionsState = { data?: { contributions: unknown[] }; isPending: boolean };
+let myContributions: MyContributionsState = { isPending: false };
+const myContributionsQueryMock = vi.fn((fundingId: number, enabled: boolean) => {
+  void fundingId;
+  void enabled;
+  return myContributions;
+});
+vi.mock("@/hooks/queries/contribution/useMyContributionsQuery", () => ({
+  myContributionsQueryKey: (fundingId: number) => ["fundings", fundingId, "contributions", "me"],
+  useMyContributionsQuery: (fundingId: number, enabled: boolean) =>
+    myContributionsQueryMock(fundingId, enabled),
+}));
+
+// 비회원 보탬 확인(POST guest/access). 실패는 훅처럼 error 상태로 돌려줘 시트 안내를 그리게 한다
+let accessGuestFailure: Error | null = null;
+const accessGuestMock = vi.fn();
+vi.mock("@/hooks/mutations/contribution/useAccessGuestContributionMutation", async () => {
+  const { useState } = await import("react");
+  return {
+    useAccessGuestContributionMutation: () => {
+      const [error, setError] = useState<Error | null>(null);
+      const [data, setData] = useState<Record<string, unknown> | undefined>();
+      return {
+        error,
+        data,
+        isPending: false,
+        reset: () => setError(null),
+        mutate: (body: unknown, options?: { onSuccess?: () => void }) => {
+          accessGuestMock(body);
+          if (accessGuestFailure) setError(accessGuestFailure);
+          else {
+            setData({
+              contributionId: 31,
+              participantName: "민지",
+              status: "PENDING_CONFIRMATION",
+              message: "지유야 생일 축하해!\n올해도 같이 많이 웃자",
+              paperTemplateCode: "LIME_VIVID_SOLID",
+              decorationCode: null,
+              photoUrl: null,
+              voiceUrl: null,
+              voiceDurationSeconds: null,
+              voiceTranscript: null,
+              accessToken: "mock-guest-token",
+            });
+            options?.onSuccess?.();
+          }
+        },
+      };
+    },
+  };
+});
 
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
@@ -36,8 +105,44 @@ beforeAll(() => {
   });
 });
 
-// 입금 확인 시트가 확인 대기 목록을 조회하므로 빈 목록 응답을 준비한다
+type User = ReturnType<typeof userEvent.setup>;
+// 입금 확인 시트가 확인 대기 목록을 조회하므로 빈 목록 응답을 준비한다. 보태기 제출·송금 확인은 성공 응답을 준다
 const server = setupServer(
+  http.post("*/api/fundings/share/:shareKey/contributions", () =>
+    HttpResponse.json({
+      success: true,
+      data: {
+        contributionId: 2,
+        participantName: "민수",
+        amount: 50000,
+        status: "AWAITING_TRANSFER",
+        payoutAccount: {
+          bank: "TOSS_BANK",
+          bankName: "토스뱅크",
+          accountNumber: "1000-1234-5678",
+          accountHolder: "김민재",
+        },
+      },
+      error: null,
+    }),
+  ),
+  http.post("*/api/fundings/share/:shareKey/contributions/:contributionId/transfer-sent", () =>
+    HttpResponse.json({
+      success: true,
+      data: { contributionId: 2, status: "PENDING_CONFIRMATION" },
+      error: null,
+    }),
+  ),
+  http.post("*/api/fundings/share/:shareKey/contributions/message-only", () =>
+    HttpResponse.json({
+      success: true,
+      data: { contributionId: 1, participantName: "민지", status: "MESSAGE_ONLY" },
+      error: null,
+    }),
+  ),
+  http.patch("*/api/fundings/share/:shareKey/contributions/guest", async ({ request }) =>
+    HttpResponse.json({ success: true, data: await request.json(), error: null }),
+  ),
   http.get("*/api/fundings/:fundingId/contributions/pending", () =>
     HttpResponse.json({
       success: true,
@@ -63,6 +168,7 @@ const render = (ui: ReactElement) => {
 
 const ownerDetail: OwnerFundingDetailResponse = {
   fundingId: 1,
+  shareKey: "share-key-1",
   type: "BIRTHDAY",
   title: "서연의 졸업",
   story: "졸업 선물로 노트북을 받고 싶어요.",
@@ -98,38 +204,87 @@ const ownerDetail: OwnerFundingDetailResponse = {
   },
 };
 
+// 확인 대기 3건이 있는 개설자 화면
+const pendingOwnerDetail: OwnerFundingDetailResponse = {
+  ...ownerDetail,
+  pendingContributionCount: 3,
+};
+// 조기 마감·공유 카드가 가능하고 연장 전인 개설자 화면
+const closableOwnerDetail: OwnerFundingDetailResponse = {
+  ...ownerDetail,
+  title: "지유의 생일",
+  extended: false,
+  actions: {
+    canCloseEarly: true,
+    canExtend: false,
+    canChangeProduct: true,
+    canReissueShareCard: true,
+  },
+};
+
 // 앞 단계 시트는 열어 둔 채 위에 쌓이므로 같은 이름의 버튼은 마지막(가장 위) 것을 누른다
-const clickTopmost = async (user: ReturnType<typeof userEvent.setup>, name: string) =>
+const clickTopmost = async (user: User, name: string) =>
   user.click(screen.getAllByRole("button", { name }).at(-1)!);
 
-// 금액 입력 → 편지 작성까지 진행해 비밀번호 시트 직전 단계로 간다
-const goToPasswordSheet = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.click(screen.getByRole("button", { name: /나도 지유님께 보태볼까요\?/ }));
-  await user.click(screen.getByRole("button", { name: "보태기" }));
-  await user.type(await screen.findByRole("textbox", { name: "보탬 금액" }), "50000");
-  await clickTopmost(user, "다음");
+// 비회원 '보태러가기': 회원/비회원 Dialog에서 아니오를 고르면 하단이 '메시지 보태기'/'보태기'로 바뀐다
+const enterGuestContributeMode = async (user: User) => {
+  await user.click(screen.getByRole("button", { name: "보태러 가기" }));
+  await user.click(screen.getByRole("button", { name: "아니오" }));
+};
 
+// 비회원 '내 보탬 확인': 아니오 → 이름·비밀번호 입력 → 확인
+const confirmGuestMyBotem = async (user: User) => {
+  await user.click(screen.getByRole("button", { name: "내 보탬 확인" }));
+  await user.click(screen.getByRole("button", { name: "아니오" }));
+  await user.type(await screen.findByRole("textbox", { name: "이름" }), "민지");
+  await user.type(screen.getByLabelText("비밀번호 4자리"), "1234");
+  await user.click(screen.getByRole("button", { name: "확인" }));
+};
+
+const writeLetter = async (user: User, { withName }: { withName: boolean }) => {
   const letter = await screen.findByRole("textbox", { name: "편지 내용" });
   // plaintext-only는 user-event가 편집 가능으로 보지 않아 내용을 넣고 input 이벤트를 직접 발생시킨다
   letter.textContent = "생일 축하해!";
   fireEvent.input(letter);
-  await user.type(screen.getByRole("textbox", { name: "친구에게 보여질 이름" }), "민수");
+  if (withName) {
+    await user.type(screen.getByRole("textbox", { name: "친구에게 보여질 이름" }), "민수");
+  }
   await clickTopmost(user, "다음");
 };
 
+// 금액 입력 → 편지 작성까지 진행해 비밀번호 시트 직전 단계로 간다
+const goToPasswordSheet = async (user: User) => {
+  await enterGuestContributeMode(user);
+  await user.click(screen.getByRole("button", { name: "보태기" }));
+  await user.type(await screen.findByRole("textbox", { name: "보탬 금액" }), "50000");
+  await clickTopmost(user, "다음");
+  await writeLetter(user, { withName: true });
+};
+
 describe("FundingDetailView", () => {
-  afterEach(() => useFundingContributionStore.getState().reset());
+  afterEach(() => {
+    useFundingContributionStore.getState().reset();
+    useGuestBotemStore.getState().reset();
+    replaceMock.mockClear();
+    kakaoLoginMock.mockClear();
+    accessGuestMock.mockClear();
+    myContributionsQueryMock.mockClear();
+    myContributions = { isPending: false };
+    accessGuestFailure = null;
+  });
 
-  it("펀딩 제목과 '나도 보태볼까요?' 버튼을 보여준다", () => {
-    render(<FundingDetailView fundingId="1" />);
+  it("펀딩 제목과 하단 '내 보탬 확인'·'보태러가기' 버튼을 보여주고 프로필 묶음 버튼은 없다", () => {
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "지유의 생일" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /나도 지유님께 보태볼까요\?/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "민재의 펀딩" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "보태러 가기" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /나도 민재님께 보태볼까요\?/ })).toBeNull();
   });
 
   it("서프라이즈 개설자가 팝업의 '확인 대기' 행을 누르면 팝업을 닫지 않고 그 위에 입금 확인 시트가 열린다", async () => {
     const user = userEvent.setup();
-    render(<FundingDetailView fundingId="1" variant="surprise" />);
+    render(<FundingDetailView ownerDetail={pendingOwnerDetail} fundingId="1" variant="surprise" />);
 
     await user.click(await screen.findByRole("button", { name: /확인 대기 3건이 있어요/ }));
     await user.click(screen.getByRole("button", { name: /통장에 들어왔는지 확인해주세요/ }));
@@ -141,58 +296,361 @@ describe("FundingDetailView", () => {
     expect(vi.mocked(HTMLDialogElement.prototype.showModal).mock.contexts.at(-1)).toBe(sheet);
   });
 
-  it("기간이 마감되면 툴팁이 바뀌고 팝업에서 메세지 보태기만 누를 수 있다", () => {
-    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2027-01-02T00:00:00") });
-    try {
-      render(<FundingDetailView fundingId="1" />);
+  it("서프라이즈 개설자와 펀딩 주인 화면에는 하단 CTA 버튼이 없다", () => {
+    const { unmount } = render(
+      <FundingDetailView ownerDetail={ownerDetail} fundingId="1" variant="surprise" />,
+    );
+    expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
+    unmount();
 
-      fireEvent.click(screen.getByRole("button", { name: /축하 메시지만 보낼 수 있어요!/ }));
-
-      expect(screen.getByRole("button", { name: "보태기" })).toBeDisabled();
-      expect(screen.getByRole("button", { name: "메세지 보태기" })).toBeEnabled();
-    } finally {
-      vi.useRealTimers();
-    }
+    render(<FundingDetailView ownerDetail={ownerDetail} fundingId="1" variant="owner" />);
+    expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
   });
 
-  it("메세지 보태기는 금액·송금 안내 없이 편지 → 비밀번호 → 완료 페이지로 이동하고 스토어에 편지·비밀번호만 담긴다", async () => {
-    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2027-01-02T00:00:00") });
-    try {
+  describe("회원/비회원 구분 Dialog", () => {
+    it.each(["내 보탬 확인", "보태러 가기"])("%s를 누르면 구분 Dialog를 연다", async name => {
       const user = userEvent.setup();
-      render(<FundingDetailView fundingId="1" />);
-      await user.click(screen.getByRole("button", { name: /축하 메시지만 보낼 수 있어요!/ }));
-      await user.click(screen.getByRole("button", { name: "메세지 보태기" }));
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+      await user.click(screen.getByRole("button", { name }));
+
+      expect(
+        await screen.findByRole("heading", { name: "이미 보탬 회원이신가요?" }),
+      ).toBeInTheDocument();
+    });
+
+    it("'내 보탬 확인'에서 예를 누르면 내 보탬 확인 복귀 경로로 카카오 로그인을 요청한다", async () => {
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+      await user.click(screen.getByRole("button", { name: "내 보탬 확인" }));
+
+      await user.click(screen.getByRole("button", { name: "예" }));
+
+      expect(kakaoLoginMock).toHaveBeenCalledWith(
+        expect.anything(),
+        "/share/share-key-1?member=myBotem",
+      );
+    });
+
+    it("'보태러가기'에서 예를 누르면 보태러가기 복귀 경로로 카카오 로그인을 요청한다", async () => {
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+      await user.click(screen.getByRole("button", { name: "보태러 가기" }));
+
+      await user.click(screen.getByRole("button", { name: "예" }));
+
+      expect(kakaoLoginMock).toHaveBeenCalledWith(
+        expect.anything(),
+        "/share/share-key-1?member=contribute",
+      );
+    });
+  });
+
+  describe("비회원 내 보탬 확인", () => {
+    it("이름·비밀번호를 입력하면 하단에 '내 보탬 확인'만 남고 시트가 자동으로 열리며 스토어에 담긴다", async () => {
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+      expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+
+      await confirmGuestMyBotem(user);
+
+      expect(await screen.findByRole("dialog", { name: "내 보탬 확인" })).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: "내 보탬 확인" })).toHaveLength(1);
+      expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
+      expect(useGuestBotemStore.getState()).toMatchObject({
+        shareKey: "share-key-1",
+        name: "민지",
+        password: "1234",
+      });
+    });
+
+    it("일치하는 보탬이 없으면 시트에 안내만 띄우고 닫지 않으며 보태러 가기로 바뀌지 않는다", async () => {
+      accessGuestFailure = new ApiError("FUNDING_025");
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+      await confirmGuestMyBotem(user);
+
+      expect(await screen.findByText(/일치하는 보탬이 없어요/)).toBeInTheDocument();
+      expect(screen.getByRole("textbox", { name: "이름" })).toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+      expect(useGuestBotemStore.getState().shareKey).toBeNull();
+      expect(accessGuestMock).toHaveBeenCalledWith({
+        participantName: "민지",
+        guestPassword: "1234",
+      });
+    });
+
+    it("비밀번호를 여러 번 틀려 잠기면 10분 뒤 다시 시도하라는 문구를 보여준다", async () => {
+      accessGuestFailure = new ApiError("FUNDING_029");
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+      await confirmGuestMyBotem(user);
+
+      expect(await screen.findByText(/10분 후 다시 시도/)).toBeInTheDocument();
+      expect(useGuestBotemStore.getState().shareKey).toBeNull();
+    });
+
+    it("비회원 화면은 회원 보탬 조회를 켜지 않는다", () => {
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+      expect(myContributionsQueryMock).toHaveBeenLastCalledWith("share-key-1", false);
+    });
+
+    it("이미 확인한 뒤에는 남은 '내 보탬 확인' 버튼으로 시트를 다시 연다", async () => {
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+      await confirmGuestMyBotem(user);
+      await user.click(await screen.findByRole("button", { name: "닫기" }));
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument(),
+      );
+
+      await user.click(screen.getByRole("button", { name: "내 보탬 확인" }));
+
+      expect(await screen.findByRole("dialog", { name: "내 보탬 확인" })).toBeInTheDocument();
+    });
+
+    it("다른 펀딩에서 확인한 값은 이 펀딩의 확인 상태로 보지 않는다", () => {
+      useGuestBotemStore.getState().setIdentity("other", "민지", "1234");
+
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+      expect(screen.getByRole("button", { name: "보태러 가기" })).toBeInTheDocument();
+    });
+
+    it("시트에서 내 보탬이 맨 위에 '내 보탬' 라벨과 미확인 안내와 함께 보인다", async () => {
+      const user = userEvent.setup();
+      const detail = {
+        ...DETAIL,
+        participants: [
+          ...DETAIL.participants,
+          { order: 4, name: "민지", profileImageUrl: null, contributedDate: "2026-11-16" },
+        ],
+      };
+      render(<FundingDetailView detail={detail} fundingId="1" />);
+      await confirmGuestMyBotem(user);
+
+      const sheet = await screen.findByRole("dialog", { name: "내 보탬 확인" });
+
+      expect(sheet).toHaveTextContent("내 보탬민지");
+      expect(sheet).toHaveTextContent("내 보탬 · 미확인 1개");
+      expect(sheet).toHaveTextContent("아직 확인하지 않았어요");
+      expect(sheet).toHaveTextContent("2026.11.16");
+      expect(screen.queryByRole("button", { name: "메세지 보태기" })).not.toBeInTheDocument();
+    });
+
+    it("보탬을 수정해 저장하면 완료 안내를 띄우고, 확인을 눌러야 수정 화면이 닫힌다", async () => {
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+      await confirmGuestMyBotem(user);
+      await user.click(await screen.findByRole("button", { name: /내 보탬 수정하기/ }));
+      // 이미 이름·비밀번호를 입력했으므로 다시 묻지 않고 바로 편지 수정으로 간다
+      expect(screen.queryByLabelText("비밀번호 4자리")).not.toBeInTheDocument();
 
       const letter = await screen.findByRole("textbox", { name: "편지 내용" });
-      letter.textContent = "생일 축하해!";
+      expect(letter).toHaveTextContent("올해도 같이 많이 웃자");
+      letter.textContent = "고친 편지";
       fireEvent.input(letter);
-      await user.type(screen.getByRole("textbox", { name: "친구에게 보여질 이름" }), "민수");
-      await clickTopmost(user, "다음");
+      await user.click(screen.getByRole("button", { name: "이대로 저장하기" }));
+
+      expect(await screen.findByRole("heading", { name: "보탬을 수정했어요" })).toBeInTheDocument();
+      expect(screen.getByRole("textbox", { name: "편지 내용" })).toBeInTheDocument();
+
+      await clickTopmost(user, "확인");
+
+      await waitFor(() =>
+        expect(screen.queryByRole("textbox", { name: "편지 내용" })).not.toBeInTheDocument(),
+      );
+      expect(screen.queryByRole("heading", { name: "보탬을 수정했어요" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("보태기를 마치면 돌아왔을 때 하단이 '내 보탬 확인'이 되도록 본인 확인을 기록한다", async () => {
+    const user = userEvent.setup();
+    render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="contribute" />);
+    await user.click(screen.getByRole("button", { name: "메시지 보태기" }));
+    await writeLetter(user, { withName: false });
+
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/share-key-1/complete"));
+    expect(useGuestBotemStore.getState().shareKey).toBe("share-key-1");
+  });
+
+  it("로그인 쿠키가 있는 회원은 쿼리가 없어도(새로고침) 서버에 보탬이 있으면 하단에 '내 보탬 확인'만 보이고 시트는 열리지 않는다", () => {
+    myContributions = { data: { contributions: [{}] }, isPending: false };
+    render(<FundingDetailView detail={DETAIL} fundingId="1" isLoggedIn />);
+
+    expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+  });
+
+  it("보태러가기로 돌아온 회원은 로그인 쿠키가 있어도 '메시지 보태기'/'보태기'를 보여준다", () => {
+    render(
+      <FundingDetailView detail={DETAIL} fundingId="1" memberIntent="contribute" isLoggedIn />,
+    );
+
+    expect(screen.getByRole("button", { name: "보태기" })).toBeInTheDocument();
+  });
+
+  it("내 보탬 확인으로 돌아오면 주소에서 member 쿼리를 지워 새로고침해도 시트가 다시 열리지 않는다", () => {
+    myContributions = { data: { contributions: [{}] }, isPending: false };
+    window.history.replaceState(null, "", "/share/share-key-1?member=myBotem");
+    render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="myBotem" isLoggedIn />);
+
+    expect(window.location.search).toBe("");
+  });
+
+  describe("비회원 보태러가기", () => {
+    it("아니오를 누르면 하단이 '메시지 보태기'/'보태기'로 바뀌고 시트는 자동으로 열리지 않는다", async () => {
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+      await enterGuestContributeMode(user);
+
+      expect(screen.getByRole("button", { name: "메시지 보태기" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "보태기" })).toBeEnabled();
+      expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+    });
+
+    it("기간이 마감되면 '보태기'는 비활성이고 '메시지 보태기'만 누를 수 있다", async () => {
+      vi.useFakeTimers({ toFake: ["Date"], now: new Date("2027-01-02T00:00:00") });
+      try {
+        const user = userEvent.setup();
+        render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+        await enterGuestContributeMode(user);
+
+        expect(screen.getByRole("button", { name: "보태기" })).toBeDisabled();
+        expect(screen.getByRole("button", { name: "메시지 보태기" })).toBeEnabled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("메시지 보태기는 금액·송금 안내 없이 편지 → 비밀번호 → 완료 페이지로 이동하고 스토어에 편지·비밀번호만 담긴다", async () => {
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+      await enterGuestContributeMode(user);
+      await user.click(screen.getByRole("button", { name: "메시지 보태기" }));
+      await writeLetter(user, { withName: true });
 
       await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
       expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "완료하기" }));
 
-      expect(replaceMock).toHaveBeenCalledWith("/share/1/complete");
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/share-key-1/complete"));
       const store = useFundingContributionStore.getState();
       expect(store.amount).toBe(0);
       expect(store.password).toBe("1234");
       expect(store.letter?.text).toBe("생일 축하해!");
-    } finally {
-      vi.useRealTimers();
-    }
+    });
+  });
+
+  describe("회원 (공유 화면에서 로그인해 돌아온 경우)", () => {
+    it("내 보탬 확인으로 돌아오면 하단에 '내 보탬 확인'만 남기고 시트를 자동으로 연다", async () => {
+      myContributions = { data: { contributions: [{}] }, isPending: false };
+      render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="myBotem" />);
+
+      expect(await screen.findByRole("dialog", { name: "내 보탬 확인" })).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: "내 보탬 확인" })).toHaveLength(1);
+      expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
+    });
+
+    it("서버에 보탠 내역이 없으면 구분 Dialog 없이 바로 '메시지 보태기'/'보태기'만 보인다", () => {
+      myContributions = { data: { contributions: [] }, isPending: false };
+      render(<FundingDetailView detail={DETAIL} fundingId="1" isLoggedIn />);
+
+      expect(screen.getByRole("button", { name: "메시지 보태기" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "보태기" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+      expect(myContributionsQueryMock).toHaveBeenLastCalledWith("share-key-1", true);
+    });
+
+    it("보태러가기로 돌아왔어도 서버에 보탠 내역이 있으면 '내 보탬 확인'만 보인다", () => {
+      myContributions = { data: { contributions: [{}] }, isPending: false };
+      render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="contribute" />);
+
+      expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "보태기" })).not.toBeInTheDocument();
+    });
+
+    it("보탠 내역을 조회하는 동안에는 하단 버튼을 보여주지 않는다", () => {
+      myContributions = { isPending: true };
+      render(<FundingDetailView detail={DETAIL} fundingId="1" isLoggedIn />);
+
+      expect(screen.queryByRole("button", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "보태기" })).not.toBeInTheDocument();
+    });
+
+    it("보탠 내역이 없는 회원이 내 보탬 확인으로 돌아오면 안내만 띄우고 시트는 열지 않는다", async () => {
+      myContributions = { data: { contributions: [] }, isPending: false };
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="myBotem" />);
+
+      expect(
+        await screen.findByRole("heading", { name: "이 펀딩에 보탠 내역이 없어요" }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "확인" }));
+
+      expect(screen.getByRole("button", { name: "보태기" })).toBeInTheDocument();
+    });
+
+    it("보태러가기로 돌아오면 '메시지 보태기'/'보태기'를 보여주고 시트는 자동으로 열지 않는다", () => {
+      render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="contribute" />);
+
+      expect(screen.getByRole("button", { name: "메시지 보태기" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "보태기" })).toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+    });
+
+    it("보태기는 이름·비밀번호 없이 금액 → 편지 → 송금 안내 → 완료 페이지로 이동한다", async () => {
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="contribute" />);
+      await user.click(screen.getByRole("button", { name: "보태기" }));
+      await user.type(await screen.findByRole("textbox", { name: "보탬 금액" }), "50000");
+      await clickTopmost(user, "다음");
+
+      await screen.findByRole("textbox", { name: "편지 내용" });
+      expect(screen.queryByRole("textbox", { name: "친구에게 보여질 이름" })).toBeNull();
+      await writeLetter(user, { withName: false });
+
+      const heading = await screen.findByRole("heading", { level: 1, name: /민재의 계좌로/ });
+      expect(heading).toHaveTextContent("50,000원");
+      expect(screen.queryByLabelText("비밀번호 4자리")).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
+      await clickTopmost(user, "완료하기");
+
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/share-key-1/complete"));
+    });
+
+    it("메시지 보태기는 편지 다음에 비밀번호 없이 바로 완료 페이지로 이동한다", async () => {
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="contribute" />);
+      await user.click(screen.getByRole("button", { name: "메시지 보태기" }));
+
+      await writeLetter(user, { withName: false });
+
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/share-key-1/complete"));
+      expect(screen.queryByLabelText("비밀번호 4자리")).not.toBeInTheDocument();
+    });
   });
 
   it("결과 화면에서 연장하고 돌아오면 '기간이 연장됐어요' 토스트를 보여준다", () => {
     useFundingExtendToastStore.getState().mark();
-    render(<FundingDetailView fundingId="1" />);
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
 
     expect(screen.getByText("기간이 연장됐어요")).toBeInTheDocument();
   });
 
   it("연장 예약 없이 들어오면 연장 토스트를 보여주지 않는다", () => {
     useFundingExtendToastStore.setState({ pending: false });
-    render(<FundingDetailView fundingId="1" />);
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
 
     expect(screen.queryByText("기간이 연장됐어요")).not.toBeInTheDocument();
   });
@@ -216,18 +674,9 @@ describe("FundingDetailView", () => {
   });
 
   describe("더보기", () => {
-    it("guest 화면에서는 더보기를 눌러도 시트가 열리지 않는다", async () => {
-      const user = userEvent.setup();
-      render(<FundingDetailView fundingId="1" />);
-
-      await user.click(await screen.findByRole("button", { name: "더보기" }));
-
-      expect(screen.queryByText("공유 카드 다시 받기")).not.toBeInTheDocument();
-    });
-
     it("개설자가 더보기를 누르면 메뉴와 연장 안내가 담긴 시트가 열린다", async () => {
       const user = userEvent.setup();
-      render(<FundingDetailView fundingId="1" variant="owner" />);
+      render(<FundingDetailView fundingId="1" variant="owner" ownerDetail={closableOwnerDetail} />);
 
       await user.click(await screen.findByRole("button", { name: "더보기" }));
 
@@ -238,7 +687,7 @@ describe("FundingDetailView", () => {
 
     it("공유 카드 다시 받기를 누르면 공유 카드 화면이 열린다", async () => {
       const user = userEvent.setup();
-      render(<FundingDetailView fundingId="1" variant="owner" />);
+      render(<FundingDetailView fundingId="1" variant="owner" ownerDetail={closableOwnerDetail} />);
 
       await user.click(await screen.findByRole("button", { name: "더보기" }));
       await user.click(await screen.findByRole("button", { name: "공유 카드 다시 받기" }));
@@ -267,7 +716,7 @@ describe("FundingDetailView", () => {
           });
         }),
       );
-      render(<FundingDetailView fundingId="1" variant="owner" />);
+      render(<FundingDetailView fundingId="1" variant="owner" ownerDetail={closableOwnerDetail} />);
 
       await user.click(await screen.findByRole("button", { name: "더보기" }));
       await user.click(await screen.findByRole("button", { name: /조기 마감하기/ }));
@@ -289,7 +738,7 @@ describe("FundingDetailView", () => {
           return HttpResponse.json({ success: true, data: null, error: null });
         }),
       );
-      render(<FundingDetailView fundingId="1" variant="owner" />);
+      render(<FundingDetailView fundingId="1" variant="owner" ownerDetail={closableOwnerDetail} />);
 
       await user.click(await screen.findByRole("button", { name: "더보기" }));
       await user.click(await screen.findByRole("button", { name: /조기 마감하기/ }));
@@ -300,42 +749,56 @@ describe("FundingDetailView", () => {
     });
   });
 
-  it("헤더에 공유·더보기 버튼이 있고 뒤로가기 버튼은 없다", () => {
-    render(<FundingDetailView fundingId="1" />);
+  it("참여자용 공유 화면 헤더에는 공유 버튼만 있고 더보기·뒤로가기 버튼은 없다", () => {
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
 
     expect(screen.getByRole("button", { name: "공유" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "더보기" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "더보기" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /뒤로/ })).not.toBeInTheDocument();
   });
 
-  it("보탬을 수정해 저장하면 완료 안내를 띄우고, 확인을 눌러야 수정 화면이 닫힌다", async () => {
-    const user = userEvent.setup();
-    render(<FundingDetailView fundingId="1" />);
-    await user.click(screen.getByRole("button", { name: /나도 지유님께 보태볼까요\?/ }));
-    await user.click(screen.getByRole("button", { name: /내 보탬 수정하기/ }));
-    await user.type(await screen.findByRole("textbox", { name: "이름" }), "민지");
-    await user.type(screen.getByLabelText("비밀번호 4자리"), "1234");
-    await user.click(screen.getByRole("button", { name: "확인" }));
+  it.each(["owner", "surprise"] as const)(
+    "%s 화면 헤더에는 공유와 더보기 버튼이 함께 있다",
+    variant => {
+      render(<FundingDetailView ownerDetail={ownerDetail} fundingId="1" variant={variant} />);
 
-    const letter = await screen.findByRole("textbox", { name: "편지 내용" });
-    expect(letter).toHaveTextContent("올해도 같이 많이 웃자");
-    letter.textContent = "고친 편지";
-    fireEvent.input(letter);
-    await user.click(screen.getByRole("button", { name: "이대로 저장하기" }));
+      expect(screen.getByRole("button", { name: "공유" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "더보기" })).toBeInTheDocument();
+    },
+  );
 
-    expect(await screen.findByRole("heading", { name: "보탬을 수정했어요" })).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: "편지 내용" })).toBeInTheDocument();
+  describe("공유 버튼", () => {
+    const writeText = vi.fn();
 
-    await clickTopmost(user, "확인");
+    beforeEach(() => {
+      writeText.mockReset();
+      vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } });
+    });
 
-    await waitFor(() =>
-      expect(screen.queryByRole("textbox", { name: "편지 내용" })).not.toBeInTheDocument(),
-    );
-    expect(screen.queryByRole("heading", { name: "보탬을 수정했어요" })).not.toBeInTheDocument();
+    afterEach(() => vi.unstubAllGlobals());
+
+    it("누르면 공유 링크를 복사하고 안내 토스트를 보여준다", async () => {
+      writeText.mockResolvedValue(undefined);
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+      await userEvent.click(screen.getByRole("button", { name: "공유" }));
+
+      expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/share/share-key-1`);
+      expect(await screen.findByText("링크를 복사했어요")).toBeInTheDocument();
+    });
+
+    it("복사에 실패하면 실패 토스트를 보여준다", async () => {
+      writeText.mockRejectedValue(new Error("denied"));
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+
+      await userEvent.click(screen.getByRole("button", { name: "공유" }));
+
+      expect(await screen.findByText("링크를 복사하지 못했어요")).toBeInTheDocument();
+    });
   });
 
   it("진행 카드와 사연(Message)을 함께 보여준다", () => {
-    render(<FundingDetailView fundingId="1" />);
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
 
     expect(
       screen.getByRole("region", { name: "소니 WH-1000XM5 펀딩 진행 상황" }),
@@ -349,7 +812,7 @@ describe("FundingDetailView", () => {
 
   it("편지 시트에서 다음을 누르면 비밀번호 입력 시트가 나타난다", async () => {
     const user = userEvent.setup();
-    render(<FundingDetailView fundingId="1" />);
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
     expect(screen.queryByLabelText("비밀번호 4자리")).not.toBeInTheDocument();
 
     await goToPasswordSheet(user);
@@ -359,7 +822,7 @@ describe("FundingDetailView", () => {
 
   it("비밀번호 시트에서 이전을 누르면 편지 시트로 돌아온다", async () => {
     const user = userEvent.setup();
-    render(<FundingDetailView fundingId="1" />);
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
     await goToPasswordSheet(user);
     await screen.findByLabelText("비밀번호 4자리");
 
@@ -371,41 +834,128 @@ describe("FundingDetailView", () => {
 
   it("비밀번호를 입력하고 보태러 가기를 누르면 입력한 금액이 담긴 송금 안내 시트가 나타난다", async () => {
     const user = userEvent.setup();
-    render(<FundingDetailView fundingId="1" />);
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
     await goToPasswordSheet(user);
 
     await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
     await user.click(screen.getByRole("button", { name: "보태러 가기" }));
 
-    const heading = await screen.findByRole("heading", { level: 1, name: /지유의 계좌로/ });
+    const heading = await screen.findByRole("heading", { level: 1, name: /민재의 계좌로/ });
     expect(heading).toHaveTextContent("50,000원");
   });
 
   it("송금 안내 시트에서 완료하기를 누르면 완료 페이지로 replace 이동한다", async () => {
     const user = userEvent.setup();
-    render(<FundingDetailView fundingId="1" />);
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
     await goToPasswordSheet(user);
     await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
     await user.click(screen.getByRole("button", { name: "보태러 가기" }));
-    await screen.findByRole("heading", { level: 1, name: /지유의 계좌로/ });
+    await screen.findByRole("heading", { level: 1, name: /민재의 계좌로/ });
 
     await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
     await clickTopmost(user, "완료하기");
 
-    expect(replaceMock).toHaveBeenCalledWith("/share/1/complete");
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/share-key-1/complete"));
+  });
+
+  it("보태러 가기는 금액 보태기를 제출하고 응답 계좌를 송금 안내에 보여준다", async () => {
+    const user = userEvent.setup();
+    const submitted = vi.fn();
+    server.use(
+      http.post("*/api/fundings/share/:shareKey/contributions", async ({ request }) => {
+        submitted(await request.json());
+        return HttpResponse.json({
+          success: true,
+          data: {
+            contributionId: 2,
+            participantName: "민수",
+            amount: 50000,
+            status: "AWAITING_TRANSFER",
+            payoutAccount: {
+              bank: "KAKAO_BANK",
+              bankName: "카카오뱅크",
+              accountNumber: "3333-01-1234567",
+              accountHolder: "김민재",
+            },
+          },
+          error: null,
+        });
+      }),
+    );
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+    await goToPasswordSheet(user);
+    await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
+    await user.click(screen.getByRole("button", { name: "보태러 가기" }));
+
+    expect(await screen.findByText(/3333-01-1234567/)).toBeInTheDocument();
+    expect(submitted).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 50000, participantName: "민수", guestPassword: "1234" }),
+    );
+  });
+
+  it("송금했어요 완료 시 transfer-sent에 비회원 비밀번호를 보낸다", async () => {
+    const user = userEvent.setup();
+    const sent = vi.fn();
+    server.use(
+      http.post(
+        "*/api/fundings/share/:shareKey/contributions/:contributionId/transfer-sent",
+        async ({ params, request }) => {
+          sent(params.contributionId, await request.json());
+          return HttpResponse.json({
+            success: true,
+            data: { contributionId: 2, status: "PENDING_CONFIRMATION" },
+            error: null,
+          });
+        },
+      ),
+    );
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+    await goToPasswordSheet(user);
+    await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
+    await user.click(screen.getByRole("button", { name: "보태러 가기" }));
+    await screen.findByRole("heading", { level: 1, name: /민재의 계좌로/ });
+    await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
+    await clickTopmost(user, "완료하기");
+
+    await waitFor(() => expect(sent).toHaveBeenCalledWith("2", { guestPassword: "1234" }));
+  });
+
+  it("송금 확인이 실패하면 완료 페이지로 이동하지 않고 다시 누를 수 있다", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post("*/api/fundings/share/:shareKey/contributions/:contributionId/transfer-sent", () =>
+        HttpResponse.json(
+          { success: false, data: null, error: { code: "COMMON_500", message: "fail" } },
+          { status: 500 },
+        ),
+      ),
+    );
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+    await goToPasswordSheet(user);
+    await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
+    await user.click(screen.getByRole("button", { name: "보태러 가기" }));
+    await screen.findByRole("heading", { level: 1, name: /민재의 계좌로/ });
+    await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
+    await clickTopmost(user, "완료하기");
+
+    await waitFor(() => expect(replaceMock).not.toHaveBeenCalled());
+    // 잠금이 풀려 같은 버튼으로 다시 시도할 수 있다
+    await clickTopmost(user, "완료하기");
+    expect(replaceMock).not.toHaveBeenCalled();
   });
 
   it("완료하기를 누르면 금액·편지·비밀번호가 스토어에 모두 담겨 있다", async () => {
     const user = userEvent.setup();
-    render(<FundingDetailView fundingId="1" />);
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
     await goToPasswordSheet(user);
     await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
     await user.click(screen.getByRole("button", { name: "보태러 가기" }));
-    await screen.findByRole("heading", { level: 1, name: /지유의 계좌로/ });
+    await screen.findByRole("heading", { level: 1, name: /민재의 계좌로/ });
 
     await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
     await clickTopmost(user, "완료하기");
 
+    await waitFor(() => expect(replaceMock).toHaveBeenCalled());
     expect(useFundingContributionStore.getState()).toMatchObject({
       amount: 50000,
       letter: { text: "생일 축하해!", name: "민수" },
@@ -414,21 +964,21 @@ describe("FundingDetailView", () => {
   });
 
   describe("보태기 플로우 나가기", () => {
-    const openExitDialog = async (user: ReturnType<typeof userEvent.setup>) => {
+    const openExitDialog = async (user: User) => {
       await clickTopmost(user, "닫기");
       return screen.findByRole("heading", { name: /보태기를 그만둘까요\?/ });
     };
 
     it("편지 시트의 X를 누르면 나가기 확인 Dialog가 뜨고, 아니오를 누르면 Dialog만 닫힌다", async () => {
       const user = userEvent.setup();
-      render(<FundingDetailView fundingId="1" />);
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
       await goToPasswordSheet(user);
       await screen.findByLabelText("비밀번호 4자리");
       await clickTopmost(user, "이전");
       await screen.findByRole("textbox", { name: "편지 내용" });
 
       const title = await openExitDialog(user);
-      expect(title).toHaveTextContent("지유에게");
+      expect(title).toHaveTextContent("민재에게");
 
       await user.click(screen.getByRole("button", { name: "아니오" }));
 
@@ -442,7 +992,7 @@ describe("FundingDetailView", () => {
 
     it("예를 누르면 열린 시트가 모두 닫히고, 다시 시작하면 입력이 비어 있다", async () => {
       const user = userEvent.setup();
-      render(<FundingDetailView fundingId="1" />);
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
       await goToPasswordSheet(user);
       await screen.findByLabelText("비밀번호 4자리");
 
@@ -455,14 +1005,13 @@ describe("FundingDetailView", () => {
         expect(screen.queryByRole("textbox", { name: "보탬 금액" })).not.toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole("button", { name: /나도 지유님께 보태볼까요\?/ }));
       await user.click(screen.getByRole("button", { name: "보태기" }));
       expect(await screen.findByRole("textbox", { name: "보탬 금액" })).toHaveValue("");
     });
 
     it("예를 누르면 스토어에 쌓인 입력값이 초기화된다", async () => {
       const user = userEvent.setup();
-      render(<FundingDetailView fundingId="1" />);
+      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
       await goToPasswordSheet(user);
       await screen.findByLabelText("비밀번호 4자리");
       expect(useFundingContributionStore.getState().amount).toBe(50000);

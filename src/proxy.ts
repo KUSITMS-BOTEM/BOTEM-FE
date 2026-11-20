@@ -11,13 +11,6 @@ export function proxy(request: NextRequest) {
       ? NextResponse.redirect(new URL(`/friends/${guestProfileUserId}`, request.url))
       : NextResponse.next();
   }
-  // 로그인 사용자는 개설자·서프라이즈 대상자 판정이 가능한 회원 경로로 보낸다. 비로그인은 공개 화면 그대로
-  const shareFundingId = request.nextUrl.pathname.match(/^\/share\/([^/]+)\/?$/)?.[1];
-  if (shareFundingId) {
-    return isLoggedIn
-      ? NextResponse.redirect(new URL(`/funding/${shareFundingId}`, request.url))
-      : NextResponse.next();
-  }
   if (isLoggedIn && isLandingPage) {
     return NextResponse.redirect(new URL("/home", request.url));
   }
@@ -37,6 +30,5 @@ export const config = {
     "/friends/:path*",
     "/funding/:path*",
     "/share/profile/:userId",
-    "/share/:fundingId",
   ],
 };

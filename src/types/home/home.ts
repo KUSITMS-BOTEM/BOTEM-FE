@@ -9,6 +9,7 @@ export type HomeFundingParticipantPreviewResponse = {
 
 export type HomeFundingCardResponse = {
   fundingId: number;
+  shareKey: string;
   cardType: HomeFundingCardType;
   fundingType: FundingType;
   productName: string;

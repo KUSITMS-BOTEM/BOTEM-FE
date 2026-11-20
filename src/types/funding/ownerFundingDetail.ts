@@ -31,6 +31,7 @@ export type FundingManagementActionsResponse = {
 
 export type OwnerFundingDetailResponse = {
   fundingId: number;
+  shareKey: string;
   type: FundingType;
   title: string | null;
   story: string | null;

@@ -7,6 +7,7 @@ import { authService } from "@/apis/auth/authService";
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/store/authStore";
+import { useGuestBotemStore } from "@/store/guestBotemStore";
 import { consumeWishPromptPending, markWishPromptPending } from "@/utils/wish/wishPromptStorage";
 
 vi.mock("@/apis/auth/authService", () => ({
@@ -45,6 +46,17 @@ describe("useLogoutMutation", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBe(error);
+  });
+
+  it("로그아웃 성공 시 비회원 본인 확인 정보(비밀번호)를 지운다", async () => {
+    useGuestBotemStore.getState().setIdentity("share-key-5", "민지", "1234");
+    vi.mocked(authService.postLogout).mockResolvedValue(null);
+    const { result } = renderHook(() => useLogoutMutation(), { wrapper: createWrapper() });
+
+    result.current.mutate();
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(useGuestBotemStore.getState()).toMatchObject({ shareKey: null, password: null });
   });
 
   it("로그아웃 성공 시 accessToken과 프로필 캐시를 지운다", async () => {

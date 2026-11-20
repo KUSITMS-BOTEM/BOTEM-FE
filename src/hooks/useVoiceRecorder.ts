@@ -51,6 +51,7 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
   const [transcript, setTranscript] = useState("");
   const [interim, setInterim] = useState("");
   const [blob, setBlob] = useState<Blob | null>(null);
+  const [durationSeconds, setDurationSeconds] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(maxSeconds);
   // 서버 렌더에서는 true로 두어 하이드레이션 불일치를 피한다
@@ -62,6 +63,7 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
   const chunksRef = useRef<Blob[]>([]);
   const finalTextRef = useRef("");
   const timerRef = useRef<number | undefined>(undefined);
+  const startedAtRef = useRef(0);
   const speakingTimerRef = useRef<number | undefined>(undefined);
   const keepListeningRef = useRef(false);
   // 마이크 권한을 기다리는 동안 reset·언마운트되면 그 시작을 무효로 만든다
@@ -118,6 +120,7 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
     setTranscript("");
     setInterim("");
     setBlob(null);
+    setDurationSeconds(0);
     setRemainingSeconds(maxSeconds);
   }, [discard, maxSeconds]);
 
@@ -164,7 +167,9 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
         window.clearInterval(timerRef.current);
         keepListeningRef.current = false;
         recognitionRef.current?.stop();
-        setBlob(new Blob(chunksRef.current, { type: recorder.mimeType }));
+        // 서버가 Content-Type을 허용 목록과 정확히 비교해 `;codecs=opus` 같은 파라미터는 뗀다. 서버는 길이 0 이하를 거부해 최소 1초로 둔다
+        setBlob(new Blob(chunksRef.current, { type: recorder.mimeType.split(";")[0] }));
+        setDurationSeconds(Math.max(1, Math.ceil((Date.now() - startedAtRef.current) / 1000)));
         setInterim("");
         clearSpeaking();
         setStatus("done");
@@ -208,6 +213,7 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
       recorderRef.current = recorder;
       recognitionRef.current = recognition;
       keepListeningRef.current = true;
+      startedAtRef.current = Date.now();
       recorder.start();
       recognition.start();
     } catch {
@@ -238,6 +244,7 @@ export function useVoiceRecorder({ maxSeconds = 30 }: UseVoiceRecorderOptions = 
     interim,
     isSpeaking,
     blob,
+    durationSeconds,
     remainingSeconds,
     start,
     stop,

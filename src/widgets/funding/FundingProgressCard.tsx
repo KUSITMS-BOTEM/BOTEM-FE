@@ -5,11 +5,7 @@ import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 
 import Badge from "@/components/Badge";
 import { cn } from "@/utils/cn";
-import {
-  calcFundingPercent,
-  getClosedLabel,
-  getFundingProgressMessage,
-} from "@/utils/funding/fundingProgress";
+import { getClosedLabel, getFundingProgressMessage } from "@/utils/funding/fundingProgress";
 import { getFundingCardColor } from "@/utils/funding/getFundingCardColor";
 import FundingProgressGraphic, {
   type FundingCardColor,
@@ -79,10 +75,9 @@ type FundingProgressCardProps = {
   productName: string;
   /** "YYYY-MM-DD" */
   deadline: string;
-  currentAmount: number;
+  /** 확정 달성률 (0~100) */
+  percent: number;
   targetAmount: number;
-  /** 서버가 달성률(%)을 직접 줄 때 넘긴다. 없으면 금액으로 계산한다 */
-  progress?: number;
   /** true면 문구·달성률·목표 금액 묶음이 한 번 커졌다 돌아온다 (보태기 완료 페이지 연출) */
   popStatus?: boolean;
   /** 서프라이즈 펀딩이면 마감일 옆에 자물쇠를 보여준다 */
@@ -97,19 +92,17 @@ export default function FundingProgressCard({
   productImageUrl,
   productName,
   deadline,
-  currentAmount,
+  percent,
   targetAmount,
-  progress,
   popStatus = false,
   locked = false,
   children,
   className,
 }: FundingProgressCardProps) {
-  const color: FundingCardColor = currentAmount === 0 ? "disabled" : getFundingCardColor(fundingId);
+  const color: FundingCardColor = percent === 0 ? "disabled" : getFundingCardColor(fundingId);
   const theme = CARD_THEME[color];
-  const percent = progress ?? calcFundingPercent(currentAmount, targetAmount);
   // 금액을 다 채운 마감이 기간 마감보다 우선한다
-  const closedLabel = getClosedLabel({ currentAmount, targetAmount, deadline });
+  const closedLabel = getClosedLabel({ percent, deadline });
 
   // 카드는 320×401 기준 px로 그려져 있어, 부모 가로 실측값에 맞춰 통째로 비율 확대한다.
   // CSS만으로 길이÷길이를 하는 기법(tan(atan2()))은 브라우저마다 계산이 달라 쓰지 않는다

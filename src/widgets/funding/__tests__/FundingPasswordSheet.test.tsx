@@ -23,12 +23,6 @@ beforeAll(() => {
   });
 });
 
-const ACCOUNT = {
-  bank: "TOSS_BANK",
-  accountHolder: "김지유",
-  accountNumber: "1000-1234-5678",
-} as const;
-
 type HarnessProps = {
   onClose?: () => void;
   onPrev?: () => void;
@@ -51,8 +45,6 @@ function Harness({
       <FundingPasswordSheet
         open={open}
         hostName="지유"
-        amount={50000}
-        account={ACCOUNT}
         onClose={() => {
           onClose?.();
           setOpen(false);
@@ -70,11 +62,6 @@ function Harness({
 
 const getInput = () => screen.getByLabelText("비밀번호 4자리");
 const getComplete = () => screen.getByRole("button", { name: "보태러 가기" });
-const getGuideHeading = () => screen.queryByRole("heading", { level: 1 });
-const finishGuide = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
-  await user.click(screen.getByRole("button", { name: "완료하기" }));
-};
 
 describe("FundingPasswordSheet", () => {
   it("제목·안내 문구·헤더가 보인다", () => {
@@ -123,52 +110,19 @@ describe("FundingPasswordSheet", () => {
     }
   });
 
-  it("보태러 가기를 누르면 송금 안내 시트가 나타나고 아직 onComplete는 호출되지 않는다", async () => {
+  it("보태러 가기를 누르면 입력한 비밀번호와 함께 onComplete가 호출된다", async () => {
     const user = userEvent.setup();
     const onComplete = vi.fn();
     render(<Harness onComplete={onComplete} />);
-    expect(getGuideHeading()).not.toBeInTheDocument();
 
     await user.type(getInput(), "1234");
     await user.click(getComplete());
-
-    const heading = await screen.findByRole("heading", { level: 1 });
-    expect(heading).toHaveTextContent("지유의 계좌로");
-    expect(heading).toHaveTextContent("50,000원");
-    expect(onComplete).not.toHaveBeenCalled();
-  });
-
-  it("송금 안내 시트에서 완료하기를 누르면 입력한 비밀번호와 함께 onComplete가 한 번만 호출된다", async () => {
-    const user = userEvent.setup();
-    const onComplete = vi.fn();
-    render(<Harness onComplete={onComplete} />);
-    await user.type(getInput(), "1234");
-    await user.click(getComplete());
-
-    await user.click(await screen.findByRole("checkbox", { name: "송금했어요" }));
-    await user.dblClick(screen.getByRole("button", { name: "완료하기" }));
 
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(onComplete).toHaveBeenCalledWith("1234");
   });
 
-  it("송금 안내 시트에서 뒤로 가기를 누르면 비밀번호 시트로 돌아오고 입력은 유지된다", async () => {
-    const user = userEvent.setup();
-    const onClose = vi.fn();
-    render(<Harness onClose={onClose} />);
-    await user.type(getInput(), "1234");
-    await user.click(getComplete());
-    await screen.findByRole("heading", { level: 1 });
-
-    await user.click(screen.getByRole("button", { name: "뒤로 가기" }));
-
-    await waitFor(() => expect(getGuideHeading()).not.toBeInTheDocument());
-    expect(getInput()).toHaveValue("1234");
-    expect(getComplete()).toBeEnabled();
-    expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it("메시지만 보태는 경우 버튼이 완료하기이고, 누르면 송금 안내 없이 바로 onComplete가 호출된다", async () => {
+  it("메시지만 보태는 경우 버튼이 완료하기이고, 누르면 onComplete가 호출된다", async () => {
     const user = userEvent.setup();
     const onComplete = vi.fn();
     render(<Harness messageOnly onComplete={onComplete} />);
@@ -180,7 +134,6 @@ describe("FundingPasswordSheet", () => {
     await user.click(complete);
 
     expect(onComplete).toHaveBeenCalledWith("1234");
-    expect(getGuideHeading()).not.toBeInTheDocument();
   });
 
   it("이전을 누르면 onPrev가 호출된다", async () => {
@@ -191,24 +144,19 @@ describe("FundingPasswordSheet", () => {
     expect(onPrev).toHaveBeenCalledTimes(1);
   });
 
-  it("완료 후 부모가 닫았다 다시 열면 입력과 송금 안내가 초기화되고 다시 완료할 수 있다", async () => {
+  it("완료 후 부모가 닫았다 다시 열면 입력이 초기화되고 다시 완료할 수 있다", async () => {
     const user = userEvent.setup();
     const onComplete = vi.fn();
     render(<Harness onComplete={onComplete} closeOnComplete />);
     await user.type(getInput(), "1234");
     await user.click(getComplete());
-    await screen.findByRole("heading", { level: 1 });
-    await finishGuide(user);
     await waitFor(() => expect(screen.queryByLabelText("비밀번호 4자리")).not.toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: "열기" }));
     expect(getInput()).toHaveValue("");
-    expect(getGuideHeading()).not.toBeInTheDocument();
 
     await user.type(getInput(), "5678");
     await user.click(getComplete());
-    await screen.findByRole("heading", { level: 1 });
-    await finishGuide(user);
     expect(onComplete).toHaveBeenCalledTimes(2);
     expect(onComplete).toHaveBeenLastCalledWith("5678");
   });

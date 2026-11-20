@@ -44,7 +44,7 @@ const renderSheet = (onClose = vi.fn(), props: Record<string, unknown> = {}) =>
         recipientName="민지"
         wish={wish}
         info={info}
-        fundingId={1}
+        shareKey="1"
         onClose={onClose}
         {...props}
       />

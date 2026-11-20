@@ -1,6 +1,7 @@
 import { delay, http, HttpResponse } from "msw";
 
 import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
+import { toMockShareKey } from "@/mocks/mockShareKey";
 import type {
   FriendFundingResponse,
   FriendProfileResponse,
@@ -70,6 +71,7 @@ const createFundings = (count: number): FriendFundingResponse[] =>
     const product = MOCK_RECOMMENDED_PRODUCTS[index % MOCK_RECOMMENDED_PRODUCTS.length];
     return {
       fundingId: 100 + index,
+      shareKey: toMockShareKey(100 + index),
       type: index === 0 ? "SURPRISE" : "BIRTHDAY",
       productName: product.name,
       productImageUrl: product.imageUrl,

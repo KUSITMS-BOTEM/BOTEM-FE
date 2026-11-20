@@ -32,7 +32,7 @@ describe("getClosedLabel", () => {
     vi.useRealTimers();
   });
 
-  const OPEN = { currentAmount: 500, targetAmount: 1000, deadline: "2026-11-23" };
+  const OPEN = { percent: 50, deadline: "2026-11-23" };
 
   it("기간이 남고 목표 미달이면 null이다", () => {
     expect(getClosedLabel(OPEN)).toBeNull();
@@ -47,15 +47,15 @@ describe("getClosedLabel", () => {
   });
 
   it("기간이 남아도 목표를 채웠으면 마감이다", () => {
-    expect(getClosedLabel({ ...OPEN, currentAmount: 1000 })).toBe("마감");
+    expect(getClosedLabel({ ...OPEN, percent: 100 })).toBe("마감");
   });
 
   it("기간이 지나고 목표도 채웠으면 마감이 우선한다", () => {
-    expect(getClosedLabel({ ...OPEN, currentAmount: 1000, deadline: "2026-11-15" })).toBe("마감");
+    expect(getClosedLabel({ ...OPEN, percent: 100, deadline: "2026-11-15" })).toBe("마감");
   });
 
-  it("목표 금액이 0이면 달성으로 보지 않는다", () => {
-    expect(getClosedLabel({ ...OPEN, currentAmount: 0, targetAmount: 0 })).toBeNull();
+  it("달성률이 0이면 달성으로 보지 않는다", () => {
+    expect(getClosedLabel({ ...OPEN, percent: 0 })).toBeNull();
   });
 });
 

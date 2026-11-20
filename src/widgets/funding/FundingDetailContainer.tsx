@@ -29,14 +29,18 @@ export default function FundingDetailContainer({
   // TODO(API): 지금은 쿼리 friendId만으로 개설자로 판정해 URL을 직접 붙이면 개설자·잠금 우회가 된다. 펀딩 조회 API가 생기면 서버가 내려주는 viewer 역할로 교체한다
   // 개설 직후 이동만 friendId를 달고 들어오므로 그때만 개설자로 본다
   const role: ViewerRole = friendId ? "host" : MOCK_VIEWER_ROLE;
-  const ownerQuery = useFundingManagementQuery(Number(fundingId), {
-    enabled: role === "owner",
-  });
+  const isHostRole = role === "owner" || role === "host";
+  const ownerQuery = useFundingManagementQuery(Number(fundingId), { enabled: isHostRole });
 
-  if (role === "owner") {
+  if (isHostRole) {
     if (ownerQuery.data) {
       return (
-        <FundingDetailView fundingId={fundingId} variant="owner" ownerDetail={ownerQuery.data} />
+        <FundingDetailView
+          fundingId={fundingId}
+          variant={role === "owner" ? "owner" : "surprise"}
+          ownerDetail={ownerQuery.data}
+          onBack={role === "host" ? () => router.push(`/friends/${friendId}`) : undefined}
+        />
       );
     }
     // 성공했는데 data가 비어 온 경우도 보여줄 값이 없으니 실패와 같이 재시도를 안내한다
@@ -56,13 +60,7 @@ export default function FundingDetailContainer({
   }
 
   if (role === "recipient") return <FundingLockedView revealDateLabel={MOCK_REVEAL_DATE_LABEL} />;
-  if (role === "guest") return <FundingDetailView fundingId={fundingId} variant="guest" />;
 
-  return (
-    <FundingDetailView
-      fundingId={fundingId}
-      variant="surprise"
-      onBack={() => router.push(`/friends/${friendId}`)}
-    />
-  );
+  // 참여자 상세는 숫자 ID 조회가 사라져 /share/{shareKey}에서만 열린다. 이 mock 분기는 viewer 역할 API가 생기면 정리한다
+  return null;
 }

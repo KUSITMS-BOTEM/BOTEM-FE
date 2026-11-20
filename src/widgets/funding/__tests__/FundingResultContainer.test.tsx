@@ -103,6 +103,7 @@ const makeResult = (
 const makeManagement = (
   overrides: Partial<OwnerFundingDetailResponse> = {},
 ): OwnerFundingDetailResponse => ({
+  shareKey: "share-key-7",
   fundingId: 7,
   type: "BIRTHDAY",
   title: null,

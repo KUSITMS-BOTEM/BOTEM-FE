@@ -8,6 +8,7 @@ export type SurpriseMessage = {
   photoUrl: string | null;
   voiceUrl: string | null;
   voiceDurationSeconds: number | null;
+  voiceTranscript: string | null;
 };
 
 export type SurpriseRevealResponse = {
@@ -27,6 +28,7 @@ export type SurpriseRevealResponse = {
 
 export type SurpriseGiftPreparationResponse = {
   fundingId: number;
+  shareKey: string;
   recipientName: string;
   productName: string;
   productImageUrl: string;

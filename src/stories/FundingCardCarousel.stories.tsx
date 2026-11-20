@@ -4,7 +4,7 @@ import FundingCardCarousel, { type FundingCardData } from "@/widgets/home/Fundin
 import SampleProduct from "@/assets/images/samples/sample-product.png";
 
 const baseCard: Omit<FundingCardData, "id"> = {
-  title: "{닉네임}님의 생일 펀딩",
+  title: "{닉네임}님의 펀딩",
   productName: "{상품명}",
   productImageUrl: SampleProduct.src,
   progress: 40,

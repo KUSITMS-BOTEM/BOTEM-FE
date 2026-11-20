@@ -3,6 +3,7 @@ import { toFundingCardData } from "@/utils/home/toFundingCardData";
 
 const makeCard = (overrides: Partial<HomeFundingCardResponse> = {}): HomeFundingCardResponse => ({
   fundingId: 1,
+  shareKey: "share-key-1",
   cardType: "IN_PROGRESS",
   fundingType: "BIRTHDAY",
   productName: "무선 헤드폰",
@@ -104,17 +105,17 @@ describe("toFundingCardData", () => {
     expect(result.dDay).toBeNull();
   });
 
-  it("생일 펀딩은 '{닉네임}님의 생일 펀딩' 제목이고 서프라이즈가 아니다", () => {
+  it("생일 펀딩은 '{닉네임}님의 펀딩' 제목이고 서프라이즈가 아니다", () => {
     const result = toFundingCardData(makeCard({ fundingType: "BIRTHDAY" }), "지유");
 
-    expect(result.title).toBe("지유님의 생일 펀딩");
+    expect(result.title).toBe("지유님의 펀딩");
     expect(result.isSurprise).toBe(false);
   });
 
-  it("서프라이즈 펀딩은 '{닉네임}님의 서프라이즈 펀딩' 제목이고 서프라이즈로 표시한다", () => {
+  it("서프라이즈 펀딩은 '{닉네임}님의 펀딩' 제목이고 서프라이즈로 표시한다", () => {
     const result = toFundingCardData(makeCard({ fundingType: "SURPRISE" }), "지유");
 
-    expect(result.title).toBe("지유님의 서프라이즈 펀딩");
+    expect(result.title).toBe("지유님의 펀딩");
     expect(result.isSurprise).toBe(true);
   });
 

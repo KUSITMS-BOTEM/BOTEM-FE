@@ -24,62 +24,50 @@ import type { ThankCardResponse } from "@/types/thank-card/thankCard";
 
 const GUEST_TOKEN_HEADER = "X-Guest-Contribution-Token";
 
-const contributionsPath = (fundingId: number) => `/api/fundings/${fundingId}/contributions`;
+// 참여자는 공유 키로, 개설자는 펀딩 ID로 호출한다
+const participantPath = (shareKey: string) => `/api/fundings/share/${shareKey}/contributions`;
+const ownerPath = (fundingId: number) => `/api/fundings/${fundingId}/contributions`;
 
 export const contributionService = {
   getPendingContributions: (fundingId: number) =>
-    clientApi.get<PendingContributionListResponse>(`${contributionsPath(fundingId)}/pending`),
+    clientApi.get<PendingContributionListResponse>(`${ownerPath(fundingId)}/pending`),
 
-  createContribution: (fundingId: number, body: CreateContributionRequest) =>
-    clientApi.post<CreateContributionResponse>(contributionsPath(fundingId), body),
-  createMessageContribution: (fundingId: number, body: CreateMessageContributionRequest) =>
-    clientApi.post<MessageContributionResponse>(
-      `${contributionsPath(fundingId)}/message-only`,
-      body,
-    ),
-  markTransferSent: (fundingId: number, contributionId: number, body: MarkTransferSentRequest) =>
+  createContribution: (shareKey: string, body: CreateContributionRequest) =>
+    clientApi.post<CreateContributionResponse>(participantPath(shareKey), body),
+  createMessageContribution: (shareKey: string, body: CreateMessageContributionRequest) =>
+    clientApi.post<MessageContributionResponse>(`${participantPath(shareKey)}/message-only`, body),
+  markTransferSent: (shareKey: string, contributionId: number, body: MarkTransferSentRequest) =>
     clientApi.post<MarkTransferSentResponse>(
-      `${contributionsPath(fundingId)}/${contributionId}/transfer-sent`,
+      `${participantPath(shareKey)}/${contributionId}/transfer-sent`,
       body,
     ),
 
   decideContributions: (fundingId: number, body: DecideContributionsRequest) =>
-    clientApi.post<ContributionDecisionsResponse>(
-      `${contributionsPath(fundingId)}/decisions`,
-      body,
-    ),
+    clientApi.post<ContributionDecisionsResponse>(`${ownerPath(fundingId)}/decisions`, body),
   undoContributionDecisions: (fundingId: number, body: UndoContributionDecisionsRequest) =>
-    clientApi.post<ContributionDecisionsResponse>(
-      `${contributionsPath(fundingId)}/decisions/undo`,
-      body,
-    ),
+    clientApi.post<ContributionDecisionsResponse>(`${ownerPath(fundingId)}/decisions/undo`, body),
 
-  getMyContributions: (fundingId: number) =>
-    clientApi.get<MyContributionListResponse>(`${contributionsPath(fundingId)}/me`),
+  getMyContributions: (shareKey: string) =>
+    clientApi.get<MyContributionListResponse>(`${participantPath(shareKey)}/me`),
   updateMyContribution: (
-    fundingId: number,
+    shareKey: string,
     contributionId: number,
     body: UpdateMyContributionRequest,
   ) =>
-    clientApi.patch<MyContributionResponse>(
-      `${contributionsPath(fundingId)}/${contributionId}`,
-      body,
-    ),
+    clientApi.patch<MyContributionResponse>(`${participantPath(shareKey)}/${contributionId}`, body),
 
-  accessGuestContribution: (fundingId: number, body: AccessGuestContributionRequest) =>
-    clientApi.post<GuestContributionResponse>(`${contributionsPath(fundingId)}/guest/access`, body),
+  accessGuestContribution: (shareKey: string, body: AccessGuestContributionRequest) =>
+    clientApi.post<GuestContributionResponse>(`${participantPath(shareKey)}/guest/access`, body),
   updateGuestContribution: (
-    fundingId: number,
+    shareKey: string,
     accessToken: string,
     body: UpdateGuestContributionRequest,
   ) =>
-    clientApi.patch<UpdatedGuestContributionResponse>(
-      `${contributionsPath(fundingId)}/guest`,
-      body,
-      { headers: { [GUEST_TOKEN_HEADER]: accessToken } },
-    ),
-  deleteGuestContribution: (fundingId: number, accessToken: string) =>
-    clientApi.delete<null>(`${contributionsPath(fundingId)}/guest`, {
+    clientApi.patch<UpdatedGuestContributionResponse>(`${participantPath(shareKey)}/guest`, body, {
+      headers: { [GUEST_TOKEN_HEADER]: accessToken },
+    }),
+  deleteGuestContribution: (shareKey: string, accessToken: string) =>
+    clientApi.delete<null>(`${participantPath(shareKey)}/guest`, {
       headers: { [GUEST_TOKEN_HEADER]: accessToken },
     }),
 
@@ -89,7 +77,7 @@ export const contributionService = {
     body: SendContributionThankCardRequest,
   ) =>
     clientApi.post<ContributionThankCardResponse>(
-      `${contributionsPath(fundingId)}/${contributionId}/thank-card`,
+      `${ownerPath(fundingId)}/${contributionId}/thank-card`,
       body,
     ),
   getReceivedThankCard: (contributionId: number) =>

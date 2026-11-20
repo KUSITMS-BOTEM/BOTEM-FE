@@ -56,6 +56,8 @@ const FALL_DISTANCE = [125, 694];
 const FALL_EASE: Easing[] = ["linear", [0.45, 0, 0.75, 0.5]];
 const SWAY_EASE: Easing = [0.4, 0, 0.6, 1];
 const FIRST_LEG_RATIO = 0.25;
+// 스테이지가 헤더 아래라 cy만으로는 화면 안에 걸친다. 시작점을 더 올려 화면 밖에서 내려오며 보이게 한다
+const START_LIFT = 100;
 
 function ConfettiBody({ piece }: { piece: ConfettiPiece }) {
   if ("svg" in piece) {
@@ -73,14 +75,20 @@ function ConfettiBody({ piece }: { piece: ConfettiPiece }) {
 
 export default function FundingCompleteConfetti() {
   return (
-    <div aria-hidden className="pointer-events-none absolute top-0 left-1/2 w-90 -translate-x-1/2">
+    <div
+      aria-hidden
+      className="pointer-events-none absolute top-0 left-1/2 z-10 w-90 -translate-x-1/2">
       {CONFETTI_PIECES.map((piece, index) => {
         const { cx, cy, deg, delay, duration, dx, spin } = piece;
         return (
           <motion.div
             key={index}
-            initial={{ x: cx, y: cy, opacity: 0 }}
-            animate={{ x: cx + dx, y: [cy, ...FALL_DISTANCE.map(d => cy + d)], opacity: [1, 1, 0] }}
+            initial={{ x: cx, y: cy - START_LIFT, opacity: 0 }}
+            animate={{
+              x: cx + dx,
+              y: [cy - START_LIFT, ...FALL_DISTANCE.map(d => cy + d)],
+              opacity: [1, 1, 0],
+            }}
             transition={{
               delay,
               duration,

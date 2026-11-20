@@ -62,18 +62,6 @@ export type ContributionLifecycleStatus =
   | "MESSAGE_ONLY"
   | "CANCELLED";
 
-export type PendingContributionItemResponse = {
-  contributionId: number;
-  participantName: string;
-  profileImageUrl: string | null;
-  participatedAt: string;
-};
-
-export type PendingContributionItemListResponse = {
-  pendingContributionCount: number;
-  contributions: PendingContributionItemResponse[];
-};
-
 export type ContributionPayoutAccount = {
   bank: BankCode;
   bankName: string;
@@ -88,6 +76,7 @@ type RollingPaperContent = {
   photoUrl: string | null;
   voiceUrl: string | null;
   voiceDurationSeconds: number | null;
+  voiceTranscript: string | null;
 };
 
 type RollingPaperContentRequest = {
@@ -98,6 +87,8 @@ type RollingPaperContentRequest = {
   // voiceUrl과 voiceDurationSeconds는 함께 보내야 한다
   voiceUrl?: string | null;
   voiceDurationSeconds?: number | null;
+  // 녹음할 때 브라우저가 만든 자막. 인식하지 못했으면 생략
+  voiceTranscript?: string | null;
 };
 
 type ContributionParticipantRequest = {

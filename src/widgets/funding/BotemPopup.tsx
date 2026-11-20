@@ -42,7 +42,7 @@ type BotemPopupProps = {
   onThankCardClick?: (friend: BotemPopupFriend) => void;
 };
 
-const getUnconfirmedText = ({
+export const getUnconfirmedText = ({
   count,
   ownerName,
   isHost,

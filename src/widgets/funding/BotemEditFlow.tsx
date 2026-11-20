@@ -3,6 +3,14 @@
 import { useState } from "react";
 
 import Dialog from "@/components/Dialog";
+import { useUpdateGuestContributionMutation } from "@/hooks/mutations/contribution/useUpdateGuestContributionMutation";
+import { useUpdateMyContributionMutation } from "@/hooks/mutations/contribution/useUpdateMyContributionMutation";
+import type {
+  GuestContributionResponse,
+  MyContributionResponse,
+} from "@/types/contribution/contribution";
+import { toLetterValues } from "@/utils/contribution/toLetterValues";
+import { toMessageContributionRequest } from "@/utils/contribution/toMessageContributionRequest";
 import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
 import LetterWriteSheet, { type LetterWriteValues } from "@/widgets/letter-paper/LetterWriteSheet";
 
@@ -10,41 +18,89 @@ import LetterWriteSheet, { type LetterWriteValues } from "@/widgets/letter-paper
 type BotemEditFlowProps = {
   open: boolean;
   recipientName: string;
+  shareKey: string;
+  // 수정할 내 보탬. 회원은 내 보탬 조회, 비회원은 본인 확인(guest/access) 응답이다. 없으면 편지 시트를 열 수 없다
+  contribution?: MyContributionResponse | GuestContributionResponse;
+  // 이미 이름·비밀번호를 입력했거나 로그인한 회원이면 확인 시트 없이 바로 편지 수정으로 간다
+  skipIdentity?: boolean;
+  isLoggedIn?: boolean;
+  memberName?: string;
   onClose: () => void;
 };
 
-// TODO(API): 보탬 수정 조회 API가 나오면 이름·비밀번호로 찾은 내 편지로 교체한다
-const MOCK_MY_LETTER = {
-  text: "지유야 생일 축하해!\n올해도 같이 많이 웃자",
-  name: "민지",
-  color: "lime",
-  paperStyle: "vividSolid",
-} satisfies LetterWriteValues;
-
-export default function BotemEditFlow({ open, recipientName, onClose }: BotemEditFlowProps) {
+export default function BotemEditFlow({
+  open,
+  recipientName,
+  shareKey,
+  contribution,
+  skipIdentity = false,
+  isLoggedIn = false,
+  memberName,
+  onClose,
+}: BotemEditFlowProps) {
   const [isLetterOpen, setIsLetterOpen] = useState(false);
   const [isSavedOpen, setIsSavedOpen] = useState(false);
   // 저장한 값을 다음 수정 세션의 기준으로 삼고, 확인 때 key를 올려 시트를 그 값으로 다시 마운트한다
-  const [letter, setLetter] = useState<LetterWriteValues>(MOCK_MY_LETTER);
+  // 다른 보탬으로 바뀌면 이전 보탬의 편지를 쓰지 않도록 contributionId와 함께 기억한다
+  const [saved, setSaved] = useState<{ contributionId: number; values: LetterWriteValues } | null>(
+    null,
+  );
   const [letterKey, setLetterKey] = useState(0);
+  const updateMy = useUpdateMyContributionMutation(shareKey);
+  const updateGuest = useUpdateGuestContributionMutation(shareKey);
+  const savedLetter = saved?.contributionId === contribution?.contributionId ? saved?.values : null;
+  const initialLetter = savedLetter ?? (contribution && toLetterValues(contribution));
+
+  const save = (values: LetterWriteValues) => {
+    if (!contribution) return;
+    const onSuccess = () => {
+      setSaved({ contributionId: contribution.contributionId, values });
+      setIsSavedOpen(true);
+    };
+    if ("accessToken" in contribution) {
+      updateGuest.mutate({ letter: values, access: contribution }, { onSuccess });
+      return;
+    }
+    // 회원 수정 API는 이름·메시지·편지지만 받는다. 스티커·사진·음성은 보내지 않는다
+    const { message, paperTemplateCode } = toMessageContributionRequest(values, { requestKey: "" });
+    updateMy.mutate(
+      {
+        contributionId: contribution.contributionId,
+        body: {
+          participantName: contribution.participantName,
+          message: message ?? "",
+          paperTemplateCode,
+        },
+      },
+      { onSuccess },
+    );
+  };
 
   return (
     <>
-      {/* TODO(API): 이름·비밀번호 확인(onSubmit) 뒤 동작은 보탬 수정 API가 정해지면 연결한다. 일치하는 보탬이 없으면(없는 이름·비밀번호) Toast나 Dialog로 안내하고 시트는 닫지 않아 재입력할 수 있게 한다 */}
-      <BotemEditSheet open={open} onClose={onClose} onSubmit={() => setIsLetterOpen(true)} />
-      {/* TODO(API): 저장(onSave)은 보탬 수정 API가 정해지면 연결하고, 성공했을 때만 완료 안내를 띄운다 */}
-      <LetterWriteSheet
-        key={letterKey}
-        open={isLetterOpen}
-        recipientName={recipientName}
-        isLoggedIn={false}
-        initialValues={letter}
-        onClose={() => setIsLetterOpen(false)}
-        onSave={values => {
-          setLetter(values);
-          setIsSavedOpen(true);
-        }}
+      {/* TODO(API): 확인 시트(owner·surprise 팝업에서 진입)의 onSubmit은 아직 연결 전이다. 회원·비회원 내 보탬 시트 경로는 skipIdentity로 이 시트를 건너뛴다 */}
+      <BotemEditSheet
+        open={open && !skipIdentity}
+        onClose={onClose}
+        onSubmit={() => setIsLetterOpen(true)}
       />
+      {initialLetter && (
+        <LetterWriteSheet
+          key={`${letterKey}-${contribution?.contributionId}`}
+          open={isLetterOpen || (skipIdentity && open)}
+          recipientName={recipientName}
+          isLoggedIn={isLoggedIn}
+          memberName={memberName}
+          initialValues={initialLetter}
+          isSavePending={updateMy.isPending || updateGuest.isPending}
+          onClose={() => {
+            setIsLetterOpen(false);
+            // 확인 시트를 건너뛰면 열림 상태가 부모에 있어 부모도 닫아야 시트가 닫힌다
+            if (skipIdentity) onClose();
+          }}
+          onSave={save}
+        />
+      )}
       {/* 확인을 누르면 수정 시트를 모두 닫아 처음 진입했던 화면으로 돌아간다 */}
       <Dialog
         kind="alert"

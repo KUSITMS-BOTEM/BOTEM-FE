@@ -26,6 +26,8 @@ type FundingTransferGuideSheetProps = {
   account: FundingTransferAccount;
   onClose: () => void;
   onComplete: () => void | Promise<unknown>;
+  // 송금 확인 요청 중이면 완료하기에 로딩을 보여준다
+  isPending?: boolean;
   className?: string;
 };
 
@@ -36,6 +38,7 @@ export default function FundingTransferGuideSheet({
   account,
   onClose,
   onComplete,
+  isPending = false,
   className,
 }: FundingTransferGuideSheetProps) {
   const [transferred, setTransferred] = useState(false);
@@ -156,7 +159,12 @@ export default function FundingTransferGuideSheet({
             onChange={event => setTransferred(event.target.checked)}
           />
         }>
-        <Button color="brand" size="xlarge" disabled={!transferred} onClick={handleComplete}>
+        <Button
+          color="brand"
+          size="xlarge"
+          disabled={!transferred}
+          states={isPending ? "loading" : "default"}
+          onClick={handleComplete}>
           완료하기
         </Button>
       </BottomCTA>

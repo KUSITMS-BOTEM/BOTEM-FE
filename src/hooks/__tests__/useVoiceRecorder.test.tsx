@@ -86,6 +86,19 @@ describe("useVoiceRecorder", () => {
     expect(trackStop).toHaveBeenCalled();
   });
 
+  it("Blob 타입에서 codecs 파라미터를 떼고 녹음 길이를 올림한 초로 기록한다", async () => {
+    const { result } = await startRecording();
+    MockRecorder.instance!.mimeType = "audio/webm;codecs=opus";
+
+    act(() => {
+      vi.advanceTimersByTime(2500);
+    });
+    act(() => result.current.stop());
+
+    expect(result.current.blob?.type).toBe("audio/webm");
+    expect(result.current.durationSeconds).toBe(3);
+  });
+
   it("인식된 문장은 확정 자막과 진행 중 자막으로 나뉜다", async () => {
     const { result } = await startRecording();
 

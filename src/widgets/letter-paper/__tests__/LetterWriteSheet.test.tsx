@@ -507,7 +507,9 @@ describe("LetterWriteSheet", () => {
 
       await userEvent.click(screen.getByRole("button", { name: "다음" }));
       expect(onNext).toHaveBeenCalledWith(
-        expect.objectContaining({ voice: { blob: expect.any(Blob), transcript: "" } }),
+        expect.objectContaining({
+          voice: { blob: expect.any(Blob), transcript: "", durationSeconds: expect.any(Number) },
+        }),
       );
     });
 

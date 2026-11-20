@@ -22,6 +22,32 @@ export const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
 
   // --- 펀딩 ---
   FUNDING_019: { message: "진행 중인 펀딩은 최대 5개까지 열 수 있어요.", action: "dialog" },
+  // 이름 없음과 비밀번호 불일치를 서버가 같은 코드로 합쳐 줘서 이름의 존재 여부가 드러나지 않는다
+  FUNDING_025: {
+    message: "일치하는 보탬이 없어요. 이름과 비밀번호를 확인해주세요.",
+    action: "inline",
+  },
+  FUNDING_029: {
+    message: "비밀번호를 여러 번 틀렸어요. 10분 후 다시 시도해 주세요.",
+    action: "inline",
+  },
+  FUNDING_020: { message: "이미 마감된 펀딩이에요.", action: "dialog" },
+  FUNDING_022: { message: "남은 목표 금액보다 큰 금액은 보탤 수 없어요.", action: "dialog" },
+  FUNDING_027: {
+    message: "요청이 겹쳤어요. 처음부터 다시 시도해주세요.",
+    action: "dialog",
+  },
+  FUNDING_032: {
+    message: "이미 같은 이름으로 보탠 친구가 있어요. 다른 이름을 써주세요.",
+    action: "dialog",
+  },
+  FUNDING_023: { message: "보탬을 찾을 수 없어요.", action: "dialog" },
+  FUNDING_024: { message: "내 보탬만 수정할 수 있어요.", action: "dialog" },
+  FUNDING_033: { message: "본인 확인이 필요해요. 다시 시도해주세요.", action: "dialog" },
+  FUNDING_034: { message: "본인 확인이 만료됐어요. 다시 시도해주세요.", action: "dialog" },
+  FUNDING_036: { message: "이미 사용 중인 이름이에요.", action: "dialog" },
+  FUNDING_048: { message: "지금은 보탬을 수정할 수 없어요.", action: "dialog" },
+  FUNDING_057: { message: "이미 이 펀딩에 보탰어요.", action: "dialog" },
   FUNDING_044: { message: "자기 자신에게는 서프라이즈 펀딩을 열 수 없어요.", action: "dialog" },
   FUNDING_045: {
     message: "이미 이 친구를 위한 서프라이즈 펀딩이 진행 중이에요.",

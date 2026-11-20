@@ -3,6 +3,7 @@ import { delay, http, HttpResponse } from "msw";
 
 import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
 import { getMockContributionProgress } from "@/mocks/mockContributions";
+import { toMockShareKey } from "@/mocks/mockShareKey";
 import { getMockGiftVerificationTargets } from "@/mocks/mockGiftVerifications";
 
 type MockHomeScenario =
@@ -193,6 +194,7 @@ export const createHomeHandlers = (scenario: MockHomeScenario) => [
       const confirmedPercentage = card.confirmedPercentage + progress.confirmedAddedPercentage;
       return {
         ...card,
+        shareKey: toMockShareKey(card.fundingId),
         confirmedPercentage,
         pendingPercentage: progress.pendingPercentage,
         pendingContributionCount: progress.pendingContributionCount,

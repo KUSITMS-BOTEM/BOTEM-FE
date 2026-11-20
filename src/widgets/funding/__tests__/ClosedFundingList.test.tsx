@@ -5,6 +5,7 @@ import ClosedFundingList from "@/widgets/funding/ClosedFundingList";
 
 const base: ClosedFundingResponse = {
   fundingId: 1,
+  shareKey: "share-key-1",
   type: "BIRTHDAY",
   productName: "에어팟 프로 2",
   productImageUrl: "",

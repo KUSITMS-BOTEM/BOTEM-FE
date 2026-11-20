@@ -16,7 +16,7 @@ const BASE = {
   productImageUrl: "/a.png",
   productName: "에어팟",
   deadline: "2026-11-23",
-  currentAmount: 500,
+  percent: 50,
   targetAmount: 1000,
 };
 
@@ -33,22 +33,14 @@ describe("FundingProgressCard", () => {
     vi.useRealTimers();
   });
 
-  it("모인 금액이 0이면 첫 보탬 문구와 0%를 보여준다", () => {
-    render(<FundingProgressCard {...BASE} currentAmount={0} />);
+  it("달성률이 0이면 첫 보탬 문구와 0%를 보여준다", () => {
+    render(<FundingProgressCard {...BASE} percent={0} />);
 
     expect(screen.getByText("첫 보탬을 기다려요.")).toBeInTheDocument();
     expect(screen.getByText("0%")).toBeInTheDocument();
   });
 
-  it("progress를 넘기면 금액 대신 그 달성률을 보여준다", () => {
-    render(
-      <FundingProgressCard {...BASE} currentAmount={29000} targetAmount={50000} progress={58} />,
-    );
-
-    expect(screen.getByText("58%")).toBeInTheDocument();
-  });
-
-  it("모인 금액이 있으면 퍼센트와 구간 문구를 보여준다", () => {
+  it("달성률이 있으면 퍼센트와 구간 문구를 보여준다", () => {
     render(<FundingProgressCard {...BASE} />);
 
     expect(screen.getByText("50%")).toBeInTheDocument();
@@ -66,13 +58,13 @@ describe("FundingProgressCard", () => {
     const { rerender } = render(<FundingProgressCard {...BASE} />);
     expect(getCard()).toHaveAttribute("data-color", color);
 
-    rerender(<FundingProgressCard {...BASE} currentAmount={600} />);
+    rerender(<FundingProgressCard {...BASE} percent={60} />);
 
     expect(getCard()).toHaveAttribute("data-color", color);
   });
 
-  it("모인 금액이 0이면 disabled(회색) 색을 쓴다", () => {
-    render(<FundingProgressCard {...BASE} currentAmount={0} />);
+  it("달성률이 0이면 disabled(회색) 색을 쓴다", () => {
+    render(<FundingProgressCard {...BASE} percent={0} />);
 
     expect(getCard()).toHaveAttribute("data-color", "disabled");
   });
@@ -93,7 +85,7 @@ describe("FundingProgressCard", () => {
     });
 
     it("기간이 남았어도 목표를 채우면 마감 뱃지를 보여주고 D-day는 유지한다", () => {
-      render(<FundingProgressCard {...BASE} currentAmount={1000} />);
+      render(<FundingProgressCard {...BASE} percent={100} />);
 
       expect(screen.getByText("마감")).toBeInTheDocument();
       expect(screen.getByText(/D-7$/)).toBeInTheDocument();
