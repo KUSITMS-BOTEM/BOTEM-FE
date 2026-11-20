@@ -1,7 +1,12 @@
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { createElement, type ReactNode } from "react";
 
-import type { DepositItem } from "@/utils/funding/depositConfirm";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+
+import type { PendingContributionResponse } from "@/types/contribution/contribution";
 import { openTossApp } from "@/utils/funding/openTossApp";
 import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
 
@@ -37,35 +42,132 @@ beforeAll(() => {
   });
 });
 
-const deposits: DepositItem[] = [
-  { id: 1, senderName: "하린이", amount: 45000, depositedAt: "2026-11-18T11:20:00" },
-  { id: 2, senderName: "도윤이", amount: 30000, depositedAt: "2026-11-16T09:05:00" },
-  { id: 3, senderName: "서준이", amount: 10000, depositedAt: "2026-11-16T08:00:00" },
+const FUNDING_ID = 12;
+const BASE = `*/api/fundings/${FUNDING_ID}/contributions`;
+
+const INITIAL: PendingContributionResponse[] = [
+  {
+    contributionId: 1,
+    participantName: "하린이",
+    profileImageUrl: null,
+    participatedAt: "2026-11-18T11:20:00",
+  },
+  {
+    contributionId: 2,
+    participantName: "도윤이",
+    profileImageUrl: null,
+    participatedAt: "2026-11-16T09:05:00",
+  },
+  {
+    contributionId: 3,
+    participantName: "서준이",
+    profileImageUrl: null,
+    participatedAt: "2026-11-16T08:00:00",
+  },
 ];
 
-const renderSheet = (props: Partial<Parameters<typeof DepositConfirmSheet>[0]> = {}) =>
-  render(<DepositConfirmSheet open deposits={deposits} onClose={vi.fn()} {...props} />);
+let pending: PendingContributionResponse[] = [];
+const requests: string[] = [];
 
-const checkbox = (name: string) => screen.getByRole("checkbox", { name: new RegExp(name) });
+const progress = {
+  confirmedPercentage: 50,
+  pendingPercentage: 0,
+  pendingContributionCount: 0,
+  targetReached: false,
+};
+
+const decide =
+  (status: "CONFIRMED" | "REJECTED") =>
+  ({ params }: { params: Record<string, string | readonly string[] | undefined> }) => {
+    const contributionId = Number(params.contributionId);
+    requests.push(`${status}:${contributionId}`);
+    pending = pending.filter(item => item.contributionId !== contributionId);
+    return HttpResponse.json({
+      success: true,
+      data: { contributionId, status, progress },
+      error: null,
+    });
+  };
+
+const server = setupServer(
+  http.get(`${BASE}/pending`, () =>
+    HttpResponse.json({
+      success: true,
+      data: { pendingContributionCount: pending.length, contributions: pending },
+      error: null,
+    }),
+  ),
+  http.post(`${BASE}/:contributionId/confirm`, decide("CONFIRMED")),
+  http.post(`${BASE}/:contributionId/reject`, decide("REJECTED")),
+  http.post(`${BASE}/confirm-all`, () => {
+    requests.push("CONFIRM_ALL");
+    const confirmedCount = pending.length;
+    pending = [];
+    return HttpResponse.json({ success: true, data: { confirmedCount, progress }, error: null });
+  }),
+);
+
+beforeAll(() => server.listen());
+afterAll(() => server.close());
 
 beforeEach(() => {
   vi.clearAllMocks();
+  pending = [...INITIAL];
+  requests.length = 0;
 });
 
+afterEach(() => server.resetHandlers());
+
+type SheetProps = Parameters<typeof DepositConfirmSheet>[0];
+
+const renderSheet = (
+  props: Partial<Pick<SheetProps, "onClose">> &
+    ({ variant?: "default" } | { variant: "preReveal"; onReveal: () => void }) = {},
+) => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  return render(<DepositConfirmSheet open fundingId={FUNDING_ID} onClose={vi.fn()} {...props} />, {
+    wrapper,
+  });
+};
+
+const checkbox = (name: string) => screen.getByRole("checkbox", { name: new RegExp(name) });
+const waitForList = () => screen.findByRole("heading", { name: "입금 확인 3건" });
+
 describe("DepositConfirmSheet 목록", () => {
-  it("날짜별로 묶어 보내는 사람·시간·금액을 보여주고 건수는 목록 개수다", () => {
+  it("불러오는 동안 스켈레톤을 보여준다", () => {
+    const { baseElement } = renderSheet();
+
+    expect(baseElement.querySelector("[aria-busy='true']")).not.toBeNull();
+  });
+
+  it("날짜별로 묶어 보내는 사람·시간을 보여주고 건수는 목록 개수다", async () => {
     renderSheet();
 
-    expect(screen.getByRole("dialog", { name: "입금 확인" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "입금 확인 3건" })).toBeInTheDocument();
+    await waitForList();
     expect(screen.getByRole("heading", { name: "11월 18일" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "11월 16일" })).toBeInTheDocument();
     expect(checkbox("도윤이의 보탬")).toHaveAccessibleName(/09:05/);
-    expect(checkbox("도윤이의 보탬")).toHaveAccessibleName(/30,000원/);
+  });
+
+  it("목록을 불러오지 못하면 안내와 다시 시도를 보여주고, 다시 시도하면 목록이 나온다", async () => {
+    server.use(
+      http.get(`${BASE}/pending`, () => HttpResponse.json({}, { status: 500 }), { once: true }),
+    );
+    renderSheet();
+
+    expect(await screen.findByText("입금 내역을 불러오지 못했어요")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+
+    await waitForList();
   });
 
   it("선택하기 전에는 받았어요·못받았어요가 비활성이고, 하나 선택하면 활성화된다", async () => {
     renderSheet();
+    await waitForList();
     expect(screen.getByRole("button", { name: "받았어요" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "못받았어요" })).toBeDisabled();
 
@@ -74,75 +176,146 @@ describe("DepositConfirmSheet 목록", () => {
     expect(screen.getByRole("button", { name: "받았어요" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "못받았어요" })).toBeEnabled();
   });
+});
 
-  it("전체 선택을 누르면 모든 행이 선택되고, 다시 누르면 모두 해제된다", async () => {
-    renderSheet();
+describe("DepositConfirmSheet 공개 전 입금 확인", () => {
+  const renderPreReveal = (onReveal = vi.fn()) => {
+    renderSheet({ variant: "preReveal", onReveal });
+    return onReveal;
+  };
+
+  it("공개 전 제목과 남은 건수 안내·미확인 보탬 건수를 보여주고, 남은 건이 있으면 공개 버튼은 없다", async () => {
+    renderPreReveal();
+
+    expect(await screen.findByRole("heading", { name: "미확인 보탬 3건" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "공개 전에 확인해주세요" })).toBeInTheDocument();
+    expect(screen.getByText("확인이 필요한 보탬이 3건 있어요.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "팡! 열어보기" })).not.toBeInTheDocument();
+  });
+
+  it("모두 확인하면 남은 건수 안내를 숨기고, 팡! 열어보기를 누르면 onReveal을 호출한다", async () => {
+    const onReveal = renderPreReveal();
+    await screen.findByRole("heading", { name: "미확인 보탬 3건" });
 
     await userEvent.click(screen.getByRole("checkbox", { name: "전체 선택" }));
-    deposits.forEach(({ senderName }) => expect(checkbox(`${senderName}의 보탬`)).toBeChecked());
+    await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
 
-    await userEvent.click(screen.getByRole("checkbox", { name: "전체 선택" }));
-    deposits.forEach(({ senderName }) =>
-      expect(checkbox(`${senderName}의 보탬`)).not.toBeChecked(),
-    );
+    expect(await screen.findByRole("heading", { name: "미확인 보탬 0건" })).toBeInTheDocument();
+    expect(screen.getByText("모든 내역을 확인했어요")).toBeInTheDocument();
+    expect(screen.queryByText(/확인이 필요한 보탬이/)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "팡! 열어보기" }));
+    expect(onReveal).toHaveBeenCalledTimes(1);
   });
 });
 
 describe("DepositConfirmSheet 처리와 토스트", () => {
-  it("개별 선택 후 받았어요를 누르면 목록에서 빠지고 'n건의 입금을 모두 확인했어요'를 보여준다", async () => {
+  it("개별 선택 후 받았어요를 누르면 confirm을 요청하고 재조회한 목록과 안내 토스트를 보여준다", async () => {
     renderSheet();
+    await waitForList();
 
     await userEvent.click(checkbox("하린이의 보탬"));
     await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
 
-    expect(screen.getByText(/1건의 입금을 모두 확인했어요/)).toBeInTheDocument();
-    expect(screen.queryByRole("checkbox", { name: /하린이의 보탬/ })).not.toBeInTheDocument();
+    expect(await screen.findByText(/1건의 입금을 모두 확인했어요/)).toBeInTheDocument();
+    expect(requests).toEqual(["CONFIRMED:1"]);
     expect(screen.getByRole("heading", { name: "입금 확인 2건" })).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: /하린이의 보탬/ })).not.toBeInTheDocument();
   });
 
-  it("개별 선택 후 못받았어요를 누르면 'n건의 입금을 못받음 처리했어요'를 보여준다", async () => {
+  it("개별 선택 후 못받았어요를 누르면 선택한 건마다 reject를 요청한다", async () => {
     renderSheet();
+    await waitForList();
 
     await userEvent.click(checkbox("하린이의 보탬"));
     await userEvent.click(checkbox("도윤이의 보탬"));
     await userEvent.click(screen.getByRole("button", { name: "못받았어요" }));
 
-    expect(screen.getByText(/2건의 입금을 못받음 처리했어요/)).toBeInTheDocument();
+    expect(await screen.findByText(/2건의 입금을 못받음 처리했어요/)).toBeInTheDocument();
+    expect(requests.sort()).toEqual(["REJECTED:1", "REJECTED:2"]);
   });
 
-  it("모두 선택하고 받았어요를 누르면 '모든 건의 입금을 확인했어요'와 빈 상태를 보여준다", async () => {
+  it("모두 선택하고 받았어요를 누르면 confirm-all을 한 번 요청하고 빈 상태를 보여준다", async () => {
     renderSheet();
+    await waitForList();
 
     await userEvent.click(screen.getByRole("checkbox", { name: "전체 선택" }));
     await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
 
-    expect(screen.getByText(/모든 건의 입금을 확인했어요/)).toBeInTheDocument();
+    expect(await screen.findByText(/모든 건의 입금을 확인했어요/)).toBeInTheDocument();
+    expect(requests).toEqual(["CONFIRM_ALL"]);
     expect(screen.getByRole("heading", { name: "입금 확인 0건" })).toBeInTheDocument();
     expect(screen.getByText("모든 내역을 확인했어요")).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: "전체 선택" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "팡! 열어보기" })).not.toBeInTheDocument();
   });
 
-  it("모두 선택하고 못받았어요를 누르면 '모든 건의 입금을 못받음 처리했어요'를 보여준다", async () => {
+  it("처리 토스트의 실행 취소를 누르면 토스트만 닫히고 추가 요청은 나가지 않는다", async () => {
     renderSheet();
+    await waitForList();
 
-    await userEvent.click(screen.getByRole("checkbox", { name: "전체 선택" }));
+    await userEvent.click(checkbox("하린이의 보탬"));
+    await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
+    await userEvent.click(await screen.findByRole("button", { name: "실행 취소" }));
+
+    await waitFor(() =>
+      expect(screen.queryByText(/1건의 입금을 모두 확인했어요/)).not.toBeInTheDocument(),
+    );
+    expect(requests).toEqual(["CONFIRMED:1"]);
+  });
+
+  it("요청 중에는 버튼이 잠겨 연달아 눌러도 요청이 한 번만 나간다", async () => {
+    renderSheet();
+    await waitForList();
+
+    await userEvent.click(checkbox("하린이의 보탬"));
+    const received = screen.getByRole("button", { name: "받았어요" });
+    await userEvent.click(received);
     await userEvent.click(screen.getByRole("button", { name: "못받았어요" }));
 
-    expect(screen.getByText(/모든 건의 입금을 못받음 처리했어요/)).toBeInTheDocument();
+    await screen.findByText(/1건의 입금을 모두 확인했어요/);
+    expect(requests).toEqual(["CONFIRMED:1"]);
   });
 
-  it("실행 취소를 누르면 처리한 행이 목록으로 돌아오고 선택은 해제된 상태다", async () => {
-    renderSheet();
-
-    await userEvent.click(screen.getByRole("checkbox", { name: "전체 선택" }));
-    await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
-    await userEvent.click(screen.getByRole("button", { name: "실행 취소" }));
-
-    expect(screen.getByRole("heading", { name: "입금 확인 3건" })).toBeInTheDocument();
-    deposits.forEach(({ senderName }) =>
-      expect(checkbox(`${senderName}의 보탬`)).not.toBeChecked(),
+  it("처리 요청이 실패하면 토스트 없이 선택을 유지해 다시 누를 수 있다", async () => {
+    server.use(
+      http.post(`${BASE}/:contributionId/confirm`, () => HttpResponse.json({}, { status: 500 })),
     );
+    renderSheet();
+    await waitForList();
+
+    await userEvent.click(checkbox("하린이의 보탬"));
+    await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "받았어요" })).toBeEnabled());
+    expect(checkbox("하린이의 보탬")).toBeChecked();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("일부만 실패하면 성공한 건만 선택에서 빼고, 다시 받았어요를 눌러도 선택하지 않은 건은 처리하지 않는다", async () => {
+    server.use(
+      http.post(`${BASE}/:contributionId/reject`, args =>
+        args.params.contributionId === "2"
+          ? HttpResponse.json({}, { status: 500 })
+          : decide("REJECTED")(args),
+      ),
+    );
+    renderSheet();
+    await waitForList();
+
+    await userEvent.click(checkbox("하린이의 보탬"));
+    await userEvent.click(checkbox("도윤이의 보탬"));
+    await userEvent.click(screen.getByRole("button", { name: "못받았어요" }));
+
+    expect(await screen.findByText(/1건의 입금을 못받음 처리했어요/)).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "입금 확인 2건" });
+    expect(checkbox("도윤이의 보탬")).toBeChecked();
+    expect(checkbox("서준이의 보탬")).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "전체 선택" })).not.toBeChecked();
+
+    await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
+
+    await screen.findByRole("heading", { name: "입금 확인 1건" });
+    expect(requests).toEqual(["REJECTED:1", "CONFIRMED:2"]);
   });
 });
 

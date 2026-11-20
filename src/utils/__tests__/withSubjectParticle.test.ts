@@ -1,4 +1,5 @@
 import {
+  withDirectionalParticle,
   withObjectParticle,
   withSubjectParticle,
   withVocativeParticle,
@@ -46,6 +47,19 @@ describe("withObjectParticle", () => {
     "받침이 없거나 영문으로 끝나는 단어 %s 뒤에는 '를'을 붙인다",
     name => {
       expect(withObjectParticle(name)).toBe(`${name}를`);
+    },
+  );
+});
+
+describe("withDirectionalParticle", () => {
+  it.each(["에어팟", "책상"])("ㄹ이 아닌 받침이 있는 단어 %s 뒤에는 '으로'를 붙인다", name => {
+    expect(withDirectionalParticle(name)).toBe(`${name}으로`);
+  });
+
+  it.each(["연필", "운동화", "iPad"])(
+    "받침이 없거나 ㄹ 받침·영문으로 끝나는 단어 %s 뒤에는 '로'를 붙인다",
+    name => {
+      expect(withDirectionalParticle(name)).toBe(`${name}로`);
     },
   );
 });

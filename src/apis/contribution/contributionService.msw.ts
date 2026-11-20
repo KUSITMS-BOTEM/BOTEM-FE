@@ -1,26 +1,52 @@
 import { delay, http, HttpResponse } from "msw";
 
-import type { UpdateContributionStatusRequest } from "@/types/contribution/contribution";
 import {
+  getMockContributionProgress,
+  getMockContributionStatus,
+  getMockPendingContributionIds,
   getMockPendingContributions,
   updateMockContributionStatuses,
 } from "@/mocks/mockContributions";
+
+const errorResponse = (status: number, code: string, message: string) =>
+  HttpResponse.json({ success: false, data: null, error: { code, message } }, { status });
+
+// mock은 펀딩의 기존 확정 달성률을 모르므로 이번 목업 보탬으로 확정된 몫만 confirmedPercentage에 담는다
+const toProgress = (fundingId: number) => {
+  const progress = getMockContributionProgress(fundingId);
+  return {
+    confirmedPercentage: progress.confirmedAddedPercentage,
+    pendingPercentage: progress.pendingPercentage,
+    pendingContributionCount: progress.pendingContributionCount,
+    targetReached: false,
+  };
+};
+
+const decideContribution =
+  (status: "CONFIRMED" | "REJECTED") =>
+  async ({ params }: { params: Record<string, string | readonly string[] | undefined> }) => {
+    await delay(300);
+    const fundingId = Number(params.fundingId);
+    const contributionId = Number(params.contributionId);
+    const current = getMockContributionStatus(fundingId, contributionId);
+    if (current === null) return errorResponse(404, "FUNDING_023", "참여 내역을 찾을 수 없습니다.");
+    if (current !== "PENDING_CONFIRMATION" && current !== status)
+      return errorResponse(409, "FUNDING_030", "입금 확인 대기 중인 참여만 처리할 수 있습니다.");
+    updateMockContributionStatuses(fundingId, [contributionId], status);
+    return HttpResponse.json({
+      success: true,
+      data: { contributionId, status, progress: toProgress(fundingId) },
+      error: null,
+    });
+  };
 
 export const contributionHandlers = [
   http.get("*/api/fundings/:fundingId/contributions/pending", async ({ params }) => {
     await delay(800);
     const contributions = getMockPendingContributions(Number(params.fundingId));
-    // 홈 시트가 읽는 구 스펙 필드에 신 스펙(participantName 등)을 얹어, 두 화면이 같은 응답을 쓴다
-    const withItemFields = contributions.map(contribution => ({
-      ...contribution,
-      participantName: contribution.senderName,
-      profileImageUrl: null,
-      participatedAt: "2026-11-18T11:20:00",
-      amount: 30000,
-    }));
     return HttpResponse.json({
       success: true,
-      data: { pendingContributionCount: withItemFields.length, contributions: withItemFields },
+      data: { pendingContributionCount: contributions.length, contributions },
       error: null,
     });
   }),
@@ -88,19 +114,23 @@ export const contributionHandlers = [
       error: null,
     });
   }),
-  http.patch("*/api/fundings/:fundingId/contributions/status", async ({ params, request }) => {
+  http.post(
+    "*/api/fundings/:fundingId/contributions/:contributionId/confirm",
+    decideContribution("CONFIRMED"),
+  ),
+  http.post(
+    "*/api/fundings/:fundingId/contributions/:contributionId/reject",
+    decideContribution("REJECTED"),
+  ),
+  http.post("*/api/fundings/:fundingId/contributions/confirm-all", async ({ params }) => {
     await delay(300);
-    const { contributionIds, status } = (await request.json()) as UpdateContributionStatusRequest;
-    if (!updateMockContributionStatuses(Number(params.fundingId), contributionIds, status)) {
-      return HttpResponse.json(
-        {
-          success: false,
-          data: null,
-          error: { code: "CONTRIBUTION_NOT_FOUND", message: "해당 펀딩의 보탬이 아닙니다." },
-        },
-        { status: 404 },
-      );
-    }
-    return HttpResponse.json({ success: true, data: null, error: null });
+    const fundingId = Number(params.fundingId);
+    const pendingIds = getMockPendingContributionIds(fundingId);
+    updateMockContributionStatuses(fundingId, pendingIds, "CONFIRMED");
+    return HttpResponse.json({
+      success: true,
+      data: { confirmedCount: pendingIds.length, progress: toProgress(fundingId) },
+      error: null,
+    });
   }),
 ];

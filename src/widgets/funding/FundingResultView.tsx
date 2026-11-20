@@ -97,7 +97,7 @@ export default function FundingResultView({
           <Button color="neutral" variant="weak" size="xlarge" onClick={onChangeGift}>
             다른 선물 고르기
           </Button>
-          <Button color="neutral" size="xlarge" onClick={onChangeGift}>
+          <Button color="neutral" size="xlarge" onClick={onBuy}>
             차액으로 구매
           </Button>
         </BottomCTA>

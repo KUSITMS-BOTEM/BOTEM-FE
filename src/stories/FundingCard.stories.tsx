@@ -53,6 +53,11 @@ export const Open: Story = {
   args: { type: "open", progress: 100, dDay: null },
 };
 
+// 마감 전이라 남은 일수가 그대로 보인다
+export const EarlyComplete: Story = {
+  args: { type: "earlyComplete", progress: 100, dDay: 5 },
+};
+
 export const WithoutParticipantsAndBadge: Story = {
   args: { participants: [], pendingCount: 0, isSurprise: false },
 };

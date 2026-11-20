@@ -17,7 +17,6 @@ export default function FundingShareContainer({
   return (
     <FundingDetailLoader
       fundingId={fundingId}
-      variant="guest"
       memberIntent={memberIntent}
       isLoggedIn={isLoggedIn}
     />

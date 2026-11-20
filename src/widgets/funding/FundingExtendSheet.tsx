@@ -6,15 +6,14 @@ import BottomSheet from "@/components/BottomSheet";
 import FieldMessage from "@/components/FieldMessage";
 import SelectBox from "@/components/SelectBox";
 import Title from "@/components/Title";
-import { addDays } from "@/utils/funding/addDays";
-import { formatDeadlineShort } from "@/utils/funding/formatDeadline";
-
-const MAX_EXTEND_DAYS = 14;
+import { formatDeadlineShort, getTodayDate } from "@/utils/funding/formatDeadline";
+import { getExtendDeadlineRange, MAX_EXTEND_DAYS } from "@/utils/funding/getExtendDeadlineRange";
 
 type FundingExtendSheetProps = {
   open: boolean;
   collectedAmount: number;
   currentDeadline: string;
+  pending?: boolean;
   onExtend: (newDeadline: string) => void;
   onClose: () => void;
 };
@@ -23,10 +22,12 @@ export default function FundingExtendSheet({
   open,
   collectedAmount,
   currentDeadline,
+  pending = false,
   onExtend,
   onClose,
 }: FundingExtendSheetProps) {
   const [newDeadline, setNewDeadline] = useState("");
+  const { minDate, maxDate } = getExtendDeadlineRange(currentDeadline, getTodayDate());
 
   return (
     <BottomSheet
@@ -37,7 +38,8 @@ export default function FundingExtendSheet({
       onClose={onClose}
       buttons={{
         rightLabel: "연장하기",
-        rightDisabled: newDeadline === "",
+        rightDisabled: newDeadline === "" || pending,
+        rightLoading: pending,
         onRightClick: () => onExtend(newDeadline),
         upper: (
           <p className="text-semantic-text-tertiary flex-1 text-center [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-x-small-weak)]">
@@ -57,8 +59,8 @@ export default function FundingExtendSheet({
           placeholder="날짜를 선택해주세요"
           value={newDeadline && formatDeadlineShort(newDeadline)}
           dateValue={newDeadline}
-          minDate={addDays(currentDeadline, 1)}
-          maxDate={addDays(currentDeadline, MAX_EXTEND_DAYS)}
+          minDate={minDate}
+          maxDate={maxDate}
           onDeadlineChange={setNewDeadline}
         />
         <FieldMessage>기존 마감일은 {formatDeadlineShort(currentDeadline)}까지에요</FieldMessage>

@@ -4,24 +4,36 @@ import { useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import Button from "@/components/Button";
+import LoadingAnimation from "@/components/LoadingAnimation";
+import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
+import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
+import { useGiftChangeStore } from "@/store/giftChangeStore";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
+import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import { isValidUrl } from "@/utils/isValidUrl";
-import FundingExtendSheet from "@/widgets/funding/FundingExtendSheet";
+import FundingExtendFlow from "@/widgets/funding/FundingExtendFlow";
 import FundingResultView, { type FundingResult } from "@/widgets/funding/FundingResultView";
-import SampleProduct from "@/assets/images/samples/sample-product.png";
 
-// TODO(API): 펀딩 결과 조회 API가 생기면 교체한다. 미달 화면을 확인하려면 goalAchieved를 false로 바꾼다
-const MOCK_RESULT: FundingResult & { productUrl: string; deadline: string } = {
-  goalAchieved: true,
-  collectedAmount: 123456678,
-  productName: "소니 WH-1000XM5",
-  productImage: SampleProduct,
-  productPrice: 364000,
-  giftChanged: false,
-  canExtend: true,
-  contributors: [{ userId: 1 }, { userId: 2 }, { userId: 3 }, { userId: 4 }, { userId: 5 }],
-  productUrl: "https://www.coupang.com",
-  deadline: "2026-12-31",
-};
+const TARGET_PERCENTAGE = 100;
+
+// 금액·친구 목록은 결과 응답, 상품·연장 가능 여부는 관리 상세 응답을 쓴다 (상품을 바꿨으면 목표 금액과 상품 가격이 다를 수 있다)
+const toFundingResult = (
+  result: FundingResultResponse,
+  management: OwnerFundingDetailResponse,
+): FundingResult => ({
+  goalAchieved: result.achievementPercentage >= TARGET_PERCENTAGE,
+  collectedAmount: result.confirmedAmount,
+  productName: management.product.name,
+  productImage: management.product.imageUrl,
+  productPrice: management.product.price,
+  giftChanged: management.productChanged,
+  canExtend: management.actions.canExtend,
+  contributors: result.contributions.map(contribution => ({
+    userId: contribution.contributionId,
+    profileImageUrl: contribution.profileImageUrl ?? undefined,
+  })),
+});
 
 type FundingResultContainerProps = {
   fundingId: string;
@@ -31,11 +43,42 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
   const router = useRouter();
   const reduceMotion = useReducedMotion() ?? false;
   const [extendOpen, setExtendOpen] = useState(false);
-  const result = MOCK_RESULT;
+  const resultQuery = useFundingResultQuery(Number(fundingId));
+  const managementQuery = useFundingManagementQuery(Number(fundingId));
 
+  if (resultQuery.isLoading || managementQuery.isLoading) {
+    return (
+      <div role="status" className="flex min-h-dvh items-center justify-center">
+        <LoadingAnimation size="large" />
+        <span className="sr-only">펀딩 결과를 불러오는 중이에요</span>
+      </div>
+    );
+  }
+  if (!resultQuery.data || !managementQuery.data) {
+    const handleRetry = () => {
+      if (!resultQuery.data) resultQuery.refetch();
+      if (!managementQuery.data) managementQuery.refetch();
+    };
+    return (
+      <main className="flex min-h-dvh flex-col items-center justify-center gap-4 text-center">
+        <p className="text-semantic-text-secondary [font:var(--semantic-subtext-large)]">
+          펀딩 결과를 불러오지 못했어요
+        </p>
+        <Button onClick={handleRetry}>다시 시도</Button>
+      </main>
+    );
+  }
+
+  const result = toFundingResult(resultQuery.data, managementQuery.data);
+  const { url: productUrl } = managementQuery.data.product;
   const handleBuy = () => {
-    if (!isValidUrl(result.productUrl)) return;
-    window.open(result.productUrl, "_blank", "noopener,noreferrer");
+    if (!isValidUrl(productUrl)) return;
+    window.open(productUrl, "_blank", "noopener,noreferrer");
+  };
+  // 선물 확인을 떠나면 다른 선물 고르기에서 기억해 둔 기존 선물도 더는 필요 없다
+  const handleClose = () => {
+    useGiftChangeStore.getState().clear();
+    router.replace("/home");
   };
 
   return (
@@ -43,17 +86,15 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
       <FundingResultView
         result={result}
         reduceMotion={reduceMotion}
-        onClose={() => router.replace("/home")}
+        onClose={handleClose}
         onBuy={handleBuy}
         onChangeGift={() => router.push(`/funding/${fundingId}/change-gift`)}
         onExtend={() => setExtendOpen(true)}
       />
-      <FundingExtendSheet
+      <FundingExtendFlow
+        fundingId={Number(fundingId)}
         open={extendOpen}
         collectedAmount={result.collectedAmount}
-        currentDeadline={result.deadline}
-        // TODO(API): 마감일 연장 API가 생기면 연결한다
-        onExtend={() => setExtendOpen(false)}
         onClose={() => setExtendOpen(false)}
       />
     </>

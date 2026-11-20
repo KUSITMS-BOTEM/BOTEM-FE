@@ -1,4 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { createElement, type ReactElement, type ReactNode } from "react";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render as rtlRender, screen } from "@testing-library/react";
 
 import FundingShareContainer from "@/widgets/funding/FundingShareContainer";
 
@@ -40,20 +43,20 @@ vi.mock("@/hooks/queries/funding/useFundingDetailQuery", async () => {
   };
 });
 
-// 공유(guest) 화면은 개설자용 쿼리를 쓰지 않는다
-vi.mock("@/hooks/queries/funding/useFundingManagementQuery", () => ({
-  useFundingManagementQuery: () => ({ data: undefined, isError: false }),
-}));
-vi.mock("@/hooks/queries/contribution/usePendingContributionItemsQuery", () => ({
-  usePendingContributionItemsQuery: () => ({ data: undefined, isError: false }),
-}));
-
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element
     <img alt={alt} {...(props as Record<string, string>)} />
   ),
 }));
+
+// 입금 확인 시트·더보기 플로우가 쿼리·뮤테이션 훅을 쓰므로 QueryClient로 감싼다
+const render = (ui: ReactElement) => {
+  const queryClient = new QueryClient();
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  return rtlRender(ui, { wrapper });
+};
 
 describe("FundingShareContainer", () => {
   it("비회원 공유 화면으로 렌더되어 하단에 '내 보탬 확인'·'보태러가기'가 보인다", () => {

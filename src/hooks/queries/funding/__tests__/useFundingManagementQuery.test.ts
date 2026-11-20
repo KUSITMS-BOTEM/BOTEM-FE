@@ -8,15 +8,23 @@ import {
   fundingManagementQueryKey,
   useFundingManagementQuery,
 } from "@/hooks/queries/funding/useFundingManagementQuery";
-import type { FundingManagementResponse } from "@/types/funding/fundingManagement";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 
 vi.mock("@/apis/funding/fundingService", () => ({
-  fundingService: {
-    getFundingManagement: vi.fn(),
-  },
+  fundingService: { getFundingManagement: vi.fn() },
 }));
 
-const mockManagement = { fundingId: 12, messageCount: 8 } as FundingManagementResponse;
+const mockManagement = {
+  fundingId: 12,
+  product: { name: "소니 WH-1000XM5", imageUrl: "", price: 459000, url: "https://x" },
+  deadline: "2026-11-30T23:59:59.999999",
+  actions: {
+    canCloseEarly: false,
+    canExtend: true,
+    canChangeProduct: false,
+    canReissueShareCard: false,
+  },
+} as OwnerFundingDetailResponse;
 
 const createWrapper = () => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -26,15 +34,13 @@ const createWrapper = () => {
   };
 };
 
-beforeEach(() => {
-  vi.clearAllMocks();
-});
+beforeEach(() => vi.clearAllMocks());
 
 describe("useFundingManagementQuery", () => {
-  it("펀딩 id로 서비스를 호출하고 반환 데이터를 돌려준다", async () => {
+  it("서비스를 펀딩 id로 호출하고 반환 데이터를 돌려준다", async () => {
     vi.mocked(fundingService.getFundingManagement).mockResolvedValue(mockManagement);
 
-    const { result } = renderHook(() => useFundingManagementQuery(12, true), {
+    const { result } = renderHook(() => useFundingManagementQuery(12), {
       wrapper: createWrapper(),
     });
 
@@ -44,7 +50,9 @@ describe("useFundingManagementQuery", () => {
   });
 
   it("enabled가 false면 요청하지 않는다", () => {
-    renderHook(() => useFundingManagementQuery(12, false), { wrapper: createWrapper() });
+    renderHook(() => useFundingManagementQuery(12, { enabled: false }), {
+      wrapper: createWrapper(),
+    });
 
     expect(fundingService.getFundingManagement).not.toHaveBeenCalled();
   });
@@ -52,14 +60,17 @@ describe("useFundingManagementQuery", () => {
   it("서비스가 실패하면 isError가 true가 된다", async () => {
     vi.mocked(fundingService.getFundingManagement).mockRejectedValue(new Error("fail"));
 
-    const { result } = renderHook(() => useFundingManagementQuery(12, true), {
+    const { result } = renderHook(() => useFundingManagementQuery(12), {
       wrapper: createWrapper(),
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
   });
+});
 
-  it("쿼리 키는 Swagger 경로 순서를 따른다", () => {
+describe("fundingManagementQueryKey", () => {
+  it("Swagger 경로 순서대로 펀딩 id별 키를 만든다", () => {
     expect(fundingManagementQueryKey(12)).toEqual(["fundings", 12, "management"]);
+    expect(fundingManagementQueryKey(13)).not.toEqual(fundingManagementQueryKey(12));
   });
 });

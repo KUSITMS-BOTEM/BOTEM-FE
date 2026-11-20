@@ -4,13 +4,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 
 import { contributionService } from "@/apis/contribution/contributionService";
-import { useUpdateContributionStatusMutation } from "@/hooks/mutations/contribution/useUpdateContributionStatusMutation";
+import { useConfirmContributionMutation } from "@/hooks/mutations/contribution/useConfirmContributionMutation";
 import { pendingContributionsQueryKey } from "@/hooks/queries/contribution/usePendingContributionsQuery";
+import { fundingManagementQueryKey } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { homeFundingsQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
 
 vi.mock("@/apis/contribution/contributionService", () => ({
   contributionService: {
-    updateContributionStatus: vi.fn(),
+    confirmContribution: vi.fn(),
   },
 }));
 
@@ -22,56 +23,57 @@ const setup = () => {
   return { wrapper, invalidateQueries };
 };
 
-const body = { contributionIds: [1, 2], status: "CONFIRMED" as const };
+const response = {
+  contributionId: 31,
+  status: "CONFIRMED" as const,
+  progress: {
+    confirmedPercentage: 55,
+    pendingPercentage: 15,
+    pendingContributionCount: 1,
+    targetReached: false,
+  },
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("useUpdateContributionStatusMutation", () => {
-  it("mutate 호출 시 펀딩 id와 body로 서비스를 호출한다", async () => {
-    vi.mocked(contributionService.updateContributionStatus).mockResolvedValue(null);
+describe("useConfirmContributionMutation", () => {
+  it("mutate 호출 시 펀딩 id와 참여 id로 confirm 서비스를 호출한다", async () => {
+    vi.mocked(contributionService.confirmContribution).mockResolvedValue(response);
     const { wrapper } = setup();
-    const { result } = renderHook(() => useUpdateContributionStatusMutation(5), { wrapper });
+    const { result } = renderHook(() => useConfirmContributionMutation(), { wrapper });
 
-    result.current.mutate(body);
+    result.current.mutate({ fundingId: 5, contributionId: 31 });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(contributionService.updateContributionStatus).toHaveBeenCalledWith(5, body);
+    expect(contributionService.confirmContribution).toHaveBeenCalledWith(5, 31);
+    expect(result.current.data).toEqual(response);
   });
 
-  it("성공하면 해당 펀딩의 pending 목록 쿼리를 무효화한다", async () => {
-    vi.mocked(contributionService.updateContributionStatus).mockResolvedValue(null);
+  it("성공하면 해당 펀딩의 pending 목록·관리 상세와 홈 펀딩 목록 쿼리를 무효화한다", async () => {
+    vi.mocked(contributionService.confirmContribution).mockResolvedValue(response);
     const { wrapper, invalidateQueries } = setup();
-    const { result } = renderHook(() => useUpdateContributionStatusMutation(5), { wrapper });
+    const { result } = renderHook(() => useConfirmContributionMutation(), { wrapper });
 
-    result.current.mutate(body);
+    result.current.mutate({ fundingId: 5, contributionId: 31 });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: pendingContributionsQueryKey(5) });
-  });
-
-  it("성공하면 홈 펀딩 목록 쿼리도 무효화한다", async () => {
-    vi.mocked(contributionService.updateContributionStatus).mockResolvedValue(null);
-    const { wrapper, invalidateQueries } = setup();
-    const { result } = renderHook(() => useUpdateContributionStatusMutation(5), { wrapper });
-
-    result.current.mutate(body);
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: homeFundingsQueryKey });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: fundingManagementQueryKey(5) });
   });
 
   it("pending 목록 재조회가 끝날 때까지 isPending을 유지한다", async () => {
-    vi.mocked(contributionService.updateContributionStatus).mockResolvedValue(null);
+    vi.mocked(contributionService.confirmContribution).mockResolvedValue(response);
     const { wrapper, invalidateQueries } = setup();
     let finishRefetch!: () => void;
     invalidateQueries.mockImplementation(
       () => new Promise<void>(resolve => (finishRefetch = resolve)),
     );
-    const { result } = renderHook(() => useUpdateContributionStatusMutation(5), { wrapper });
+    const { result } = renderHook(() => useConfirmContributionMutation(), { wrapper });
 
-    result.current.mutate(body);
+    result.current.mutate({ fundingId: 5, contributionId: 31 });
 
     await waitFor(() =>
       expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: pendingContributionsQueryKey(5) }),
@@ -84,12 +86,12 @@ describe("useUpdateContributionStatusMutation", () => {
   });
 
   it("서비스가 실패하면 isError가 true가 되고 쿼리를 무효화하지 않는다", async () => {
-    const error = new Error("상태 변경 실패");
-    vi.mocked(contributionService.updateContributionStatus).mockRejectedValue(error);
+    const error = new Error("입금 확인 처리 실패");
+    vi.mocked(contributionService.confirmContribution).mockRejectedValue(error);
     const { wrapper, invalidateQueries } = setup();
-    const { result } = renderHook(() => useUpdateContributionStatusMutation(5), { wrapper });
+    const { result } = renderHook(() => useConfirmContributionMutation(), { wrapper });
 
-    result.current.mutate(body);
+    result.current.mutate({ fundingId: 5, contributionId: 31 });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBe(error);

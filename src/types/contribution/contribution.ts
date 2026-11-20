@@ -1,21 +1,41 @@
 import type { BankCode } from "@/constants/bank";
 
-// 입금 확인 바텀시트가 쓰는 구 스펙(PATCH /contributions/status) 형태다. 되돌리기·입금수단 스펙이 BE에 나오면 아래 새 스펙으로 옮길 것
-export type ContributionStatus = "PENDING" | "CONFIRMED" | "REJECTED";
-
 export type PendingContributionResponse = {
   contributionId: number;
-  senderName: string;
-  depositMethod: string;
+  participantName: string;
+  profileImageUrl: string | null;
+  participatedAt: string;
 };
 
 export type PendingContributionListResponse = {
+  pendingContributionCount: number;
   contributions: PendingContributionResponse[];
 };
 
-export type UpdateContributionStatusRequest = {
-  contributionIds: number[];
-  status: ContributionStatus;
+export type FundingProgressResponse = {
+  confirmedPercentage: number;
+  pendingPercentage: number;
+  pendingContributionCount: number;
+  targetReached: boolean;
+};
+
+export type ContributionDecisionStatus =
+  | "AWAITING_TRANSFER"
+  | "PENDING_CONFIRMATION"
+  | "CONFIRMED"
+  | "REJECTED"
+  | "CANCELLED"
+  | "MESSAGE_ONLY";
+
+export type ContributionDecisionResponse = {
+  contributionId: number;
+  status: ContributionDecisionStatus;
+  progress: FundingProgressResponse;
+};
+
+export type ConfirmAllContributionsResponse = {
+  confirmedCount: number;
+  progress: FundingProgressResponse;
 };
 
 // ---- 최신 Swagger 스펙 ----
@@ -27,19 +47,6 @@ export type ContributionLifecycleStatus =
   | "REJECTED"
   | "MESSAGE_ONLY"
   | "CANCELLED";
-
-export type PendingContributionItemResponse = {
-  contributionId: number;
-  participantName: string;
-  profileImageUrl: string | null;
-  participatedAt: string;
-  amount: number;
-};
-
-export type PendingContributionItemListResponse = {
-  pendingContributionCount: number;
-  contributions: PendingContributionItemResponse[];
-};
 
 export type ContributionPayoutAccount = {
   bank: BankCode;
@@ -103,24 +110,6 @@ export type MarkTransferSentRequest = {
 export type MarkTransferSentResponse = {
   contributionId: number;
   status: ContributionLifecycleStatus;
-};
-
-export type FundingProgress = {
-  confirmedPercentage: number;
-  pendingPercentage: number;
-  pendingContributionCount: number;
-  targetReached: boolean;
-};
-
-export type ContributionDecisionResponse = {
-  contributionId: number;
-  status: ContributionLifecycleStatus;
-  progress: FundingProgress;
-};
-
-export type ConfirmAllContributionsResponse = {
-  confirmedCount: number;
-  progress: FundingProgress;
 };
 
 export type MyContributionResponse = RollingPaperContent & {
