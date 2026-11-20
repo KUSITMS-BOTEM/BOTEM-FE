@@ -50,31 +50,12 @@ export const contributionHandlers = [
       error: null,
     });
   }),
-  // 로컬 개발용: 로그인 회원은 보탠 내역이 있다. 비어 있는 상태(보태기 버튼)는 이 핸들러를 바꿔 확인한다
+  // 로컬 개발용: 로그인 회원은 아직 보탠 내역이 없다(보태기 플로우 확인용). 내 보탬 확인 상태는 contributions에 내역을 넣어 확인한다
   http.get("*/api/fundings/share/:shareKey/contributions/me", async () => {
     await delay(400);
     return HttpResponse.json({
       success: true,
-      data: {
-        editable: true,
-        contributions: [
-          {
-            contributionId: 21,
-            participantName: "민지",
-            amount: 30000,
-            status: "PENDING_CONFIRMATION",
-            excludedFromResult: false,
-            message: "지유야 생일 축하해!",
-            paperTemplateCode: "LIME_DOT_GRID",
-            decorationCode: "PARTY_POPPER",
-            photoUrl: null,
-            voiceUrl: null,
-            voiceDurationSeconds: null,
-            participatedAt: "2026-11-18T11:20:00",
-            payoutAccount: null,
-          },
-        ],
-      },
+      data: { editable: true, contributions: [] },
       error: null,
     });
   }),
