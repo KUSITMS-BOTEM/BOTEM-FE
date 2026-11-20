@@ -8,6 +8,7 @@ export type SurpriseMessage = {
   photoUrl: string | null;
   voiceUrl: string | null;
   voiceDurationSeconds: number | null;
+  voiceTranscript: string | null;
 };
 
 export type SurpriseRevealResponse = {

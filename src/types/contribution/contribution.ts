@@ -62,6 +62,7 @@ type RollingPaperContent = {
   photoUrl: string | null;
   voiceUrl: string | null;
   voiceDurationSeconds: number | null;
+  voiceTranscript: string | null;
 };
 
 type RollingPaperContentRequest = {
