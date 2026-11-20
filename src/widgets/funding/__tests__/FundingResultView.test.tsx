@@ -81,16 +81,22 @@ describe("FundingResultView", () => {
       expect(screen.queryByText("기존 선물")).not.toBeInTheDocument();
     });
 
-    it.each(["다른 선물 고르기", "차액으로 구매"])(
-      "'%s'를 누르면 onChangeGift를 호출한다",
-      async name => {
-        renderView(missed);
+    it("'다른 선물 고르기'를 누르면 onChangeGift를 호출한다", async () => {
+      renderView(missed);
 
-        await userEvent.click(screen.getByRole("button", { name }));
+      await userEvent.click(screen.getByRole("button", { name: "다른 선물 고르기" }));
 
-        expect(handlers.onChangeGift).toHaveBeenCalledTimes(1);
-      },
-    );
+      expect(handlers.onChangeGift).toHaveBeenCalledTimes(1);
+    });
+
+    it("'차액으로 구매'를 누르면 onBuy를 호출한다", async () => {
+      renderView(missed);
+
+      await userEvent.click(screen.getByRole("button", { name: "차액으로 구매" }));
+
+      expect(handlers.onBuy).toHaveBeenCalledTimes(1);
+      expect(handlers.onChangeGift).not.toHaveBeenCalled();
+    });
 
     it("연장할 수 있으면 기간연장 버튼으로 onExtend를 호출한다", async () => {
       renderView(missed);
