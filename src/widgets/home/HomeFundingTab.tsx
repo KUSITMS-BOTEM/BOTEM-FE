@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { fundingRevealQueryOptions } from "@/hooks/queries/funding/useFundingRevealQuery";
+import { fundingResultQueryOptions } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useHomeNoFundingQuery } from "@/hooks/queries/home/useHomeNoFundingQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
@@ -64,7 +64,7 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding, banner }: Hom
     revealLockRef.current = true;
     // 응답이 늦거나 오프라인이면 프리페치가 끝나지 않아 이동이 막히므로 제한 시간이 지나면 그대로 이동한다
     await Promise.race([
-      queryClient.prefetchQuery(fundingRevealQueryOptions(fundingId)),
+      queryClient.prefetchQuery(fundingResultQueryOptions(fundingId)),
       new Promise(resolve => setTimeout(resolve, REVEAL_PREFETCH_TIMEOUT_MS)),
     ]);
     if (isUnmountedRef.current) return;
@@ -75,10 +75,10 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding, banner }: Hom
     if (!profile) return null;
     const cards = fundingCards.map(card => {
       const data = toFundingCardData(card, getDisplayName(profile));
-      if (data.type === "default" || data.type === "open") {
+      if (data.type === "default") {
         return { ...data, onClick: () => router.push(`/funding/${card.fundingId}`) };
       }
-      if (data.type === "complete" || data.type === "earlyComplete") {
+      if (data.type === "open" || data.type === "complete" || data.type === "earlyComplete") {
         return { ...data, onClick: () => openReveal(card.fundingId) };
       }
       const openCardSheet = () => {

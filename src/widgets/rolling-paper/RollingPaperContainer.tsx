@@ -28,21 +28,24 @@ import {
 } from "@/widgets/rolling-paper/rollingPaperMotion";
 
 type RollingPaperContainerProps = {
-  rollingPaperId: string;
+  fundingId: number;
   count: number;
+  open: boolean;
+  onClose: () => void;
 };
 
 export default function RollingPaperContainer({
-  rollingPaperId,
+  fundingId,
   count,
+  open,
+  onClose,
 }: RollingPaperContainerProps) {
-  const [open, setOpen] = useState(true);
   const [opened, setOpened] = useState(false);
   const backgroundRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const slots = getVisibleSlots(count);
-  // TODO(API): 조회 API가 나오면 count 쿼리를 없애고 도착 페이지가 id로 직접 받아오게 한다
-  const detailPath = `/rolling-paper/${rollingPaperId}?count=${count}`;
+  // 도착 페이지는 펀딩 결과 응답에서 메세지 개수를 직접 받는다
+  const detailPath = `/rolling-paper/${fundingId}`;
 
   // 모션이 끝나는 1.1s 뒤 이동하므로 그 사이 페이지를 미리 받아둔다
   const handleOpen = () => {
@@ -50,11 +53,17 @@ export default function RollingPaperContainer({
     setOpened(true);
   };
 
+  // 시트를 닫아도 컴포넌트는 남아 있으므로, 다시 열었을 때 퇴장 상태가 이어지지 않게 되돌린다
+  const handleClose = () => {
+    setOpened(false);
+    onClose();
+  };
+
   return (
     <OpenSheet
       open={open}
       title=""
-      onClose={() => setOpen(false)}
+      onClose={handleClose}
       hideScrollbar
       overlay={
         opened && (
@@ -90,8 +99,12 @@ export default function RollingPaperContainer({
             transition={EXIT_BACKGROUND_TRANSITION}
           />
           {/* 정렬된 편지지는 배경 영역 안에서 잘린다. 퇴장 때도 유지해 카드가 배경 아래 경계에 가려지며 내려간다 */}
-          <motion.div
-            className="absolute inset-0"
+          <motion.button
+            type="button"
+            aria-label="편지지 크게 보기"
+            disabled={opened}
+            onClick={handleOpen}
+            className="focus-visible:outline-semantic-fill-brand absolute inset-0 rounded-2xl focus-visible:outline-2"
             initial={{ clipPath: CARD_CLIP_OPEN }}
             animate={{ clipPath: CARD_CLIP_CLOSED }}
             transition={CARD_CLIP_CLOSE_TRANSITION}>
@@ -106,7 +119,7 @@ export default function RollingPaperContainer({
                 />
               ))}
             </div>
-          </motion.div>
+          </motion.button>
           <motion.p
             className="from-semantic-background-default/70 to-semantic-background-default/0 text-semantic-text-secondary absolute bottom-[12.5px] left-1/2 z-20 -translate-x-1/2 rounded-full bg-gradient-to-b px-2.5 py-1.5 text-center [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-x-small-weak)]"
             initial={{ opacity: 0 }}
@@ -117,7 +130,10 @@ export default function RollingPaperContainer({
         </div>
       </div>
       <BottomCTA className={cn(EXIT_CTA_CLASS, opened && EXIT_CTA_HIDDEN_CLASS)}>
-        <Button color="brand" size="xlarge" onClick={handleOpen}>
+        <Button
+          color="brand"
+          size="xlarge"
+          onClick={() => router.push(`/funding/${fundingId}/result`)}>
           선물 받으러 가기
         </Button>
       </BottomCTA>

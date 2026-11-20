@@ -4,7 +4,10 @@ import { delay, http, HttpResponse } from "msw";
 import { MOCK_FUNDING_CARDS } from "@/apis/home/homeService.msw";
 import { getMockContributionProgress, getMockContributionRecords } from "@/mocks/mockContributions";
 import type { ClosedFundingListResponse } from "@/types/funding/closedFunding";
-import type { FundingRevealResponse } from "@/types/funding/funding";
+import type {
+  FundingResultContributionResponse,
+  FundingResultResponse,
+} from "@/types/funding/fundingResult";
 import type {
   FundingManagementState,
   OwnerFundingDetailResponse,
@@ -12,25 +15,72 @@ import type {
 } from "@/types/funding/ownerFundingDetail";
 import type { FundingType } from "@/types/home/home";
 
-// 목록에 없는 펀딩 id는 보탠 사람이 없는 마감(참여자 0명 화면)으로 응답한다
-const MOCK_REVEALS: Record<number, FundingRevealResponse> = {
+const toContributions = (names: string[]): FundingResultContributionResponse[] =>
+  names.map((name, index) => ({
+    contributionId: index + 1,
+    name,
+    profileImageUrl: null,
+    status: "CONFIRMED",
+    participatedAt: "2026-11-10T14:20:00",
+    hasMessage: true,
+    hasPhoto: false,
+    hasVoice: false,
+    thankCardSent: false,
+  }));
+
+const MOCK_PRODUCT = {
+  productName: "소니 WH-1000XM5",
+  productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
+  targetAmount: 364000,
+  pendingContributionCount: 0,
+  pendingCleanupRequired: false,
+  resultOpenedAt: null,
+};
+
+// 12는 미달, 13은 달성. 목록에 없는 펀딩 id는 보탠 사람이 없는 마감(참여자 0명 화면)으로 응답한다
+const MOCK_RESULTS: Record<number, FundingResultResponse> = {
   12: {
-    contributorNames: ["하린이", "도윤이", "서준이", "지아", "민서"],
-    totalAmount: 215000,
-    goalAchieved: false,
+    ...MOCK_PRODUCT,
+    fundingId: 12,
+    confirmedAmount: 215000,
+    achievementPercentage: 59,
+    targetReached: false,
+    participantCount: 5,
+    messageCount: 5,
+    contributions: toContributions(["하린이", "도윤이", "서준이", "지아", "민서"]),
   },
   13: {
-    contributorNames: ["지민", "서연", "도윤", "하은", "민준", "수아", "예준", "지우"],
-    totalAmount: 429000,
-    goalAchieved: true,
+    ...MOCK_PRODUCT,
+    fundingId: 13,
+    confirmedAmount: 429000,
+    achievementPercentage: 117,
+    targetReached: true,
+    participantCount: 8,
+    messageCount: 8,
+    contributions: toContributions([
+      "지민",
+      "서연",
+      "도윤",
+      "하은",
+      "민준",
+      "수아",
+      "예준",
+      "지우",
+    ]),
   },
 };
 
-const EMPTY_REVEAL: FundingRevealResponse = {
-  contributorNames: [],
-  totalAmount: 0,
-  goalAchieved: false,
-};
+const getMockResult = (fundingId: number): FundingResultResponse =>
+  MOCK_RESULTS[fundingId] ?? {
+    ...MOCK_PRODUCT,
+    fundingId,
+    confirmedAmount: 0,
+    achievementPercentage: 0,
+    targetReached: false,
+    participantCount: 0,
+    messageCount: 0,
+    contributions: [],
+  };
 
 const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
   fundings: [
@@ -176,9 +226,17 @@ export const fundingHandlers = [
     await delay(300);
     return HttpResponse.json({ success: true, data: MOCK_CLOSED_FUNDINGS, error: null });
   }),
-  http.get("*/api/fundings/:fundingId/reveal", async ({ params }) => {
+  http.get("*/api/fundings/:fundingId/result", async ({ params }) => {
     await delay(300);
-    const data = MOCK_REVEALS[Number(params.fundingId)] ?? EMPTY_REVEAL;
+    const data = getMockResult(Number(params.fundingId));
+    return HttpResponse.json({ success: true, data, error: null });
+  }),
+  http.post("*/api/fundings/:fundingId/result/open", async ({ params }) => {
+    await delay(300);
+    const data = {
+      ...getMockResult(Number(params.fundingId)),
+      resultOpenedAt: "2026-11-15T00:00:00",
+    };
     return HttpResponse.json({ success: true, data, error: null });
   }),
   // 조기 마감 확인 Dialog의 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다

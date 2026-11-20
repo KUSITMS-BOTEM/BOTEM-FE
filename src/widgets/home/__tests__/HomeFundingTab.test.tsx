@@ -19,7 +19,7 @@ vi.mock("@/hooks/queries/home/useHomeFundingsQuery");
 vi.mock("@/hooks/queries/home/useHomeNoFundingQuery");
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
 vi.mock("@/apis/funding/fundingService", () => ({
-  fundingService: { getReveal: vi.fn() },
+  fundingService: { getResult: vi.fn() },
 }));
 const push = vi.fn();
 
@@ -227,11 +227,7 @@ describe("HomeFundingTab", () => {
   });
 
   it("입금 확인 시트에서 팡! 열어보기를 누르면 그 펀딩의 결과 데이터를 받은 뒤 공개 화면으로 이동한다", async () => {
-    vi.mocked(fundingService.getReveal).mockResolvedValue({
-      contributorNames: [],
-      totalAmount: 0,
-      goalAchieved: false,
-    });
+    vi.mocked(fundingService.getResult).mockResolvedValue(null);
     mockQueries({
       data: fundingList([
         { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 2 },
@@ -242,7 +238,7 @@ describe("HomeFundingTab", () => {
     await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
     await userEvent.click(screen.getByRole("button", { name: "팡! 열어보기" }));
 
-    expect(fundingService.getReveal).toHaveBeenCalledWith(42);
+    expect(fundingService.getResult).toHaveBeenCalledWith(42);
     await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
   });
 
@@ -255,7 +251,7 @@ describe("HomeFundingTab", () => {
     expect(push).toHaveBeenCalledWith("/funding/1");
   });
 
-  it("참여자가 없는 마감 카드(open)를 누르면 결과 조회 없이 펀딩 상세 화면으로 이동한다", async () => {
+  it("참여자가 없는 마감 카드(open)를 누르면 결과 데이터를 받은 뒤 공개 화면으로 이동한다", async () => {
     mockQueries({
       data: fundingList([
         { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 0 },
@@ -265,18 +261,18 @@ describe("HomeFundingTab", () => {
     renderTab();
     await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
 
-    expect(push).toHaveBeenCalledWith("/funding/42");
-    expect(fundingService.getReveal).not.toHaveBeenCalled();
+    expect(fundingService.getResult).toHaveBeenCalledWith(42);
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("마감 카드를 누르면 결과 데이터를 받은 뒤에 공개 화면으로 이동한다", async () => {
-    let resolveReveal: (
-      value: Awaited<ReturnType<typeof fundingService.getReveal>>,
+    let resolveResult: (
+      value: Awaited<ReturnType<typeof fundingService.getResult>>,
     ) => void = () => {};
-    vi.mocked(fundingService.getReveal).mockReturnValue(
+    vi.mocked(fundingService.getResult).mockReturnValue(
       new Promise(resolve => {
-        resolveReveal = resolve;
+        resolveResult = resolve;
       }),
     );
     mockQueries({
@@ -294,16 +290,16 @@ describe("HomeFundingTab", () => {
     renderTab();
     await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
 
-    expect(fundingService.getReveal).toHaveBeenCalledWith(42);
+    expect(fundingService.getResult).toHaveBeenCalledWith(42);
     expect(push).not.toHaveBeenCalled();
 
-    resolveReveal({ contributorNames: [], totalAmount: 0, goalAchieved: false });
+    resolveResult(null);
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
   });
 
   it("결과 데이터 응답이 1.5초 안에 오지 않으면 기다리지 않고 공개 화면으로 이동한다", async () => {
-    vi.mocked(fundingService.getReveal).mockReturnValue(new Promise(() => {}));
+    vi.mocked(fundingService.getResult).mockReturnValue(new Promise(() => {}));
     mockQueries({
       data: fundingList([
         {
@@ -327,9 +323,9 @@ describe("HomeFundingTab", () => {
 
   it("결과 데이터를 기다리는 동안 홈을 떠나면 늦게 끝나도 공개 화면으로 이동하지 않는다", async () => {
     let resolveReveal: (
-      value: Awaited<ReturnType<typeof fundingService.getReveal>>,
+      value: Awaited<ReturnType<typeof fundingService.getResult>>,
     ) => void = () => {};
-    vi.mocked(fundingService.getReveal).mockReturnValue(
+    vi.mocked(fundingService.getResult).mockReturnValue(
       new Promise(resolve => {
         resolveReveal = resolve;
       }),
@@ -349,19 +345,19 @@ describe("HomeFundingTab", () => {
     const { unmount } = renderTab();
     await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
     unmount();
-    resolveReveal({ contributorNames: [], totalAmount: 0, goalAchieved: false });
+    resolveReveal(null);
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(push).not.toHaveBeenCalled();
   });
 
   it("결과 데이터를 받는 동안 마감 카드를 연타해도 요청과 이동은 한 번만 한다", async () => {
-    let resolveReveal: (
-      value: Awaited<ReturnType<typeof fundingService.getReveal>>,
+    let resolveResult: (
+      value: Awaited<ReturnType<typeof fundingService.getResult>>,
     ) => void = () => {};
-    vi.mocked(fundingService.getReveal).mockReturnValue(
+    vi.mocked(fundingService.getResult).mockReturnValue(
       new Promise(resolve => {
-        resolveReveal = resolve;
+        resolveResult = resolve;
       }),
     );
     mockQueries({
@@ -380,10 +376,10 @@ describe("HomeFundingTab", () => {
     const card = screen.getByRole("button", { name: "지유님의 생일 펀딩" });
     await userEvent.click(card);
     await userEvent.click(card);
-    resolveReveal({ contributorNames: [], totalAmount: 0, goalAchieved: false });
+    resolveResult(null);
 
     await waitFor(() => expect(push).toHaveBeenCalledTimes(1));
-    expect(fundingService.getReveal).toHaveBeenCalledTimes(1);
+    expect(fundingService.getResult).toHaveBeenCalledTimes(1);
   });
 
   it("확인 대기가 없고 참여자가 있는 마감 카드(complete)를 누르면 공개 시트 없이 공개 화면으로 이동한다", async () => {
