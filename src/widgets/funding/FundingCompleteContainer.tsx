@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion, type Easing } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
@@ -11,8 +11,8 @@ import PageExitMotion from "@/components/effects/PageExitMotion";
 import ToastMessage from "@/components/ToastMessage";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 import { usePageExit } from "@/hooks/usePageExit";
-import { useShareLink } from "@/hooks/useShareLink";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
+import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
 import FundingBragCard from "@/widgets/funding/FundingBragCard";
 import FundingCompleteConfetti from "@/widgets/funding/FundingCompleteConfetti";
 import FundingCompleteTitle from "@/widgets/funding/FundingCompleteTitle";
@@ -24,7 +24,7 @@ import IconShare from "@/assets/icons/icon-share.svg?react";
 
 // TODO(API): 보탬 완료 응답과 펀딩 조회 API가 정해지면 교체한다 (N번째 보탬·상승률은 서버 계산값이 필요하다)
 const MOCK_COMPLETE = {
-  hostName: "지유",
+  hostName: "민재",
   giverName: "민지",
   contributionOrder: 3,
   risePercent: 20,
@@ -38,6 +38,8 @@ const MOCK_COMPLETE = {
 // Figma 12.2초 타임라인(한 번만 재생): 진행률 장면 → 2.3초에 자랑 장면으로 전환 → 공유 버튼은 전환 2.26초 뒤에 등장
 const SHARE_SCENE_AT_MS = 2300;
 const CTA_AT_MS = 4560;
+
+const SAVE_FAIL_TOAST_MS = 2000;
 
 const EASE: Easing = [0.87, 0, 0.13, 1];
 
@@ -54,7 +56,9 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
   const [isMessageOnly] = useState(() => useFundingContributionStore.getState().amount === 0);
   // 0: 진행률 장면, 1: 자랑 장면, 2: 자랑 장면 + 공유 버튼
   const [step, setStep] = useState(0);
-  const { toast, share } = useShareLink();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const failTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const scene = reduceMotion ? 2 : step;
   const isShareScene = scene >= 1;
 
@@ -70,11 +74,18 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
   // 완료 페이지를 떠나면 보태기 플로우의 비밀번호 등 입력값을 메모리에서 지운다
   useEffect(() => () => useFundingContributionStore.getState().reset(), []);
 
-  const handleShare = () =>
-    share({
-      title: `${funding.hostName}에게 보탬`,
-      url: `${window.location.origin}/share/${fundingId}`,
-    });
+  useEffect(() => () => clearTimeout(failTimerRef.current), []);
+
+  const handleShare = async () => {
+    if (!cardRef.current) return;
+    try {
+      await saveNodeAsImage(cardRef.current, `${funding.hostName}에게-보탬.png`);
+    } catch {
+      setSaveFailed(true);
+      clearTimeout(failTimerRef.current);
+      failTimerRef.current = setTimeout(() => setSaveFailed(false), SAVE_FAIL_TOAST_MS);
+    }
+  };
 
   return (
     <PageExitMotion exit={pageExit}>
@@ -157,7 +168,9 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
                       ease: [[0.3, 0, 0.3, 1], "linear", "linear"],
                     },
                   }}
-                  className="relative col-start-1 row-start-1 aspect-320/401 w-full">
+                  ref={cardRef}
+                  // 저장되는 이미지는 이 틀 그대로라 흰 배경과 둥근 모서리를 여기서 정한다
+                  className="bg-semantic-fill-default relative col-start-1 row-start-1 aspect-320/401 w-full overflow-clip rounded-[32px]">
                   <FundingBragCard
                     giverName={funding.giverName}
                     recipientName={funding.hostName}
@@ -196,9 +209,9 @@ export default function FundingCompleteContainer({ fundingId }: FundingCompleteC
           </motion.div>
         )}
         <ToastMessage
-          show={toast !== null}
-          state={toast === "success"}
-          text={toast === "fail" ? "링크를 복사하지 못했어요" : "링크를 복사했어요"}
+          show={saveFailed}
+          state={false}
+          text="이미지를 저장하지 못했어요"
           className="pointer-events-none fixed bottom-32 left-1/2 z-20 -translate-x-1/2"
         />
       </main>

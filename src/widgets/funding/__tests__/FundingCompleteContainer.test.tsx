@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { useReducedMotion } from "framer-motion";
 
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
+import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
 import FundingCompleteContainer from "@/widgets/funding/FundingCompleteContainer";
 
 const replaceMock = vi.fn();
@@ -9,6 +10,8 @@ const pushMock = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: replaceMock, push: pushMock }),
 }));
+
+vi.mock("@/utils/saveNodeAsImage", () => ({ saveNodeAsImage: vi.fn() }));
 
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
@@ -72,7 +75,7 @@ describe("FundingCompleteContainer", () => {
       render(<FundingCompleteContainer fundingId="1" />);
 
       expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-        "지유에게 보탬이 되었어요",
+        "민재에게 보탬이 되었어요",
       );
       expect(screen.queryByRole("button", SHARE_BUTTON)).not.toBeInTheDocument();
     });
@@ -132,70 +135,25 @@ describe("FundingCompleteContainer", () => {
   });
 
   describe("공유하기", () => {
-    const originalShare = Object.getOwnPropertyDescriptor(navigator, "share");
-    const originalClipboard = Object.getOwnPropertyDescriptor(navigator, "clipboard");
-    const define = (key: "share" | "clipboard", value: unknown) =>
-      Object.defineProperty(navigator, key, { value, configurable: true, writable: true });
-
     beforeEach(() => vi.mocked(useReducedMotion).mockReturnValue(true));
-    afterEach(() => {
-      for (const [key, original] of [
-        ["share", originalShare],
-        ["clipboard", originalClipboard],
-      ] as const) {
-        if (original) Object.defineProperty(navigator, key, original);
-        else delete (navigator as unknown as Record<string, unknown>)[key];
-      }
-    });
 
-    it("navigator.share가 있으면 공유 링크를 담아 호출한다", async () => {
-      const share = vi.fn().mockResolvedValue(undefined);
-      define("share", share);
+    it("누르면 자랑 카드를 이미지로 저장·공유한다", async () => {
       render(<FundingCompleteContainer fundingId="7" />);
 
       fireEvent.click(screen.getByRole("button", SHARE_BUTTON));
 
       await vi.waitFor(() =>
-        expect(share).toHaveBeenCalledWith(
-          expect.objectContaining({ url: `${window.location.origin}/share/7` }),
-        ),
+        expect(saveNodeAsImage).toHaveBeenCalledWith(expect.any(HTMLElement), "민재에게-보탬.png"),
       );
     });
 
-    it("사용자가 공유창을 닫으면 링크 복사도 토스트도 없다", async () => {
-      const share = vi.fn().mockRejectedValue(new DOMException("취소", "AbortError"));
-      const writeText = vi.fn();
-      define("share", share);
-      define("clipboard", { writeText });
+    it("이미지 저장에 실패하면 안내 토스트를 보여준다", async () => {
+      vi.mocked(saveNodeAsImage).mockRejectedValueOnce(new Error("fail"));
       render(<FundingCompleteContainer fundingId="7" />);
 
       fireEvent.click(screen.getByRole("button", SHARE_BUTTON));
 
-      await vi.waitFor(() => expect(share).toHaveBeenCalled());
-      expect(writeText).not.toHaveBeenCalled();
-      expect(screen.queryByText(/링크를 복사/)).not.toBeInTheDocument();
-    });
-
-    it("navigator.share가 없으면 링크를 복사하고 복사 성공 토스트를 보여준다", async () => {
-      const writeText = vi.fn().mockResolvedValue(undefined);
-      define("share", undefined);
-      define("clipboard", { writeText });
-      render(<FundingCompleteContainer fundingId="7" />);
-
-      fireEvent.click(screen.getByRole("button", SHARE_BUTTON));
-
-      expect(await screen.findByText("링크를 복사했어요")).toBeInTheDocument();
-      expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/share/7`);
-    });
-
-    it("링크 복사에 실패하면 실패 토스트를 보여준다", async () => {
-      define("share", undefined);
-      define("clipboard", { writeText: vi.fn().mockRejectedValue(new Error("거부")) });
-      render(<FundingCompleteContainer fundingId="7" />);
-
-      fireEvent.click(screen.getByRole("button", SHARE_BUTTON));
-
-      expect(await screen.findByText("링크를 복사하지 못했어요")).toBeInTheDocument();
+      expect(await screen.findByText("이미지를 저장하지 못했어요")).toBeInTheDocument();
     });
   });
 });
