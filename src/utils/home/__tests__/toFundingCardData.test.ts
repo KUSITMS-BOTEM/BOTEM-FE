@@ -35,6 +35,17 @@ describe("toFundingCardData", () => {
     expect(result.dDay).toBe(5);
   });
 
+  it("earlyComplete 카드의 진행률은 확정·대기를 합친 전체 달성률(최대 100)이다", () => {
+    expect(
+      toFundingCardData(makeCard({ confirmedPercentage: 100, pendingPercentage: 0 }), "지유")
+        .progress,
+    ).toBe(100);
+    expect(
+      toFundingCardData(makeCard({ confirmedPercentage: 120, pendingPercentage: 0 }), "지유")
+        .progress,
+    ).toBe(100);
+  });
+
   it("마감 전 100% 이상이어도 확인 대기가 있으면 default 타입이다", () => {
     const result = toFundingCardData(
       makeCard({ confirmedPercentage: 80, pendingPercentage: 30, pendingContributionCount: 1 }),

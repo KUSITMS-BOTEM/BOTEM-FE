@@ -47,13 +47,18 @@ export function toFundingCardData(
   card: HomeFundingCardResponse,
   nickname: string,
 ): FundingCardData {
+  const type = toCardType(card);
   return {
     id: card.fundingId,
-    type: toCardType(card),
+    type,
     title: `${nickname}님의 ${FUNDING_TYPE_LABEL[card.fundingType]} 펀딩`,
     productName: card.productName,
     productImageUrl: card.productImageUrl,
-    progress: card.pendingPercentage,
+    // 조기 완료는 확인 대기가 없어 대기 비율이 0이므로 목표에 닿은 전체 달성률을 보여준다
+    progress:
+      type === "earlyComplete"
+        ? Math.min(100, card.confirmedPercentage + card.pendingPercentage)
+        : card.pendingPercentage,
     dDay: card.remainingDays,
     targetAmount: card.targetAmount,
     participants: card.participantPreviews.map(toParticipant),
