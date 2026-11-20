@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -43,6 +43,14 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding, banner }: Hom
   const [sheetFundingId, setSheetFundingId] = useState<number | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const revealLockRef = useRef(false);
+  // 프리페치를 기다리는 동안 다른 화면으로 떠났으면 늦게 끝난 공개 화면 이동을 버린다
+  const isUnmountedRef = useRef(false);
+  useEffect(() => {
+    isUnmountedRef.current = false;
+    return () => {
+      isUnmountedRef.current = true;
+    };
+  }, []);
 
   if (fundingsFailed || noFundingFailed) {
     const handleRetry = () => (fundingsFailed ? fundingsQuery.refetch() : noFundingQuery.refetch());
@@ -59,6 +67,7 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding, banner }: Hom
       queryClient.prefetchQuery(fundingRevealQueryOptions(fundingId)),
       new Promise(resolve => setTimeout(resolve, REVEAL_PREFETCH_TIMEOUT_MS)),
     ]);
+    if (isUnmountedRef.current) return;
     router.push(`/funding/${fundingId}/reveal`);
   };
 
@@ -69,7 +78,7 @@ export default function HomeFundingTab({ onAddWish, onOpenFunding, banner }: Hom
       if (data.type === "default" || data.type === "open") {
         return { ...data, onClick: () => router.push(`/funding/${card.fundingId}`) };
       }
-      if (data.type === "complete") {
+      if (data.type === "complete" || data.type === "earlyComplete") {
         return { ...data, onClick: () => openReveal(card.fundingId) };
       }
       const openCardSheet = () => {

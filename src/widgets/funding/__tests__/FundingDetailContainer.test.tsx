@@ -20,6 +20,10 @@ vi.mock("next/image", () => ({
   ),
 }));
 
+vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
+  useMyProfileQuery: () => ({ data: { name: "민지" } }),
+}));
+
 const ownerDetail: OwnerFundingDetailResponse = {
   fundingId: 1,
   type: "BIRTHDAY",
@@ -88,17 +92,17 @@ const render = (ui: ReactElement) => {
 describe("FundingDetailContainer", () => {
   afterEach(() => vi.clearAllMocks());
 
-  it("서프라이즈 펀딩 상세로 자물쇠와 확인 대기 안내를 보여준다", () => {
+  it("서프라이즈 펀딩 상세로 자물쇠와 확인 대기 안내를 보여준다", async () => {
     render(<FundingDetailContainer fundingId="1" friendId="7" />);
 
-    expect(screen.getByRole("img", { name: "서프라이즈 펀딩" })).toBeInTheDocument();
+    expect(await screen.findByRole("img", { name: "서프라이즈 펀딩" })).toBeInTheDocument();
     expect(screen.getByText("확인 대기 3건이 있어요")).toBeInTheDocument();
   });
 
   it("뒤로가기를 누르면 친구 프로필로 이동한다", async () => {
     render(<FundingDetailContainer fundingId="1" friendId="7" />);
 
-    await userEvent.click(screen.getByRole("button", { name: "뒤로가기" }));
+    await userEvent.click(await screen.findByRole("button", { name: "뒤로가기" }));
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/friends/7"));
   });

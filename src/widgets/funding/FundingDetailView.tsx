@@ -15,11 +15,12 @@ import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDet
 import { getClosedLabel } from "@/utils/funding/fundingProgress";
 import { toOwnerFundingView } from "@/utils/funding/toOwnerFundingView";
 import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
-import BotemPopup from "@/widgets/funding/BotemPopup";
+import BotemPopup, { type BotemPopupFriend } from "@/widgets/funding/BotemPopup";
 import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
 import FundingGiftProofView from "@/widgets/funding/FundingGiftProofView";
 import FundingMessage from "@/widgets/funding/FundingMessage";
+import FundingMoreFlow from "@/widgets/funding/FundingMoreFlow";
 import FundingPasswordSheet from "@/widgets/funding/FundingPasswordSheet";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
 import type { FundingTransferAccount } from "@/widgets/funding/FundingTransferGuideSheet";
@@ -50,11 +51,15 @@ const MOCK_FUNDING = {
   productName: "소니 WH-1000XM5",
   productImageUrl: SampleProduct.src,
   deadline: "2026-12-31",
-  // TODO(API): 개설자가 선물 인증 사진을 올렸는지 서버 값으로 교체한다 (true면 마감 후 인증 화면)
+  // TODO(API): guest 화면 전용. 공유용 상세 API의 giftVerification으로 교체한다 (true면 마감 후 인증 화면)
   hasGiftProof: false,
   currentAmount: 74074074,
   targetAmount: 123456789,
+  progress: 60,
   closed: false,
+  // TODO(API): 서프라이즈 개설자 화면도 서버 값으로 교체한다 (owner는 ownerDetail 값을 쓴다)
+  extended: false,
+  actions: { canCloseEarly: true, canReissueShareCard: true },
   participants: ["orange", "blue", "pink"] as const,
   extraParticipantCount: 99,
   // TODO(API): 서프라이즈 개설자 화면도 서버 값으로 교체한다 (owner는 ownerDetail 값을 쓴다)
@@ -64,7 +69,7 @@ const MOCK_FUNDING = {
   friends: [
     { id: 1, name: "민수", contributedAt: "2026-11-10T09:00:00", thankCardSent: false },
     { id: 2, name: "서연", contributedAt: "2026-11-12T18:30:00", thankCardSent: true },
-  ],
+  ] as BotemPopupFriend[],
   account: {
     bank: "TOSS_BANK",
     accountHolder: "김지유",
@@ -72,7 +77,7 @@ const MOCK_FUNDING = {
   } satisfies FundingTransferAccount,
 };
 
-// TODO: 공유·더보기 동작은 디자인이 정해지면 연결한다
+// TODO: 공유 동작(과 guest 화면의 더보기)은 디자인이 정해지면 연결한다
 const noop = () => {};
 
 export default function FundingDetailView({
@@ -98,6 +103,7 @@ export default function FundingDetailView({
   const [isLetterOpen, setIsLetterOpen] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
   const contributeAmount = useFundingContributionStore(state => state.amount);
   const { setAmount, setLetter, setPassword, reset } = useFundingContributionStore.getState();
   const [isExitOpen, setIsExitOpen] = useState(false);
@@ -122,7 +128,8 @@ export default function FundingDetailView({
   const closedLabel = getClosedLabel(funding);
   const isClosed = funding.closed || closedLabel !== null;
 
-  if (isClosed && funding.hasGiftProof) {
+  // 공유 링크로 들어온 친구에게 마감 후 선물 인증을 보여주는 화면이라 개설자 화면은 해당하지 않는다
+  if (!confirmsDeposits && isClosed && funding.hasGiftProof) {
     return (
       <FundingGiftProofView
         contributorCount={funding.friends.length}
@@ -146,8 +153,12 @@ export default function FundingDetailView({
           rightItems={[
             // TODO: 공유 버튼 클릭 시 동작 구현 필요 (예: 카카오톡/링크 공유)
             { icon: <IconShare />, ariaLabel: "공유", onClick: noop },
-            // TODO: 더보기 버튼 클릭 시 동작 구현 필요 (예: 메뉴/바텀시트 노출)
-            { icon: <IconDotVertical />, ariaLabel: "더보기", onClick: noop },
+            // 더보기(공유 카드 다시 받기·조기 마감)는 개설자만 쓸 수 있다
+            {
+              icon: <IconDotVertical />,
+              ariaLabel: "더보기",
+              onClick: confirmsDeposits ? () => setIsMoreOpen(true) : noop,
+            },
           ]}
         />
         <div className="flex flex-col gap-4 px-5 pb-[calc(var(--padding-large)+env(safe-area-inset-bottom))]">
@@ -170,6 +181,7 @@ export default function FundingDetailView({
             deadline={funding.deadline}
             currentAmount={funding.currentAmount}
             targetAmount={funding.targetAmount}
+            progress={funding.progress}
             locked={isSurprise}
           />
           <button
@@ -233,6 +245,26 @@ export default function FundingDetailView({
           fundingId={Number(fundingId)}
           onClose={() => setIsDepositOpen(false)}
         />
+        {confirmsDeposits && (
+          <FundingMoreFlow
+            open={isMoreOpen}
+            fundingId={Number(fundingId)}
+            extended={funding.extended}
+            actions={funding.actions}
+            shareCard={{
+              cardTitle: `${funding.title} 펀딩`,
+              wish: {
+                id: 0,
+                productName: funding.productName,
+                productImageUrl: funding.productImageUrl,
+                price: funding.targetAmount,
+              },
+              info: { targetAmount: String(funding.targetAmount), deadline: funding.deadline },
+              progress: funding.progress,
+            }}
+            onClose={() => setIsMoreOpen(false)}
+          />
+        )}
         <BotemEditFlow
           open={isEditOpen}
           recipientName={funding.hostName}

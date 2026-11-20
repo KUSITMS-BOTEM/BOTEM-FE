@@ -45,6 +45,7 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
         reduceMotion={reduceMotion}
         onClose={() => router.replace("/home")}
         onBuy={handleBuy}
+        // TODO(API): change-gift 라우트가 아직 없다. 화면을 만들 때 fundingService.changeFundingProduct(PATCH /api/fundings/{id}/product)를 연결한다
         onChangeGift={() => router.push(`/funding/${fundingId}/change-gift`)}
         onExtend={() => setExtendOpen(true)}
       />
@@ -52,7 +53,7 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
         open={extendOpen}
         collectedAmount={result.collectedAmount}
         currentDeadline={result.deadline}
-        // TODO(API): 마감일 연장 API가 생기면 연결한다
+        // TODO(API): fundingService.extendFunding(POST /api/fundings/{id}/extension)은 있다. mutation 훅을 만들어 연결하고 성공 시 결과·관리·홈 캐시를 무효화한다
         onExtend={() => setExtendOpen(false)}
         onClose={() => setExtendOpen(false)}
       />

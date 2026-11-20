@@ -325,6 +325,36 @@ describe("HomeFundingTab", () => {
     });
   });
 
+  it("결과 데이터를 기다리는 동안 홈을 떠나면 늦게 끝나도 공개 화면으로 이동하지 않는다", async () => {
+    let resolveReveal: (
+      value: Awaited<ReturnType<typeof fundingService.getReveal>>,
+    ) => void = () => {};
+    vi.mocked(fundingService.getReveal).mockReturnValue(
+      new Promise(resolve => {
+        resolveReveal = resolve;
+      }),
+    );
+    mockQueries({
+      data: fundingList([
+        {
+          ...fundingCard,
+          fundingId: 42,
+          cardType: "CLOSED_UNOPENED",
+          pendingContributionCount: 0,
+          participantCount: 3,
+        },
+      ]),
+    });
+
+    const { unmount } = renderTab();
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    unmount();
+    resolveReveal({ contributorNames: [], totalAmount: 0, goalAchieved: false });
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(push).not.toHaveBeenCalled();
+  });
+
   it("결과 데이터를 받는 동안 마감 카드를 연타해도 요청과 이동은 한 번만 한다", async () => {
     let resolveReveal: (
       value: Awaited<ReturnType<typeof fundingService.getReveal>>,
@@ -374,5 +404,28 @@ describe("HomeFundingTab", () => {
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("마감 전 100% 달성 카드(earlyComplete)를 누르면 상세가 아니라 공개 화면으로 이동한다", async () => {
+    mockQueries({
+      data: fundingList([
+        {
+          ...fundingCard,
+          fundingId: 42,
+          cardType: "IN_PROGRESS",
+          fundingType: "BIRTHDAY",
+          confirmedPercentage: 100,
+          pendingPercentage: 0,
+          pendingContributionCount: 0,
+          participantCount: 3,
+        },
+      ]),
+    });
+
+    renderTab();
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
+    expect(push).not.toHaveBeenCalledWith("/funding/42");
   });
 });

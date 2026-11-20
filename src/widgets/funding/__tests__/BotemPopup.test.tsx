@@ -67,12 +67,14 @@ describe("BotemPopup 개설자 확인 대기 행", () => {
     expect(onUnconfirmedClick).toHaveBeenCalledTimes(1);
   });
 
-  it("개설자에게 미확인이 없으면 '확인 대기 0건'과 안내 문구를 보여주고 클릭할 수 없다", () => {
-    renderPopup({ isHost: true, unconfirmedCount: 0 });
+  it("개설자에게 미확인이 없어도 '확인 대기 0건'과 안내 문구를 보여주고 클릭하면 onUnconfirmedClick이 호출된다", () => {
+    const { onUnconfirmedClick } = renderPopup({ isHost: true, unconfirmedCount: 0 });
 
     expect(screen.getByText("확인 대기 0건")).toBeInTheDocument();
     expect(screen.getByText("새로 확인할 보탬이 없어요")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /확인 대기/ })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /확인 대기 0건/ }));
+    expect(onUnconfirmedClick).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -198,12 +200,14 @@ describe("BotemPopup 펀딩 주인", () => {
     expect(onUnconfirmedClick).toHaveBeenCalledTimes(1);
   });
 
-  it("확인대기가 없으면 전부 들어왔다는 문구를 보여주고 클릭할 수 없다", () => {
-    renderPopup({ isOwner: true, unconfirmedCount: 0 });
+  it("확인대기가 없어도 전부 들어왔다는 문구를 보여주고 클릭하면 onUnconfirmedClick이 호출된다", () => {
+    const { onUnconfirmedClick } = renderPopup({ isOwner: true, unconfirmedCount: 0 });
 
     expect(screen.getByText("확인대기 0건")).toBeInTheDocument();
     expect(screen.getByText("통장에 전부 들어왔어요")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /확인대기/ })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /확인대기 0건/ }));
+    expect(onUnconfirmedClick).toHaveBeenCalledTimes(1);
   });
 
   it("메세지 건수 행을 보여주고 수정 행과 하단 보태기 버튼은 없다", () => {

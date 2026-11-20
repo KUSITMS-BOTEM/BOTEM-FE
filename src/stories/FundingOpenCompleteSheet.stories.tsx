@@ -44,7 +44,10 @@ const MY_PROFILE: MyProfile = {
 function FundingOpenCompleteSheetDemo({
   variant,
   progress,
-}: Pick<ComponentProps<typeof FundingOpenCompleteSheet>, "variant" | "progress">) {
+}: {
+  variant: ComponentProps<typeof FundingOpenCompleteSheet>["variant"];
+  progress?: number;
+}) {
   const [open, setOpen] = useState(true);
   const [queryClient] = useState(() => createQueryClient(MY_PROFILE));
 
@@ -53,9 +56,9 @@ function FundingOpenCompleteSheetDemo({
       <Button onClick={() => setOpen(true)}>개설 완료 열기</Button>
       <FundingOpenCompleteSheet
         open={open}
-        variant={variant}
-        progress={progress}
-        recipientName="지유"
+        {...(variant === "surprise"
+          ? { variant, recipientName: "지유" }
+          : { variant, cardTitle: "지유의 생일 펀딩", progress })}
         wish={{
           id: 1,
           productName: "소니 WH-1000XM5",

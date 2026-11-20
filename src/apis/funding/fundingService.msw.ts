@@ -181,6 +181,22 @@ export const fundingHandlers = [
     const data = MOCK_REVEALS[Number(params.fundingId)] ?? EMPTY_REVEAL;
     return HttpResponse.json({ success: true, data, error: null });
   }),
+  // 조기 마감 확인 Dialog의 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다
+  http.post("*/api/fundings/:fundingId/close", async ({ params }) => {
+    await delay(1000);
+    return HttpResponse.json({
+      success: true,
+      data: {
+        fundingId: Number(params.fundingId),
+        type: "BIRTHDAY",
+        status: "CLOSED",
+        deadline: "2026-12-31",
+        revealAt: null,
+        earlyClosedAt: new Date().toISOString(),
+      },
+      error: null,
+    });
+  }),
   // 확인 시트의 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다
   http.post("*/api/fundings", async () => {
     await delay(1000);

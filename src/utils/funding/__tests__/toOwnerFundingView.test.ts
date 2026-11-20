@@ -43,6 +43,14 @@ const detail = (overrides: Partial<OwnerFundingDetailResponse> = {}) =>
   }) as OwnerFundingDetailResponse;
 
 describe("toOwnerFundingView", () => {
+  it("달성률은 금액에서 다시 계산하지 않고 서버 확정 달성률을 그대로 옮긴다 (100 초과는 100)", () => {
+    // 50000원의 58%는 29000원이지만 29000/50000*100은 부동소수점으로 57.99…가 된다
+    expect(
+      toOwnerFundingView(detail({ targetAmount: 50000, confirmedPercentage: 58 })).progress,
+    ).toBe(58);
+    expect(toOwnerFundingView(detail({ confirmedPercentage: 120 })).progress).toBe(100);
+  });
+
   it("제목·사연·약속·상품·마감일(YYYY-MM-DD)·확인 대기 건수를 화면 값으로 옮긴다", () => {
     expect(toOwnerFundingView(detail())).toMatchObject({
       title: "지유의 생일",
@@ -106,5 +114,48 @@ describe("toOwnerFundingView", () => {
       { color: "pink", imageUrl: undefined },
     ]);
     expect(view.extraParticipantCount).toBe(2);
+  });
+
+  it("연장 여부·가능한 관리 동작을 그대로 옮긴다", () => {
+    const actions = {
+      canCloseEarly: false,
+      canExtend: true,
+      canChangeProduct: false,
+      canReissueShareCard: true,
+    };
+
+    expect(toOwnerFundingView(detail({ extended: true, actions }))).toMatchObject({
+      extended: true,
+      actions,
+    });
+  });
+
+  it("참여자를 한 사람당 한 줄의 친구 목록으로 옮기고 안전하지 않은 프로필 주소는 버린다", () => {
+    const view = toOwnerFundingView(
+      detail({
+        participants: [
+          { ...participant(1, 1, "https://image.example.com/a.jpg"), thankCardSent: true },
+          participant(2, 1),
+          participant(3, 2, "javascript:alert(1)"),
+        ],
+      }),
+    );
+
+    expect(view.friends).toEqual([
+      {
+        id: 1,
+        name: "참여자1",
+        contributedAt: "2026-11-20T14:03:12",
+        profileImageUrl: "https://image.example.com/a.jpg",
+        thankCardSent: true,
+      },
+      {
+        id: 3,
+        name: "참여자2",
+        contributedAt: "2026-11-20T14:03:12",
+        profileImageUrl: undefined,
+        thankCardSent: false,
+      },
+    ]);
   });
 });

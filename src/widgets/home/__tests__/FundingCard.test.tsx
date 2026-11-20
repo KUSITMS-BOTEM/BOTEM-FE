@@ -122,6 +122,12 @@ describe("FundingCard", () => {
     expect(screen.getByText("다 모였어요. 팡! 열어볼까요?")).toBeInTheDocument();
   });
 
+  it("earlyComplete 타입이면 마감 전 미리 열기 라벨을 표시한다", () => {
+    render(<FundingCard {...baseProps} type="earlyComplete" />);
+
+    expect(screen.getByText("마감일이 아직 안지났지만 지금 펑! 열까요?")).toBeInTheDocument();
+  });
+
   it("open 타입이면 '기간이 만료되었어요.' 라벨을 표시하고 선물 커버 문구는 없다", () => {
     render(<FundingCard {...baseProps} type="open" />);
 
@@ -219,6 +225,17 @@ describe("FundingCard 효과 타입 탭 동작", () => {
     const onClick = vi.fn();
     MotionGlobalConfig.skipAnimations = true;
     render(<FundingCard {...baseProps} type="complete" onClick={onClick} />);
+
+    fireEvent.click(screen.getByRole("button", tapName));
+    expect(onClick).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(onClick).toHaveBeenCalledTimes(1));
+  });
+
+  it("earlyComplete 카드도 complete처럼 터지는 연출이 끝난 뒤 onClick을 호출한다", async () => {
+    const onClick = vi.fn();
+    MotionGlobalConfig.skipAnimations = true;
+    render(<FundingCard {...baseProps} type="earlyComplete" onClick={onClick} />);
 
     fireEvent.click(screen.getByRole("button", tapName));
     expect(onClick).not.toHaveBeenCalled();
