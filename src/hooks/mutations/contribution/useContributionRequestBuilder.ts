@@ -18,10 +18,15 @@ export type ContributionRequestVariables = {
   guestPassword?: string;
 };
 
-// 금액·메시지 보태기가 같은 편지 본문을 보내므로 첨부 업로드와 요청 body 조립을 함께 쓴다
-export const useContributionRequestBuilder = (shareKey: string) => {
+// 업로드에 성공한 파일은 fileUrl을 기억해, 뒤 단계가 실패해 재시도할 때 같은 파일을 S3에 다시 올려 고아 파일을 늘리지 않는다
+const uploadedUrls = new WeakMap<Blob, string>();
+
+// 첨부 업로드는 보탬 생성·수정이 함께 쓴다
+export const useAttachmentUploader = (shareKey: string) => {
   // 발급 → S3 PUT까지 묶어 올리고 보탬 요청에 넣을 fileUrl을 돌려준다
   const upload = async (attachmentType: RollingPaperAttachmentType, file: Blob) => {
+    const cached = uploadedUrls.get(file);
+    if (cached) return cached;
     const issued = await fundingService.createRollingPaperAttachmentUploadUrl(shareKey, {
       attachmentType,
       contentType: file.type,
@@ -30,14 +35,23 @@ export const useContributionRequestBuilder = (shareKey: string) => {
     if (!issued) throw new Error("업로드 URL 발급에 실패했습니다.");
     const { uploadUrl, fileUrl } = issued;
     await fundingService.uploadRollingPaperAttachment(uploadUrl, file);
+    uploadedUrls.set(file, fileUrl);
     return fileUrl;
   };
 
-  return async ({ letter, requestKey, guestPassword }: ContributionRequestVariables) => {
-    const [photoUrl, voiceUrl] = await Promise.all([
+  return (letter: ContributionLetter) =>
+    Promise.all([
       letter.photo && upload("PHOTO", letter.photo),
       letter.voice && upload("VOICE", letter.voice.blob),
     ]);
+};
+
+// 금액·메시지 보태기가 같은 편지 본문을 보내므로 첨부 업로드와 요청 body 조립을 함께 쓴다
+export const useContributionRequestBuilder = (shareKey: string) => {
+  const uploadAttachments = useAttachmentUploader(shareKey);
+
+  return async ({ letter, requestKey, guestPassword }: ContributionRequestVariables) => {
+    const [photoUrl, voiceUrl] = await uploadAttachments(letter);
     return {
       ...toMessageContributionRequest(letter, { requestKey, guestPassword }),
       photoUrl,

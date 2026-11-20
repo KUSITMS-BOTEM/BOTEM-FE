@@ -33,6 +33,13 @@ type Options = {
   guestPassword?: string;
 };
 
+// 생성·수정이 같은 편지 본문 필드를 보낸다
+export const toLetterFields = (letter: LetterInput) => ({
+  message: letter.text,
+  paperTemplateCode: `${letter.color.toUpperCase()}_${PAPER_STYLE_CODE[letter.paperStyle]}`,
+  decorationCode: toDecorationCode(letter),
+});
+
 // 사진·음성 URL은 업로드 뒤에 채우므로 여기서는 다루지 않는다
 export function toMessageContributionRequest(
   letter: LetterInput,
@@ -40,9 +47,7 @@ export function toMessageContributionRequest(
 ): CreateMessageContributionRequest {
   return {
     requestKey,
-    message: letter.text,
-    paperTemplateCode: `${letter.color.toUpperCase()}_${PAPER_STYLE_CODE[letter.paperStyle]}`,
-    decorationCode: toDecorationCode(letter),
+    ...toLetterFields(letter),
     ...(guestPassword !== undefined && { participantName: letter.name, guestPassword }),
   };
 }

@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
@@ -18,16 +16,8 @@ import { useShareLink } from "@/hooks/useShareLink";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
-import { useAccessGuestContributionMutation } from "@/hooks/mutations/contribution/useAccessGuestContributionMutation";
-import { useCreateContributionMutation } from "@/hooks/mutations/contribution/useCreateContributionMutation";
-import { useCreateMessageContributionMutation } from "@/hooks/mutations/contribution/useCreateMessageContributionMutation";
-import { useMarkTransferSentMutation } from "@/hooks/mutations/contribution/useMarkTransferSentMutation";
-import { useMyContributionsQuery } from "@/hooks/queries/contribution/useMyContributionsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
-import { DEFAULT_ERROR_MESSAGE, ERROR_MESSAGES } from "@/constants/errorMessages";
-import { ApiError } from "@/types/api";
 import { useGuestBotemStore } from "@/store/guestBotemStore";
-import { toMyBotemSheetFriends } from "@/utils/funding/toMyBotemSheetFriends";
 import { handleKakaoLoginClick } from "@/utils/auth/handleKakaoLoginClick";
 import { getShareReturnPath, type ShareMemberIntent } from "@/utils/funding/shareMemberIntent";
 import { cn } from "@/utils/cn";
@@ -38,6 +28,8 @@ import { toOwnerFundingView } from "@/utils/funding/toOwnerFundingView";
 import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
 import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
 import BotemPopup, { type BotemPopupFriend } from "@/widgets/funding/BotemPopup";
+import { useContributionFlow } from "@/widgets/funding/useContributionFlow";
+import { useMyBotem } from "@/widgets/funding/useMyBotem";
 import MyBotemSheet from "@/widgets/funding/MyBotemSheet";
 import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
@@ -46,9 +38,7 @@ import FundingMessage from "@/widgets/funding/FundingMessage";
 import FundingMoreFlow from "@/widgets/funding/FundingMoreFlow";
 import FundingPasswordSheet from "@/widgets/funding/FundingPasswordSheet";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
-import FundingTransferGuideSheet, {
-  type FundingTransferAccount,
-} from "@/widgets/funding/FundingTransferGuideSheet";
+import FundingTransferGuideSheet from "@/widgets/funding/FundingTransferGuideSheet";
 import ThankCardSheet from "@/widgets/funding/ThankCardSheet";
 import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
 import IconShare from "@/assets/icons/icon-share.svg?react";
@@ -139,7 +129,6 @@ export default function FundingDetailView({
   isLoggedIn = false,
   ...source
 }: FundingDetailViewProps) {
-  const router = useRouter();
   const { pageExit, exitPage } = usePageExit();
   const { toast, copyLink } = useShareLink();
   const { profiles, ...view } = source.ownerDetail
@@ -157,44 +146,27 @@ export default function FundingDetailView({
   const [memberCheckFrom, setMemberCheckFrom] = useState<ShareMemberIntent | null>(null);
   const { mutate: requestKakaoLogin } = useKakaoLoginUriMutation();
   const [isGuestFindOpen, setIsGuestFindOpen] = useState(false);
-  const accessGuest = useAccessGuestContributionMutation(shareKey);
-  const guestFindError = accessGuest.error
-    ? (accessGuest.error instanceof ApiError && ERROR_MESSAGES[accessGuest.error.code]?.message) ||
-      DEFAULT_ERROR_MESSAGE.message
-    : undefined;
   const isMember = memberIntent !== undefined || isLoggedIn;
   // 비회원이 '보태러가기'에서 확인을 마치거나 회원이 보태러가기로 돌아오면 하단이 '메시지 보태기'/'보태기'로 바뀐다
   const [isContributeReady, setIsContributeReady] = useState(memberIntent === "contribute");
-  // 이 펀딩에서 이름·비밀번호(비회원)나 로그인(회원)으로 내 보탬을 확인하고 나면 하단은 '내 보탬 확인' 버튼만 남는다
-  const hasGuestIdentity = useGuestBotemStore(state => state.shareKey === shareKey);
-  // 회원은 서버가 이 펀딩에 보탠 내역이 있는지 알려준다. 비로그인 화면에서는 401이 나가지 않도록 조회하지 않는다
-  const myContributions = useMyContributionsQuery(shareKey, isGuest && isMember);
-  const memberHasBotem = myContributions.data && myContributions.data.contributions.length > 0;
-  const memberHasNoBotem = myContributions.data && myContributions.data.contributions.length === 0;
-  // 회원 조회가 끝나기 전에는 하단 버튼을 정할 수 없어 비워 둔다. 조회에 실패하면 두 버튼을 보여주고 중복은 서버가 막는다
-  const isCheckingMember = isGuest && isMember && myContributions.isPending;
-  const hasConfirmedMyBotem = hasGuestIdentity || !!memberHasBotem;
-  // 내 보탬 시트: 회원은 내 보탬 조회, 비회원은 본인 확인 응답과 입력한 이름으로 내 보탬을 찾는다
-  const guestName = useGuestBotemStore(state => (hasGuestIdentity ? state.name : null));
-  const myStatuses = isMember
-    ? (myContributions.data?.contributions.map(({ status }) => status) ?? [])
-    : accessGuest.data
-      ? [accessGuest.data.status]
-      : [];
-  // 개설자가 '받았어요'를 누르기 전(확인 대기)이거나 '못 받았어요'를 누른 보탬이 미확인이다. 송금 전·메시지만 보낸 보탬은 세지 않는다
-  const myUnconfirmedCount = myStatuses.filter(
-    status => status === "PENDING_CONFIRMATION" || status === "REJECTED",
-  ).length;
-  const myBotemFriends = toMyBotemSheetFriends({
+  const {
+    accessGuest,
+    guestFindError,
+    myContributions,
+    memberHasNoBotem,
+    isCheckingMember,
+    hasConfirmedMyBotem,
+    myUnconfirmedCount,
+    myBotemFriends,
+    showNoBotemNotice,
+    closeNoBotemNotice,
+  } = useMyBotem({
+    shareKey,
+    isGuest,
+    isMember,
+    memberIntent,
     participants: source.detail?.participants ?? [],
-    myName: isMember ? myContributions.data?.contributions[0]?.participantName : guestName,
-    hasUnconfirmed: myUnconfirmedCount > 0,
-    isRejected: myStatuses.includes("REJECTED"),
   });
-  // 보탠 내역이 없는 회원이 '내 보탬 확인'으로 돌아오면 안내만 하고 시트는 열지 않는다
-  const [isNoBotemNoticeClosed, setIsNoBotemNoticeClosed] = useState(false);
-  const showNoBotemNotice =
-    memberIntent === "myBotem" && !!memberHasNoBotem && !isNoBotemNoticeClosed;
   // 비회원 화면에서는 401 요청이 나가지 않도록 로그인 복귀한 회원일 때만 조회한다
   const { data: profile } = useMyProfileQuery(isMember);
   const memberName = profile?.name ?? undefined;
@@ -207,106 +179,39 @@ export default function FundingDetailView({
     if (memberIntent === "myBotem") window.history.replaceState(null, "", window.location.pathname);
   }, [memberIntent]);
   const showExtendedToast = useFundingExtendToast();
-  const [isMemberGuideOpen, setIsMemberGuideOpen] = useState(false);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
-  const [isContributeOpen, setIsContributeOpen] = useState(false);
-  const [isLetterOpen, setIsLetterOpen] = useState(false);
-  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [thankCardFriend, setThankCardFriend] = useState<BotemPopupFriend | null>(null);
-  const contributeAmount = useFundingContributionStore(state => state.amount);
-  const { setAmount, setLetter, setPassword, reset } = useFundingContributionStore.getState();
-  const [isExitOpen, setIsExitOpen] = useState(false);
-  // 메시지 보태기는 금액·송금 없이 편지 → 비밀번호만 거친다
-  const [isMessageOnly, setIsMessageOnly] = useState(false);
-  // 올리면 금액·편지 시트가 새로 마운트되어 입력값이 모두 초기화된다
-  const [flowKey, setFlowKey] = useState(0);
-  const createMessage = useCreateMessageContributionMutation(shareKey);
-  const createContribution = useCreateContributionMutation(shareKey);
-  const markTransferSent = useMarkTransferSentMutation(shareKey);
-  const isSubmitting = createMessage.isPending || createContribution.isPending;
-  // 금액 보태기를 저장한 응답. 송금 안내 시트의 계좌와 송금 확인 호출에 쓴다
-  const [submitted, setSubmitted] = useState<{
-    contributionId: number;
-    account: FundingTransferAccount;
-  } | null>(null);
-  // 같은 플로우에서 실패 후 재시도하면 같은 키로 보내 서버가 중복 참여를 만들지 않게 한다. 금액이 바뀌면 새로 만든다
-  const requestKeyRef = useRef("");
   const closePopup = () => setIsPopupOpen(false);
-  const requestExit = () => setIsExitOpen(true);
-  // 보태기를 마치면 돌아왔을 때 하단이 '내 보탬 확인'이 되도록 이 펀딩의 본인 확인을 기록한다 (회원은 비밀번호가 없다)
-  const goToComplete = (password = "") => {
-    const name = useFundingContributionStore.getState().letter?.name ?? "";
-    useGuestBotemStore.getState().setIdentity(shareKey, name, password);
-    router.replace(`/share/${shareKey}/complete`);
-  };
-
-  // 뒤로가기 등으로 플로우를 중간에 떠나 남은 값이 있으면 비우고 시작한다
-  const startMessage = () => {
-    reset();
-    requestKeyRef.current = crypto.randomUUID();
-    setIsMessageOnly(true);
-    setIsLetterOpen(true);
-  };
-  const startContribute = () => {
-    reset();
-    setIsMessageOnly(false);
-    setIsContributeOpen(true);
-  };
-
-  // 편지를 서버에 제출한다. 메시지 보태기는 바로 완료 화면으로, 금액 보태기는 응답 계좌로 송금 안내를 연다. 회원은 비밀번호 없이 보낸다
-  const submitContribution = (password?: string) => {
-    const { letter, amount } = useFundingContributionStore.getState();
-    if (!letter) return;
-    const variables = { letter, requestKey: requestKeyRef.current, guestPassword: password };
-    // 이름이 겹치면 비밀번호 시트를 닫아 편지 시트에서 이름을 고치게 한다
-    const onError = (error: Error) => {
-      if (error instanceof ApiError && error.code === "FUNDING_032") setIsPasswordOpen(false);
-    };
-    if (isMessageOnly) {
-      createMessage.mutate(variables, { onSuccess: () => goToComplete(password), onError });
-      return;
-    }
-    createContribution.mutate(
-      { ...variables, amount },
-      {
-        onSuccess: response => {
-          // 계좌 없이는 송금 안내를 열 수 없다
-          if (!response) return;
-          const { contributionId, payoutAccount } = response;
-          setSubmitted({
-            contributionId,
-            account: { ...payoutAccount, accountHolder: payoutAccount.accountHolder ?? "" },
-          });
-          setIsMemberGuideOpen(true);
-        },
-        onError,
-      },
-    );
-  };
-
-  // 송금했다고 서버에 알리고 성공하면 완료 화면으로 간다. 실패하면 reject해 시트가 다시 누를 수 있게 한다
-  const completeTransfer = async () => {
-    if (!submitted) return;
-    const password = isMember ? undefined : useFundingContributionStore.getState().password;
-    await markTransferSent.mutateAsync({
-      contributionId: submitted.contributionId,
-      guestPassword: password,
-    });
-    goToComplete(password);
-  };
-
-  // 보태기 플로우에서 입력한 값을 모두 버리고 열려 있는 시트를 닫는다
-  const handleExitConfirm = () => {
-    setIsExitOpen(false);
-    setIsContributeOpen(false);
-    setIsLetterOpen(false);
-    setIsPasswordOpen(false);
-    setIsMemberGuideOpen(false);
-    reset();
-    setFlowKey(key => key + 1);
-  };
+  const {
+    isMemberGuideOpen,
+    setIsMemberGuideOpen,
+    isContributeOpen,
+    setIsContributeOpen,
+    isLetterOpen,
+    setIsLetterOpen,
+    isPasswordOpen,
+    setIsPasswordOpen,
+    isExitOpen,
+    isMessageOnly,
+    setIsExitOpen,
+    flowKey,
+    contributeAmount,
+    setAmount,
+    setLetter,
+    setPassword,
+    isSubmitting,
+    markTransferSent,
+    submitted,
+    requestKeyRef,
+    requestExit,
+    startMessage,
+    startContribute,
+    submitContribution,
+    completeTransfer,
+    handleExitConfirm,
+  } = useContributionFlow({ shareKey, isMember });
   // 서버가 남은 금액을 주지 않아 목표 금액에서 확정·확인 대기 달성률을 뺀 값으로 근사한다 (서버가 최종 검증)
   const remainingAmount = Math.max(
     0,
@@ -477,7 +382,7 @@ export default function FundingDetailView({
           kind="alert"
           open={showNoBotemNotice}
           title="이 펀딩에 보탠 내역이 없어요"
-          onConfirm={() => setIsNoBotemNoticeClosed(true)}
+          onConfirm={() => closeNoBotemNotice()}
         />
         <Dialog
           kind="confirm"
