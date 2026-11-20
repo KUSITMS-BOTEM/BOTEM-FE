@@ -25,9 +25,9 @@ export const FUNDING_DETAIL: FundingDetailResponse = {
   pendingPercentage: 0,
   participantCount: 3,
   participants: [
-    { order: 1, name: "하린이", profileImageUrl: null },
-    { order: 2, name: "도윤이", profileImageUrl: null },
-    { order: 3, name: "서준이", profileImageUrl: null },
+    { order: 1, name: "하린이", profileImageUrl: null, participatedAt: "2026-11-10T09:00:00" },
+    { order: 2, name: "도윤이", profileImageUrl: null, participatedAt: "2026-11-12T18:30:00" },
+    { order: 3, name: "서준이", profileImageUrl: null, participatedAt: "2026-11-15T21:10:00" },
   ],
   displayStatus: "IN_PROGRESS",
   canContributeAmount: true,

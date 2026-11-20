@@ -14,6 +14,8 @@ export type FundingDetailParticipant = {
   order: number;
   name: string;
   profileImageUrl: string | null;
+  // TODO(API): 백엔드에 추가를 요청한 필드라 Swagger에는 아직 없다. 이름이 다르면 맞출 것
+  participatedAt: string;
 };
 
 // TODO(API): Swagger에 giftVerification·thankCard 하위 스키마가 없어 API 설명 문구 기준으로 추정한 필드다. BE 스펙이 나오면 맞출 것

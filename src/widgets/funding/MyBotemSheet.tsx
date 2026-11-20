@@ -13,6 +13,8 @@ export type MyBotemSheetFriend = BotemPopupFriend & {
   isMine?: boolean;
   // 개설자가 이 보탬을 확인했는지. 내 보탬이면서 false일 때만 안내 문구를 띄운다
   isConfirmed?: boolean;
+  // 개설자가 '못 받았어요'를 눌러 입금을 못 받았다고 한 보탬. 있으면 '아직 확인하지 않았어요' 대신 이 상태를 보여준다
+  isRejected?: boolean;
 };
 
 type MyBotemSheetProps = {
@@ -109,7 +111,7 @@ export default function MyBotemSheet({
                       </span>
                       {friend.isMine && friend.isConfirmed === false && (
                         <span className="text-semantic-text-tertiary truncate [font:var(--semantic-subtext-small)]">
-                          아직 확인하지 않았어요
+                          {friend.isRejected ? "못 받았대요" : "아직 확인하지 않았어요"}
                         </span>
                       )}
                     </div>

@@ -52,14 +52,19 @@ vi.mock("@/hooks/mutations/contribution/useAccessGuestContributionMutation", asy
   return {
     useAccessGuestContributionMutation: () => {
       const [error, setError] = useState<Error | null>(null);
+      const [data, setData] = useState<{ status: string } | undefined>();
       return {
         error,
+        data,
         isPending: false,
         reset: () => setError(null),
         mutate: (body: unknown, options?: { onSuccess?: () => void }) => {
           accessGuestMock(body);
           if (accessGuestFailure) setError(accessGuestFailure);
-          else options?.onSuccess?.();
+          else {
+            setData({ status: "PENDING_CONFIRMATION" });
+            options?.onSuccess?.();
+          }
         },
       };
     },
@@ -402,13 +407,22 @@ describe("FundingDetailView", () => {
 
     it("시트에서 내 보탬이 맨 위에 '내 보탬' 라벨과 미확인 안내와 함께 보인다", async () => {
       const user = userEvent.setup();
-      render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+      const detail = {
+        ...DETAIL,
+        participants: [
+          ...DETAIL.participants,
+          { order: 4, name: "민지", profileImageUrl: null, participatedAt: "2026-11-16T10:00:00" },
+        ],
+      };
+      render(<FundingDetailView detail={detail} fundingId="1" />);
       await confirmGuestMyBotem(user);
 
       const sheet = await screen.findByRole("dialog", { name: "내 보탬 확인" });
 
-      expect(sheet).toHaveTextContent("내 보탬서연");
+      expect(sheet).toHaveTextContent("내 보탬민지");
+      expect(sheet).toHaveTextContent("내 보탬 · 미확인 1개");
       expect(sheet).toHaveTextContent("아직 확인하지 않았어요");
+      expect(sheet).toHaveTextContent("2026.11.16");
       expect(screen.queryByRole("button", { name: "메세지 보태기" })).not.toBeInTheDocument();
     });
 

@@ -56,6 +56,24 @@ describe("MyBotemSheet", () => {
     expect(screen.getByText("아직 확인하지 않았어요")).toBeInTheDocument();
   });
 
+  it("개설자가 못 받았다고 한 내 보탬은 '못 받았대요'를 보여준다", () => {
+    renderSheet({
+      friends: [
+        {
+          id: 2,
+          name: "이동현",
+          contributedAt: "2026-10-13T09:00:00",
+          isMine: true,
+          isConfirmed: false,
+          isRejected: true,
+        },
+      ],
+    });
+
+    expect(screen.getByText("못 받았대요")).toBeInTheDocument();
+    expect(screen.queryByText("아직 확인하지 않았어요")).not.toBeInTheDocument();
+  });
+
   it("내 보탬을 확인했으면 안내 문구를 보여주지 않는다", () => {
     renderSheet({
       friends: [

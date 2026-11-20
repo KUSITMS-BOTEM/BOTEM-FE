@@ -27,6 +27,7 @@ import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { DEFAULT_ERROR_MESSAGE, ERROR_MESSAGES } from "@/constants/errorMessages";
 import { ApiError } from "@/types/api";
 import { useGuestBotemStore } from "@/store/guestBotemStore";
+import { toMyBotemSheetFriends } from "@/utils/funding/toMyBotemSheetFriends";
 import { handleKakaoLoginClick } from "@/utils/auth/handleKakaoLoginClick";
 import { getShareReturnPath, type ShareMemberIntent } from "@/utils/funding/shareMemberIntent";
 import { cn } from "@/utils/cn";
@@ -37,7 +38,7 @@ import { toOwnerFundingView } from "@/utils/funding/toOwnerFundingView";
 import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
 import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
 import BotemPopup from "@/widgets/funding/BotemPopup";
-import MyBotemSheet, { type MyBotemSheetFriend } from "@/widgets/funding/MyBotemSheet";
+import MyBotemSheet from "@/widgets/funding/MyBotemSheet";
 import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
 import FundingGiftProofView from "@/widgets/funding/FundingGiftProofView";
@@ -94,11 +95,8 @@ const MOCK_FUNDING = {
       name: "서연",
       contributedAt: "2026-11-12T18:30:00",
       thankCardSent: true,
-      // TODO(API): 참여자 화면의 '내 보탬'(isMine)·개설자 확인 여부(isConfirmed)를 내 보탬 조회 API 값으로 교체한다
-      isMine: true,
-      isConfirmed: false,
     },
-  ] satisfies MyBotemSheetFriend[],
+  ],
 };
 
 // 공유용 상세 응답에는 금액이 없고 달성률만 있어, 화면이 쓰는 모양으로 옮겨 담는다
@@ -175,6 +173,23 @@ export default function FundingDetailView({
   // 회원 조회가 끝나기 전에는 하단 버튼을 정할 수 없어 비워 둔다. 조회에 실패하면 두 버튼을 보여주고 중복은 서버가 막는다
   const isCheckingMember = isGuest && isMember && myContributions.isPending;
   const hasConfirmedMyBotem = hasGuestIdentity || !!memberHasBotem;
+  // 내 보탬 시트: 회원은 내 보탬 조회, 비회원은 본인 확인 응답과 입력한 이름으로 내 보탬을 찾는다
+  const guestName = useGuestBotemStore(state => (hasGuestIdentity ? state.name : null));
+  const myStatuses = isMember
+    ? (myContributions.data?.contributions.map(({ status }) => status) ?? [])
+    : accessGuest.data
+      ? [accessGuest.data.status]
+      : [];
+  // 개설자가 '받았어요'를 누르기 전(확인 대기)이거나 '못 받았어요'를 누른 보탬이 미확인이다. 송금 전·메시지만 보낸 보탬은 세지 않는다
+  const myUnconfirmedCount = myStatuses.filter(
+    status => status === "PENDING_CONFIRMATION" || status === "REJECTED",
+  ).length;
+  const myBotemFriends = toMyBotemSheetFriends({
+    participants: source.detail?.participants ?? [],
+    myName: isMember ? myContributions.data?.contributions[0]?.participantName : guestName,
+    hasUnconfirmed: myUnconfirmedCount > 0,
+    isRejected: myStatuses.includes("REJECTED"),
+  });
   // 보탠 내역이 없는 회원이 '내 보탬 확인'으로 돌아오면 안내만 하고 시트는 열지 않는다
   const [isNoBotemNoticeClosed, setIsNoBotemNoticeClosed] = useState(false);
   const showNoBotemNotice =
@@ -482,8 +497,8 @@ export default function FundingDetailView({
         {isGuest ? (
           <MyBotemSheet
             open={isPopupOpen && hasConfirmedMyBotem}
-            unconfirmedCount={unconfirmedCount}
-            friends={funding.friends}
+            unconfirmedCount={myUnconfirmedCount}
+            friends={myBotemFriends}
             ownerName={funding.hostName}
             isClosed={isClosed}
             onClose={closePopup}
