@@ -28,7 +28,7 @@ export default function FundingOriginalGiftSheet({
         title={`총 ${formatWon(collectedAmount)}이 모였어요`}
         description="확정된 금액 기준이에요"
       />
-      <div className="flex flex-col gap-1">
+      <div className="flex w-full flex-col gap-1 pb-8">
         {shortfall > 0 && (
           <InfoBox
             icon={<IconFundingOpen aria-hidden />}

@@ -67,6 +67,7 @@ export default function FundingGiftChangeWishContainer() {
         sellerName={wish.sellerName}
         onBack={backToResult}
         ctaLabel={isChanged ? "쿠팡에서 선물 사러 가기" : "이 선물로 변경하기"}
+        ctaColor={isChanged ? "brand" : "neutral"}
         ctaPending={changeMutation.isPending}
         ctaDisabled={changeMutation.isPending}
         onCtaClick={isChanged ? handleBuy : () => changeMutation.mutate(wish.id)}
