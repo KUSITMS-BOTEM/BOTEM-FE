@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { delay, http, HttpResponse } from "msw";
 
+import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
 import type { ClosedFundingListResponse } from "@/types/funding/closedFunding";
 import type {
   FundingManagementResponse,
@@ -75,32 +76,52 @@ const getMockResult = (fundingId: number): FundingResultResponse =>
     contributions: [],
   };
 
+// 상품 변경·기간 연장 요청이 바꾼 값. 재조회한 관리 상세에 반영된다
+const mockFundingOverrides: Record<
+  number,
+  Partial<Pick<FundingManagementResponse, "product" | "productChangedAt" | "deadline">>
+> = {};
+
+// 위시 목(wishService.msw)과 같은 id 체계라 wishId로 추천 상품 목을 찾아 펀딩 상품 스냅샷을 만든다
+const toFundingProduct = (wishId: number): FundingManagementResponse["product"] | null => {
+  const product = MOCK_RECOMMENDED_PRODUCTS.find(item => item.id === wishId);
+  if (!product) return null;
+  return {
+    name: product.name,
+    imageUrl: product.imageUrl,
+    price: product.price,
+    url: "https://link.coupang.com/a/example",
+  };
+};
+
 // 결과 화면이 쓰는 상품·마감일·연장 가능 여부를 위해 결과 mock과 같은 펀딩으로 맞춘다
 const getMockManagement = (fundingId: number): FundingManagementResponse => {
   const result = getMockResult(fundingId);
+  const override = mockFundingOverrides[fundingId] ?? {};
+  const extended = override.deadline !== undefined;
   return {
     fundingId,
     type: "BIRTHDAY",
     title: null,
     story: "올해 생일에는 오래 사용한 헤드폰을 바꾸고 싶어요.",
     promise: null,
-    product: {
+    product: override.product ?? {
       name: result.productName,
       imageUrl: result.productImageUrl,
       price: result.targetAmount,
       url: "https://www.coupang.com/vp/products/7334036476",
     },
-    productChanged: false,
-    productChangedAt: null,
+    productChanged: override.productChangedAt !== undefined,
+    productChangedAt: override.productChangedAt ?? null,
     targetAmount: result.targetAmount,
-    deadline: "2026-11-13T23:59:59.999999",
+    deadline: override.deadline ?? "2026-11-13T23:59:59.999999",
     revealAt: null,
     remainingDays: null,
     confirmedPercentage: result.achievementPercentage,
     pendingPercentage: 0,
     pendingContributionCount: 0,
     targetReached: result.targetReached,
-    extended: false,
+    extended,
     earlyClosedAt: null,
     giftPreparedAt: null,
     participantCount: result.participantCount,
@@ -110,7 +131,7 @@ const getMockManagement = (fundingId: number): FundingManagementResponse => {
     actions: {
       canCloseEarly: false,
       // 생일 펀딩이 마감 후 목표에 못 미쳤고 연장한 적이 없을 때만 연장할 수 있다
-      canExtend: !result.targetReached,
+      canExtend: !result.targetReached && !extended,
       canChangeProduct: false,
       canReissueShareCard: false,
     },
@@ -177,6 +198,52 @@ export const fundingHandlers = [
       resultOpenedAt: "2026-11-15T00:00:00",
     };
     return HttpResponse.json({ success: true, data, error: null });
+  }),
+  // 버튼 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다. 실서버는 마감 후 변경을 409(FUNDING_043)로 막는다
+  http.patch("*/api/fundings/:fundingId/product", async ({ params, request }) => {
+    await delay(800);
+    const fundingId = Number(params.fundingId);
+    const { wishId } = (await request.json()) as { wishId: number };
+    const product = toFundingProduct(wishId);
+    if (!product) {
+      return HttpResponse.json(
+        {
+          success: false,
+          data: null,
+          error: { code: "WISH_002", message: "위시를 찾을 수 없습니다.", detail: null },
+        },
+        { status: 404 },
+      );
+    }
+    const productChangedAt = new Date().toISOString();
+    mockFundingOverrides[fundingId] = {
+      ...mockFundingOverrides[fundingId],
+      product,
+      productChangedAt,
+    };
+    return HttpResponse.json({
+      success: true,
+      data: { fundingId, product, productChangedAt },
+      error: null,
+    });
+  }),
+  http.post("*/api/fundings/:fundingId/extension", async ({ params, request }) => {
+    await delay(800);
+    const fundingId = Number(params.fundingId);
+    const { newDeadline } = (await request.json()) as { newDeadline: string };
+    const deadline = `${newDeadline}T23:59:59.999999`;
+    mockFundingOverrides[fundingId] = { ...mockFundingOverrides[fundingId], deadline };
+    return HttpResponse.json({
+      success: true,
+      data: {
+        fundingId,
+        status: "FUNDING",
+        deadline,
+        extensionCount: 1,
+        extendedAt: new Date().toISOString(),
+      },
+      error: null,
+    });
   }),
   // 확인 시트의 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다
   http.post("*/api/fundings", async () => {

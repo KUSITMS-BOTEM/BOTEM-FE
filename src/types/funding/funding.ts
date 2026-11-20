@@ -117,3 +117,26 @@ export type FundingManagementResponse = {
     canReissueShareCard: boolean;
   };
 };
+
+export type ChangeFundingProductRequest = {
+  wishId: number;
+};
+
+export type ChangeFundingProductResponse = {
+  fundingId: number;
+  product: FundingManagementResponse["product"];
+  productChangedAt: string | null;
+};
+
+export type ExtendFundingRequest = {
+  // "YYYY-MM-DD"
+  newDeadline: string;
+};
+
+export type ExtendFundingResponse = {
+  fundingId: number;
+  status: string;
+  deadline: string;
+  extensionCount: number;
+  extendedAt: string;
+};

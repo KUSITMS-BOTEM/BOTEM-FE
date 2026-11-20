@@ -6,6 +6,7 @@ vi.mock("@/apis/client", () => ({
   clientApi: {
     get: vi.fn(),
     post: vi.fn(),
+    patch: vi.fn(),
   },
 }));
 
@@ -102,5 +103,27 @@ describe("fundingService.postFunding", () => {
     vi.mocked(clientApi.post).mockRejectedValue(error);
 
     await expect(fundingService.postFunding(body)).rejects.toBe(error);
+  });
+});
+
+describe("fundingService.patchProduct", () => {
+  it("clientApi.patch를 product 경로와 위시 id로 호출한다", async () => {
+    vi.mocked(clientApi.patch).mockResolvedValue(null);
+
+    await fundingService.patchProduct(12, { wishId: 3 });
+
+    expect(clientApi.patch).toHaveBeenCalledWith("/api/fundings/12/product", { wishId: 3 });
+  });
+});
+
+describe("fundingService.postExtension", () => {
+  it("clientApi.post를 extension 경로와 새 마감일로 호출한다", async () => {
+    vi.mocked(clientApi.post).mockResolvedValue(null);
+
+    await fundingService.postExtension(12, { newDeadline: "2026-11-30" });
+
+    expect(clientApi.post).toHaveBeenCalledWith("/api/fundings/12/extension", {
+      newDeadline: "2026-11-30",
+    });
   });
 });
