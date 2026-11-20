@@ -91,6 +91,6 @@ describe("FundingDetailLoader", () => {
     render(<FundingDetailLoader fundingId="1" isLoggedIn />);
 
     expect(replace).not.toHaveBeenCalled();
-    expect(screen.getByRole("heading", { level: 1, name: "민재의 생일" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "민재의 펀딩" })).toBeInTheDocument();
   });
 });

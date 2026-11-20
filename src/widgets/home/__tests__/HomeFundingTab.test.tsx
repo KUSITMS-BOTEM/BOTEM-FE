@@ -129,7 +129,7 @@ describe("HomeFundingTab", () => {
     renderTab();
 
     expect(screen.getByText("작은 보탬들이 차곡차곡 쌓이고 있어요")).toBeInTheDocument();
-    expect(screen.getByText("지유님의 생일 펀딩")).toBeInTheDocument();
+    expect(screen.getByText("지유님의 펀딩")).toBeInTheDocument();
     expect(useHomeNoFundingQuery).toHaveBeenCalledWith({ enabled: false });
   });
 
@@ -180,7 +180,7 @@ describe("HomeFundingTab", () => {
 
     renderTab();
 
-    expect(screen.getByText("지유님의 생일 펀딩")).toBeInTheDocument();
+    expect(screen.getByText("지유님의 펀딩")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "다시 시도" })).not.toBeInTheDocument();
   });
 
@@ -189,7 +189,7 @@ describe("HomeFundingTab", () => {
 
     renderTab();
 
-    expect(screen.getByText("지유님의 생일 펀딩")).toBeInTheDocument();
+    expect(screen.getByText("지유님의 펀딩")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "다시 시도" })).not.toBeInTheDocument();
   });
 
@@ -221,7 +221,7 @@ describe("HomeFundingTab", () => {
 
     renderTab();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
 
     expect(screen.getByRole("dialog")).toHaveTextContent("입금 확인 42");
   });
@@ -235,7 +235,7 @@ describe("HomeFundingTab", () => {
     });
 
     renderTab();
-    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
     await userEvent.click(screen.getByRole("button", { name: "팡! 열어보기" }));
 
     expect(fundingService.getResult).toHaveBeenCalledWith(42);
@@ -246,7 +246,7 @@ describe("HomeFundingTab", () => {
     mockQueries({ data: fundingList([fundingCard]) });
 
     renderTab();
-    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
 
     expect(push).toHaveBeenCalledWith("/funding/1");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -260,7 +260,7 @@ describe("HomeFundingTab", () => {
     });
 
     renderTab();
-    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
 
     expect(fundingService.getResult).toHaveBeenCalledWith(42);
     await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
@@ -289,7 +289,7 @@ describe("HomeFundingTab", () => {
     });
 
     renderTab();
-    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
 
     expect(fundingService.getResult).toHaveBeenCalledWith(42);
     expect(push).not.toHaveBeenCalled();
@@ -314,7 +314,7 @@ describe("HomeFundingTab", () => {
     });
 
     renderTab();
-    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
     expect(push).not.toHaveBeenCalled();
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"), {
@@ -344,7 +344,7 @@ describe("HomeFundingTab", () => {
     });
 
     const { unmount } = renderTab();
-    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
     unmount();
     resolveReveal(null);
     await new Promise(resolve => setTimeout(resolve, 0));
@@ -374,7 +374,7 @@ describe("HomeFundingTab", () => {
     });
 
     renderTab();
-    const card = screen.getByRole("button", { name: "지유님의 생일 펀딩" });
+    const card = screen.getByRole("button", { name: "지유님의 펀딩" });
     await userEvent.click(card);
     await userEvent.click(card);
     resolveResult(null);
@@ -397,7 +397,7 @@ describe("HomeFundingTab", () => {
     });
 
     renderTab();
-    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -420,7 +420,7 @@ describe("HomeFundingTab", () => {
     });
 
     renderTab();
-    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
     expect(push).not.toHaveBeenCalledWith("/funding/42");

@@ -1,6 +1,5 @@
 import type { Color } from "@/constants/color";
 import type {
-  FundingType,
   HomeFundingCardResponse,
   HomeFundingParticipantPreviewResponse,
 } from "@/types/home/home";
@@ -8,11 +7,6 @@ import { isValidUrl } from "@/utils/isValidUrl";
 import type { FundingCardType } from "@/widgets/home/FundingCard";
 import type { FundingCardData } from "@/widgets/home/FundingCardCarousel";
 import type { ProfileBoxItem } from "@/components/ProfileBox";
-
-const FUNDING_TYPE_LABEL: Record<FundingType, string> = {
-  BIRTHDAY: "생일",
-  SURPRISE: "서프라이즈",
-};
 
 // 미리보기 응답에 참여자 id가 없어 순서로 색을 정한다 (Figma 순서)
 const PARTICIPANT_COLORS: Color[] = ["orange", "lime", "pink", "blue"];
@@ -51,7 +45,7 @@ export function toFundingCardData(
   return {
     id: card.fundingId,
     type,
-    title: `${nickname}님의 ${FUNDING_TYPE_LABEL[card.fundingType]} 펀딩`,
+    title: `${nickname}님의 펀딩`,
     productName: card.productName,
     productImageUrl: card.productImageUrl,
     // 조기 완료는 확인 대기가 없어 대기 비율이 0이므로 목표에 닿은 전체 달성률을 보여준다

@@ -230,7 +230,7 @@ describe("FundingDetailView", () => {
   it("펀딩 제목과 하단 '내 보탬 확인'·'보태러가기' 버튼을 보여주고 프로필 묶음 버튼은 없다", () => {
     render(<FundingDetailView detail={DETAIL} fundingId="1" />);
 
-    expect(screen.getByRole("heading", { level: 1, name: "민재의 생일" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "민재의 펀딩" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "보태러 가기" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /나도 민재님께 보태볼까요\?/ })).toBeNull();

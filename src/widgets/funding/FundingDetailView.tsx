@@ -107,7 +107,7 @@ const MOCK_FUNDING = {
 // 공유용 상세 응답에는 금액이 없고 달성률만 있어, 화면이 쓰는 모양으로 옮겨 담는다
 const toShareFundingView = (detail: FundingDetailResponse) => ({
   hostName: detail.celebrantName,
-  title: detail.title ?? `${detail.celebrantName}의 생일`,
+  title: detail.title ?? `${detail.celebrantName}의 펀딩`,
   story: detail.story ?? undefined,
   pledge: detail.promise ?? undefined,
   productName: detail.product.name,
