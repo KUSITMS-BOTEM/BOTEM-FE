@@ -7,10 +7,10 @@ import { fundingService } from "@/apis/funding/fundingService";
 import { useOpenFundingResultMutation } from "@/hooks/mutations/funding/useOpenFundingResultMutation";
 import { fundingResultQueryKey } from "@/hooks/queries/funding/useFundingResultQuery";
 import { homeQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
-import type { FundingResultResponse } from "@/types/funding/funding";
+import type { FundingResultResponse } from "@/types/funding/fundingResult";
 
 vi.mock("@/apis/funding/fundingService", () => ({
-  fundingService: { postResultOpen: vi.fn() },
+  fundingService: { openResult: vi.fn() },
 }));
 
 const opened: FundingResultResponse = {
@@ -39,11 +39,11 @@ const createWrapper = () =>
 describe("useOpenFundingResultMutation", () => {
   beforeEach(() => {
     queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-    vi.mocked(fundingService.postResultOpen).mockReset();
+    vi.mocked(fundingService.openResult).mockReset();
   });
 
-  it("mutate 호출 시 postResultOpen을 펀딩 id로 호출한다", async () => {
-    vi.mocked(fundingService.postResultOpen).mockResolvedValue(opened);
+  it("mutate 호출 시 openResult을 펀딩 id로 호출한다", async () => {
+    vi.mocked(fundingService.openResult).mockResolvedValue(opened);
     const { result } = renderHook(() => useOpenFundingResultMutation(), {
       wrapper: createWrapper(),
     });
@@ -51,11 +51,11 @@ describe("useOpenFundingResultMutation", () => {
     result.current.mutate(12);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(vi.mocked(fundingService.postResultOpen).mock.calls[0]?.[0]).toBe(12);
+    expect(vi.mocked(fundingService.openResult).mock.calls[0]?.[0]).toBe(12);
   });
 
   it("성공하면 응답을 결과 조회 캐시에 바로 쓰고 홈 캐시를 무효화한다", async () => {
-    vi.mocked(fundingService.postResultOpen).mockResolvedValue(opened);
+    vi.mocked(fundingService.openResult).mockResolvedValue(opened);
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
     const { result } = renderHook(() => useOpenFundingResultMutation(), {
       wrapper: createWrapper(),
@@ -69,7 +69,7 @@ describe("useOpenFundingResultMutation", () => {
   });
 
   it("실패하면 결과 조회 캐시를 건드리지 않는다", async () => {
-    vi.mocked(fundingService.postResultOpen).mockRejectedValue(new Error("FUNDING_007"));
+    vi.mocked(fundingService.openResult).mockRejectedValue(new Error("FUNDING_007"));
     const { result } = renderHook(() => useOpenFundingResultMutation(), {
       wrapper: createWrapper(),
     });

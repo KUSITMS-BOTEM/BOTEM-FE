@@ -5,7 +5,7 @@ import { useExtendFundingMutation } from "@/hooks/mutations/funding/useExtendFun
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingExtendToastStore } from "@/store/fundingExtendToastStore";
 import { useGiftChangeStore } from "@/store/giftChangeStore";
-import type { FundingManagementResponse } from "@/types/funding/funding";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import FundingExtendFlow from "@/widgets/funding/FundingExtendFlow";
 
 const replace = vi.fn();
@@ -22,7 +22,7 @@ const extendMutate = vi.fn();
 // 시트는 마감일만 읽으므로 나머지 필드는 채우지 않는다
 const mockManagement = (deadline?: string) => {
   vi.mocked(useFundingManagementQuery).mockReturnValue({
-    data: deadline ? ({ deadline } as FundingManagementResponse) : undefined,
+    data: deadline ? ({ deadline } as OwnerFundingDetailResponse) : undefined,
   } as unknown as ReturnType<typeof useFundingManagementQuery>);
   vi.mocked(useExtendFundingMutation).mockReturnValue({
     mutate: extendMutate,

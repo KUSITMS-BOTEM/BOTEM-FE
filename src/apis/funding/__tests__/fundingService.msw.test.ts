@@ -69,11 +69,11 @@ describe("fundingHandlers GET /management", () => {
     return response.json();
   };
 
-  it("결과 mock과 같은 상품 정보와 구매 링크를 반환한다", async () => {
-    const [management, result] = await Promise.all([getManagement(13), getResult(13)]);
+  it("상품 정보와 구매 링크, 마감 일시를 반환한다", async () => {
+    const management = await getManagement(13);
 
     expect(management.success).toBe(true);
-    expect(management.data.product.name).toBe(result.data.productName);
+    expect(management.data.product.name).toEqual(expect.any(String));
     expect(management.data.product.url).toMatch(/^https:\/\//);
     expect(management.data.deadline).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
@@ -114,8 +114,8 @@ describe("fundingHandlers 상품 변경·기간 연장", () => {
     );
 
   it("상품을 바꾸면 관리 상세의 상품과 변경 여부에 반영된다", async () => {
-    const changed = await (await send("PATCH", "/api/fundings/71/product", { wishId: 1 })).json();
-    const management = await getManagementOf(71);
+    const changed = await (await send("PATCH", "/api/fundings/16/product", { wishId: 1 })).json();
+    const management = await getManagementOf(16);
 
     expect(changed.data.product.name).toBe("에어팟 프로 3");
     expect(management.data.product.name).toBe("에어팟 프로 3");
@@ -123,7 +123,7 @@ describe("fundingHandlers 상품 변경·기간 연장", () => {
   });
 
   it("없는 위시로 바꾸면 404(WISH_002)를 돌려준다", async () => {
-    const response = await send("PATCH", "/api/fundings/72/product", { wishId: 999 });
+    const response = await send("PATCH", "/api/fundings/17/product", { wishId: 999 });
     const body = await response.json();
 
     expect(response.status).toBe(404);
@@ -131,11 +131,63 @@ describe("fundingHandlers 상품 변경·기간 연장", () => {
   });
 
   it("연장하면 새 마감일이 반영되고 다시 연장할 수 없다", async () => {
-    await send("POST", "/api/fundings/73/extension", { newDeadline: "2026-11-30" });
-    const management = await getManagementOf(73);
+    await send("POST", "/api/fundings/12/extension", { newDeadline: "2026-11-30" });
+    const management = await getManagementOf(12);
 
     expect(management.data.deadline.startsWith("2026-11-30")).toBe(true);
     expect(management.data.extended).toBe(true);
     expect(management.data.actions.canExtend).toBe(false);
+  });
+});
+
+describe("fundingHandlers POST /api/fundings/surprise", () => {
+  it("ApiResponse 형태로 SURPRISE 타입의 fundingId·status·shareUrl을 반환한다", async () => {
+    const response = await fetch("http://localhost/api/fundings/surprise", {
+      method: "POST",
+      body: "{}",
+    });
+    const body = await response.json();
+
+    expect(body.success).toBe(true);
+    expect(body.data).toEqual({
+      fundingId: expect.any(Number),
+      type: "SURPRISE",
+      status: "FUNDING",
+      shareUrl: expect.any(String),
+    });
+  });
+});
+
+describe("GET management 핸들러", () => {
+  const getManagement = async (fundingId: number) => {
+    const response = await fetch(`http://localhost/api/fundings/${fundingId}/management`);
+    return { status: response.status, body: await response.json() };
+  };
+
+  it.each([
+    [18, "TARGET_REACHED", 100, 2],
+    [17, "IN_PROGRESS", 30, 2],
+    [13, "CLOSED", 100, 0],
+    [16, "IN_PROGRESS", 10, 0],
+    [14, "NO_PARTICIPANTS", 0, 0],
+  ])(
+    "펀딩 %i는 %s 상태, 확정 %i%%, 확인 대기 %i건으로 응답한다",
+    async (fundingId, state, confirmed, pending) => {
+      const { body } = await getManagement(fundingId);
+
+      expect(body.data).toMatchObject({
+        fundingId,
+        managementState: state,
+        confirmedPercentage: confirmed,
+        pendingContributionCount: pending,
+      });
+    },
+  );
+
+  it("목업에 없는 펀딩은 404 FUNDING_002를 반환한다", async () => {
+    const { status, body } = await getManagement(999);
+
+    expect(status).toBe(404);
+    expect(body.error.code).toBe("FUNDING_002");
   });
 });

@@ -1,4 +1,3 @@
-import type { ComponentProps } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -10,6 +9,11 @@ vi.mock("next/image", () => ({
     // eslint-disable-next-line @next/next/no-img-element
     <img alt={alt} src={src} />
   ),
+}));
+
+const saveNodeAsImageMock = vi.fn();
+vi.mock("@/utils/saveNodeAsImage", () => ({
+  saveNodeAsImage: (...args: unknown[]) => saveNodeAsImageMock(...args),
 }));
 
 let profileName: string | null = null;
@@ -27,12 +31,10 @@ const wish = {
   productImageUrl: "https://example.com/1.png",
   price: 468000,
 };
-const info = { targetAmount: "429000", deadline: "2099-11-13", story: "", pledge: "" };
+const info = { targetAmount: "429000", deadline: "2099-11-13" };
 
-const renderSheet = (
-  onClose = vi.fn(),
-  props: Partial<ComponentProps<typeof FundingOpenCompleteSheet>> = {},
-) =>
+// variant마다 받는 props가 달라(surprise: recipientName / funding: cardTitle) 덮어쓸 값은 느슨하게 받는다
+const renderSheet = (onClose = vi.fn(), props: Record<string, unknown> = {}) =>
   render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -42,6 +44,7 @@ const renderSheet = (
         recipientName="민지"
         wish={wish}
         info={info}
+        fundingId={1}
         onClose={onClose}
         {...props}
       />
@@ -107,8 +110,8 @@ describe("FundingOpenCompleteSheet", () => {
   });
 
   describe("funding variant", () => {
-    const renderFunding = (props: Partial<ComponentProps<typeof FundingOpenCompleteSheet>> = {}) =>
-      renderSheet(vi.fn(), { variant: "funding", ...props });
+    const renderFunding = (props: Record<string, unknown> = {}) =>
+      renderSheet(vi.fn(), { variant: "funding", cardTitle: "지유의 생일 펀딩", ...props });
 
     it("서프라이즈 안내 대신 '공유 카드 다시 받기' 제목을 보여준다", () => {
       mockProfile("지유");
@@ -133,35 +136,35 @@ describe("FundingOpenCompleteSheet", () => {
       expect(screen.queryByText(/달성/)).not.toBeInTheDocument();
     });
 
-    it("공유하기와 링크 복사 버튼을 함께 보여준다", () => {
+    it("하단 공유하기·링크 복사 버튼 대신 헤더에 공유 카드 저장 버튼을 보여준다", () => {
       mockProfile("지유");
       renderFunding();
 
-      expect(screen.getByRole("button", { name: "공유하기" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "링크 복사" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "공유 카드 저장" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "공유하기" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "링크 복사" })).not.toBeInTheDocument();
     });
 
-    it("링크 복사를 누르면 공유창 없이 /share/1 링크를 복사한다", async () => {
+    it("공유 카드 저장을 누르면 카드를 수신자 이름이 든 파일명의 이미지로 저장한다", async () => {
       mockProfile("지유");
-      const writeText = vi.fn().mockResolvedValue(undefined);
-      const share = vi.fn();
-      Object.defineProperty(navigator, "share", {
-        value: share,
-        configurable: true,
-        writable: true,
-      });
-      Object.defineProperty(navigator, "clipboard", {
-        value: { writeText },
-        configurable: true,
-        writable: true,
-      });
       renderFunding();
 
-      await userEvent.click(screen.getByRole("button", { name: "링크 복사" }));
+      await userEvent.click(screen.getByRole("button", { name: "공유 카드 저장" }));
 
-      expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/share/1`);
-      expect(share).not.toHaveBeenCalled();
-      expect(await screen.findByText("링크를 복사했어요")).toBeInTheDocument();
+      expect(saveNodeAsImageMock).toHaveBeenCalledWith(
+        expect.any(HTMLElement),
+        "지유의 생일 펀딩-공유-카드.png",
+      );
+    });
+
+    it("이미지 저장에 실패하면 실패 토스트를 보여준다", async () => {
+      mockProfile("지유");
+      saveNodeAsImageMock.mockRejectedValueOnce(new Error("fail"));
+      renderFunding();
+
+      await userEvent.click(screen.getByRole("button", { name: "공유 카드 저장" }));
+
+      expect(await screen.findByText("이미지를 저장하지 못했어요")).toBeInTheDocument();
     });
   });
 

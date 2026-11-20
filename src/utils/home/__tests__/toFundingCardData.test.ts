@@ -25,6 +25,45 @@ describe("toFundingCardData", () => {
     expect(result.dDay).toBe(3);
   });
 
+  it("마감 전 생일 펀딩이 확인 대기 없이 100% 이상이면 earlyComplete 타입이고 남은 일수를 유지한다", () => {
+    const result = toFundingCardData(
+      makeCard({ confirmedPercentage: 120, pendingPercentage: 0, remainingDays: 5 }),
+      "지유",
+    );
+
+    expect(result.type).toBe("earlyComplete");
+    expect(result.dDay).toBe(5);
+  });
+
+  it("earlyComplete 카드의 진행률은 확정·대기를 합친 전체 달성률(최대 100)이다", () => {
+    expect(
+      toFundingCardData(makeCard({ confirmedPercentage: 100, pendingPercentage: 0 }), "지유")
+        .progress,
+    ).toBe(100);
+    expect(
+      toFundingCardData(makeCard({ confirmedPercentage: 120, pendingPercentage: 0 }), "지유")
+        .progress,
+    ).toBe(100);
+  });
+
+  it("마감 전 100% 이상이어도 확인 대기가 있으면 default 타입이다", () => {
+    const result = toFundingCardData(
+      makeCard({ confirmedPercentage: 80, pendingPercentage: 30, pendingContributionCount: 1 }),
+      "지유",
+    );
+
+    expect(result.type).toBe("default");
+  });
+
+  it("마감 전 100% 이상이어도 서프라이즈 펀딩은 default 타입이다", () => {
+    const result = toFundingCardData(
+      makeCard({ fundingType: "SURPRISE", confirmedPercentage: 100, pendingPercentage: 0 }),
+      "지유",
+    );
+
+    expect(result.type).toBe("default");
+  });
+
   it("마감 후 확인 대기가 있으면 notification 타입이다", () => {
     const result = toFundingCardData(
       makeCard({ cardType: "CLOSED_UNOPENED", remainingDays: null, pendingContributionCount: 2 }),

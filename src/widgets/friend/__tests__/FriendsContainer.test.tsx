@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import FriendsContainer from "@/widgets/friend/FriendsContainer";
@@ -36,7 +36,7 @@ describe("FriendsContainer", () => {
 
     await userEvent.setup().click(screen.getByRole("button", { name: "뒤로가기" }));
 
-    expect(back).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
   });
 
   it("불러오는 중이면 친구 목록 스켈레톤을 보여준다", () => {

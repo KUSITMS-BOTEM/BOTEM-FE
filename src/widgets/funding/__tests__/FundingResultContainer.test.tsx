@@ -6,7 +6,8 @@ import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingMan
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useFundingExtendToastStore } from "@/store/fundingExtendToastStore";
 import { useGiftChangeStore } from "@/store/giftChangeStore";
-import type { FundingManagementResponse, FundingResultResponse } from "@/types/funding/funding";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
+import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import FundingResultContainer from "@/widgets/funding/FundingResultContainer";
 
 const replace = vi.fn();
@@ -50,7 +51,7 @@ const mockQueries = ({
   management = {},
 }: {
   result?: QueryState<FundingResultResponse>;
-  management?: QueryState<FundingManagementResponse>;
+  management?: QueryState<OwnerFundingDetailResponse>;
 }) => {
   vi.mocked(useFundingResultQuery).mockReturnValue({
     data: undefined,
@@ -100,8 +101,8 @@ const makeResult = (
 });
 
 const makeManagement = (
-  overrides: Partial<FundingManagementResponse> = {},
-): FundingManagementResponse => ({
+  overrides: Partial<OwnerFundingDetailResponse> = {},
+): OwnerFundingDetailResponse => ({
   fundingId: 7,
   type: "BIRTHDAY",
   title: null,

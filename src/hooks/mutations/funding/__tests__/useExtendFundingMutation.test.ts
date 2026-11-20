@@ -10,7 +10,7 @@ import { fundingResultQueryKey } from "@/hooks/queries/funding/useFundingResultQ
 import { homeQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
 
 vi.mock("@/apis/funding/fundingService", () => ({
-  fundingService: { postExtension: vi.fn() },
+  fundingService: { extendFunding: vi.fn() },
 }));
 
 const response = {
@@ -29,22 +29,22 @@ const createWrapper = () =>
 
 beforeEach(() => {
   queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-  vi.mocked(fundingService.postExtension).mockReset();
+  vi.mocked(fundingService.extendFunding).mockReset();
 });
 
 describe("useExtendFundingMutation", () => {
   it("새 마감일로 연장을 요청한다", async () => {
-    vi.mocked(fundingService.postExtension).mockResolvedValue(response);
+    vi.mocked(fundingService.extendFunding).mockResolvedValue(response);
     const { result } = renderHook(() => useExtendFundingMutation(7), { wrapper: createWrapper() });
 
     result.current.mutate("2026-11-30");
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(fundingService.postExtension).toHaveBeenCalledWith(7, { newDeadline: "2026-11-30" });
+    expect(fundingService.extendFunding).toHaveBeenCalledWith(7, { newDeadline: "2026-11-30" });
   });
 
   it("성공하면 관리 상세·홈은 무효화하고, 새 마감일 전엔 조회가 막히는 결과는 무효화하지 않는다", async () => {
-    vi.mocked(fundingService.postExtension).mockResolvedValue(response);
+    vi.mocked(fundingService.extendFunding).mockResolvedValue(response);
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
     const { result } = renderHook(() => useExtendFundingMutation(7), { wrapper: createWrapper() });
 

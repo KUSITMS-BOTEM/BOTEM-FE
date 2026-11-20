@@ -9,7 +9,8 @@ import LoadingAnimation from "@/components/LoadingAnimation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useGiftChangeStore } from "@/store/giftChangeStore";
-import type { FundingManagementResponse, FundingResultResponse } from "@/types/funding/funding";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
+import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import { isValidUrl } from "@/utils/isValidUrl";
 import FundingExtendFlow from "@/widgets/funding/FundingExtendFlow";
 import FundingResultView, { type FundingResult } from "@/widgets/funding/FundingResultView";
@@ -19,7 +20,7 @@ const TARGET_PERCENTAGE = 100;
 // 금액·친구 목록은 결과 응답, 상품·연장 가능 여부는 관리 상세 응답을 쓴다 (상품을 바꿨으면 목표 금액과 상품 가격이 다를 수 있다)
 const toFundingResult = (
   result: FundingResultResponse,
-  management: FundingManagementResponse,
+  management: OwnerFundingDetailResponse,
 ): FundingResult => ({
   goalAchieved: result.achievementPercentage >= TARGET_PERCENTAGE,
   collectedAmount: result.confirmedAmount,

@@ -1,9 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useOpenFundingResultMutation } from "@/hooks/mutations/funding/useOpenFundingResultMutation";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
-import type { FundingResultResponse } from "@/types/funding/funding";
+import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import FundingRevealContainer from "@/widgets/funding/FundingRevealContainer";
 
 vi.mock("@/hooks/queries/funding/useFundingResultQuery", () => ({
@@ -280,7 +280,7 @@ describe("FundingRevealContainer", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "닫기" }));
 
-    expect(replace).toHaveBeenCalledWith("/home");
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/home"));
   });
 
   it("빈 화면의 '닫기'를 누르면 홈으로 replace 한다", async () => {

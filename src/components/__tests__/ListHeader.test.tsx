@@ -32,6 +32,56 @@ describe("ListHeader", () => {
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
+  it("boxClickable이면 박스 전체가 하나의 버튼이 되고 제목 영역 클릭에도 onClick이 1회 호출된다", async () => {
+    const handleClick = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <ListHeader
+        title="타이틀"
+        boxClickable
+        rightItem={{ label: "추가하기", onClick: handleClick }}
+      />,
+    );
+
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+    await user.click(screen.getByText("타이틀"));
+
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("boxClickable 버튼은 키보드 Enter로도 onClick이 호출된다", async () => {
+    const handleClick = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <ListHeader
+        title="타이틀"
+        boxClickable
+        rightItem={{ label: "추가하기", onClick: handleClick }}
+      />,
+    );
+
+    await user.tab();
+    await user.keyboard("{Enter}");
+
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("boxClickable이어도 rightItem.disabled면 클릭해도 onClick이 호출되지 않는다", async () => {
+    const handleClick = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <ListHeader
+        title="타이틀"
+        boxClickable
+        rightItem={{ label: "추가하기", onClick: handleClick, disabled: true }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button"));
+
+    expect(handleClick).not.toHaveBeenCalled();
+  });
+
   it("bg를 생략하면 32px 높이에 배경이 없다", () => {
     render(<ListHeader title="타이틀" />);
     const container = screen.getByRole("heading").parentElement;

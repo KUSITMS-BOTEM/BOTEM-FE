@@ -64,6 +64,15 @@ describe("HomeMyMenuSheet", () => {
     expect(replace).toHaveBeenCalledWith("/home", { scroll: false });
   });
 
+  it("위시 탭에서 시트를 닫으면 tab 쿼리는 유지한다", async () => {
+    searchParams = new URLSearchParams("tab=wish&menu=open");
+    render(<HomeMyMenuSheet closedFundingCount={0} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+    expect(replace).toHaveBeenCalledWith("/home?tab=wish", { scroll: false });
+  });
+
   it("마감된 펀딩 수를 시트에 그대로 넘긴다", () => {
     searchParams = new URLSearchParams("menu=open");
     render(<HomeMyMenuSheet closedFundingCount={2} />);

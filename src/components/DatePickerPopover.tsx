@@ -15,6 +15,8 @@ type DatePickerPopoverProps = {
   minDate?: string;
   // deadline에서 선택할 수 있는 가장 늦은 날짜("YYYY-MM-DD"). 없으면 제한 없음
   maxDate?: string;
+  // 달력의 접근성 이름. 없으면 variant에 맞는 기본 이름
+  title?: string;
   onSelect: (date: string) => void;
   disabled?: boolean;
   // 트리거 아이콘 버튼에 전달된다
@@ -57,6 +59,7 @@ export default function DatePickerPopover({
   value,
   minDate,
   maxDate,
+  title,
   onSelect,
   disabled,
   triggerProps,
@@ -137,7 +140,7 @@ export default function DatePickerPopover({
           <div
             ref={popoverRef}
             role="dialog"
-            aria-label={isBirth ? "생일 선택" : "마감일 선택"}
+            aria-label={title ?? (isBirth ? "생일 선택" : "마감일 선택")}
             style={{ top: position.top, right: position.right }}
             className="bg-semantic-background-floated fixed z-50 w-fit rounded-xl p-2 shadow-[0_4px_16px_var(--color-semantic-shadow-default)]">
             <DayPicker

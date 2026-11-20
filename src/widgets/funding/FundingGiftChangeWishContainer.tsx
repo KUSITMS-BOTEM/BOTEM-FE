@@ -13,7 +13,7 @@ import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingMan
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import { type OriginalGift, useGiftChangeStore } from "@/store/giftChangeStore";
-import type { FundingManagementResponse } from "@/types/funding/funding";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import { isValidUrl } from "@/utils/isValidUrl";
 import type { GiftChangeProduct } from "@/widgets/funding/FundingGiftChangeView";
 import FundingOriginalGiftSheet from "@/widgets/funding/FundingOriginalGiftSheet";
@@ -105,7 +105,7 @@ export default function FundingGiftChangeWishContainer() {
 // 다른 선물 고르기에서 기록해 둔 기존 선물이 없으면(새로고침 후 바로 진입 등), 아직 바꾸지 않은 펀딩의 지금 상품이 곧 기존 선물이다
 function resolveOriginalGift(
   storedOriginalGift: OriginalGift | null,
-  management: FundingManagementResponse | null | undefined,
+  management: OwnerFundingDetailResponse | null | undefined,
 ): Omit<GiftChangeProduct, "id"> | null {
   if (storedOriginalGift) return storedOriginalGift;
   if (!management || management.productChanged) return null;

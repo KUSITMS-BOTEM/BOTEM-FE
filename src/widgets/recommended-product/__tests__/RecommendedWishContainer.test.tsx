@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useRecommendedProductsQuery } from "@/hooks/queries/recommended-product/useRecommendedProductsQuery";
@@ -138,5 +138,14 @@ describe("RecommendedWishContainer", () => {
     await user.click(screen.getByText("찾는 선물이 없어요"));
 
     expect(push).toHaveBeenCalledWith("/wish/request");
+  });
+
+  it("뒤로 가기를 누르면 닫히는 슬라이드가 끝난 뒤 이전 페이지로 돌아간다", async () => {
+    mockProductsQuery({ data: mockProducts });
+    render(<RecommendedWishContainer />);
+
+    await userEvent.click(screen.getByRole("button", { name: "뒤로 가기" }));
+
+    await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
   });
 });

@@ -40,6 +40,14 @@ describe("FundingProgressCard", () => {
     expect(screen.getByText("0%")).toBeInTheDocument();
   });
 
+  it("progress를 넘기면 금액 대신 그 달성률을 보여준다", () => {
+    render(
+      <FundingProgressCard {...BASE} currentAmount={29000} targetAmount={50000} progress={58} />,
+    );
+
+    expect(screen.getByText("58%")).toBeInTheDocument();
+  });
+
   it("모인 금액이 있으면 퍼센트와 구간 문구를 보여준다", () => {
     render(<FundingProgressCard {...BASE} />);
 

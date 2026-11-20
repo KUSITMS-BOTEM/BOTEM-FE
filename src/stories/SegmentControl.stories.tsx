@@ -1,7 +1,9 @@
+import { useState } from "react";
+
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { fn } from "storybook/test";
 
-import SegmentControl from "@/widgets/home/SegmentControl";
+import SegmentControl, { type SegmentValue } from "@/widgets/home/SegmentControl";
 
 const meta = {
   title: "Widgets/Main/SegmentControl",
@@ -18,10 +20,25 @@ const meta = {
     ),
   ],
   argTypes: {
+    value: { control: "inline-radio", options: ["funding", "wish"] },
     onChange: { control: false },
   },
   args: {
+    value: "funding",
     onChange: fn(),
+  },
+  render: function Render(args) {
+    const [value, setValue] = useState<SegmentValue>(args.value);
+    return (
+      <SegmentControl
+        {...args}
+        value={value}
+        onChange={next => {
+          setValue(next);
+          args.onChange(next);
+        }}
+      />
+    );
   },
 } satisfies Meta<typeof SegmentControl>;
 

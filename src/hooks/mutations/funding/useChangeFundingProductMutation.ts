@@ -10,7 +10,7 @@ export const useChangeFundingProductMutation = (fundingId: number) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (wishId: number) => fundingService.patchProduct(fundingId, { wishId }),
+    mutationFn: (wishId: number) => fundingService.changeFundingProduct(fundingId, { wishId }),
     // 응답엔 바뀐 상품만 있고 productChanged·결과 상품명 등은 다른 응답에 흩어져 있어 setQueryData 대신 무효화한다
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: fundingResultQueryKey(fundingId) });

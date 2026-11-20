@@ -1,29 +1,83 @@
 import { clientApi } from "@/apis/client";
 import type { ClosedFundingListResponse } from "@/types/funding/closedFunding";
 import type {
-  ChangeFundingProductRequest,
-  ChangeFundingProductResponse,
   CreateFundingRequest,
   CreateFundingResponse,
+  CreateSurpriseFundingRequest,
+} from "@/types/funding/funding";
+import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
+import type {
+  ChangeFundingProductRequest,
+  ChangeFundingProductResponse,
+  CloseFundingResponse,
   ExtendFundingRequest,
   ExtendFundingResponse,
-  FundingManagementResponse,
-  FundingResultResponse,
-} from "@/types/funding/funding";
+} from "@/types/funding/fundingManagement";
+import type { FundingResultResponse } from "@/types/funding/fundingResult";
+import type {
+  CreateRollingPaperAttachmentUploadUrlRequest,
+  RollingPaperAttachmentUploadUrlResponse,
+} from "@/types/funding/rollingPaperAttachment";
+import type {
+  SendSurpriseThankCardRequest,
+  SurpriseGiftPreparationResponse,
+  SurpriseRevealResponse,
+  SurpriseThankCardResponse,
+} from "@/types/funding/surprise";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 
 export const fundingService = {
   getClosedFundings: () =>
     clientApi.get<ClosedFundingListResponse>("/api/users/me/fundings/closed"),
-  getResult: (fundingId: number) =>
-    clientApi.get<FundingResultResponse>(`/api/fundings/${fundingId}/result`),
-  getManagement: (fundingId: number) =>
-    clientApi.get<FundingManagementResponse>(`/api/fundings/${fundingId}/management`),
-  postResultOpen: (fundingId: number) =>
-    clientApi.post<FundingResultResponse>(`/api/fundings/${fundingId}/result/open`),
   postFunding: (body: CreateFundingRequest) =>
     clientApi.post<CreateFundingResponse>("/api/fundings", body),
-  patchProduct: (fundingId: number, body: ChangeFundingProductRequest) =>
-    clientApi.patch<ChangeFundingProductResponse>(`/api/fundings/${fundingId}/product`, body),
-  postExtension: (fundingId: number, body: ExtendFundingRequest) =>
+  postSurpriseFunding: (body: CreateSurpriseFundingRequest) =>
+    clientApi.post<CreateFundingResponse>("/api/fundings/surprise", body),
+
+  getFundingDetail: (fundingId: number) =>
+    clientApi.get<FundingDetailResponse>(`/api/fundings/${fundingId}`),
+  getFundingManagement: (fundingId: number) =>
+    clientApi.get<OwnerFundingDetailResponse>(`/api/fundings/${fundingId}/management`),
+  closeFunding: (fundingId: number) =>
+    clientApi.post<CloseFundingResponse>(`/api/fundings/${fundingId}/close`),
+  extendFunding: (fundingId: number, body: ExtendFundingRequest) =>
     clientApi.post<ExtendFundingResponse>(`/api/fundings/${fundingId}/extension`, body),
+  changeFundingProduct: (fundingId: number, body: ChangeFundingProductRequest) =>
+    clientApi.patch<ChangeFundingProductResponse>(`/api/fundings/${fundingId}/product`, body),
+
+  getResult: (fundingId: number) =>
+    clientApi.get<FundingResultResponse>(`/api/fundings/${fundingId}/result`),
+  openResult: (fundingId: number, excludePendingContributions = false) =>
+    clientApi.post<FundingResultResponse>(`/api/fundings/${fundingId}/result/open`, undefined, {
+      searchParams: { excludePendingContributions },
+    }),
+
+  getSurprise: (fundingId: number) =>
+    clientApi.get<SurpriseRevealResponse>(`/api/fundings/${fundingId}/surprise`),
+  openSurprise: (fundingId: number) =>
+    clientApi.post<SurpriseRevealResponse>(`/api/fundings/${fundingId}/surprise/open`),
+  sendSurpriseThankCard: (fundingId: number, body: SendSurpriseThankCardRequest) =>
+    clientApi.post<SurpriseThankCardResponse>(
+      `/api/fundings/${fundingId}/surprise/thank-card`,
+      body,
+    ),
+  getSurpriseGiftPreparation: (fundingId: number) =>
+    clientApi.get<SurpriseGiftPreparationResponse>(
+      `/api/fundings/${fundingId}/surprise/gift-preparation`,
+    ),
+  completeSurpriseGiftPreparation: (fundingId: number, excludePendingContributions = false) =>
+    clientApi.post<SurpriseGiftPreparationResponse>(
+      `/api/fundings/${fundingId}/surprise/gift-preparation/complete`,
+      undefined,
+      { searchParams: { excludePendingContributions } },
+    ),
+
+  createRollingPaperAttachmentUploadUrl: (
+    fundingId: number,
+    body: CreateRollingPaperAttachmentUploadUrlRequest,
+  ) =>
+    clientApi.post<RollingPaperAttachmentUploadUrlResponse>(
+      `/api/fundings/${fundingId}/rolling-paper-attachments/upload-url`,
+      body,
+    ),
 };

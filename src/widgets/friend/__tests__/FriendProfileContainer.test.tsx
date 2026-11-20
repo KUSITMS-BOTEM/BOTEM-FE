@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import type { FriendFundingResponse, FriendProfileResponse } from "@/types/friend/friend";
@@ -8,8 +8,8 @@ const back = vi.fn();
 const refetch = vi.fn();
 const useFriendProfileQuery = vi.fn();
 
-vi.mock("@/hooks/mutations/funding/useCreateFundingMutation", () => ({
-  useCreateFundingMutation: () => ({ mutate: vi.fn(), isPending: false }),
+vi.mock("@/hooks/mutations/funding/useCreateSurpriseFundingMutation", () => ({
+  useCreateSurpriseFundingMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ back }),
@@ -20,15 +20,14 @@ vi.mock("@/hooks/queries/friend/useFriendProfileQuery", () => ({
 
 const funding: FriendFundingResponse = {
   fundingId: 1,
-  isSurprise: false,
-  title: "지유의 생일 펀딩",
+  type: "BIRTHDAY",
   productName: "소니 WH-1000 XM4",
   productImageUrl: null,
-  deadline: "2026-10-13",
-  currentAmount: 50,
-  targetAmount: 100,
-  representativeParticipantName: "민지",
+  deadline: "2026-10-13T23:59:59.999999",
+  remainingDays: 7,
   participantCount: 2,
+  firstParticipantName: "민지",
+  confirmedPercentage: 50,
 };
 
 const profile = (overrides: Partial<FriendProfileResponse> = {}): FriendProfileResponse => ({
@@ -38,14 +37,14 @@ const profile = (overrides: Partial<FriendProfileResponse> = {}): FriendProfileR
   birthday: "10-24",
   birthdayDday: 3,
   fundings: [funding],
+  wishesVisible: true,
+  wishCount: 1,
   wishes: [
     {
       wishId: 1,
       productName: "모자",
       productImageUrl: null,
       price: 429000,
-      sellerName: "쿠팡",
-      productUrl: "https://link.coupang.com/a/example",
     },
   ],
   ...overrides,
@@ -135,6 +134,6 @@ describe("FriendProfileContainer", () => {
 
     await userEvent.setup().click(screen.getByRole("button", { name: "뒤로가기" }));
 
-    expect(back).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
   });
 });

@@ -15,20 +15,13 @@ import FundingAccountStep, {
 } from "@/widgets/funding/FundingAccountStep";
 import FundingConfirmSheet from "@/widgets/funding/FundingConfirmSheet";
 import FundingInfoStep, { type FundingInfoValues } from "@/widgets/funding/FundingInfoStep";
-import FundingOpenCompleteSheet, {
-  MOCK_FUNDING_ID,
-} from "@/widgets/funding/FundingOpenCompleteSheet";
 import FundingWishSelectStep from "@/widgets/funding/FundingWishSelectStep";
 
 type FundingOpenSheetProps = {
   open: boolean;
   onClose: () => void;
-  // 있으면 위시 선택 단계를 건너뛰고 이 상품으로 펀딩 정보부터 시작한다 (친구 위시 서프라이즈)
+  // 있으면 위시 선택 단계를 건너뛰고 이 상품으로 펀딩 정보부터 시작한다 (내 위시 상세에서 열 때)
   initialWish?: FundingWish;
-  // 서프라이즈 대상 친구 이름. 있으면 펀딩 열기를 확정한 뒤 개설 완료 화면을 보여준다
-  recipientName?: string;
-  // 서프라이즈 대상 친구 id. 개설 완료 뒤 이동하는 펀딩 상세에서 뒤로가기 대상이 된다
-  recipientId?: string;
   className?: string;
 };
 
@@ -40,8 +33,6 @@ export default function FundingOpenSheet({
   open,
   onClose,
   initialWish,
-  recipientName,
-  recipientId,
   className,
 }: FundingOpenSheetProps) {
   const router = useRouter();
@@ -54,7 +45,6 @@ export default function FundingOpenSheet({
   const [info, setInfo] = useState<FundingInfoValues | null>(null);
   const [account, setAccount] = useState<FundingAccountValues | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [completeOpen, setCompleteOpen] = useState(false);
   // 확인 시트를 연 채로 그 위에 띄우는 수정 시트
   const [editing, setEditing] = useState<Step | null>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
@@ -74,7 +64,6 @@ export default function FundingOpenSheet({
     setInfo(null);
     setAccount(null);
     setConfirmOpen(false);
-    setCompleteOpen(false);
     setEditing(null);
     setDraftInfo(null);
     setDraftAccount(null);
@@ -94,13 +83,6 @@ export default function FundingOpenSheet({
   // 입력 단계(위시를 골랐거나 initialWish로 시작)에서는 입력한 정보가 사라지므로 확인을 받고, 위시 선택 단계에서는 바로 닫는다
   const handleRequestClose = () => (selectedWish ? setLeaveOpen(true) : handleClose());
 
-  // 시트를 닫지 않고 이동만 한다. 이동이 끝나 이 화면이 언마운트될 때 함께 사라져 뒤 화면이 비치지 않는다
-  const handleCompleteClose = () => {
-    const query = recipientId ? `?friendId=${encodeURIComponent(recipientId)}` : "";
-    // TODO(API): 서프라이즈 펀딩 생성 API(POST /api/fundings/surprise) 응답의 fundingId로 교체한다 (지금은 목 ID라 모든 펀딩이 같은 링크로 간다)
-    router.push(`/funding/${MOCK_FUNDING_ID}${query}`);
-  };
-
   const handleLeave = () => {
     setLeaveOpen(false);
     handleClose();
@@ -114,8 +96,6 @@ export default function FundingOpenSheet({
 
   const handleConfirm = async () => {
     if (!selectedWish || !confirmInfo || !confirmAccount) return;
-    // TODO(API): 서프라이즈 펀딩 생성 API가 정해지면 서프라이즈도 요청 성공 뒤에 완료 화면을 연다
-    if (recipientName) return setCompleteOpen(true);
     setSubmitting(true);
     try {
       await createFunding(toCreateFundingRequest(selectedWish.id, confirmInfo, confirmAccount));
@@ -217,17 +197,6 @@ export default function FundingOpenSheet({
               />
             )}
           </OpenSheet>
-          {recipientName && (
-            <FundingOpenCompleteSheet
-              open={completeOpen}
-              variant="surprise"
-              recipientName={recipientName}
-              wish={selectedWish}
-              info={confirmInfo}
-              onClose={handleCompleteClose}
-              className={className}
-            />
-          )}
         </>
       )}
     </>

@@ -8,7 +8,7 @@ export const useExtendFundingMutation = (fundingId: number) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (newDeadline: string) => fundingService.postExtension(fundingId, { newDeadline }),
+    mutationFn: (newDeadline: string) => fundingService.extendFunding(fundingId, { newDeadline }),
     // 결과 조회는 연장 뒤 새 마감일 전까지 409(FUNDING_005)라 무효화하지 않고, 지금 보이는 결과를 그대로 둔다
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: fundingManagementQueryKey(fundingId) });

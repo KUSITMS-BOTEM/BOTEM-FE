@@ -22,6 +22,11 @@ export const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
 
   // --- 펀딩 ---
   FUNDING_019: { message: "진행 중인 펀딩은 최대 5개까지 열 수 있어요.", action: "dialog" },
+  FUNDING_044: { message: "자기 자신에게는 서프라이즈 펀딩을 열 수 없어요.", action: "dialog" },
+  FUNDING_045: {
+    message: "이미 이 친구를 위한 서프라이즈 펀딩이 진행 중이에요.",
+    action: "dialog",
+  },
 
   // --- 홈 ---
   HOME_001: { message: "홈에 표시할 펀딩이 존재합니다.", action: "none" }, // 에러가 아닌 정상 분기 신호, useHomeNoFundingQuery에서 로컬 처리

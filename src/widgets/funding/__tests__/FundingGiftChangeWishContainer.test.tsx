@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useChangeFundingProductMutation } from "@/hooks/mutations/funding/useChangeFundingProductMutation";
@@ -6,7 +6,8 @@ import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingMan
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import { useGiftChangeStore } from "@/store/giftChangeStore";
-import type { FundingManagementResponse, FundingResultResponse } from "@/types/funding/funding";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
+import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import type { WishResponse } from "@/types/wish/wish";
 import FundingGiftChangeWishContainer from "@/widgets/funding/FundingGiftChangeWishContainer";
 
@@ -44,7 +45,7 @@ const mockManagement = {
     url: "https://example.com",
   },
   productChanged: false,
-} as FundingManagementResponse;
+} as OwnerFundingDetailResponse;
 
 const changeMutate = vi.fn();
 
@@ -158,6 +159,6 @@ describe("FundingGiftChangeWishContainer", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "뒤로 가기" }));
 
-    expect(replace).toHaveBeenCalledWith("/funding/7/result");
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/funding/7/result"));
   });
 });

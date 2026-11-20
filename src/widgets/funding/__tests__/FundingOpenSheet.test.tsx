@@ -62,26 +62,12 @@ const mockWishes = () =>
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useWishesQuery>);
 
-function Harness({
-  initialWish,
-  recipientName,
-  recipientId,
-}: {
-  initialWish?: FundingWish;
-  recipientName?: string;
-  recipientId?: string;
-}) {
+function Harness({ initialWish }: { initialWish?: FundingWish }) {
   const [open, setOpen] = useState(true);
   return (
     <>
       <button onClick={() => setOpen(true)}>열기</button>
-      <FundingOpenSheet
-        open={open}
-        onClose={() => setOpen(false)}
-        initialWish={initialWish}
-        recipientName={recipientName}
-        recipientId={recipientId}
-      />
+      <FundingOpenSheet open={open} onClose={() => setOpen(false)} initialWish={initialWish} />
     </>
   );
 }
@@ -224,8 +210,8 @@ describe("FundingOpenSheet", () => {
   });
 
   describe("펀딩 정보 → 계좌 정보 단계", () => {
-    const goToAccountStep = async (recipient?: { recipientName: string; recipientId: string }) => {
-      render(<Harness {...recipient} />);
+    const goToAccountStep = async () => {
+      render(<Harness />);
       await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
       // 필드 모션이 끝나면 자동 포커스가 걸려 타이핑 도중 포커스를 가져가므로, 먼저 포커스가 옮겨올 때까지 기다린다
       const amount = await screen.findByLabelText("목표 금액");
@@ -260,11 +246,11 @@ describe("FundingOpenSheet", () => {
     });
 
     describe("펀딩 열기 확인 시트", () => {
-      const openConfirm = async (recipient?: { recipientName: string; recipientId: string }) => {
+      const openConfirm = async () => {
         vi.mocked(usePayoutAccountsQuery).mockReturnValue({
           data: [{ accountNumber: "100159014821", bank: "TOSS_BANK", isDefault: true }],
         } as unknown as ReturnType<typeof usePayoutAccountsQuery>);
-        await goToAccountStep(recipient);
+        await goToAccountStep();
         await userEvent.click(await screen.findByRole("button", { name: /대표 계좌 사용하기/ }));
         await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
         await screen.findByText("이대로 펀딩을 열까요?");
@@ -289,23 +275,7 @@ describe("FundingOpenSheet", () => {
         expect(confirmSheet().getByText("100159014821")).toBeInTheDocument();
       });
 
-      it("recipientName이 있으면 확인 시트에서 펀딩 열기 뒤 개설 완료 화면을 열고, 닫으면 friendId를 달고 상세로 이동한다", async () => {
-        await openConfirm({ recipientName: "민지", recipientId: "7" });
-
-        await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
-        expect(await screen.findByText("서프라이즈가 시작됐어요!")).toBeInTheDocument();
-        expect(push).not.toHaveBeenCalled();
-        expect(createFunding).not.toHaveBeenCalled();
-
-        const completeSheet = screen
-          .getByText("서프라이즈가 시작됐어요!")
-          .closest("dialog") as HTMLElement;
-        await userEvent.click(within(completeSheet).getByRole("button", { name: "닫기" }));
-
-        expect(push).toHaveBeenCalledWith("/funding/1?friendId=7");
-      });
-
-      it("recipientName이 없으면 펀딩 열기로 개설 요청을 보내고 성공하면 완료 화면 없이 /home으로 이동한다", async () => {
+      it("펀딩 열기로 개설 요청을 보내고 성공하면 완료 화면 없이 /home으로 이동한다", async () => {
         createFunding.mockResolvedValue({});
         await openConfirm();
 

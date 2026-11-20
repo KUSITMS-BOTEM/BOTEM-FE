@@ -174,9 +174,20 @@ export const clientApi = {
       .get(getUrl(path), { searchParams: params })
       .json<ApiResponse<T>>()
       .then(json => unwrap<T>(json), toJsonParseError),
-  post: <T>(path: string, body?: unknown, options?: { timeout?: number | false }) =>
+  post: <T>(
+    path: string,
+    body?: unknown,
+    options?: {
+      timeout?: number | false;
+      searchParams?: Record<string, string | number | boolean>;
+    },
+  ) =>
     clientKy
-      .post(getUrl(path), { json: body, timeout: options?.timeout })
+      .post(getUrl(path), {
+        json: body,
+        timeout: options?.timeout,
+        searchParams: options?.searchParams,
+      })
       .json<ApiResponse<T>>()
       .then(json => unwrap<T>(json), toJsonParseError),
   // 쿠키(refreshToken)를 다루는 엔드포인트 전용 — 로컬 개발은 BFF(getAuthUrl)로 우회
@@ -190,13 +201,15 @@ export const clientApi = {
       .put(getUrl(path), { json: body })
       .json<ApiResponse<T>>()
       .then(json => unwrap<T>(json), toJsonParseError),
-  patch: <T>(path: string, body?: unknown) =>
+  patch: <T>(path: string, body?: unknown, options?: { headers?: Record<string, string> }) =>
     clientKy
-      .patch(getUrl(path), { json: body })
+      .patch(getUrl(path), { json: body, headers: options?.headers })
       .json<ApiResponse<T>>()
       .then(json => unwrap<T>(json), toJsonParseError),
-  delete: <T>(path: string) =>
-    clientKy.delete(getUrl(path)).then(response => parseDeleteResponse<T>(response)),
+  delete: <T>(path: string, options?: { headers?: Record<string, string> }) =>
+    clientKy
+      .delete(getUrl(path), { headers: options?.headers })
+      .then(response => parseDeleteResponse<T>(response)),
   // 쿠키(refreshToken)를 다루는 엔드포인트 전용 — 로컬 개발은 BFF(getAuthUrl)로 우회
   deleteAuth: <T>(path: string) =>
     clientKy.delete(getAuthUrl(path)).then(response => parseDeleteResponse<T>(response)),

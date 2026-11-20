@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -30,7 +30,7 @@ describe("FundingGiftProofView", () => {
     await user.click(screen.getByRole("button", { name: "닫기" }));
 
     expect(push).toHaveBeenNthCalledWith(1, "/home");
-    expect(push).toHaveBeenNthCalledWith(2, "/home");
+    await waitFor(() => expect(push).toHaveBeenNthCalledWith(2, "/home"));
   });
 
   it("나도 만들기는 펀딩 시트를 열도록 /home?open=funding으로 이동한다", async () => {

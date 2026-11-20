@@ -5,9 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
 import LoadingAnimation from "@/components/LoadingAnimation";
+import PageExitMotion from "@/components/effects/PageExitMotion";
 import { useCompleteGiftVerificationMutation } from "@/hooks/mutations/gift-verification/useCompleteGiftVerificationMutation";
 import { useGiftVerificationTargetsQuery } from "@/hooks/queries/home/useGiftVerificationTargetsQuery";
-import { getReceivedProductName } from "@/utils/home/giftVerificationTarget";
+import { usePageExit } from "@/hooks/usePageExit";
+import FundingGiftVerifyCompleteView from "@/widgets/funding/FundingGiftVerifyCompleteView";
 import FundingGiftVerifyView, {
   type GiftVerifySubmitValues,
 } from "@/widgets/funding/FundingGiftVerifyView";
@@ -17,6 +19,7 @@ const HOME_PATH = "/home";
 
 export default function FundingGiftVerifyContainer() {
   const router = useRouter();
+  const { pageExit, exitPage } = usePageExit();
   const { fundingId } = useParams<{ fundingId: string }>();
   const { data, isLoading, isError, refetch } = useGiftVerificationTargetsQuery();
   const { mutate, isPending, isSuccess } = useCompleteGiftVerificationMutation();
@@ -25,19 +28,16 @@ export default function FundingGiftVerifyContainer() {
 
   const handleSubmit = ({ image, thankYouMessage }: GiftVerifySubmitValues) => {
     if (!target) return;
-    mutate(
-      {
-        giftVerificationId: target.giftVerificationId,
-        image,
-        thankYouMessage,
-        replacementProductName: target.replacementProductName,
-      },
-      // 감사 카드를 보내면 흐름이 끝나므로 홈으로 돌아간다
-      { onSuccess: goHome },
-    );
+    mutate({
+      giftVerificationId: target.giftVerificationId,
+      image,
+      thankYouMessage,
+      replacementProductName: target.replacementProductName,
+    });
   };
 
   const renderContent = () => {
+    if (isSuccess) return <FundingGiftVerifyCompleteView fundingId={fundingId} />;
     if (isLoading) {
       return (
         <div role="status" className="flex flex-1 items-center justify-center">
@@ -70,23 +70,27 @@ export default function FundingGiftVerifyContainer() {
     }
     return (
       <FundingGiftVerifyView
-        productName={getReceivedProductName(target)}
+        productName={target.productName}
+        replacementProductName={target.replacementProductName}
         productImageUrl={target.productImageUrl}
-        // 성공 후 홈으로 넘어가는 동안 다시 눌러 이미 완료된 인증을 재요청하지 않도록 계속 잠근다
-        isSubmitting={isPending || isSuccess}
+        isSubmitting={isPending}
         onSubmit={handleSubmit}
       />
     );
   };
 
   return (
-    <main className="bg-semantic-background-default flex min-h-dvh flex-col">
-      <h1 className="sr-only">선물 도착 인증</h1>
-      <Header
-        title="선물 도착 인증"
-        rightItems={[{ icon: <IconClose />, ariaLabel: "닫기", onClick: goHome }]}
-      />
-      {renderContent()}
-    </main>
+    <PageExitMotion exit={pageExit}>
+      <main className="bg-semantic-background-default flex min-h-dvh flex-col">
+        <h1 className="sr-only">선물 도착 인증</h1>
+        <Header
+          title="선물 도착 인증"
+          rightItems={[
+            { icon: <IconClose />, ariaLabel: "닫기", onClick: () => exitPage("fade", goHome) },
+          ]}
+        />
+        {renderContent()}
+      </main>
+    </PageExitMotion>
   );
 }

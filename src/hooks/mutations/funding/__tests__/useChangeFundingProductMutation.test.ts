@@ -11,7 +11,7 @@ import { homeQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { wishesQueryKey } from "@/hooks/queries/wish/useWishesQuery";
 
 vi.mock("@/apis/funding/fundingService", () => ({
-  fundingService: { patchProduct: vi.fn() },
+  fundingService: { changeFundingProduct: vi.fn() },
 }));
 
 const response = {
@@ -33,12 +33,12 @@ const createWrapper = () =>
 
 beforeEach(() => {
   queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-  vi.mocked(fundingService.patchProduct).mockReset();
+  vi.mocked(fundingService.changeFundingProduct).mockReset();
 });
 
 describe("useChangeFundingProductMutation", () => {
   it("펀딩 id와 고른 위시 id로 상품 변경을 요청한다", async () => {
-    vi.mocked(fundingService.patchProduct).mockResolvedValue(response);
+    vi.mocked(fundingService.changeFundingProduct).mockResolvedValue(response);
     const { result } = renderHook(() => useChangeFundingProductMutation(7), {
       wrapper: createWrapper(),
     });
@@ -46,11 +46,11 @@ describe("useChangeFundingProductMutation", () => {
     result.current.mutate(3);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(fundingService.patchProduct).toHaveBeenCalledWith(7, { wishId: 3 });
+    expect(fundingService.changeFundingProduct).toHaveBeenCalledWith(7, { wishId: 3 });
   });
 
   it("성공하면 펀딩 결과·관리 상세·위시·홈 캐시를 무효화한다", async () => {
-    vi.mocked(fundingService.patchProduct).mockResolvedValue(response);
+    vi.mocked(fundingService.changeFundingProduct).mockResolvedValue(response);
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
     const { result } = renderHook(() => useChangeFundingProductMutation(7), {
       wrapper: createWrapper(),
@@ -66,7 +66,7 @@ describe("useChangeFundingProductMutation", () => {
   });
 
   it("실패하면 캐시를 무효화하지 않는다", async () => {
-    vi.mocked(fundingService.patchProduct).mockRejectedValue(new Error("FUNDING_043"));
+    vi.mocked(fundingService.changeFundingProduct).mockRejectedValue(new Error("FUNDING_043"));
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
     const { result } = renderHook(() => useChangeFundingProductMutation(7), {
       wrapper: createWrapper(),

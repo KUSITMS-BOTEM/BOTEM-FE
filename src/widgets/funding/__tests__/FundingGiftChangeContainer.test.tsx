@@ -1,11 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
 import { useGiftChangeStore } from "@/store/giftChangeStore";
-import type { FundingManagementResponse, FundingResultResponse } from "@/types/funding/funding";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
+import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import type { WishResponse } from "@/types/wish/wish";
 import FundingGiftChangeContainer from "@/widgets/funding/FundingGiftChangeContainer";
 
@@ -56,7 +57,7 @@ const mockManagement = {
     url: "https://example.com",
   },
   productChanged: false,
-} as FundingManagementResponse;
+} as OwnerFundingDetailResponse;
 
 const wishesRefetch = vi.fn();
 
@@ -202,6 +203,6 @@ describe("FundingGiftChangeContainer", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "뒤로 가기" }));
 
-    expect(back).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
   });
 });

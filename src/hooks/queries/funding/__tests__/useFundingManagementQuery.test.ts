@@ -8,10 +8,10 @@ import {
   fundingManagementQueryKey,
   useFundingManagementQuery,
 } from "@/hooks/queries/funding/useFundingManagementQuery";
-import type { FundingManagementResponse } from "@/types/funding/funding";
+import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 
 vi.mock("@/apis/funding/fundingService", () => ({
-  fundingService: { getManagement: vi.fn() },
+  fundingService: { getFundingManagement: vi.fn() },
 }));
 
 const mockManagement = {
@@ -24,7 +24,7 @@ const mockManagement = {
     canChangeProduct: false,
     canReissueShareCard: false,
   },
-} as FundingManagementResponse;
+} as OwnerFundingDetailResponse;
 
 const createWrapper = () => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -38,19 +38,27 @@ beforeEach(() => vi.clearAllMocks());
 
 describe("useFundingManagementQuery", () => {
   it("서비스를 펀딩 id로 호출하고 반환 데이터를 돌려준다", async () => {
-    vi.mocked(fundingService.getManagement).mockResolvedValue(mockManagement);
+    vi.mocked(fundingService.getFundingManagement).mockResolvedValue(mockManagement);
 
     const { result } = renderHook(() => useFundingManagementQuery(12), {
       wrapper: createWrapper(),
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(fundingService.getManagement).toHaveBeenCalledWith(12);
+    expect(fundingService.getFundingManagement).toHaveBeenCalledWith(12);
     expect(result.current.data).toEqual(mockManagement);
   });
 
+  it("enabled가 false면 요청하지 않는다", () => {
+    renderHook(() => useFundingManagementQuery(12, { enabled: false }), {
+      wrapper: createWrapper(),
+    });
+
+    expect(fundingService.getFundingManagement).not.toHaveBeenCalled();
+  });
+
   it("서비스가 실패하면 isError가 true가 된다", async () => {
-    vi.mocked(fundingService.getManagement).mockRejectedValue(new Error("fail"));
+    vi.mocked(fundingService.getFundingManagement).mockRejectedValue(new Error("fail"));
 
     const { result } = renderHook(() => useFundingManagementQuery(12), {
       wrapper: createWrapper(),
