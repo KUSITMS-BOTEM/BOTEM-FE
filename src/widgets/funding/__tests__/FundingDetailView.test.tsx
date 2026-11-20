@@ -39,6 +39,7 @@ const myContributionsQueryMock = vi.fn((fundingId: number, enabled: boolean) => 
   return myContributions;
 });
 vi.mock("@/hooks/queries/contribution/useMyContributionsQuery", () => ({
+  myContributionsQueryKey: (fundingId: number) => ["fundings", fundingId, "contributions", "me"],
   useMyContributionsQuery: (fundingId: number, enabled: boolean) =>
     myContributionsQueryMock(fundingId, enabled),
 }));
@@ -88,8 +89,15 @@ beforeAll(() => {
 });
 
 type User = ReturnType<typeof userEvent.setup>;
-// 입금 확인 시트가 확인 대기 목록을 조회하므로 빈 목록 응답을 준비한다
+// 입금 확인 시트가 확인 대기 목록을 조회하므로 빈 목록 응답을 준비한다. 메시지 보태기 제출은 성공 응답을 준다
 const server = setupServer(
+  http.post("*/api/fundings/:fundingId/contributions/message-only", () =>
+    HttpResponse.json({
+      success: true,
+      data: { contributionId: 1, participantName: "민지", status: "MESSAGE_ONLY" },
+      error: null,
+    }),
+  ),
   http.get("*/api/fundings/:fundingId/contributions/pending", () =>
     HttpResponse.json({
       success: true,
@@ -472,7 +480,7 @@ describe("FundingDetailView", () => {
       expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "완료하기" }));
 
-      expect(replaceMock).toHaveBeenCalledWith("/share/1/complete");
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/1/complete"));
       const store = useFundingContributionStore.getState();
       expect(store.amount).toBe(0);
       expect(store.password).toBe("1234");
@@ -567,7 +575,7 @@ describe("FundingDetailView", () => {
 
       await writeLetter(user, { withName: false });
 
-      expect(replaceMock).toHaveBeenCalledWith("/share/1/complete");
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/1/complete"));
       expect(screen.queryByLabelText("비밀번호 4자리")).not.toBeInTheDocument();
     });
   });

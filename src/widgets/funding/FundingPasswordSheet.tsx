@@ -31,6 +31,8 @@ type FundingPasswordSheetProps = {
   onComplete: (password: string) => void;
   /** true면 송금이 없는 메시지 보태기라 송금 안내 시트를 건너뛰고 '완료하기'에서 바로 onComplete를 호출한다 */
   messageOnly?: boolean;
+  // 메시지 보태기 제출 중이면 완료하기를 잠그고 로딩을 보여준다
+  isPending?: boolean;
   className?: string;
 };
 
@@ -43,6 +45,7 @@ export default function FundingPasswordSheet({
   onPrev,
   onComplete,
   messageOnly = false,
+  isPending = false,
   className,
 }: FundingPasswordSheetProps) {
   const [password, setPassword] = useState("");
@@ -115,6 +118,7 @@ export default function FundingPasswordSheet({
             color="brand"
             size="xlarge"
             disabled={!isFilled}
+            states={isPending ? "loading" : "default"}
             onClick={() => (messageOnly ? onComplete(password) : setGuideOpen(true))}>
             {messageOnly ? "완료하기" : "보태러 가기"}
           </Button>

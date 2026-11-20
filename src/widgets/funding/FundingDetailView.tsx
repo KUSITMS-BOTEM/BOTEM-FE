@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -19,6 +19,7 @@ import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
 import { useAccessGuestContributionMutation } from "@/hooks/mutations/contribution/useAccessGuestContributionMutation";
+import { useCreateMessageContributionMutation } from "@/hooks/mutations/contribution/useCreateMessageContributionMutation";
 import { useMyContributionsQuery } from "@/hooks/queries/contribution/useMyContributionsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { DEFAULT_ERROR_MESSAGE, ERROR_MESSAGES } from "@/constants/errorMessages";
@@ -205,6 +206,9 @@ export default function FundingDetailView({
   const [isMessageOnly, setIsMessageOnly] = useState(false);
   // 올리면 금액·편지 시트가 새로 마운트되어 입력값이 모두 초기화된다
   const [flowKey, setFlowKey] = useState(0);
+  const createMessage = useCreateMessageContributionMutation(Number(fundingId));
+  // 같은 플로우에서 실패 후 재시도하면 같은 키로 보내 서버가 중복 참여를 만들지 않게 한다
+  const requestKeyRef = useRef("");
   const closePopup = () => setIsPopupOpen(false);
   const requestExit = () => setIsExitOpen(true);
   // 보태기를 마치면 돌아왔을 때 하단이 '내 보탬 확인'이 되도록 이 펀딩의 본인 확인을 기록한다 (회원은 비밀번호가 없다)
@@ -217,6 +221,7 @@ export default function FundingDetailView({
   // 뒤로가기 등으로 플로우를 중간에 떠나 남은 값이 있으면 비우고 시작한다
   const startMessage = () => {
     reset();
+    requestKeyRef.current = crypto.randomUUID();
     setIsMessageOnly(true);
     setIsLetterOpen(true);
   };
@@ -224,6 +229,22 @@ export default function FundingDetailView({
     reset();
     setIsMessageOnly(false);
     setIsContributeOpen(true);
+  };
+
+  // 편지를 서버에 제출하고 성공하면 완료 화면으로 간다. 회원은 비밀번호 없이 보낸다
+  const submitMessage = (password?: string) => {
+    const letter = useFundingContributionStore.getState().letter;
+    if (!letter) return;
+    createMessage.mutate(
+      { letter, requestKey: requestKeyRef.current, guestPassword: password },
+      {
+        onSuccess: () => goToComplete(password),
+        // 이름이 겹치면 비밀번호 시트를 닫아 편지 시트에서 이름을 고치게 한다
+        onError: error => {
+          if (error instanceof ApiError && error.code === "FUNDING_032") setIsPasswordOpen(false);
+        },
+      },
+    );
   };
 
   // 보태기 플로우에서 입력한 값을 모두 버리고 열려 있는 시트를 닫는다
@@ -522,11 +543,12 @@ export default function FundingDetailView({
           memberName={memberName}
           onClose={() => setIsLetterOpen(false)}
           onExit={requestExit}
+          isNextPending={createMessage.isPending}
           onNext={values => {
             setLetter(values);
             // 회원은 비밀번호를 정하지 않으므로 바로 송금 안내(메시지 보태기는 바로 완료)로 간다
             if (!isMember) setIsPasswordOpen(true);
-            else if (isMessageOnly) goToComplete();
+            else if (isMessageOnly) submitMessage();
             else setIsMemberGuideOpen(true);
           }}
         />
@@ -538,18 +560,20 @@ export default function FundingDetailView({
           onClose={() => setIsMemberGuideOpen(false)}
           onComplete={() => goToComplete()}
         />
-        {/* TODO(API): 보탬 제출 API가 정해지면 여기서 스토어의 amount·letter·password를 보내고, 성공 뒤에 이동하도록 바꾼다. replace라 뒤로가기로 보태기 플로우에 돌아오지 않는다 */}
+        {/* TODO(API): 금액 보태기 제출 API는 아직 연결 전이다(메시지 보태기만 연결됨). replace라 뒤로가기로 보태기 플로우에 돌아오지 않는다 */}
         <FundingPasswordSheet
           open={isPasswordOpen}
           hostName={funding.hostName}
           amount={contributeAmount}
           account={funding.account}
           messageOnly={isMessageOnly}
+          isPending={createMessage.isPending}
           onClose={requestExit}
           onPrev={() => setIsPasswordOpen(false)}
           onComplete={password => {
             setPassword(password);
-            goToComplete(password);
+            if (isMessageOnly) submitMessage(password);
+            else goToComplete(password);
           }}
         />
         <Dialog

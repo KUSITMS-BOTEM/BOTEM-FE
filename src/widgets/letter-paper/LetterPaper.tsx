@@ -13,6 +13,7 @@ import {
   type LetterPaperStyle,
 } from "@/constants/letterPaperStyle";
 import Profile from "@/components/Profile";
+import { PHOTO_ALLOWED_TYPES, PHOTO_MAX_BYTES } from "@/constants/rollingPaperAttachment";
 import AssetSlot from "@/widgets/letter-paper/AssetSlot";
 import VoiceMessage from "@/widgets/letter-paper/VoiceMessage";
 
@@ -153,6 +154,8 @@ export default function LetterPaper({
       <div inert={slotsInert} className="pointer-events-none absolute -inset-px">
         <AssetSlot
           type="photo"
+          allowedTypes={PHOTO_ALLOWED_TYPES}
+          maxSizeBytes={PHOTO_MAX_BYTES}
           src={photoSrc}
           disabled={photoSlotDisabled}
           active={photoSlotActive}

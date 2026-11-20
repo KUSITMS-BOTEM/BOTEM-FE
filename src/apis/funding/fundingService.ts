@@ -95,4 +95,13 @@ export const fundingService = {
       `/api/fundings/${fundingId}/rolling-paper-attachments/upload-url`,
       body,
     ),
+  // uploadUrl은 S3 presigned PUT이라 Authorization 헤더가 붙으면 서명이 깨진다 — ky 대신 raw fetch. 발급 때 보낸 Content-Type과 같아야 하고, 덮어쓰기는 막혀 있다
+  uploadRollingPaperAttachment: async (uploadUrl: string, file: Blob) => {
+    const response = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type, "If-None-Match": "*" },
+      body: file,
+    });
+    if (!response.ok) throw new Error("첨부 파일 업로드에 실패했습니다.");
+  },
 };

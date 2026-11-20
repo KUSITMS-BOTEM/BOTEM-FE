@@ -114,6 +114,32 @@ export const contributionHandlers = [
       error: null,
     });
   }),
+  // 로컬 개발용: 업로드 URL과 S3 PUT(userService.msw의 mock-s3 핸들러)까지 모두 모킹한다. 실제 S3 업로드는 MSW를 끄고 확인한다. MSW 서비스 워커가 실제 S3 PUT을 대신 보내면 요청이 달라져 403이 난다
+  http.post(
+    "*/api/fundings/:fundingId/rolling-paper-attachments/upload-url",
+    async ({ request }) => {
+      const { attachmentType } = (await request.json()) as { attachmentType: string };
+      const url = `https://mock-s3.botem.local/rolling-paper/${attachmentType.toLowerCase()}/mock-upload-token`;
+      return HttpResponse.json({
+        success: true,
+        data: { attachmentType, uploadUrl: url, fileUrl: url },
+        error: null,
+      });
+    },
+  ),
+  http.post("*/api/fundings/:fundingId/contributions/message-only", async ({ request }) => {
+    await delay(500);
+    const { participantName } = (await request.json()) as { participantName?: string };
+    return HttpResponse.json({
+      success: true,
+      data: {
+        contributionId: 99,
+        participantName: participantName ?? "회원",
+        status: "MESSAGE_ONLY",
+      },
+      error: null,
+    });
+  }),
   http.post(
     "*/api/fundings/:fundingId/contributions/:contributionId/confirm",
     decideContribution("CONFIRMED"),

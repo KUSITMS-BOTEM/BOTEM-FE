@@ -37,6 +37,7 @@ const TEXT_ENTRY_SELECTOR = "input, [contenteditable]";
 export type LetterVoice = {
   blob: Blob;
   transcript: string;
+  durationSeconds: number;
 };
 
 type ActiveTool = null | "menu" | "record" | "sticker" | "paper" | "photo";
@@ -67,6 +68,8 @@ type LetterWriteSheetProps = {
   // 로그인한 회원의 이름. 있으면 편지지 보낸 사람으로 쓴다
   memberName?: string;
   onNext?: (values: LetterWriteValues) => void;
+  // 다음 단계에서 바로 제출하는 경우(회원 메시지 보태기) 요청 중 다음 버튼을 잠그고 로딩을 보여준다
+  isNextPending?: boolean;
   // 있으면 수정 모드다: 이 값으로 시작하고, 이름은 바꿀 수 없으며, 되돌리기·저장 버튼이 나온다.
   // 값은 처음 마운트될 때만 읽으므로 서버 데이터가 도착한 뒤에 마운트하거나 key로 다시 마운트한다
   initialValues?: LetterWriteValues;
@@ -83,6 +86,7 @@ export default function LetterWriteSheet({
   isLoggedIn,
   memberName,
   onNext,
+  isNextPending = false,
   initialValues,
   onSave,
 }: LetterWriteSheetProps) {
@@ -288,7 +292,12 @@ export default function LetterWriteSheet({
   };
 
   const handleRecordDone = () => {
-    if (recorder.blob) setVoice({ blob: recorder.blob, transcript: recorder.transcript });
+    if (recorder.blob)
+      setVoice({
+        blob: recorder.blob,
+        transcript: recorder.transcript,
+        durationSeconds: recorder.durationSeconds,
+      });
     recorder.reset();
     setActiveTool(null);
   };
@@ -471,6 +480,7 @@ export default function LetterWriteSheet({
                   color="neutral"
                   size="xlarge"
                   disabled={!canNext || recorder.status === "recording"}
+                  states={isNextPending ? "loading" : "default"}
                   onClick={() => onNext?.(buildValues())}>
                   다음
                 </Button>

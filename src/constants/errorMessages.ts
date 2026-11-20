@@ -31,6 +31,16 @@ export const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     message: "비밀번호를 여러 번 틀렸어요. 10분 후 다시 시도해 주세요.",
     action: "inline",
   },
+  FUNDING_020: { message: "이미 마감된 펀딩이에요.", action: "dialog" },
+  FUNDING_027: {
+    message: "요청이 겹쳤어요. 처음부터 다시 시도해주세요.",
+    action: "dialog",
+  },
+  FUNDING_032: {
+    message: "이미 같은 이름으로 보탠 친구가 있어요. 다른 이름을 써주세요.",
+    action: "dialog",
+  },
+  FUNDING_057: { message: "이미 이 펀딩에 보탰어요.", action: "dialog" },
   FUNDING_044: { message: "자기 자신에게는 서프라이즈 펀딩을 열 수 없어요.", action: "dialog" },
   FUNDING_045: {
     message: "이미 이 친구를 위한 서프라이즈 펀딩이 진행 중이에요.",
