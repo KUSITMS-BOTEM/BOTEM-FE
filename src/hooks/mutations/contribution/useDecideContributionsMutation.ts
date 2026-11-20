@@ -4,16 +4,17 @@ import { contributionService } from "@/apis/contribution/contributionService";
 import { pendingContributionsQueryKey } from "@/hooks/queries/contribution/usePendingContributionsQuery";
 import { fundingManagementQueryKey } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { homeFundingsQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
+import type { DecideContributionsRequest } from "@/types/contribution/contribution";
 
-type ConfirmContributionVariables = { fundingId: number; contributionId: number };
+type DecideContributionsVariables = DecideContributionsRequest & { fundingId: number };
 
 // fundingId를 훅 인자가 아니라 변수로 받는다. 요청 중 시트가 다른 펀딩으로 바뀌어도 처리한 펀딩의 쿼리를 무효화해야 한다
-export const useConfirmContributionMutation = () => {
+export const useDecideContributionsMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ fundingId, contributionId }: ConfirmContributionVariables) =>
-      contributionService.confirmContribution(fundingId, contributionId),
+    mutationFn: ({ fundingId, ...body }: DecideContributionsVariables) =>
+      contributionService.decideContributions(fundingId, body),
     onSuccess: (_data, { fundingId }) => {
       queryClient.invalidateQueries({ queryKey: homeFundingsQueryKey });
       queryClient.invalidateQueries({ queryKey: fundingManagementQueryKey(fundingId) });

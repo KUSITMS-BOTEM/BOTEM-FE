@@ -39,6 +39,7 @@ type BotemPopupProps = {
   onEditClick: () => void;
   onMessageClick: () => void;
   onContributeClick: () => void;
+  onThankCardClick?: (friend: BotemPopupFriend) => void;
 };
 
 export const getUnconfirmedText = ({
@@ -88,6 +89,7 @@ export default function BotemPopup({
   onEditClick,
   onMessageClick,
   onContributeClick,
+  onThankCardClick,
 }: BotemPopupProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -221,9 +223,14 @@ export default function BotemPopup({
                     )}
                   </div>
                   {isOwner ? (
-                    // TODO: 감사카드 화면이 정해지면 배지를 보내기 동작으로 연결한다
                     !friend.thankCardSent && (
-                      <Badge color="brand" variant="fill" label="감사카드 보내기" />
+                      <button
+                        type="button"
+                        aria-label={`${friend.name}에게 감사카드 보내기`}
+                        onClick={() => onThankCardClick?.(friend)}
+                        className="shrink-0 cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-black/20 focus-visible:outline-none">
+                        <Badge color="brand" variant="fill" label="감사카드 보내기" />
+                      </button>
                     )
                   ) : (
                     <span className="text-semantic-text-secondary shrink-0 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-subtext-medium)]">

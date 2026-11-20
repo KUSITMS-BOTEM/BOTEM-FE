@@ -1,12 +1,12 @@
 import { clientApi } from "@/apis/client";
 import type {
   AccessGuestContributionRequest,
-  ConfirmAllContributionsResponse,
-  ContributionDecisionResponse,
+  ContributionDecisionsResponse,
   ContributionThankCardResponse,
   CreateContributionRequest,
   CreateContributionResponse,
   CreateMessageContributionRequest,
+  DecideContributionsRequest,
   GuestContributionResponse,
   MarkTransferSentRequest,
   MarkTransferSentResponse,
@@ -15,6 +15,7 @@ import type {
   MyContributionResponse,
   PendingContributionListResponse,
   SendContributionThankCardRequest,
+  UndoContributionDecisionsRequest,
   UpdatedGuestContributionResponse,
   UpdateGuestContributionRequest,
   UpdateMyContributionRequest,
@@ -41,16 +42,10 @@ export const contributionService = {
       body,
     ),
 
-  confirmContribution: (fundingId: number, contributionId: number) =>
-    clientApi.post<ContributionDecisionResponse>(
-      `${ownerPath(fundingId)}/${contributionId}/confirm`,
-    ),
-  rejectContribution: (fundingId: number, contributionId: number) =>
-    clientApi.post<ContributionDecisionResponse>(
-      `${ownerPath(fundingId)}/${contributionId}/reject`,
-    ),
-  confirmAllContributions: (fundingId: number) =>
-    clientApi.post<ConfirmAllContributionsResponse>(`${ownerPath(fundingId)}/confirm-all`),
+  decideContributions: (fundingId: number, body: DecideContributionsRequest) =>
+    clientApi.post<ContributionDecisionsResponse>(`${ownerPath(fundingId)}/decisions`, body),
+  undoContributionDecisions: (fundingId: number, body: UndoContributionDecisionsRequest) =>
+    clientApi.post<ContributionDecisionsResponse>(`${ownerPath(fundingId)}/decisions/undo`, body),
 
   getMyContributions: (shareKey: string) =>
     clientApi.get<MyContributionListResponse>(`${participantPath(shareKey)}/me`),

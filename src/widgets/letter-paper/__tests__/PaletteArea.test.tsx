@@ -87,6 +87,16 @@ describe("PaletteArea", () => {
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 
+  it("showAddButton이 false면 플러스 버튼과 툴팁이 없고 스와치는 그대로 보인다", () => {
+    render(<PaletteArea color="orange" showAddButton={false} />);
+
+    expect(screen.queryByRole("button", { name: "나만의 편지 만들기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole("group", { name: "편지지 색상" })).getAllByRole("button"),
+    ).toHaveLength(4);
+  });
+
   it("루트는 기본으로 w-full이고 className이 병합된다", () => {
     const { container } = render(<PaletteArea color="orange" className="bg-red-500" />);
 

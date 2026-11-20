@@ -2,6 +2,7 @@ export type DepositItem = {
   id: number;
   senderName: string;
   depositedAt: string;
+  amount: number;
 };
 
 export type DepositGroup = {

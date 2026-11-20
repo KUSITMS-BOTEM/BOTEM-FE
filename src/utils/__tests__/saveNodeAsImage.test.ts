@@ -15,6 +15,12 @@ const setShare = (share: ReturnType<typeof vi.fn> | undefined) => {
   Object.defineProperty(navigator, "share", { value: share, configurable: true });
 };
 
+const setTouchDevice = (isTouch: boolean) => {
+  window.matchMedia = vi.fn((query: string) => ({
+    matches: isTouch && query === "(pointer: coarse)",
+  })) as unknown as typeof window.matchMedia;
+};
+
 describe("saveNodeAsImage", () => {
   let clickSpy: ReturnType<typeof vi.spyOn>;
 
@@ -23,6 +29,7 @@ describe("saveNodeAsImage", () => {
     URL.createObjectURL = vi.fn(() => "blob:mock");
     URL.revokeObjectURL = vi.fn();
     clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    setTouchDevice(true);
   });
 
   afterEach(() => {
@@ -52,6 +59,17 @@ describe("saveNodeAsImage", () => {
 
     expect(clickSpy).toHaveBeenCalledTimes(1);
     expect(downloadName).toBe(FILENAME);
+  });
+
+  it("마우스 기기(PC)면 공유창을 쓸 수 있어도 공유하지 않고 바로 PNG를 내려받는다", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    setShare(share);
+    setTouchDevice(false);
+
+    await saveNodeAsImage(node, FILENAME);
+
+    expect(share).not.toHaveBeenCalled();
+    expect(clickSpy).toHaveBeenCalledTimes(1);
   });
 
   it("사용자가 공유창을 닫으면 다운로드로 넘어가지 않는다", async () => {

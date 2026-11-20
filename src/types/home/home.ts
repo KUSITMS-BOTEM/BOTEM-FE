@@ -21,6 +21,8 @@ export type HomeFundingCardResponse = {
   confirmedPercentage: number;
   pendingPercentage: number;
   pendingContributionCount: number;
+  // 마감 전이지만 목표 달성·확인 대기 0건이라 지금 결과를 열 수 있는 생일 펀딩이면 true
+  earlyOpenable: boolean;
 };
 
 export type HomeFundingListResponse = {

@@ -58,6 +58,7 @@ const fundingCard: HomeFundingCardResponse = {
   confirmedPercentage: 50,
   pendingPercentage: 0,
   pendingContributionCount: 0,
+  earlyOpenable: false,
 };
 
 const makeNoFunding = (state: HomeNoFundingResponse["state"]): HomeNoFundingResponse => {
@@ -404,7 +405,7 @@ describe("HomeFundingTab", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("마감 전 100% 달성 카드(earlyComplete)를 누르면 상세가 아니라 공개 화면으로 이동한다", async () => {
+  it("지금 열 수 있는 카드(earlyOpenable, earlyComplete)를 누르면 상세가 아니라 공개 화면으로 이동한다", async () => {
     mockQueries({
       data: fundingList([
         {
@@ -416,6 +417,7 @@ describe("HomeFundingTab", () => {
           pendingPercentage: 0,
           pendingContributionCount: 0,
           participantCount: 3,
+          earlyOpenable: true,
         },
       ]),
     });

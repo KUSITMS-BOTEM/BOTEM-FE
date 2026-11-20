@@ -5,6 +5,7 @@ export type PendingContributionResponse = {
   participantName: string;
   profileImageUrl: string | null;
   participatedAt: string;
+  amount: number;
 };
 
 export type PendingContributionListResponse = {
@@ -27,14 +28,27 @@ export type ContributionDecisionStatus =
   | "CANCELLED"
   | "MESSAGE_ONLY";
 
-export type ContributionDecisionResponse = {
-  contributionId: number;
-  status: ContributionDecisionStatus;
-  progress: FundingProgressResponse;
+export type ContributionDecision = "CONFIRM" | "REJECT";
+
+export type DecideContributionsRequest = {
+  contributionIds: number[];
+  decision: ContributionDecision;
 };
 
-export type ConfirmAllContributionsResponse = {
-  confirmedCount: number;
+export type UndoContributionDecisionsRequest = {
+  contributionIds: number[];
+};
+
+export type ContributionDecisionResult = {
+  contributionId: number;
+  status: ContributionDecisionStatus;
+  // 이번 요청으로 상태가 바뀌었는지. 실행 취소에는 true인 참여만 보낸다
+  changed: boolean;
+};
+
+// 선택 처리(decisions)와 실행 취소(decisions/undo)가 같은 형태로 응답한다
+export type ContributionDecisionsResponse = {
+  contributions: ContributionDecisionResult[];
   progress: FundingProgressResponse;
 };
 
@@ -164,14 +178,19 @@ export type UpdatedGuestContributionResponse = RollingPaperContent & {
   status: ContributionLifecycleStatus;
 };
 
+export type ThankCardPaperColor = "ORANGE" | "LIME" | "PINK" | "BLUE";
+
 export type SendContributionThankCardRequest = {
   message: string;
+  // 생략하면 서버가 LIME으로 저장한다
+  paperColor?: ThankCardPaperColor;
 };
 
 export type ContributionThankCardResponse = {
   thankCardId: number;
   contributionId: number;
   message: string;
+  paperColor: ThankCardPaperColor;
   sentAt: string;
   shareUrl: string;
 };

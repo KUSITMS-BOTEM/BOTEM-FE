@@ -24,6 +24,7 @@ const mockList: PendingContributionListResponse = {
       participantName: "하린이",
       profileImageUrl: null,
       participatedAt: "2026-11-18T11:20:00",
+      amount: 30000,
     },
   ],
 };

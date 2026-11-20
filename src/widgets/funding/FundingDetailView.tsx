@@ -37,7 +37,7 @@ import { getClosedLabel } from "@/utils/funding/fundingProgress";
 import { toOwnerFundingView } from "@/utils/funding/toOwnerFundingView";
 import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
 import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
-import BotemPopup from "@/widgets/funding/BotemPopup";
+import BotemPopup, { type BotemPopupFriend } from "@/widgets/funding/BotemPopup";
 import MyBotemSheet from "@/widgets/funding/MyBotemSheet";
 import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
@@ -49,6 +49,7 @@ import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
 import FundingTransferGuideSheet, {
   type FundingTransferAccount,
 } from "@/widgets/funding/FundingTransferGuideSheet";
+import ThankCardSheet from "@/widgets/funding/ThankCardSheet";
 import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
 import IconShare from "@/assets/icons/icon-share.svg?react";
 import IconDotVertical from "@/assets/icons/icon-dotvertical.svg?react";
@@ -213,6 +214,7 @@ export default function FundingDetailView({
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [thankCardFriend, setThankCardFriend] = useState<BotemPopupFriend | null>(null);
   const contributeAmount = useFundingContributionStore(state => state.amount);
   const { setAmount, setLetter, setPassword, reset } = useFundingContributionStore.getState();
   const [isExitOpen, setIsExitOpen] = useState(false);
@@ -546,6 +548,20 @@ export default function FundingDetailView({
               closePopup();
               startContribute();
             }}
+            onThankCardClick={friend => {
+              closePopup();
+              setThankCardFriend(friend);
+            }}
+          />
+        )}
+        {/* 닫으면 언마운트돼 다음 친구에게는 빈 카드로 다시 시작한다. owner 친구의 id는 contributionId다 */}
+        {isOwner && thankCardFriend && (
+          <ThankCardSheet
+            open
+            fundingId={Number(fundingId)}
+            contributionId={thankCardFriend.id}
+            recipientName={thankCardFriend.name}
+            onClose={() => setThankCardFriend(null)}
           />
         )}
         {/* 처리 뒤 관리 상세가 다시 조회돼 owner의 확인 대기 건수·알림 점이 함께 갱신된다 */}

@@ -17,6 +17,7 @@ const mockList: PendingContributionListResponse = {
       participantName: "하린",
       profileImageUrl: null,
       participatedAt: "2026-11-20T14:03:12",
+      amount: 30000,
     },
   ],
 };
@@ -49,32 +50,36 @@ const progress = {
 };
 
 describe("contributionService 입금 확인 API", () => {
-  it.each([
-    ["confirmContribution", "/api/fundings/7/contributions/31/confirm", "CONFIRMED"],
-    ["rejectContribution", "/api/fundings/7/contributions/31/reject", "REJECTED"],
-  ] as const)(
-    "%s는 clientApi.post를 %s 경로로 호출하고 응답을 돌려준다",
-    async (fn, path, status) => {
-      const response = { contributionId: 31, status, progress };
-      vi.mocked(clientApi.post).mockResolvedValue(response);
+  const response = {
+    contributions: [{ contributionId: 31, status: "CONFIRMED" as const, changed: true }],
+    progress,
+  };
 
-      await expect(contributionService[fn](7, 31)).resolves.toEqual(response);
-      expect(clientApi.post).toHaveBeenCalledWith(path);
-    },
-  );
-
-  it("confirmAllContributions는 confirm-all 경로로 호출하고 응답을 돌려준다", async () => {
-    const response = { confirmedCount: 2, progress };
+  it("decideContributions는 decisions 경로로 선택한 참여와 처리 결과를 보내고 응답을 돌려준다", async () => {
     vi.mocked(clientApi.post).mockResolvedValue(response);
+    const body = { contributionIds: [31, 32], decision: "CONFIRM" as const };
 
-    await expect(contributionService.confirmAllContributions(7)).resolves.toEqual(response);
-    expect(clientApi.post).toHaveBeenCalledWith("/api/fundings/7/contributions/confirm-all");
+    await expect(contributionService.decideContributions(7, body)).resolves.toEqual(response);
+    expect(clientApi.post).toHaveBeenCalledWith("/api/fundings/7/contributions/decisions", body);
+  });
+
+  it("undoContributionDecisions는 decisions/undo 경로로 되돌릴 참여를 보내고 응답을 돌려준다", async () => {
+    vi.mocked(clientApi.post).mockResolvedValue(response);
+    const body = { contributionIds: [31] };
+
+    await expect(contributionService.undoContributionDecisions(7, body)).resolves.toEqual(response);
+    expect(clientApi.post).toHaveBeenCalledWith(
+      "/api/fundings/7/contributions/decisions/undo",
+      body,
+    );
   });
 
   it("clientApi.post가 실패하면 에러를 그대로 전파한다", async () => {
     const error = new Error("입금 확인 실패");
     vi.mocked(clientApi.post).mockRejectedValue(error);
 
-    await expect(contributionService.confirmContribution(7, 31)).rejects.toBe(error);
+    await expect(
+      contributionService.decideContributions(7, { contributionIds: [31], decision: "REJECT" }),
+    ).rejects.toBe(error);
   });
 });
