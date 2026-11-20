@@ -9,9 +9,6 @@ import NumberFieldGroup, { NUMBER_FIELD_LENGTH } from "@/components/NumberFieldG
 import OpenSheet from "@/components/OpenSheet";
 import Title from "@/components/Title";
 import { cn } from "@/utils/cn";
-import FundingTransferGuideSheet, {
-  type FundingTransferAccount,
-} from "@/widgets/funding/FundingTransferGuideSheet";
 
 // 시트가 이미 떠 있는 상태에서 빈 화면 → Title → 입력 영역 순서로 나타난다 (FundingContributeSheet 모션 기준)
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
@@ -22,16 +19,13 @@ const KEYPAD_HIDE_DELAY_MS = 400;
 type FundingPasswordSheetProps = {
   open: boolean;
   hostName: string;
-  // 송금 안내 시트에 그대로 넘긴다
-  amount: number;
-  account: FundingTransferAccount;
   onClose: () => void;
   onPrev: () => void;
-  // 보태러 가기 뒤 송금 안내 시트에서 완료하기를 누르면 입력한 비밀번호와 함께 호출된다
+  // 버튼을 누르면 입력한 비밀번호와 함께 호출된다. 제출과 이후 송금 안내는 부모가 맡는다
   onComplete: (password: string) => void;
-  /** true면 송금이 없는 메시지 보태기라 송금 안내 시트를 건너뛰고 '완료하기'에서 바로 onComplete를 호출한다 */
+  /** true면 송금이 없는 메시지 보태기라 버튼이 '완료하기'다. 아니면 '보태러 가기' */
   messageOnly?: boolean;
-  // 메시지 보태기 제출 중이면 완료하기를 잠그고 로딩을 보여준다
+  // 보탬 제출 중이면 버튼을 잠그고 로딩을 보여준다
   isPending?: boolean;
   className?: string;
 };
@@ -39,8 +33,6 @@ type FundingPasswordSheetProps = {
 export default function FundingPasswordSheet({
   open,
   hostName,
-  amount,
-  account,
   onClose,
   onPrev,
   onComplete,
@@ -49,7 +41,6 @@ export default function FundingPasswordSheet({
   className,
 }: FundingPasswordSheetProps) {
   const [password, setPassword] = useState("");
-  const [guideOpen, setGuideOpen] = useState(false);
   // iOS는 키보드 열림·닫힘 이벤트가 없어 input의 focus·blur를 키보드가 올라온 시점으로 본다
   const [isTyping, setIsTyping] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -62,7 +53,6 @@ export default function FundingPasswordSheet({
     if (!open) {
       setPassword("");
       setIsTyping(false);
-      setGuideOpen(false);
     }
   }
 
@@ -74,64 +64,50 @@ export default function FundingPasswordSheet({
   }, [isFilled, isTyping]);
 
   return (
-    <>
-      <OpenSheet
-        open={open}
-        title={`${hostName}에게 보태기`}
-        onClose={onClose}
-        className={className}>
-        <div className="flex w-full flex-col gap-4">
-          <motion.div
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={TITLE_TRANSITION}
-            className="w-full">
-            <Title
-              type="a2z"
-              title={"내 보탬을 지킬\n비밀번호 4자리를 정해주세요"}
-              description="나중에 메시지를 고칠 때 이름과 함께 써요"
-            />
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={FIELD_TRANSITION}
-            // 입력 영역이 다 나타난 뒤에 포커스해야 모션 중 키보드가 올라와 레이아웃이 흔들리지 않는다
-            onAnimationComplete={() => inputRef.current?.focus({ preventScroll: true })}
-            className="w-full">
-            <NumberFieldGroup
-              ref={inputRef}
-              label="비밀번호 4자리"
-              value={password}
-              onChange={setPassword}
-              onFocus={() => setIsTyping(true)}
-              onBlur={() => setIsTyping(false)}
-            />
-          </motion.div>
-        </div>
-        {/* 키보드가 올라온 터치 기기에서는 CTA가 키보드 위에 떠 입력을 가리므로 숨긴다 */}
-        <BottomCTA className={cn(isTyping && "pointer-coarse:hidden")}>
-          <Button color="neutral" variant="weak" size="xlarge" onClick={onPrev}>
-            이전
-          </Button>
-          <Button
-            color="brand"
-            size="xlarge"
-            disabled={!isFilled}
-            states={isPending ? "loading" : "default"}
-            onClick={() => (messageOnly ? onComplete(password) : setGuideOpen(true))}>
-            {messageOnly ? "완료하기" : "보태러 가기"}
-          </Button>
-        </BottomCTA>
-      </OpenSheet>
-      <FundingTransferGuideSheet
-        open={guideOpen}
-        hostName={hostName}
-        amount={amount}
-        account={account}
-        onClose={() => setGuideOpen(false)}
-        onComplete={() => onComplete(password)}
-      />
-    </>
+    <OpenSheet open={open} title={`${hostName}에게 보태기`} onClose={onClose} className={className}>
+      <div className="flex w-full flex-col gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={TITLE_TRANSITION}
+          className="w-full">
+          <Title
+            type="a2z"
+            title={"내 보탬을 지킬\n비밀번호 4자리를 정해주세요"}
+            description="나중에 메시지를 고칠 때 이름과 함께 써요"
+          />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={FIELD_TRANSITION}
+          // 입력 영역이 다 나타난 뒤에 포커스해야 모션 중 키보드가 올라와 레이아웃이 흔들리지 않는다
+          onAnimationComplete={() => inputRef.current?.focus({ preventScroll: true })}
+          className="w-full">
+          <NumberFieldGroup
+            ref={inputRef}
+            label="비밀번호 4자리"
+            value={password}
+            onChange={setPassword}
+            onFocus={() => setIsTyping(true)}
+            onBlur={() => setIsTyping(false)}
+          />
+        </motion.div>
+      </div>
+      {/* 키보드가 올라온 터치 기기에서는 CTA가 키보드 위에 떠 입력을 가리므로 숨긴다 */}
+      <BottomCTA className={cn(isTyping && "pointer-coarse:hidden")}>
+        <Button color="neutral" variant="weak" size="xlarge" onClick={onPrev}>
+          이전
+        </Button>
+        <Button
+          color="brand"
+          size="xlarge"
+          disabled={!isFilled}
+          states={isPending ? "loading" : "default"}
+          onClick={() => onComplete(password)}>
+          {messageOnly ? "완료하기" : "보태러 가기"}
+        </Button>
+      </BottomCTA>
+    </OpenSheet>
   );
 }

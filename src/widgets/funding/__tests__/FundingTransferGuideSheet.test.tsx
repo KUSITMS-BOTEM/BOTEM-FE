@@ -33,9 +33,15 @@ type HarnessProps = {
   onClose?: () => void;
   onComplete?: () => void;
   closeOnComplete?: boolean;
+  isPending?: boolean;
 };
 
-function Harness({ onClose, onComplete = vi.fn(), closeOnComplete = false }: HarnessProps) {
+function Harness({
+  onClose,
+  onComplete = vi.fn(),
+  closeOnComplete = false,
+  isPending,
+}: HarnessProps) {
   const [open, setOpen] = useState(true);
   return (
     <>
@@ -45,6 +51,7 @@ function Harness({ onClose, onComplete = vi.fn(), closeOnComplete = false }: Har
         hostName="지유"
         amount={50000}
         account={ACCOUNT}
+        isPending={isPending}
         onClose={() => {
           onClose?.();
           setOpen(false);
@@ -142,6 +149,18 @@ describe("FundingTransferGuideSheet", () => {
 
     await user.click(screen.getByRole("button", { name: "열기" }));
     expect(getCheckbox()).not.toBeChecked();
+  });
+
+  it("요청 중(isPending)이면 송금했어요를 체크해도 완료하기가 로딩 상태로 잠긴다", async () => {
+    const user = userEvent.setup();
+    const onComplete = vi.fn();
+    render(<Harness isPending onComplete={onComplete} />);
+    await user.click(getCheckbox());
+
+    expect(getComplete()).toHaveAttribute("aria-busy", "true");
+    expect(getComplete()).toBeDisabled();
+    await user.click(getComplete());
+    expect(onComplete).not.toHaveBeenCalled();
   });
 
   it("완료하기를 연속으로 눌러도 onComplete는 한 번만 호출된다", async () => {

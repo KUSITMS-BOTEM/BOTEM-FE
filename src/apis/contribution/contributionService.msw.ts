@@ -140,6 +140,37 @@ export const contributionHandlers = [
       error: null,
     });
   }),
+  http.post("*/api/fundings/:fundingId/contributions", async ({ request }) => {
+    await delay(500);
+    const { participantName, amount } = (await request.json()) as {
+      participantName?: string;
+      amount: number;
+    };
+    return HttpResponse.json({
+      success: true,
+      data: {
+        contributionId: 98,
+        participantName: participantName ?? "회원",
+        amount,
+        status: "AWAITING_TRANSFER",
+        payoutAccount: {
+          bank: "TOSS_BANK",
+          bankName: "토스뱅크",
+          accountNumber: "1000-1234-5678",
+          accountHolder: "김민재",
+        },
+      },
+      error: null,
+    });
+  }),
+  http.post("*/api/fundings/:fundingId/contributions/:contributionId/transfer-sent", async () => {
+    await delay(300);
+    return HttpResponse.json({
+      success: true,
+      data: { contributionId: 98, status: "PENDING_CONFIRMATION" },
+      error: null,
+    });
+  }),
   http.post(
     "*/api/fundings/:fundingId/contributions/:contributionId/confirm",
     decideContribution("CONFIRMED"),

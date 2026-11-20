@@ -89,8 +89,33 @@ beforeAll(() => {
 });
 
 type User = ReturnType<typeof userEvent.setup>;
-// 입금 확인 시트가 확인 대기 목록을 조회하므로 빈 목록 응답을 준비한다. 메시지 보태기 제출은 성공 응답을 준다
+// 입금 확인 시트가 확인 대기 목록을 조회하므로 빈 목록 응답을 준비한다. 보태기 제출·송금 확인은 성공 응답을 준다
 const server = setupServer(
+  http.post("*/api/fundings/:fundingId/contributions", () =>
+    HttpResponse.json({
+      success: true,
+      data: {
+        contributionId: 2,
+        participantName: "민수",
+        amount: 50000,
+        status: "AWAITING_TRANSFER",
+        payoutAccount: {
+          bank: "TOSS_BANK",
+          bankName: "토스뱅크",
+          accountNumber: "1000-1234-5678",
+          accountHolder: "김민재",
+        },
+      },
+      error: null,
+    }),
+  ),
+  http.post("*/api/fundings/:fundingId/contributions/:contributionId/transfer-sent", () =>
+    HttpResponse.json({
+      success: true,
+      data: { contributionId: 2, status: "PENDING_CONFIRMATION" },
+      error: null,
+    }),
+  ),
   http.post("*/api/fundings/:fundingId/contributions/message-only", () =>
     HttpResponse.json({
       success: true,
@@ -565,7 +590,7 @@ describe("FundingDetailView", () => {
       await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
       await clickTopmost(user, "완료하기");
 
-      expect(replaceMock).toHaveBeenCalledWith("/share/1/complete");
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/1/complete"));
     });
 
     it("메시지 보태기는 편지 다음에 비밀번호 없이 바로 완료 페이지로 이동한다", async () => {
@@ -794,7 +819,93 @@ describe("FundingDetailView", () => {
     await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
     await clickTopmost(user, "완료하기");
 
-    expect(replaceMock).toHaveBeenCalledWith("/share/1/complete");
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/1/complete"));
+  });
+
+  it("보태러 가기는 금액 보태기를 제출하고 응답 계좌를 송금 안내에 보여준다", async () => {
+    const user = userEvent.setup();
+    const submitted = vi.fn();
+    server.use(
+      http.post("*/api/fundings/:fundingId/contributions", async ({ request }) => {
+        submitted(await request.json());
+        return HttpResponse.json({
+          success: true,
+          data: {
+            contributionId: 2,
+            participantName: "민수",
+            amount: 50000,
+            status: "AWAITING_TRANSFER",
+            payoutAccount: {
+              bank: "KAKAO_BANK",
+              bankName: "카카오뱅크",
+              accountNumber: "3333-01-1234567",
+              accountHolder: "김민재",
+            },
+          },
+          error: null,
+        });
+      }),
+    );
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+    await goToPasswordSheet(user);
+    await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
+    await user.click(screen.getByRole("button", { name: "보태러 가기" }));
+
+    expect(await screen.findByText(/3333-01-1234567/)).toBeInTheDocument();
+    expect(submitted).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 50000, participantName: "민수", guestPassword: "1234" }),
+    );
+  });
+
+  it("송금했어요 완료 시 transfer-sent에 비회원 비밀번호를 보낸다", async () => {
+    const user = userEvent.setup();
+    const sent = vi.fn();
+    server.use(
+      http.post(
+        "*/api/fundings/:fundingId/contributions/:contributionId/transfer-sent",
+        async ({ params, request }) => {
+          sent(params.contributionId, await request.json());
+          return HttpResponse.json({
+            success: true,
+            data: { contributionId: 2, status: "PENDING_CONFIRMATION" },
+            error: null,
+          });
+        },
+      ),
+    );
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+    await goToPasswordSheet(user);
+    await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
+    await user.click(screen.getByRole("button", { name: "보태러 가기" }));
+    await screen.findByRole("heading", { level: 1, name: /민재의 계좌로/ });
+    await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
+    await clickTopmost(user, "완료하기");
+
+    await waitFor(() => expect(sent).toHaveBeenCalledWith("2", { guestPassword: "1234" }));
+  });
+
+  it("송금 확인이 실패하면 완료 페이지로 이동하지 않고 다시 누를 수 있다", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post("*/api/fundings/:fundingId/contributions/:contributionId/transfer-sent", () =>
+        HttpResponse.json(
+          { success: false, data: null, error: { code: "COMMON_500", message: "fail" } },
+          { status: 500 },
+        ),
+      ),
+    );
+    render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+    await goToPasswordSheet(user);
+    await user.type(await screen.findByLabelText("비밀번호 4자리"), "1234");
+    await user.click(screen.getByRole("button", { name: "보태러 가기" }));
+    await screen.findByRole("heading", { level: 1, name: /민재의 계좌로/ });
+    await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
+    await clickTopmost(user, "완료하기");
+
+    await waitFor(() => expect(replaceMock).not.toHaveBeenCalled());
+    // 잠금이 풀려 같은 버튼으로 다시 시도할 수 있다
+    await clickTopmost(user, "완료하기");
+    expect(replaceMock).not.toHaveBeenCalled();
   });
 
   it("완료하기를 누르면 금액·편지·비밀번호가 스토어에 모두 담겨 있다", async () => {
@@ -808,6 +919,7 @@ describe("FundingDetailView", () => {
     await user.click(screen.getByRole("checkbox", { name: "송금했어요" }));
     await clickTopmost(user, "완료하기");
 
+    await waitFor(() => expect(replaceMock).toHaveBeenCalled());
     expect(useFundingContributionStore.getState()).toMatchObject({
       amount: 50000,
       letter: { text: "생일 축하해!", name: "민수" },

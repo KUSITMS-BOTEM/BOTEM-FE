@@ -19,7 +19,9 @@ import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
 import { useAccessGuestContributionMutation } from "@/hooks/mutations/contribution/useAccessGuestContributionMutation";
+import { useCreateContributionMutation } from "@/hooks/mutations/contribution/useCreateContributionMutation";
 import { useCreateMessageContributionMutation } from "@/hooks/mutations/contribution/useCreateMessageContributionMutation";
+import { useMarkTransferSentMutation } from "@/hooks/mutations/contribution/useMarkTransferSentMutation";
 import { useMyContributionsQuery } from "@/hooks/queries/contribution/useMyContributionsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { DEFAULT_ERROR_MESSAGE, ERROR_MESSAGES } from "@/constants/errorMessages";
@@ -97,11 +99,6 @@ const MOCK_FUNDING = {
       isConfirmed: false,
     },
   ] satisfies MyBotemSheetFriend[],
-  account: {
-    bank: "TOSS_BANK",
-    accountHolder: "김민재",
-    accountNumber: "1000-1234-5678",
-  } satisfies FundingTransferAccount,
 };
 
 // 공유용 상세 응답에는 금액이 없고 달성률만 있어, 화면이 쓰는 모양으로 옮겨 담는다
@@ -207,7 +204,15 @@ export default function FundingDetailView({
   // 올리면 금액·편지 시트가 새로 마운트되어 입력값이 모두 초기화된다
   const [flowKey, setFlowKey] = useState(0);
   const createMessage = useCreateMessageContributionMutation(Number(fundingId));
-  // 같은 플로우에서 실패 후 재시도하면 같은 키로 보내 서버가 중복 참여를 만들지 않게 한다
+  const createContribution = useCreateContributionMutation(Number(fundingId));
+  const markTransferSent = useMarkTransferSentMutation(Number(fundingId));
+  const isSubmitting = createMessage.isPending || createContribution.isPending;
+  // 금액 보태기를 저장한 응답. 송금 안내 시트의 계좌와 송금 확인 호출에 쓴다
+  const [submitted, setSubmitted] = useState<{
+    contributionId: number;
+    account: FundingTransferAccount;
+  } | null>(null);
+  // 같은 플로우에서 실패 후 재시도하면 같은 키로 보내 서버가 중복 참여를 만들지 않게 한다. 금액이 바뀌면 새로 만든다
   const requestKeyRef = useRef("");
   const closePopup = () => setIsPopupOpen(false);
   const requestExit = () => setIsExitOpen(true);
@@ -231,20 +236,46 @@ export default function FundingDetailView({
     setIsContributeOpen(true);
   };
 
-  // 편지를 서버에 제출하고 성공하면 완료 화면으로 간다. 회원은 비밀번호 없이 보낸다
-  const submitMessage = (password?: string) => {
-    const letter = useFundingContributionStore.getState().letter;
+  // 편지를 서버에 제출한다. 메시지 보태기는 바로 완료 화면으로, 금액 보태기는 응답 계좌로 송금 안내를 연다. 회원은 비밀번호 없이 보낸다
+  const submitContribution = (password?: string) => {
+    const { letter, amount } = useFundingContributionStore.getState();
     if (!letter) return;
-    createMessage.mutate(
-      { letter, requestKey: requestKeyRef.current, guestPassword: password },
+    const variables = { letter, requestKey: requestKeyRef.current, guestPassword: password };
+    // 이름이 겹치면 비밀번호 시트를 닫아 편지 시트에서 이름을 고치게 한다
+    const onError = (error: Error) => {
+      if (error instanceof ApiError && error.code === "FUNDING_032") setIsPasswordOpen(false);
+    };
+    if (isMessageOnly) {
+      createMessage.mutate(variables, { onSuccess: () => goToComplete(password), onError });
+      return;
+    }
+    createContribution.mutate(
+      { ...variables, amount },
       {
-        onSuccess: () => goToComplete(password),
-        // 이름이 겹치면 비밀번호 시트를 닫아 편지 시트에서 이름을 고치게 한다
-        onError: error => {
-          if (error instanceof ApiError && error.code === "FUNDING_032") setIsPasswordOpen(false);
+        onSuccess: response => {
+          // 계좌 없이는 송금 안내를 열 수 없다
+          if (!response) return;
+          const { contributionId, payoutAccount } = response;
+          setSubmitted({
+            contributionId,
+            account: { ...payoutAccount, accountHolder: payoutAccount.accountHolder ?? "" },
+          });
+          setIsMemberGuideOpen(true);
         },
+        onError,
       },
     );
+  };
+
+  // 송금했다고 서버에 알리고 성공하면 완료 화면으로 간다. 실패하면 reject해 시트가 다시 누를 수 있게 한다
+  const completeTransfer = async () => {
+    if (!submitted) return;
+    const password = isMember ? undefined : useFundingContributionStore.getState().password;
+    await markTransferSent.mutateAsync({
+      contributionId: submitted.contributionId,
+      guestPassword: password,
+    });
+    goToComplete(password);
   };
 
   // 보태기 플로우에서 입력한 값을 모두 버리고 열려 있는 시트를 닫는다
@@ -530,6 +561,8 @@ export default function FundingDetailView({
           onClose={() => setIsContributeOpen(false)}
           onExit={requestExit}
           onNext={amount => {
+            if (amount !== useFundingContributionStore.getState().amount)
+              requestKeyRef.current = crypto.randomUUID();
             setAmount(amount);
             setIsLetterOpen(true);
           }}
@@ -543,37 +576,36 @@ export default function FundingDetailView({
           memberName={memberName}
           onClose={() => setIsLetterOpen(false)}
           onExit={requestExit}
-          isNextPending={createMessage.isPending}
+          isNextPending={isSubmitting}
           onNext={values => {
             setLetter(values);
-            // 회원은 비밀번호를 정하지 않으므로 바로 송금 안내(메시지 보태기는 바로 완료)로 간다
+            // 회원은 비밀번호를 정하지 않으므로 바로 제출한다
             if (!isMember) setIsPasswordOpen(true);
-            else if (isMessageOnly) submitMessage();
-            else setIsMemberGuideOpen(true);
+            else submitContribution();
           }}
         />
-        <FundingTransferGuideSheet
-          open={isMemberGuideOpen}
-          hostName={funding.hostName}
-          amount={contributeAmount}
-          account={funding.account}
-          onClose={() => setIsMemberGuideOpen(false)}
-          onComplete={() => goToComplete()}
-        />
-        {/* TODO(API): 금액 보태기 제출 API는 아직 연결 전이다(메시지 보태기만 연결됨). replace라 뒤로가기로 보태기 플로우에 돌아오지 않는다 */}
+        {/* replace라 완료 뒤 뒤로가기로 보태기 플로우에 돌아오지 않는다 */}
+        {submitted && (
+          <FundingTransferGuideSheet
+            open={isMemberGuideOpen}
+            hostName={funding.hostName}
+            amount={contributeAmount}
+            account={submitted.account}
+            onClose={() => setIsMemberGuideOpen(false)}
+            isPending={markTransferSent.isPending}
+            onComplete={completeTransfer}
+          />
+        )}
         <FundingPasswordSheet
           open={isPasswordOpen}
           hostName={funding.hostName}
-          amount={contributeAmount}
-          account={funding.account}
           messageOnly={isMessageOnly}
-          isPending={createMessage.isPending}
+          isPending={isSubmitting}
           onClose={requestExit}
           onPrev={() => setIsPasswordOpen(false)}
           onComplete={password => {
             setPassword(password);
-            if (isMessageOnly) submitMessage(password);
-            else goToComplete(password);
+            submitContribution(password);
           }}
         />
         <Dialog

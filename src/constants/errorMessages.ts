@@ -32,6 +32,7 @@ export const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     action: "inline",
   },
   FUNDING_020: { message: "이미 마감된 펀딩이에요.", action: "dialog" },
+  FUNDING_022: { message: "남은 목표 금액보다 큰 금액은 보탤 수 없어요.", action: "dialog" },
   FUNDING_027: {
     message: "요청이 겹쳤어요. 처음부터 다시 시도해주세요.",
     action: "dialog",
