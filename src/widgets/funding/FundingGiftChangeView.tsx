@@ -1,4 +1,3 @@
-import Button from "@/components/Button";
 import Header from "@/components/Header";
 import InfoBox from "@/components/InfoBox";
 import List from "@/components/List";
@@ -19,9 +18,9 @@ type FundingGiftChangeViewProps = {
   collectedAmount: number;
   currentGift: GiftChangeProduct;
   wishes: GiftChangeProduct[];
-  currentGiftPending?: boolean;
   onBack: () => void;
-  onSelectCurrentGift: () => void;
+  // 기존 선물의 위시를 찾지 못하면 넘겨주지 않아 행을 누를 수 없게 한다
+  onSelectCurrentGift?: () => void;
   onSelectWish: (wish: GiftChangeProduct) => void;
   onBrowseProducts: () => void;
 };
@@ -30,24 +29,12 @@ export default function FundingGiftChangeView({
   collectedAmount,
   currentGift,
   wishes,
-  currentGiftPending = false,
   onBack,
   onSelectCurrentGift,
   onSelectWish,
   onBrowseProducts,
 }: FundingGiftChangeViewProps) {
   const shortfall = getShortfall(currentGift.price, collectedAmount);
-
-  const renderSelectButton = (ariaLabel: string, onClick: () => void, pending = false) => (
-    <Button
-      size="small"
-      aria-label={ariaLabel}
-      states={pending ? "loading" : "default"}
-      disabled={pending}
-      onClick={onClick}>
-      선택
-    </Button>
-  );
 
   return (
     <div className="flex flex-col">
@@ -74,11 +61,7 @@ export default function FundingGiftChangeView({
             caption="기존 선물"
             titleUp
             textType="price"
-            right={renderSelectButton(
-              `${currentGift.productName} 선택`,
-              onSelectCurrentGift,
-              currentGiftPending,
-            )}
+            onClick={onSelectCurrentGift}
           />
         </div>
         {wishes.length > 0 && (
@@ -94,7 +77,7 @@ export default function FundingGiftChangeView({
                 caption={`남는 금액 ${formatWon(getRemainingAmount(collectedAmount, wish.price))}`}
                 titleUp
                 textType="price"
-                right={renderSelectButton(`${wish.productName} 선택`, () => onSelectWish(wish))}
+                onClick={() => onSelectWish(wish)}
               />
             ))}
           </section>

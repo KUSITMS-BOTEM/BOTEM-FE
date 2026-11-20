@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { useChangeFundingProductMutation } from "@/hooks/mutations/funding/useChangeFundingProductMutation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
@@ -12,9 +11,8 @@ import FundingGiftChangeContainer from "@/widgets/funding/FundingGiftChangeConta
 
 const back = vi.fn();
 const push = vi.fn();
-const replace = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ back, push, replace }),
+  useRouter: () => ({ back, push }),
   useParams: () => ({ fundingId: "7" }),
 }));
 vi.mock("@/hooks/queries/funding/useFundingResultQuery", () => ({
@@ -24,9 +22,6 @@ vi.mock("@/hooks/queries/funding/useFundingManagementQuery", () => ({
   useFundingManagementQuery: vi.fn(),
 }));
 vi.mock("@/hooks/queries/wish/useWishesQuery", () => ({ useWishesQuery: vi.fn() }));
-vi.mock("@/hooks/mutations/funding/useChangeFundingProductMutation", () => ({
-  useChangeFundingProductMutation: vi.fn(),
-}));
 
 const wish = (overrides: Partial<WishResponse>): WishResponse => ({
   id: 1,
@@ -63,7 +58,6 @@ const mockManagement = {
   productChanged: false,
 } as FundingManagementResponse;
 
-const changeMutate = vi.fn();
 const wishesRefetch = vi.fn();
 
 const mockQueries = ({
@@ -86,11 +80,6 @@ const mockQueries = ({
     isLoading,
     refetch: wishesRefetch,
   } as unknown as ReturnType<typeof useWishesQuery>);
-  vi.mocked(useChangeFundingProductMutation).mockReturnValue({
-    mutate: changeMutate,
-    isPending: false,
-    isSuccess: false,
-  } as unknown as ReturnType<typeof useChangeFundingProductMutation>);
 };
 
 beforeEach(() => {
@@ -145,26 +134,25 @@ describe("FundingGiftChangeContainer", () => {
     expect(screen.getByText("위시 상품을 찾아볼까요?")).toBeInTheDocument();
   });
 
-  it("위시를 고르면 그 위시의 변경 화면으로 이동한다", async () => {
+  it("위시 행을 누르면 그 위시의 상세 화면으로 이동한다", async () => {
     mockQueries();
     render(<FundingGiftChangeContainer />);
 
-    await userEvent.click(screen.getByRole("button", { name: "에어팟 프로 3 선택" }));
+    await userEvent.click(screen.getByRole("button", { name: /에어팟 프로 3/ }));
 
     expect(push).toHaveBeenCalledWith("/funding/7/change-gift/wish/1");
   });
 
-  it("바꾼 적 없이 기존 선물을 고르면 요청 없이 선물 확인으로 돌아간다", async () => {
+  it("기존 선물 행을 누르면 기존 위시의 상세 화면으로 이동한다", async () => {
     mockQueries();
     render(<FundingGiftChangeContainer />);
 
-    await userEvent.click(screen.getByRole("button", { name: "다이슨 에어랩 선택" }));
+    await userEvent.click(screen.getByRole("button", { name: /다이슨 에어랩/ }));
 
-    expect(changeMutate).not.toHaveBeenCalled();
-    expect(replace).toHaveBeenCalledWith("/funding/7/result");
+    expect(push).toHaveBeenCalledWith("/funding/7/change-gift/wish/2");
   });
 
-  it("다른 위시로 바꾼 뒤 기존 선물을 고르면 기존 위시로 되돌리고 선물 확인으로 돌아간다", async () => {
+  it("다른 위시로 바꾼 뒤에도 기존 선물 행은 기록해 둔 기존 위시 상세로 이동한다", async () => {
     useGiftChangeStore.getState().start(7, {
       wishId: 2,
       productName: "다이슨 에어랩",
@@ -184,15 +172,18 @@ describe("FundingGiftChangeContainer", () => {
       ],
       management: { ...mockManagement, productChanged: true },
     });
-    changeMutate.mockImplementation((_wishId: number, options: { onSuccess: () => void }) =>
-      options.onSuccess(),
-    );
     render(<FundingGiftChangeContainer />);
 
-    await userEvent.click(screen.getByRole("button", { name: "다이슨 에어랩 선택" }));
+    await userEvent.click(screen.getByRole("button", { name: /다이슨 에어랩/ }));
 
-    expect(changeMutate.mock.calls[0][0]).toBe(2);
-    expect(replace).toHaveBeenCalledWith("/funding/7/result");
+    expect(push).toHaveBeenCalledWith("/funding/7/change-gift/wish/2");
+  });
+
+  it("기존 선물의 위시를 찾지 못하면 기존 선물 행은 누를 수 없다", () => {
+    mockQueries({ wishes: [wish({ id: 1, productName: "에어팟 프로 3", price: 359000 })] });
+    render(<FundingGiftChangeContainer />);
+
+    expect(screen.queryByRole("button", { name: /다이슨 에어랩/ })).not.toBeInTheDocument();
   });
 
   it("'상품 보기'를 누르면 상품 보기 중으로 표시하고 추천 상품 목록으로 이동한다", async () => {

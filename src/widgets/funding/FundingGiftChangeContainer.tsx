@@ -5,7 +5,6 @@ import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import Header from "@/components/Header";
-import { useChangeFundingProductMutation } from "@/hooks/mutations/funding/useChangeFundingProductMutation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
@@ -23,13 +22,11 @@ export default function FundingGiftChangeContainer() {
   const resultQuery = useFundingResultQuery(fundingId);
   const managementQuery = useFundingManagementQuery(fundingId);
   const wishesQuery = useWishesQuery();
-  const changeMutation = useChangeFundingProductMutation(fundingId);
   const storedFundingId = useGiftChangeStore(state => state.fundingId);
   const storedOriginalGift = useGiftChangeStore(state => state.originalGift);
   const result = resultQuery.data;
   const management = managementQuery.data;
   const wishes = wishesQuery.data?.content;
-  const resultPath = `/funding/${fundingId}/result`;
 
   // 추천 상품에서 위시를 담지 않고 돌아왔다면 이후 평소 위시 담기가 변경 화면으로 새지 않게 끈다
   useEffect(() => {
@@ -89,24 +86,19 @@ export default function FundingGiftChangeContainer() {
   );
   const changeableWishes = getChangeableWishes(wishes, result.confirmedAmount, excludeWishIds);
 
-  // 다른 위시로 바꿨다가 기존 선물을 다시 고르면 기존 위시로 되돌린다
-  const handleSelectOriginalGift = () => {
-    if (!originalGift || currentWish?.id === originalGift.wishId) {
-      router.replace(resultPath);
-      return;
-    }
-    changeMutation.mutate(originalGift.wishId, { onSuccess: () => router.replace(resultPath) });
-  };
+  const goToWishDetail = (wishId: number) =>
+    router.push(`/funding/${fundingId}/change-gift/wish/${wishId}`);
 
   return (
     <FundingGiftChangeView
       collectedAmount={result.confirmedAmount}
       currentGift={giftShownAsOriginal}
       wishes={changeableWishes}
-      currentGiftPending={changeMutation.isPending || changeMutation.isSuccess}
       onBack={() => router.back()}
-      onSelectCurrentGift={handleSelectOriginalGift}
-      onSelectWish={wish => router.push(`/funding/${fundingId}/change-gift/wish/${wish.id}`)}
+      onSelectCurrentGift={
+        giftShownAsOriginal.id ? () => goToWishDetail(giftShownAsOriginal.id) : undefined
+      }
+      onSelectWish={wish => goToWishDetail(wish.id)}
       onBrowseProducts={() => {
         useGiftChangeStore.getState().setBrowsingProducts(true);
         router.push("/wish/recommended");
