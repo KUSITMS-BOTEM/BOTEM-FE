@@ -13,7 +13,10 @@ import ProfileBox from "@/components/ProfileBox";
 import Tooltip from "@/components/Tooltip";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
+import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
 import { useGuestBotemStore } from "@/store/guestBotemStore";
+import { handleKakaoLoginClick } from "@/utils/auth/handleKakaoLoginClick";
+import { getShareReturnPath, type ShareMemberIntent } from "@/utils/funding/shareMemberIntent";
 import { cn } from "@/utils/cn";
 import type { DepositItem } from "@/utils/funding/depositConfirm";
 import { getClosedLabel } from "@/utils/funding/fundingProgress";
@@ -26,7 +29,9 @@ import FundingGiftProofView from "@/widgets/funding/FundingGiftProofView";
 import FundingMessage from "@/widgets/funding/FundingMessage";
 import FundingPasswordSheet from "@/widgets/funding/FundingPasswordSheet";
 import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
-import type { FundingTransferAccount } from "@/widgets/funding/FundingTransferGuideSheet";
+import FundingTransferGuideSheet, {
+  type FundingTransferAccount,
+} from "@/widgets/funding/FundingTransferGuideSheet";
 import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
 import SampleProduct from "@/assets/images/samples/sample-product.png";
 import IconShare from "@/assets/icons/icon-share.svg?react";
@@ -41,6 +46,8 @@ type FundingDetailViewProps = {
   variant?: "guest" | "surprise" | "owner";
   // 있으면 헤더 왼쪽에 뒤로가기 버튼을 보여준다
   onBack?: () => void;
+  // 공유 화면에서 로그인해 돌아온 회원이 어느 버튼에서 출발했는지
+  memberIntent?: ShareMemberIntent;
 };
 
 // TODO(API): 비회원 펀딩 공개 조회 API가 나오면 fundingId로 받아온 값으로 교체한다
@@ -84,6 +91,7 @@ export default function FundingDetailView({
   fundingId,
   variant = "guest",
   onBack,
+  memberIntent,
 }: FundingDetailViewProps) {
   const router = useRouter();
   const { pageExit, exitPage } = usePageExit();
@@ -93,16 +101,21 @@ export default function FundingDetailView({
   const isOwner = variant === "owner";
   const isGuest = variant === "guest";
   // 하단 CTA 버튼을 누르면 회원/비회원 구분 Dialog를 띄운다. 값은 어느 버튼에서 왔는지
-  // TODO: Dialog '예'(로그인) 이후는 후속 작업에서 이 값으로 분기한다
-  const [memberCheckFrom, setMemberCheckFrom] = useState<"myBotem" | "contribute" | null>(null);
+  // 어느 버튼에서 왔는지에 따라 '예'(로그인 후 복귀 경로)·'아니오'(비회원 플로우)가 갈린다
+  const [memberCheckFrom, setMemberCheckFrom] = useState<ShareMemberIntent | null>(null);
+  const { mutate: requestKakaoLogin } = useKakaoLoginUriMutation();
   const [isGuestFindOpen, setIsGuestFindOpen] = useState(false);
-  // 비회원이 '보태러가기'에서 확인을 마치면 하단이 '메시지 보태기'/'보태기'로 바뀐다
-  const [isContributeReady, setIsContributeReady] = useState(false);
-  // 비회원이 이 펀딩에서 이름·비밀번호로 내 보탬을 확인하고 나면 하단은 '내 보탬 확인' 버튼만 남는다
+  const isMember = memberIntent !== undefined;
+  // 비회원이 '보태러가기'에서 확인을 마치거나 회원이 보태러가기로 돌아오면 하단이 '메시지 보태기'/'보태기'로 바뀐다
+  const [isContributeReady, setIsContributeReady] = useState(memberIntent === "contribute");
+  // 이 펀딩에서 이름·비밀번호(비회원)나 로그인(회원)으로 내 보탬을 확인하고 나면 하단은 '내 보탬 확인' 버튼만 남는다
   const hasGuestIdentity = useGuestBotemStore(state => state.fundingId === fundingId);
+  const hasConfirmedMyBotem = hasGuestIdentity || memberIntent === "myBotem";
   // 받은 입금을 확인해야 하는 쪽(서프라이즈 개설자·펀딩 주인)
   const confirmsDeposits = isSurprise || isOwner;
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  // 회원이 '내 보탬 확인'으로 로그인해 돌아오면 팝업을 바로 연다. 보태러가기로 돌아오면 자동으로 열지 않는다
+  const [isPopupOpen, setIsPopupOpen] = useState(memberIntent === "myBotem");
+  const [isMemberGuideOpen, setIsMemberGuideOpen] = useState(false);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isContributeOpen, setIsContributeOpen] = useState(false);
   const [isLetterOpen, setIsLetterOpen] = useState(false);
@@ -117,6 +130,7 @@ export default function FundingDetailView({
   const [flowKey, setFlowKey] = useState(0);
   const closePopup = () => setIsPopupOpen(false);
   const requestExit = () => setIsExitOpen(true);
+  const goToComplete = () => router.replace(`/share/${fundingId}/complete`);
 
   // 뒤로가기 등으로 플로우를 중간에 떠나 남은 값이 있으면 비우고 시작한다
   const startMessage = () => {
@@ -136,6 +150,7 @@ export default function FundingDetailView({
     setIsContributeOpen(false);
     setIsLetterOpen(false);
     setIsPasswordOpen(false);
+    setIsMemberGuideOpen(false);
     reset();
     setFlowKey(key => key + 1);
   };
@@ -227,7 +242,7 @@ export default function FundingDetailView({
         </div>
         {isGuest && (
           <BottomCTA>
-            {hasGuestIdentity ? (
+            {hasConfirmedMyBotem ? (
               <Button size="xlarge" variant="fill" onClick={() => setIsPopupOpen(true)}>
                 내 보탬 확인
               </Button>
@@ -276,7 +291,15 @@ export default function FundingDetailView({
             else setIsContributeReady(true);
             setMemberCheckFrom(null);
           }}
-          onConfirm={() => setMemberCheckFrom(null)}
+          onConfirm={() => {
+            if (memberCheckFrom) {
+              handleKakaoLoginClick(
+                requestKakaoLogin,
+                getShareReturnPath(fundingId, memberCheckFrom),
+              );
+            }
+            setMemberCheckFrom(null);
+          }}
         />
         {/* TODO: 팝업 내부 동작(미확인·수정·메세지·보태기)은 보탬 폼 디자인이 정해지면 연결한다 */}
         <BotemPopup
@@ -328,18 +351,29 @@ export default function FundingDetailView({
             setIsLetterOpen(true);
           }}
         />
-        {/* TODO: 쿠키가 httpOnly라 로그인 여부를 클라이언트에서 못 읽어 비회원(false)으로 둔다 */}
+        {/* TODO: 쿠키가 httpOnly라 로그인 여부를 클라이언트에서 못 읽어, 공유 화면에서 로그인해 돌아온 경우(memberIntent)만 회원으로 본다 */}
         <LetterWriteSheet
           key={`letter-${flowKey}`}
           open={isLetterOpen}
           recipientName={funding.hostName}
-          isLoggedIn={false}
+          isLoggedIn={isMember}
           onClose={() => setIsLetterOpen(false)}
           onExit={requestExit}
           onNext={values => {
             setLetter(values);
-            setIsPasswordOpen(true);
+            // 회원은 비밀번호를 정하지 않으므로 바로 송금 안내(메시지 보태기는 바로 완료)로 간다
+            if (!isMember) setIsPasswordOpen(true);
+            else if (isMessageOnly) goToComplete();
+            else setIsMemberGuideOpen(true);
           }}
+        />
+        <FundingTransferGuideSheet
+          open={isMemberGuideOpen}
+          hostName={funding.hostName}
+          amount={contributeAmount}
+          account={funding.account}
+          onClose={() => setIsMemberGuideOpen(false)}
+          onComplete={goToComplete}
         />
         {/* TODO(API): 보탬 제출 API가 정해지면 여기서 스토어의 amount·letter·password를 보내고, 성공 뒤에 이동하도록 바꾼다. replace라 뒤로가기로 보태기 플로우에 돌아오지 않는다 */}
         <FundingPasswordSheet
@@ -352,7 +386,7 @@ export default function FundingDetailView({
           onPrev={() => setIsPasswordOpen(false)}
           onComplete={password => {
             setPassword(password);
-            router.replace(`/share/${fundingId}/complete`);
+            goToComplete();
           }}
         />
         <Dialog
