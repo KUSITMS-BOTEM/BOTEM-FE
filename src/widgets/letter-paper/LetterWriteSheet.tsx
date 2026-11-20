@@ -74,6 +74,8 @@ type LetterWriteSheetProps = {
   // 값은 처음 마운트될 때만 읽으므로 서버 데이터가 도착한 뒤에 마운트하거나 key로 다시 마운트한다
   initialValues?: LetterWriteValues;
   onSave?: (values: LetterWriteValues) => void;
+  // 저장 요청 중에는 저장 버튼을 잠그고 로딩을 보여준다
+  isSavePending?: boolean;
 };
 
 const TOAST_DURATION_MS = 2000;
@@ -89,6 +91,7 @@ export default function LetterWriteSheet({
   isNextPending = false,
   initialValues,
   onSave,
+  isSavePending = false,
 }: LetterWriteSheetProps) {
   const isEdit = initialValues !== undefined;
   // 수정 모드에서는 보탠 사람의 이름을 바꿀 수 없어 로그인 상태처럼 이름 입력란을 두지 않는다
@@ -467,7 +470,8 @@ export default function LetterWriteSheet({
               <Button
                 color="brand"
                 size="xlarge"
-                disabled={!canSave}
+                disabled={!canSave || isSavePending}
+                states={isSavePending ? "loading" : "default"}
                 onClick={() => onSave?.(buildValues())}>
                 이대로 저장하기
               </Button>

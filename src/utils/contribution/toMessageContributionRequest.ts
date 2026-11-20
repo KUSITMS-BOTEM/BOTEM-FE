@@ -10,7 +10,7 @@ export type LetterInput = {
 };
 
 // 서버는 paperTemplateCode를 해석하지 않고 그대로 저장·반환한다. 코드명은 FE가 정한 규칙이다
-const PAPER_STYLE_CODE: Record<string, string> = {
+export const PAPER_STYLE_CODE: Record<string, string> = {
   vividSolid: "VIVID_SOLID",
   colorDot: "COLOR_DOT",
   whiteDot: "WHITE_DOT",
@@ -18,7 +18,7 @@ const PAPER_STYLE_CODE: Record<string, string> = {
   solid: "SOLID",
 };
 
-const toCode = (id: string) => id.toUpperCase().replaceAll("-", "_");
+export const toCode = (id: string) => id.toUpperCase().replaceAll("-", "_");
 
 // shortcut: 합성 문자열이라 다른 클라이언트는 `큰|작은` 규칙을 모른다. 백엔드가 필드를 분리하면 교체
 const toDecorationCode = (letter: LetterInput) => {

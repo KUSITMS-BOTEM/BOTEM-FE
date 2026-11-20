@@ -41,6 +41,12 @@ export const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     message: "이미 같은 이름으로 보탠 친구가 있어요. 다른 이름을 써주세요.",
     action: "dialog",
   },
+  FUNDING_023: { message: "보탬을 찾을 수 없어요.", action: "dialog" },
+  FUNDING_024: { message: "내 보탬만 수정할 수 있어요.", action: "dialog" },
+  FUNDING_033: { message: "본인 확인이 필요해요. 다시 시도해주세요.", action: "dialog" },
+  FUNDING_034: { message: "본인 확인이 만료됐어요. 다시 시도해주세요.", action: "dialog" },
+  FUNDING_036: { message: "이미 사용 중인 이름이에요.", action: "dialog" },
+  FUNDING_048: { message: "지금은 보탬을 수정할 수 없어요.", action: "dialog" },
   FUNDING_057: { message: "이미 이 펀딩에 보탰어요.", action: "dialog" },
   FUNDING_044: { message: "자기 자신에게는 서프라이즈 펀딩을 열 수 없어요.", action: "dialog" },
   FUNDING_045: {

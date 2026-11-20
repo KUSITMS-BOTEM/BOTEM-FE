@@ -467,6 +467,10 @@ export default function FundingDetailView({
             )
           }
         />
+        {/* 확인 시트 밖(수정 진입)에서 본인 확인이 실패했을 때 안내한다 */}
+        {!isGuestFindOpen && guestFindError && (
+          <Dialog kind="alert" open title={guestFindError} onConfirm={accessGuest.reset} />
+        )}
         <Dialog
           kind="alert"
           open={showNoBotemNotice}
@@ -504,7 +508,16 @@ export default function FundingDetailView({
             onClose={closePopup}
             onEditClick={() => {
               closePopup();
-              setIsEditOpen(true);
+              if (isMember) {
+                setIsEditOpen(true);
+                return;
+              }
+              // 비회원은 수정 전에 이름·비밀번호로 내 보탬(과 접근 토큰)을 먼저 받아 온다
+              const { name, password } = useGuestBotemStore.getState();
+              accessGuest.mutate(
+                { participantName: name ?? "", guestPassword: password ?? "" },
+                { onSuccess: () => setIsEditOpen(true) },
+              );
             }}
           />
         ) : (
@@ -565,6 +578,10 @@ export default function FundingDetailView({
         <BotemEditFlow
           open={isEditOpen}
           recipientName={funding.hostName}
+          shareKey={shareKey}
+          contribution={
+            (isMember ? myContributions.data?.contributions[0] : accessGuest.data) ?? undefined
+          }
           skipIdentity={hasConfirmedMyBotem}
           isLoggedIn={isMember}
           memberName={memberName}

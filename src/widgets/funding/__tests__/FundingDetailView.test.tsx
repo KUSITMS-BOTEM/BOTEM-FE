@@ -52,7 +52,7 @@ vi.mock("@/hooks/mutations/contribution/useAccessGuestContributionMutation", asy
   return {
     useAccessGuestContributionMutation: () => {
       const [error, setError] = useState<Error | null>(null);
-      const [data, setData] = useState<{ status: string } | undefined>();
+      const [data, setData] = useState<Record<string, unknown> | undefined>();
       return {
         error,
         data,
@@ -62,7 +62,19 @@ vi.mock("@/hooks/mutations/contribution/useAccessGuestContributionMutation", asy
           accessGuestMock(body);
           if (accessGuestFailure) setError(accessGuestFailure);
           else {
-            setData({ status: "PENDING_CONFIRMATION" });
+            setData({
+              contributionId: 31,
+              participantName: "민지",
+              status: "PENDING_CONFIRMATION",
+              message: "지유야 생일 축하해!\n올해도 같이 많이 웃자",
+              paperTemplateCode: "LIME_VIVID_SOLID",
+              decorationCode: null,
+              photoUrl: null,
+              voiceUrl: null,
+              voiceDurationSeconds: null,
+              voiceTranscript: null,
+              accessToken: "mock-guest-token",
+            });
             options?.onSuccess?.();
           }
         },
@@ -127,6 +139,9 @@ const server = setupServer(
       data: { contributionId: 1, participantName: "민지", status: "MESSAGE_ONLY" },
       error: null,
     }),
+  ),
+  http.patch("*/api/fundings/share/:shareKey/contributions/guest", async ({ request }) =>
+    HttpResponse.json({ success: true, data: await request.json(), error: null }),
   ),
   http.get("*/api/fundings/:fundingId/contributions/pending", () =>
     HttpResponse.json({
