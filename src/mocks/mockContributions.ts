@@ -15,6 +15,7 @@ const MOCK_CONTRIBUTIONS: MockContribution[] = [
     participantName: "하린",
     profileImageUrl: null,
     participatedAt: "2026-11-18T11:20:00",
+    amount: 45000,
     percentage: 10,
   },
   {
@@ -23,6 +24,7 @@ const MOCK_CONTRIBUTIONS: MockContribution[] = [
     participantName: "도윤",
     profileImageUrl: null,
     participatedAt: "2026-11-16T09:05:00",
+    amount: 45000,
     percentage: 10,
   },
   {
@@ -31,6 +33,7 @@ const MOCK_CONTRIBUTIONS: MockContribution[] = [
     participantName: "서준",
     profileImageUrl: null,
     participatedAt: "2026-11-19T20:10:00",
+    amount: 30000,
     percentage: 7.5,
   },
   {
@@ -39,6 +42,7 @@ const MOCK_CONTRIBUTIONS: MockContribution[] = [
     participantName: "지아",
     profileImageUrl: null,
     participatedAt: "2026-11-19T08:40:00",
+    amount: 20000,
     percentage: 7.5,
   },
   {
@@ -47,6 +51,7 @@ const MOCK_CONTRIBUTIONS: MockContribution[] = [
     participantName: "민지",
     profileImageUrl: null,
     participatedAt: "2026-11-20T14:03:00",
+    amount: 15000,
     percentage: 5,
   },
   {
@@ -55,6 +60,7 @@ const MOCK_CONTRIBUTIONS: MockContribution[] = [
     participantName: "예준",
     profileImageUrl: null,
     participatedAt: "2026-11-18T21:45:00",
+    amount: 10000,
     percentage: 5,
   },
   {
@@ -63,6 +69,7 @@ const MOCK_CONTRIBUTIONS: MockContribution[] = [
     participantName: "수아",
     profileImageUrl: null,
     participatedAt: "2026-11-19T12:30:00",
+    amount: 25000,
     percentage: 5,
   },
   {
@@ -71,6 +78,7 @@ const MOCK_CONTRIBUTIONS: MockContribution[] = [
     participantName: "지우",
     profileImageUrl: null,
     participatedAt: "2026-11-19T10:15:00",
+    amount: 25000,
     percentage: 5,
   },
 ];
@@ -87,11 +95,12 @@ const contributionsOf = (fundingId: number) =>
 export const getMockPendingContributions = (fundingId: number): PendingContributionResponse[] =>
   contributionsOf(fundingId)
     .filter(({ contributionId }) => statusOf(contributionId) === "PENDING_CONFIRMATION")
-    .map(({ contributionId, participantName, profileImageUrl, participatedAt }) => ({
+    .map(({ contributionId, participantName, profileImageUrl, participatedAt, amount }) => ({
       contributionId,
       participantName,
       profileImageUrl,
       participatedAt,
+      amount,
     }));
 
 export const getMockPendingContributionIds = (fundingId: number): number[] =>

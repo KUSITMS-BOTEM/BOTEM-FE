@@ -190,11 +190,17 @@ export const createHomeHandlers = (scenario: MockHomeScenario) => [
     }[scenario];
     const fundingCards = scenarioCards.map(card => {
       const progress = getMockContributionProgress(card.fundingId);
+      const confirmedPercentage = card.confirmedPercentage + progress.confirmedAddedPercentage;
       return {
         ...card,
-        confirmedPercentage: card.confirmedPercentage + progress.confirmedAddedPercentage,
+        confirmedPercentage,
         pendingPercentage: progress.pendingPercentage,
         pendingContributionCount: progress.pendingContributionCount,
+        earlyOpenable:
+          card.cardType === "IN_PROGRESS" &&
+          card.fundingType === "BIRTHDAY" &&
+          confirmedPercentage >= 100 &&
+          progress.pendingContributionCount === 0,
       };
     });
     const activeFundingCount = fundingCards.filter(card => card.cardType === "IN_PROGRESS").length;

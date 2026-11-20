@@ -14,6 +14,7 @@ const makeCard = (overrides: Partial<HomeFundingCardResponse> = {}): HomeFunding
   confirmedPercentage: 55,
   pendingPercentage: 15,
   pendingContributionCount: 0,
+  earlyOpenable: false,
   ...overrides,
 });
 
@@ -25,9 +26,14 @@ describe("toFundingCardData", () => {
     expect(result.dDay).toBe(3);
   });
 
-  it("마감 전 생일 펀딩이 확인 대기 없이 100% 이상이면 earlyComplete 타입이고 남은 일수를 유지한다", () => {
+  it("마감 전이라도 earlyOpenable이면 earlyComplete 타입이고 남은 일수를 유지한다", () => {
     const result = toFundingCardData(
-      makeCard({ confirmedPercentage: 120, pendingPercentage: 0, remainingDays: 5 }),
+      makeCard({
+        confirmedPercentage: 120,
+        pendingPercentage: 0,
+        remainingDays: 5,
+        earlyOpenable: true,
+      }),
       "지유",
     );
 
@@ -37,27 +43,22 @@ describe("toFundingCardData", () => {
 
   it("earlyComplete 카드의 진행률은 확정·대기를 합친 전체 달성률(최대 100)이다", () => {
     expect(
-      toFundingCardData(makeCard({ confirmedPercentage: 100, pendingPercentage: 0 }), "지유")
-        .progress,
+      toFundingCardData(
+        makeCard({ confirmedPercentage: 100, pendingPercentage: 0, earlyOpenable: true }),
+        "지유",
+      ).progress,
     ).toBe(100);
     expect(
-      toFundingCardData(makeCard({ confirmedPercentage: 120, pendingPercentage: 0 }), "지유")
-        .progress,
+      toFundingCardData(
+        makeCard({ confirmedPercentage: 120, pendingPercentage: 0, earlyOpenable: true }),
+        "지유",
+      ).progress,
     ).toBe(100);
   });
 
-  it("마감 전 100% 이상이어도 확인 대기가 있으면 default 타입이다", () => {
+  it("달성률이 100% 이상이어도 earlyOpenable이 false면 default 타입이다", () => {
     const result = toFundingCardData(
-      makeCard({ confirmedPercentage: 80, pendingPercentage: 30, pendingContributionCount: 1 }),
-      "지유",
-    );
-
-    expect(result.type).toBe("default");
-  });
-
-  it("마감 전 100% 이상이어도 서프라이즈 펀딩은 default 타입이다", () => {
-    const result = toFundingCardData(
-      makeCard({ fundingType: "SURPRISE", confirmedPercentage: 100, pendingPercentage: 0 }),
+      makeCard({ confirmedPercentage: 100, pendingPercentage: 0, earlyOpenable: false }),
       "지유",
     );
 
