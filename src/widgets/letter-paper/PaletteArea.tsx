@@ -13,6 +13,8 @@ type PaletteAreaProps = {
   onColorChange?: (color: Color) => void;
   onAddClick?: () => void;
   tooltip?: boolean;
+  // false면 플러스 버튼과 그 위 툴팁을 숨긴다(감사 카드처럼 편지 꾸미기가 없는 화면)
+  showAddButton?: boolean;
   className?: string;
 };
 
@@ -28,6 +30,7 @@ export default function PaletteArea({
   onColorChange,
   onAddClick,
   tooltip = true,
+  showAddButton = true,
   className,
 }: PaletteAreaProps) {
   return (
@@ -54,15 +57,17 @@ export default function PaletteArea({
             );
           })}
         </div>
-        <IconButton
-          size="xlarge"
-          aria-label="나만의 편지 만들기"
-          icon={<IconPlus aria-hidden />}
-          onClick={onAddClick}
-          className="bg-semantic-fill-default/70 shadow-[0_4px_16px_var(--color-semantic-shadow-weak)] backdrop-blur-[3.57px]"
-        />
+        {showAddButton && (
+          <IconButton
+            size="xlarge"
+            aria-label="나만의 편지 만들기"
+            icon={<IconPlus aria-hidden />}
+            onClick={onAddClick}
+            className="bg-semantic-fill-default/70 shadow-[0_4px_16px_var(--color-semantic-shadow-weak)] backdrop-blur-[3.57px]"
+          />
+        )}
       </div>
-      {tooltip && (
+      {showAddButton && tooltip && (
         <div
           role="tooltip"
           className="bg-semantic-border-inverted text-semantic-text-primary absolute right-7 bottom-full rounded-lg px-3 py-2 whitespace-nowrap [font:var(--semantic-label-x-small-weak)]">
