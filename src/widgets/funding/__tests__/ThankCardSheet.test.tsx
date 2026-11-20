@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useSendThankCardMutation } from "@/hooks/mutations/contribution/useSendThankCardMutation";
@@ -250,5 +250,52 @@ describe("ThankCardSheet 완료 단계", () => {
     await userEvent.click(screen.getByRole("button", { name: "다운받기" }));
 
     expect(await screen.findByText("이미지를 저장하지 못했어요")).toBeInTheDocument();
+  });
+
+  it("이미지 저장이 끝나기 전에는 다운받기 버튼이 비활성화되고 다시 눌러도 한 번만 저장한다", async () => {
+    let finishSave!: () => void;
+    vi.mocked(saveNodeAsImage).mockImplementationOnce(
+      () => new Promise<void>(resolve => (finishSave = resolve)),
+    );
+    renderSheet();
+    await goToSentStep("고마워");
+
+    await userEvent.click(screen.getByRole("button", { name: "다운받기" }));
+    await userEvent.click(screen.getByRole("button", { name: "다운받기" }));
+
+    expect(screen.getByRole("button", { name: "다운받기" })).toBeDisabled();
+    expect(saveNodeAsImage).toHaveBeenCalledTimes(1);
+
+    finishSave();
+    await waitFor(() => expect(screen.getByRole("button", { name: "다운받기" })).toBeEnabled());
+  });
+
+  it("이미지 저장이 끝나면 다운받기 버튼이 다시 활성화된다", async () => {
+    let finishSave!: () => void;
+    vi.mocked(saveNodeAsImage).mockImplementationOnce(
+      () => new Promise<void>(resolve => (finishSave = resolve)),
+    );
+    renderSheet();
+    await goToSentStep("고마워");
+    await userEvent.click(screen.getByRole("button", { name: "다운받기" }));
+
+    finishSave();
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "다운받기" })).toBeEnabled());
+  });
+
+  it("이미지 저장에 실패해도 다운받기 버튼이 다시 활성화된다", async () => {
+    let failSave!: () => void;
+    vi.mocked(saveNodeAsImage).mockImplementationOnce(
+      () => new Promise<void>((_resolve, reject) => (failSave = () => reject(new Error("fail")))),
+    );
+    renderSheet();
+    await goToSentStep("고마워");
+    await userEvent.click(screen.getByRole("button", { name: "다운받기" }));
+    expect(screen.getByRole("button", { name: "다운받기" })).toBeDisabled();
+
+    failSave();
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "다운받기" })).toBeEnabled());
   });
 });
