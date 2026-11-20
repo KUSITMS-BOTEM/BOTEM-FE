@@ -1,8 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { useExtendFundingMutation } from "@/hooks/mutations/funding/useExtendFundingMutation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
+import { useGiftChangeStore } from "@/store/giftChangeStore";
 import type { FundingManagementResponse, FundingResultResponse } from "@/types/funding/funding";
 import FundingResultContainer from "@/widgets/funding/FundingResultContainer";
 
@@ -16,6 +18,9 @@ vi.mock("@/hooks/queries/funding/useFundingResultQuery", () => ({
 }));
 vi.mock("@/hooks/queries/funding/useFundingManagementQuery", () => ({
   useFundingManagementQuery: vi.fn(),
+}));
+vi.mock("@/hooks/mutations/funding/useExtendFundingMutation", () => ({
+  useExtendFundingMutation: vi.fn(),
 }));
 vi.mock("@/widgets/funding/FundingResultCelebration", () => ({
   default: ({ contributors }: { contributors: unknown[] }) => (
@@ -34,6 +39,7 @@ beforeAll(() => {
 });
 
 const refetchResult = vi.fn();
+const extendMutate = vi.fn();
 const refetchManagement = vi.fn();
 
 type QueryState<T> = { data?: T; isLoading?: boolean };
@@ -57,6 +63,10 @@ const mockQueries = ({
     refetch: refetchManagement,
     ...management,
   } as unknown as ReturnType<typeof useFundingManagementQuery>);
+  vi.mocked(useExtendFundingMutation).mockReturnValue({
+    mutate: extendMutate,
+    isPending: false,
+  } as unknown as ReturnType<typeof useExtendFundingMutation>);
 };
 
 const makeResult = (
@@ -290,5 +300,44 @@ describe("FundingResultContainer", () => {
 
     expect(open).not.toHaveBeenCalled();
     open.mockRestore();
+  });
+
+  it("닫기를 누르면 다른 선물 고르기에서 기억해 둔 상태를 비운다", async () => {
+    mockQueries({
+      result: { data: makeResult(50, 200000) },
+      management: { data: makeManagement() },
+    });
+    useGiftChangeStore.getState().start(7, null);
+    render(<FundingResultContainer fundingId="7" />);
+
+    await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+    expect(useGiftChangeStore.getState().fundingId).toBeNull();
+  });
+
+  it("연장에 성공하면 시트를 닫고 '기간이 연장됐어요' 토스트를 잠깐 보여준다", async () => {
+    mockQueries({
+      result: { data: makeResult(50, 200000) },
+      management: { data: makeManagement() },
+    });
+    extendMutate.mockImplementation((_date: string, options: { onSuccess: () => void }) =>
+      options.onSuccess(),
+    );
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 13));
+    const user = userEvent.setup();
+    render(<FundingResultContainer fundingId="7" />);
+
+    await user.click(screen.getByRole("button", { name: "기간연장 (1회)" }));
+    await user.click(screen.getByRole("button", { name: "새 마감일 날짜를 선택해주세요" }));
+    await user.click(screen.getByRole("button", { name: /11월 20일/ }));
+    await user.click(screen.getByRole("button", { name: "연장하기" }));
+    vi.useRealTimers();
+
+    expect(extendMutate.mock.calls[0][0]).toBe("2026-11-20");
+    expect(screen.getByText("기간이 연장됐어요")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("기간이 연장됐어요")).not.toBeInTheDocument(), {
+      timeout: 3000,
+    });
   });
 });
