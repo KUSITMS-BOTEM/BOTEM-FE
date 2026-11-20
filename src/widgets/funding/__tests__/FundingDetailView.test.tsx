@@ -47,7 +47,7 @@ const clickTopmost = async (user: User, name: string) =>
 
 // 비회원 '보태러가기': 회원/비회원 Dialog에서 아니오를 고르면 하단이 '메시지 보태기'/'보태기'로 바뀐다
 const enterGuestContributeMode = async (user: User) => {
-  await user.click(screen.getByRole("button", { name: "보태러가기" }));
+  await user.click(screen.getByRole("button", { name: "보태러 가기" }));
   await user.click(screen.getByRole("button", { name: "아니오" }));
 };
 
@@ -93,7 +93,7 @@ describe("FundingDetailView", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "민재의 생일" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "보태러가기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "보태러 가기" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /나도 민재님께 보태볼까요\?/ })).toBeNull();
   });
 
@@ -113,15 +113,15 @@ describe("FundingDetailView", () => {
 
   it("서프라이즈 개설자와 펀딩 주인 화면에는 하단 CTA 버튼이 없다", () => {
     const { unmount } = render(<FundingDetailView fundingId="1" variant="surprise" />);
-    expect(screen.queryByRole("button", { name: "보태러가기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
     unmount();
 
     render(<FundingDetailView fundingId="1" variant="owner" />);
-    expect(screen.queryByRole("button", { name: "보태러가기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
   });
 
   describe("회원/비회원 구분 Dialog", () => {
-    it.each(["내 보탬 확인", "보태러가기"])("%s를 누르면 구분 Dialog를 연다", async name => {
+    it.each(["내 보탬 확인", "보태러 가기"])("%s를 누르면 구분 Dialog를 연다", async name => {
       const user = userEvent.setup();
       render(<FundingDetailView fundingId="1" />);
 
@@ -145,7 +145,7 @@ describe("FundingDetailView", () => {
     it("'보태러가기'에서 예를 누르면 보태러가기 복귀 경로로 카카오 로그인을 요청한다", async () => {
       const user = userEvent.setup();
       render(<FundingDetailView fundingId="1" />);
-      await user.click(screen.getByRole("button", { name: "보태러가기" }));
+      await user.click(screen.getByRole("button", { name: "보태러 가기" }));
 
       await user.click(screen.getByRole("button", { name: "예" }));
 
@@ -163,7 +163,7 @@ describe("FundingDetailView", () => {
 
       expect(await screen.findByRole("dialog", { name: "내 보탬 확인" })).toBeInTheDocument();
       expect(screen.getAllByRole("button", { name: "내 보탬 확인" })).toHaveLength(1);
-      expect(screen.queryByRole("button", { name: "보태러가기" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
       expect(useGuestBotemStore.getState()).toMatchObject({
         fundingId: "1",
         name: "민지",
@@ -190,7 +190,7 @@ describe("FundingDetailView", () => {
 
       render(<FundingDetailView fundingId="1" />);
 
-      expect(screen.getByRole("button", { name: "보태러가기" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "보태러 가기" })).toBeInTheDocument();
     });
 
     it("시트에서 내 보탬이 맨 위에 '내 보탬' 라벨과 미확인 안내와 함께 보인다", async () => {
@@ -245,7 +245,7 @@ describe("FundingDetailView", () => {
     render(<FundingDetailView fundingId="1" isLoggedIn />);
 
     expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "보태러가기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
   });
 
@@ -271,7 +271,7 @@ describe("FundingDetailView", () => {
 
       expect(screen.getByRole("button", { name: "메시지 보태기" })).toBeEnabled();
       expect(screen.getByRole("button", { name: "보태기" })).toBeEnabled();
-      expect(screen.queryByRole("button", { name: "보태러가기" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
       expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
     });
 
@@ -315,7 +315,7 @@ describe("FundingDetailView", () => {
 
       expect(await screen.findByRole("dialog", { name: "내 보탬 확인" })).toBeInTheDocument();
       expect(screen.getAllByRole("button", { name: "내 보탬 확인" })).toHaveLength(1);
-      expect(screen.queryByRole("button", { name: "보태러가기" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
     });
 
     it("보태러가기로 돌아오면 '메시지 보태기'/'보태기'를 보여주고 시트는 자동으로 열지 않는다", () => {

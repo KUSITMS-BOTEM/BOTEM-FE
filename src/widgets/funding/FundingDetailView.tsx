@@ -291,7 +291,7 @@ export default function FundingDetailView({
                   size="xlarge"
                   variant="fill"
                   onClick={() => setMemberCheckFrom("contribute")}>
-                  보태러가기
+                  보태러 가기
                 </Button>
               </>
             )}

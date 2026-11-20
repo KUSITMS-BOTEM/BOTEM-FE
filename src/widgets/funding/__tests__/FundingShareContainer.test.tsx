@@ -21,13 +21,13 @@ describe("FundingShareContainer", () => {
     render(<FundingShareContainer fundingId="1" />);
 
     expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "보태러가기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "보태러 가기" })).toBeInTheDocument();
   });
 
   it("로그인 여부가 전달되어 로그인 회원이면 '내 보탬 확인'만 보인다", () => {
     render(<FundingShareContainer fundingId="1" isLoggedIn />);
 
     expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "보태러가기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
   });
 });
