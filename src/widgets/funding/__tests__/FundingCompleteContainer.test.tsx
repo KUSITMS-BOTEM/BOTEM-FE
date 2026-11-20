@@ -1,159 +1,91 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { useReducedMotion } from "framer-motion";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen } from "@testing-library/react";
 
+import { useFundingDetailQuery } from "@/hooks/queries/funding/useFundingDetailQuery";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
-import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
+import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
 import FundingCompleteContainer from "@/widgets/funding/FundingCompleteContainer";
 
-const replaceMock = vi.fn();
-const pushMock = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: replaceMock, push: pushMock }),
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
 }));
 
-vi.mock("@/utils/saveNodeAsImage", () => ({ saveNodeAsImage: vi.fn() }));
-
-vi.mock("next/image", () => ({
-  default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img alt={alt} {...(props as Record<string, string>)} />
-  ),
+vi.mock("@/hooks/queries/funding/useFundingDetailQuery", () => ({
+  useFundingDetailQuery: vi.fn(),
 }));
 
-// exit 애니메이션을 기다리지 않고 장면 전환 결과만 검증하도록 AnimatePresence를 단순 대체한다
-vi.mock("framer-motion", async importOriginal => ({
-  ...(await importOriginal<typeof import("framer-motion")>()),
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useReducedMotion: vi.fn(() => false),
+vi.mock("@/widgets/funding/FundingCompleteView", () => ({
+  default: ({
+    funding,
+    isMessageOnly,
+  }: {
+    funding: { giverName: string };
+    isMessageOnly: boolean;
+  }) => <div data-testid="view">{`${funding.giverName}/${isMessageOnly}`}</div>,
 }));
 
-vi.mock("@/widgets/funding/FundingCompleteConfetti", () => ({
-  default: () => <div data-testid="confetti" />,
-}));
+const detail = {
+  fundingId: 12,
+  celebrantName: "지유",
+  targetAmount: 300000,
+  product: { name: "에어팟", imageUrl: "/p.jpg" },
+  deadline: "2026-11-30T23:59:59",
+  confirmedPercentage: 40,
+  pendingPercentage: 10,
+  participantCount: 1,
+  participants: [{ order: 1, name: "민지", profileImageUrl: null }],
+} as FundingDetailResponse;
 
-const SHARE_BUTTON = { name: "공유하기" };
+const renderContainer = () =>
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <FundingCompleteContainer shareKey="key" />
+    </QueryClientProvider>,
+  );
 
-describe("FundingCompleteContainer 입력값 정리", () => {
+const mockQuery = (state: Record<string, unknown>) =>
+  vi.mocked(useFundingDetailQuery).mockReturnValue(state as never);
+
+afterEach(() => useFundingContributionStore.getState().reset());
+
+describe("FundingCompleteContainer", () => {
+  it("조회 중에는 완료 화면 대신 스켈레톤을 보여준다", () => {
+    mockQuery({ data: undefined, isError: false, refetch: vi.fn() });
+    renderContainer();
+
+    expect(screen.queryByTestId("view")).not.toBeInTheDocument();
+  });
+
+  it("조회에 실패하면 다시 시도 버튼을 보여준다", () => {
+    mockQuery({ data: undefined, isError: true, refetch: vi.fn() });
+    renderContainer();
+
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
+  });
+
+  it("조회가 끝나면 스토어의 이름·금액으로 완료 화면을 그린다", () => {
+    useFundingContributionStore.getState().setAmount(30000);
+    useFundingContributionStore.getState().setLetter({ name: "민지" } as never);
+    mockQuery({ data: detail, isError: false, refetch: vi.fn() });
+    renderContainer();
+
+    expect(screen.getByTestId("view")).toHaveTextContent("민지/false");
+  });
+
+  it("금액이 0이면 메시지만 보탠 화면으로 넘긴다", () => {
+    mockQuery({ data: detail, isError: false, refetch: vi.fn() });
+    renderContainer();
+
+    expect(screen.getByTestId("view")).toHaveTextContent("/true");
+  });
+
   it("완료 페이지를 떠나면 보태기 플로우 입력값이 초기화된다", () => {
     useFundingContributionStore.getState().setPassword("1234");
-    const { unmount } = render(<FundingCompleteContainer shareKey="1" />);
+    mockQuery({ data: detail, isError: false, refetch: vi.fn() });
+    const { unmount } = renderContainer();
 
     unmount();
 
     expect(useFundingContributionStore.getState().password).toBe("");
-  });
-});
-
-describe("FundingCompleteContainer 올랐어요 뱃지", () => {
-  afterEach(() => useFundingContributionStore.getState().reset());
-
-  it("금액을 보탠 경우에는 올랐어요 뱃지를 보여준다", () => {
-    useFundingContributionStore.getState().setAmount(50000);
-    render(<FundingCompleteContainer shareKey="1" />);
-
-    expect(screen.getByText("올랐어요")).toBeInTheDocument();
-  });
-
-  it("메시지만 보탠 경우(금액 0)에는 올랐어요 뱃지를 숨긴다", () => {
-    render(<FundingCompleteContainer shareKey="1" />);
-
-    expect(screen.queryByText("올랐어요")).not.toBeInTheDocument();
-  });
-});
-
-describe("FundingCompleteContainer", () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(useReducedMotion).mockReturnValue(false);
-  });
-
-  describe("모션 타임라인", () => {
-    beforeEach(() => vi.useFakeTimers());
-    afterEach(() => vi.useRealTimers());
-
-    it("처음에는 진행률 장면 제목을 보여주고 공유하기 버튼은 없다", () => {
-      render(<FundingCompleteContainer shareKey="1" />);
-
-      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-        "민재에게 보탬이 되었어요",
-      );
-      expect(screen.queryByRole("button", SHARE_BUTTON)).not.toBeInTheDocument();
-    });
-
-    it("2.3초 뒤에는 3번째로 보탬 제목으로 바뀌지만 공유하기 버튼은 아직 없다", () => {
-      render(<FundingCompleteContainer shareKey="1" />);
-
-      act(() => {
-        vi.advanceTimersByTime(2300);
-      });
-
-      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("3번째로 보탬!");
-      expect(screen.queryByRole("button", SHARE_BUTTON)).not.toBeInTheDocument();
-    });
-
-    it("4.6초 뒤에 공유하기 버튼이 나타난다", () => {
-      render(<FundingCompleteContainer shareKey="1" />);
-
-      act(() => {
-        vi.advanceTimersByTime(4600);
-      });
-
-      expect(screen.getByRole("button", SHARE_BUTTON)).toBeInTheDocument();
-    });
-  });
-
-  describe("모션 감소 설정", () => {
-    beforeEach(() => vi.mocked(useReducedMotion).mockReturnValue(true));
-
-    it("처음부터 자랑 장면 제목과 공유하기 버튼을 보여준다", () => {
-      render(<FundingCompleteContainer shareKey="1" />);
-
-      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("3번째로 보탬!");
-      expect(screen.getByRole("button", SHARE_BUTTON)).toBeInTheDocument();
-    });
-
-    it("컨페티를 그리지 않는다", () => {
-      render(<FundingCompleteContainer shareKey="1" />);
-
-      expect(screen.queryByTestId("confetti")).not.toBeInTheDocument();
-    });
-  });
-
-  it("모션 감소가 아니면 컨페티를 그린다", () => {
-    render(<FundingCompleteContainer shareKey="1" />);
-
-    expect(screen.getByTestId("confetti")).toBeInTheDocument();
-  });
-
-  it("닫기 버튼을 누르면 push가 아니라 replace로 공유 페이지에 이동한다", async () => {
-    render(<FundingCompleteContainer shareKey="7" />);
-
-    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
-
-    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/7"));
-    expect(pushMock).not.toHaveBeenCalled();
-  });
-
-  describe("공유하기", () => {
-    beforeEach(() => vi.mocked(useReducedMotion).mockReturnValue(true));
-
-    it("누르면 자랑 카드를 이미지로 저장·공유한다", async () => {
-      render(<FundingCompleteContainer shareKey="7" />);
-
-      fireEvent.click(screen.getByRole("button", SHARE_BUTTON));
-
-      await vi.waitFor(() =>
-        expect(saveNodeAsImage).toHaveBeenCalledWith(expect.any(HTMLElement), "민재에게-보탬.png"),
-      );
-    });
-
-    it("이미지 저장에 실패하면 안내 토스트를 보여준다", async () => {
-      vi.mocked(saveNodeAsImage).mockRejectedValueOnce(new Error("fail"));
-      render(<FundingCompleteContainer shareKey="7" />);
-
-      fireEvent.click(screen.getByRole("button", SHARE_BUTTON));
-
-      expect(await screen.findByText("이미지를 저장하지 못했어요")).toBeInTheDocument();
-    });
   });
 });
