@@ -6,8 +6,9 @@ import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
 import FundingCompleteContainer from "@/widgets/funding/FundingCompleteContainer";
 
+const replaceMock = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  useRouter: () => ({ replace: replaceMock, push: vi.fn() }),
 }));
 
 vi.mock("@/hooks/queries/funding/useFundingDetailQuery", () => ({
@@ -46,7 +47,12 @@ const renderContainer = () =>
 const mockQuery = (state: Record<string, unknown>) =>
   vi.mocked(useFundingDetailQuery).mockReturnValue(state as never);
 
-afterEach(() => useFundingContributionStore.getState().reset());
+const setLetter = () => useFundingContributionStore.getState().setLetter({ name: "민지" } as never);
+
+afterEach(() => {
+  useFundingContributionStore.getState().reset();
+  vi.clearAllMocks();
+});
 
 describe("FundingCompleteContainer", () => {
   it("조회 중에는 완료 화면 대신 스켈레톤을 보여준다", () => {
@@ -65,7 +71,7 @@ describe("FundingCompleteContainer", () => {
 
   it("조회가 끝나면 스토어의 이름·금액으로 완료 화면을 그린다", () => {
     useFundingContributionStore.getState().setAmount(30000);
-    useFundingContributionStore.getState().setLetter({ name: "민지" } as never);
+    setLetter();
     mockQuery({ data: detail, isError: false, refetch: vi.fn() });
     renderContainer();
 
@@ -73,10 +79,27 @@ describe("FundingCompleteContainer", () => {
   });
 
   it("금액이 0이면 메시지만 보탠 화면으로 넘긴다", () => {
+    setLetter();
     mockQuery({ data: detail, isError: false, refetch: vi.fn() });
     renderContainer();
 
     expect(screen.getByTestId("view")).toHaveTextContent("/true");
+  });
+
+  it("새로고침으로 편지 입력값이 사라졌으면 공유 페이지로 돌려보낸다", () => {
+    mockQuery({ data: detail, isError: false, refetch: vi.fn() });
+    renderContainer();
+
+    expect(replaceMock).toHaveBeenCalledWith("/share/key");
+    expect(screen.queryByTestId("view")).not.toBeInTheDocument();
+  });
+
+  it("편지 입력값이 있으면 공유 페이지로 돌려보내지 않는다", () => {
+    setLetter();
+    mockQuery({ data: detail, isError: false, refetch: vi.fn() });
+    renderContainer();
+
+    expect(replaceMock).not.toHaveBeenCalled();
   });
 
   it("완료 페이지를 떠나면 보태기 플로우 입력값이 초기화된다", () => {
