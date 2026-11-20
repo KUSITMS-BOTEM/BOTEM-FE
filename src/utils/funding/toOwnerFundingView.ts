@@ -35,8 +35,9 @@ export function toOwnerFundingView(detail: OwnerFundingDetailResponse) {
     productName: detail.product.name,
     productImageUrl: detail.product.imageUrl,
     deadline: detail.deadline.slice(0, 10),
-    // 응답엔 모인 금액이 없고 확정 달성률만 온다. 진행 카드가 금액으로 달성률을 다시 계산하므로 같은 달성률이 나오는 금액으로 넘긴다 (올림해야 내림 계산에서 1%가 깎이지 않는다)
+    // 응답엔 모인 금액이 없고 확정 달성률만 온다. 금액은 남은 금액·마감 판정용 근삿값이라 달성률 표시는 progress를 쓴다 (금액에서 다시 계산하면 부동소수점 오차로 1%가 깎인다)
     currentAmount: Math.ceil((detail.targetAmount * detail.confirmedPercentage) / 100),
+    progress: Math.min(100, detail.confirmedPercentage),
     targetAmount: detail.targetAmount,
     // 조기 마감은 금액·마감일로 다시 계산할 수 없어 서버 상태를 그대로 쓴다
     closed: detail.managementState === "CLOSED",

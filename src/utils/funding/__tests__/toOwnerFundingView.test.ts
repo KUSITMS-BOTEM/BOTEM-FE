@@ -43,6 +43,14 @@ const detail = (overrides: Partial<OwnerFundingDetailResponse> = {}) =>
   }) as OwnerFundingDetailResponse;
 
 describe("toOwnerFundingView", () => {
+  it("달성률은 금액에서 다시 계산하지 않고 서버 확정 달성률을 그대로 옮긴다 (100 초과는 100)", () => {
+    // 50000원의 58%는 29000원이지만 29000/50000*100은 부동소수점으로 57.99…가 된다
+    expect(
+      toOwnerFundingView(detail({ targetAmount: 50000, confirmedPercentage: 58 })).progress,
+    ).toBe(58);
+    expect(toOwnerFundingView(detail({ confirmedPercentage: 120 })).progress).toBe(100);
+  });
+
   it("제목·사연·약속·상품·마감일(YYYY-MM-DD)·확인 대기 건수를 화면 값으로 옮긴다", () => {
     expect(toOwnerFundingView(detail())).toMatchObject({
       title: "지유의 생일",

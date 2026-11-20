@@ -12,7 +12,7 @@ import Tooltip from "@/components/Tooltip";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
-import { calcFundingPercent, getClosedLabel } from "@/utils/funding/fundingProgress";
+import { getClosedLabel } from "@/utils/funding/fundingProgress";
 import { toOwnerFundingView } from "@/utils/funding/toOwnerFundingView";
 import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
 import BotemPopup, { type BotemPopupFriend } from "@/widgets/funding/BotemPopup";
@@ -55,6 +55,7 @@ const MOCK_FUNDING = {
   hasGiftProof: false,
   currentAmount: 74074074,
   targetAmount: 123456789,
+  progress: 60,
   closed: false,
   // TODO(API): 서프라이즈 개설자 화면도 서버 값으로 교체한다 (owner는 ownerDetail 값을 쓴다)
   extended: false,
@@ -180,6 +181,7 @@ export default function FundingDetailView({
             deadline={funding.deadline}
             currentAmount={funding.currentAmount}
             targetAmount={funding.targetAmount}
+            progress={funding.progress}
             locked={isSurprise}
           />
           <button
@@ -258,7 +260,7 @@ export default function FundingDetailView({
                 price: funding.targetAmount,
               },
               info: { targetAmount: String(funding.targetAmount), deadline: funding.deadline },
-              progress: calcFundingPercent(funding.currentAmount, funding.targetAmount),
+              progress: funding.progress,
             }}
             onClose={() => setIsMoreOpen(false)}
           />
