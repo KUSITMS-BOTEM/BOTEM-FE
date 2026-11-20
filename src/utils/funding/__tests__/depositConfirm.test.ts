@@ -10,6 +10,7 @@ const deposit = (id: number, depositedAt: string): DepositItem => ({
   id,
   senderName: `보낸이${id}`,
   depositedAt,
+  amount: 10000,
 });
 
 describe("formatDepositDate / formatDepositTime", () => {

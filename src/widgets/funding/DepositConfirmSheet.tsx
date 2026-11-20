@@ -7,11 +7,11 @@ import Button from "@/components/Button";
 import CheckBox from "@/components/CheckBox";
 import DepositConfirmedAnimation from "@/components/effects/DepositConfirmedAnimation";
 import ListHeader from "@/components/ListHeader";
+import ListText from "@/components/ListText";
 import ShimmerBar from "@/components/skeleton/ShimmerBar";
 import ToastMessage from "@/components/ToastMessage";
-import { useConfirmAllContributionsMutation } from "@/hooks/mutations/contribution/useConfirmAllContributionsMutation";
-import { useConfirmContributionMutation } from "@/hooks/mutations/contribution/useConfirmContributionMutation";
-import { useRejectContributionMutation } from "@/hooks/mutations/contribution/useRejectContributionMutation";
+import { useDecideContributionsMutation } from "@/hooks/mutations/contribution/useDecideContributionsMutation";
+import { useUndoContributionDecisionsMutation } from "@/hooks/mutations/contribution/useUndoContributionDecisionsMutation";
 import { usePendingContributionsQuery } from "@/hooks/queries/contribution/usePendingContributionsQuery";
 import {
   type DepositAction,
@@ -20,6 +20,7 @@ import {
   getDepositToastText,
   groupDepositsByDate,
 } from "@/utils/funding/depositConfirm";
+import { formatWon } from "@/utils/funding/giftChangeAmount";
 import { openTossApp } from "@/utils/funding/openTossApp";
 import PendingContributionItem from "@/widgets/home/PendingContributionItem";
 import IconRight from "@/assets/icons/icon-right.svg?react";
@@ -32,8 +33,8 @@ const SKELETON_COUNT = 2;
 type DepositToast = {
   text: string;
   show: boolean;
-  // true면 처리 결과 토스트라 '실행 취소' 버튼을 붙인다
-  undoable?: boolean;
+  // 있으면 처리 결과 토스트라 '실행 취소' 버튼을 붙이고, 누르면 이 참여들을 되돌린다
+  undo?: { fundingId: number; contributionIds: number[] };
 };
 
 // preReveal: 마감 후 공개 전에 남은 입금을 확인하는 시트라, 모두 확인하면 공개 화면으로 보낼 수 있다
@@ -57,11 +58,10 @@ export default function DepositConfirmSheet({
 }: DepositConfirmSheetProps) {
   const isPreReveal = variant === "preReveal";
   const query = usePendingContributionsQuery({ fundingId, enabled: open });
-  const confirmMutation = useConfirmContributionMutation();
-  const rejectMutation = useRejectContributionMutation();
-  const confirmAllMutation = useConfirmAllContributionsMutation();
+  const decideMutation = useDecideContributionsMutation();
+  const undoMutation = useUndoContributionDecisionsMutation();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  // 클릭 즉시 버튼을 잠근다. 여러 건을 병렬로 보내면 isPending만으로는 마지막 요청 상태만 보인다
+  // 클릭 즉시 버튼을 잠근다. isPending은 다음 렌더에야 반영돼 그 사이의 연타를 막지 못한다
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<DepositToast | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -70,16 +70,13 @@ export default function DepositConfirmSheet({
     id: contribution.contributionId,
     senderName: contribution.participantName,
     depositedAt: contribution.participatedAt,
+    amount: contribution.amount,
   }));
   const count = pendingDeposits.length;
   const groups = groupDepositsByDate(pendingDeposits);
   const hasSelection = selectedIds.length > 0;
   const isAllSelected = count > 0 && pendingDeposits.every(({ id }) => selectedIds.includes(id));
-  const isBusy =
-    isSubmitting ||
-    confirmMutation.isPending ||
-    rejectMutation.isPending ||
-    confirmAllMutation.isPending;
+  const isBusy = isSubmitting || decideMutation.isPending || undoMutation.isPending;
 
   useEffect(() => () => clearTimeout(toastTimerRef.current), []);
 
@@ -92,43 +89,30 @@ export default function DepositConfirmSheet({
     );
   };
 
-  // 건별 요청의 성공한 id만 돌려준다. 일부만 실패해도 성공한 건은 이미 서버에 반영됐다
-  const requestEach = async (action: DepositAction, targetFundingId: number, ids: number[]) => {
-    const mutation = action === "notReceived" ? rejectMutation : confirmMutation;
-    const results = await Promise.allSettled(
-      ids.map(contributionId =>
-        mutation.mutateAsync({ fundingId: targetFundingId, contributionId }),
-      ),
-    );
-    return ids.filter((_, index) => results[index].status === "fulfilled");
-  };
-
-  const requestProcess = async (action: DepositAction, targetFundingId: number, ids: number[]) => {
-    if (action === "received" && isAllSelected) {
-      await confirmAllMutation.mutateAsync(targetFundingId);
-      return ids;
-    }
-    return requestEach(action, targetFundingId, ids);
-  };
-
-  // 누르는 즉시 서버에 반영한다. 실행 취소는 되돌리는 API가 없어 지금은 토스트만 닫는다
+  // 누르는 즉시 서버에 반영한다. 선택한 건은 한 요청으로 함께 처리돼 일부만 성공하는 경우가 없다
   const handleProcess = async (action: DepositAction) => {
     if (isBusy || fundingId === null) return;
-    // 이전 부분 실패로 선택에 남은 id 중 이미 처리돼 목록에서 빠진 건은 다시 보내지 않는다
+    // 다른 기기에서 이미 처리돼 목록에서 빠진 건은 다시 보내지 않는다
     const ids = selectedIds.filter(id => pendingDeposits.some(deposit => deposit.id === id));
+    if (ids.length === 0) return;
     setIsSubmitting(true);
     try {
-      const succeededIds = await requestProcess(action, fundingId, ids);
-      // 실패한 건은 선택을 유지해 바로 다시 누를 수 있게 둔다. 실패 안내는 전역 MutationCache onError가 맡는다
-      setSelectedIds(prev => prev.filter(id => ids.includes(id) && !succeededIds.includes(id)));
-      if (succeededIds.length > 0) {
-        showToast({
-          text: getDepositToastText(action, succeededIds.length, count),
-          undoable: true,
-        });
-      }
+      const data = await decideMutation.mutateAsync({
+        fundingId,
+        contributionIds: ids,
+        decision: action === "received" ? "CONFIRM" : "REJECT",
+      });
+      setSelectedIds([]);
+      // 이미 같은 결과였던 참여까지 되돌리면 원래 상태가 바뀌므로 이번에 바뀐 참여만 실행 취소 대상이다
+      const undoIds = (data?.contributions ?? [])
+        .filter(({ changed }) => changed)
+        .map(({ contributionId }) => contributionId);
+      showToast({
+        text: getDepositToastText(action, ids.length, count),
+        undo: undoIds.length > 0 ? { fundingId, contributionIds: undoIds } : undefined,
+      });
     } catch {
-      // confirm-all 실패. 안내는 전역 MutationCache onError가 맡고 선택은 그대로 둔다
+      // 안내는 전역 MutationCache onError가 맡고, 선택은 그대로 둬 바로 다시 누를 수 있게 한다
     } finally {
       setIsSubmitting(false);
     }
@@ -139,10 +123,12 @@ export default function DepositConfirmSheet({
     if (!opened) showToast({ text: TOSS_FALLBACK_MESSAGE });
   };
 
-  // TODO(API): 처리를 되돌리는 API가 생기면 여기서 요청하고 목록을 다시 불러온다
+  // 실패(10초 경과 등) 안내는 전역 MutationCache onError가 맡는다
   const handleUndo = () => {
+    const undo = toast?.undo;
     clearTimeout(toastTimerRef.current);
     setToast(prev => prev && { ...prev, show: false });
+    if (undo && !undoMutation.isPending) undoMutation.mutate(undo);
   };
 
   const handleClose = () => {
@@ -159,7 +145,7 @@ export default function DepositConfirmSheet({
 
   const toastNode =
     toast &&
-    (toast.undoable ? (
+    (toast.undo ? (
       <ToastMessage
         show={toast.show}
         text={toast.text}
@@ -264,12 +250,13 @@ export default function DepositConfirmSheet({
                 <section key={dateLabel} className="flex w-full flex-col gap-1">
                   <ListHeader title={dateLabel} as="h4" />
                   <ul className="flex w-full flex-col gap-3">
-                    {groupDeposits.map(({ id, senderName, depositedAt }) => (
+                    {groupDeposits.map(({ id, senderName, depositedAt, amount }) => (
                       <li key={id}>
                         <PendingContributionItem
                           senderName={senderName}
                           depositMethod={formatDepositTime(depositedAt)}
                           leading={<IconDeposit aria-hidden />}
+                          right={<ListText type="price" align="right" title={formatWon(amount)} />}
                           checked={selectedIds.includes(id)}
                           onCheckedChange={checked => toggle(id, checked)}
                         />

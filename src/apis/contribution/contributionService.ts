@@ -1,12 +1,12 @@
 import { clientApi } from "@/apis/client";
 import type {
   AccessGuestContributionRequest,
-  ConfirmAllContributionsResponse,
-  ContributionDecisionResponse,
+  ContributionDecisionsResponse,
   ContributionThankCardResponse,
   CreateContributionRequest,
   CreateContributionResponse,
   CreateMessageContributionRequest,
+  DecideContributionsRequest,
   GuestContributionResponse,
   MarkTransferSentRequest,
   MarkTransferSentResponse,
@@ -15,6 +15,7 @@ import type {
   MyContributionResponse,
   PendingContributionListResponse,
   SendContributionThankCardRequest,
+  UndoContributionDecisionsRequest,
   UpdatedGuestContributionResponse,
   UpdateGuestContributionRequest,
   UpdateMyContributionRequest,
@@ -42,16 +43,16 @@ export const contributionService = {
       body,
     ),
 
-  confirmContribution: (fundingId: number, contributionId: number) =>
-    clientApi.post<ContributionDecisionResponse>(
-      `${contributionsPath(fundingId)}/${contributionId}/confirm`,
+  decideContributions: (fundingId: number, body: DecideContributionsRequest) =>
+    clientApi.post<ContributionDecisionsResponse>(
+      `${contributionsPath(fundingId)}/decisions`,
+      body,
     ),
-  rejectContribution: (fundingId: number, contributionId: number) =>
-    clientApi.post<ContributionDecisionResponse>(
-      `${contributionsPath(fundingId)}/${contributionId}/reject`,
+  undoContributionDecisions: (fundingId: number, body: UndoContributionDecisionsRequest) =>
+    clientApi.post<ContributionDecisionsResponse>(
+      `${contributionsPath(fundingId)}/decisions/undo`,
+      body,
     ),
-  confirmAllContributions: (fundingId: number) =>
-    clientApi.post<ConfirmAllContributionsResponse>(`${contributionsPath(fundingId)}/confirm-all`),
 
   getMyContributions: (fundingId: number) =>
     clientApi.get<MyContributionListResponse>(`${contributionsPath(fundingId)}/me`),

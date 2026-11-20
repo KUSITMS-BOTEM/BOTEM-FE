@@ -51,18 +51,21 @@ const INITIAL: PendingContributionResponse[] = [
     participantName: "하린이",
     profileImageUrl: null,
     participatedAt: "2026-11-18T11:20:00",
+    amount: 45000,
   },
   {
     contributionId: 2,
     participantName: "도윤이",
     profileImageUrl: null,
     participatedAt: "2026-11-16T09:05:00",
+    amount: 30000,
   },
   {
     contributionId: 3,
     participantName: "서준이",
     profileImageUrl: null,
     participatedAt: "2026-11-16T08:00:00",
+    amount: 20000,
   },
 ];
 
@@ -76,19 +79,6 @@ const progress = {
   targetReached: false,
 };
 
-const decide =
-  (status: "CONFIRMED" | "REJECTED") =>
-  ({ params }: { params: Record<string, string | readonly string[] | undefined> }) => {
-    const contributionId = Number(params.contributionId);
-    requests.push(`${status}:${contributionId}`);
-    pending = pending.filter(item => item.contributionId !== contributionId);
-    return HttpResponse.json({
-      success: true,
-      data: { contributionId, status, progress },
-      error: null,
-    });
-  };
-
 const server = setupServer(
   http.get(`${BASE}/pending`, () =>
     HttpResponse.json({
@@ -97,13 +87,35 @@ const server = setupServer(
       error: null,
     }),
   ),
-  http.post(`${BASE}/:contributionId/confirm`, decide("CONFIRMED")),
-  http.post(`${BASE}/:contributionId/reject`, decide("REJECTED")),
-  http.post(`${BASE}/confirm-all`, () => {
-    requests.push("CONFIRM_ALL");
-    const confirmedCount = pending.length;
-    pending = [];
-    return HttpResponse.json({ success: true, data: { confirmedCount, progress }, error: null });
+  http.post(`${BASE}/decisions`, async ({ request }) => {
+    const { contributionIds, decision } = (await request.json()) as {
+      contributionIds: number[];
+      decision: "CONFIRM" | "REJECT";
+    };
+    requests.push(`${decision}:${contributionIds.join(",")}`);
+    pending = pending.filter(item => !contributionIds.includes(item.contributionId));
+    const status = decision === "CONFIRM" ? "CONFIRMED" : "REJECTED";
+    const contributions = contributionIds.map(contributionId => ({
+      contributionId,
+      status,
+      changed: true,
+    }));
+    return HttpResponse.json({ success: true, data: { contributions, progress }, error: null });
+  }),
+  http.post(`${BASE}/decisions/undo`, async ({ request }) => {
+    const { contributionIds } = (await request.json()) as { contributionIds: number[] };
+    requests.push(`UNDO:${contributionIds.join(",")}`);
+    pending = INITIAL.filter(
+      item =>
+        contributionIds.includes(item.contributionId) ||
+        pending.some(({ contributionId }) => contributionId === item.contributionId),
+    );
+    const contributions = contributionIds.map(contributionId => ({
+      contributionId,
+      status: "PENDING_CONFIRMATION",
+      changed: true,
+    }));
+    return HttpResponse.json({ success: true, data: { contributions, progress }, error: null });
   }),
 );
 
@@ -151,6 +163,14 @@ describe("DepositConfirmSheet 목록", () => {
     expect(screen.getByRole("heading", { name: "11월 18일" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "11월 16일" })).toBeInTheDocument();
     expect(checkbox("도윤이의 보탬")).toHaveAccessibleName(/09:05/);
+  });
+
+  it("항목마다 보탠 금액을 보여준다", async () => {
+    renderSheet();
+
+    await waitForList();
+    expect(checkbox("하린이의 보탬")).toHaveAccessibleName(/45,000원/);
+    expect(checkbox("도윤이의 보탬")).toHaveAccessibleName(/30,000원/);
   });
 
   it("목록을 불러오지 못하면 안내와 다시 시도를 보여주고, 다시 시도하면 목록이 나온다", async () => {
@@ -210,7 +230,7 @@ describe("DepositConfirmSheet 공개 전 입금 확인", () => {
 });
 
 describe("DepositConfirmSheet 처리와 토스트", () => {
-  it("개별 선택 후 받았어요를 누르면 confirm을 요청하고 재조회한 목록과 안내 토스트를 보여준다", async () => {
+  it("개별 선택 후 받았어요를 누르면 CONFIRM으로 처리 요청하고 재조회한 목록과 안내 토스트를 보여준다", async () => {
     renderSheet();
     await waitForList();
 
@@ -218,12 +238,12 @@ describe("DepositConfirmSheet 처리와 토스트", () => {
     await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
 
     expect(await screen.findByText(/1건의 입금을 모두 확인했어요/)).toBeInTheDocument();
-    expect(requests).toEqual(["CONFIRMED:1"]);
+    expect(requests).toEqual(["CONFIRM:1"]);
     expect(screen.getByRole("heading", { name: "입금 확인 2건" })).toBeInTheDocument();
     expect(screen.queryByRole("checkbox", { name: /하린이의 보탬/ })).not.toBeInTheDocument();
   });
 
-  it("개별 선택 후 못받았어요를 누르면 선택한 건마다 reject를 요청한다", async () => {
+  it("여러 건을 선택하고 못받았어요를 누르면 한 번의 REJECT 요청으로 함께 처리한다", async () => {
     renderSheet();
     await waitForList();
 
@@ -232,10 +252,10 @@ describe("DepositConfirmSheet 처리와 토스트", () => {
     await userEvent.click(screen.getByRole("button", { name: "못받았어요" }));
 
     expect(await screen.findByText(/2건의 입금을 못받음 처리했어요/)).toBeInTheDocument();
-    expect(requests.sort()).toEqual(["REJECTED:1", "REJECTED:2"]);
+    expect(requests).toEqual(["REJECT:1,2"]);
   });
 
-  it("모두 선택하고 받았어요를 누르면 confirm-all을 한 번 요청하고 빈 상태를 보여준다", async () => {
+  it("모두 선택하고 받았어요를 누르면 전체를 한 번에 처리하고 빈 상태를 보여준다", async () => {
     renderSheet();
     await waitForList();
 
@@ -243,24 +263,48 @@ describe("DepositConfirmSheet 처리와 토스트", () => {
     await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
 
     expect(await screen.findByText(/모든 건의 입금을 확인했어요/)).toBeInTheDocument();
-    expect(requests).toEqual(["CONFIRM_ALL"]);
+    expect(requests).toEqual(["CONFIRM:1,2,3"]);
     expect(screen.getByRole("heading", { name: "입금 확인 0건" })).toBeInTheDocument();
     expect(screen.getByText("모든 내역을 확인했어요")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "팡! 열어보기" })).not.toBeInTheDocument();
   });
 
-  it("처리 토스트의 실행 취소를 누르면 토스트만 닫히고 추가 요청은 나가지 않는다", async () => {
+  it("처리 토스트의 실행 취소를 누르면 처리한 건을 되돌리고 목록에 다시 보여준다", async () => {
     renderSheet();
     await waitForList();
 
     await userEvent.click(checkbox("하린이의 보탬"));
     await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
+    await screen.findByRole("heading", { name: "입금 확인 2건" });
     await userEvent.click(await screen.findByRole("button", { name: "실행 취소" }));
 
-    await waitFor(() =>
-      expect(screen.queryByText(/1건의 입금을 모두 확인했어요/)).not.toBeInTheDocument(),
+    await waitForList();
+    expect(checkbox("하린이의 보탬")).toBeInTheDocument();
+    expect(requests).toEqual(["CONFIRM:1", "UNDO:1"]);
+    expect(screen.queryByText(/1건의 입금을 모두 확인했어요/)).not.toBeInTheDocument();
+  });
+
+  it("이번 요청으로 바뀐 참여가 없으면 실행 취소 버튼을 보여주지 않는다", async () => {
+    server.use(
+      http.post(`${BASE}/decisions`, () =>
+        HttpResponse.json({
+          success: true,
+          data: {
+            contributions: [{ contributionId: 1, status: "CONFIRMED", changed: false }],
+            progress,
+          },
+          error: null,
+        }),
+      ),
     );
-    expect(requests).toEqual(["CONFIRMED:1"]);
+    renderSheet();
+    await waitForList();
+
+    await userEvent.click(checkbox("하린이의 보탬"));
+    await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
+
+    expect(await screen.findByText(/1건의 입금을 모두 확인했어요/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "실행 취소" })).not.toBeInTheDocument();
   });
 
   it("요청 중에는 버튼이 잠겨 연달아 눌러도 요청이 한 번만 나간다", async () => {
@@ -273,13 +317,11 @@ describe("DepositConfirmSheet 처리와 토스트", () => {
     await userEvent.click(screen.getByRole("button", { name: "못받았어요" }));
 
     await screen.findByText(/1건의 입금을 모두 확인했어요/);
-    expect(requests).toEqual(["CONFIRMED:1"]);
+    expect(requests).toEqual(["CONFIRM:1"]);
   });
 
   it("처리 요청이 실패하면 토스트 없이 선택을 유지해 다시 누를 수 있다", async () => {
-    server.use(
-      http.post(`${BASE}/:contributionId/confirm`, () => HttpResponse.json({}, { status: 500 })),
-    );
+    server.use(http.post(`${BASE}/decisions`, () => HttpResponse.json({}, { status: 500 })));
     renderSheet();
     await waitForList();
 
@@ -289,33 +331,6 @@ describe("DepositConfirmSheet 처리와 토스트", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "받았어요" })).toBeEnabled());
     expect(checkbox("하린이의 보탬")).toBeChecked();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
-  });
-
-  it("일부만 실패하면 성공한 건만 선택에서 빼고, 다시 받았어요를 눌러도 선택하지 않은 건은 처리하지 않는다", async () => {
-    server.use(
-      http.post(`${BASE}/:contributionId/reject`, args =>
-        args.params.contributionId === "2"
-          ? HttpResponse.json({}, { status: 500 })
-          : decide("REJECTED")(args),
-      ),
-    );
-    renderSheet();
-    await waitForList();
-
-    await userEvent.click(checkbox("하린이의 보탬"));
-    await userEvent.click(checkbox("도윤이의 보탬"));
-    await userEvent.click(screen.getByRole("button", { name: "못받았어요" }));
-
-    expect(await screen.findByText(/1건의 입금을 못받음 처리했어요/)).toBeInTheDocument();
-    await screen.findByRole("heading", { name: "입금 확인 2건" });
-    expect(checkbox("도윤이의 보탬")).toBeChecked();
-    expect(checkbox("서준이의 보탬")).not.toBeChecked();
-    expect(screen.getByRole("checkbox", { name: "전체 선택" })).not.toBeChecked();
-
-    await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
-
-    await screen.findByRole("heading", { name: "입금 확인 1건" });
-    expect(requests).toEqual(["REJECTED:1", "CONFIRMED:2"]);
   });
 });
 
