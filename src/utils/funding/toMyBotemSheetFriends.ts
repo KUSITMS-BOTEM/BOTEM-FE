@@ -14,11 +14,11 @@ export const toMyBotemSheetFriends = ({
   hasUnconfirmed: boolean;
   isRejected?: boolean;
 }): MyBotemSheetFriend[] => {
-  const friends = participants.map(({ order, name, profileImageUrl, participatedAt }) => ({
+  const friends = participants.map(({ order, name, profileImageUrl, contributedDate }) => ({
     id: order,
     name,
     profileImageUrl: profileImageUrl ?? undefined,
-    contributedAt: participatedAt,
+    contributedAt: contributedDate,
   }));
   const mineIndex = myName ? friends.findIndex(friend => friend.name === myName) : -1;
   if (mineIndex === -1) return friends;

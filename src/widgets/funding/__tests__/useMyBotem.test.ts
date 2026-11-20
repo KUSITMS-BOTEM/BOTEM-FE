@@ -17,8 +17,8 @@ const wrapper = ({ children }: { children: ReactNode }) =>
   createElement(QueryClientProvider, { client: queryClient }, children);
 
 const participants = [
-  { order: 1, name: "서연", profileImageUrl: null, participatedAt: "2026-11-10T09:00:00" },
-  { order: 2, name: "민지", profileImageUrl: null, participatedAt: "2026-11-11T09:00:00" },
+  { order: 1, name: "서연", profileImageUrl: null, contributedDate: "2026-11-10" },
+  { order: 2, name: "민지", profileImageUrl: null, contributedDate: "2026-11-11" },
 ] as FundingDetailParticipant[];
 
 const render = (overrides: Partial<Parameters<typeof useMyBotem>[0]> = {}) =>

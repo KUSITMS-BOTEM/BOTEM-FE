@@ -426,7 +426,7 @@ describe("FundingDetailView", () => {
         ...DETAIL,
         participants: [
           ...DETAIL.participants,
-          { order: 4, name: "민지", profileImageUrl: null, participatedAt: "2026-11-16T10:00:00" },
+          { order: 4, name: "민지", profileImageUrl: null, contributedDate: "2026-11-16" },
         ],
       };
       render(<FundingDetailView detail={detail} fundingId="1" />);

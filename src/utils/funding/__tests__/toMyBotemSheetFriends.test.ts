@@ -1,14 +1,14 @@
 import { toMyBotemSheetFriends } from "@/utils/funding/toMyBotemSheetFriends";
 
 const participants = [
-  { order: 1, name: "하린이", profileImageUrl: null, participatedAt: "2026-11-10T09:00:00" },
+  { order: 1, name: "하린이", profileImageUrl: null, contributedDate: "2026-11-10" },
   {
     order: 2,
     name: "도윤이",
     profileImageUrl: "https://img/a.png",
-    participatedAt: "2026-11-12T18:30:00",
+    contributedDate: "2026-11-12",
   },
-  { order: 3, name: "서준이", profileImageUrl: null, participatedAt: "2026-11-15T21:10:00" },
+  { order: 3, name: "서준이", profileImageUrl: null, contributedDate: "2026-11-15" },
 ];
 
 describe("toMyBotemSheetFriends", () => {
@@ -23,7 +23,7 @@ describe("toMyBotemSheetFriends", () => {
     expect(friends[0]).toMatchObject({
       isMine: true,
       isConfirmed: true,
-      contributedAt: "2026-11-15T21:10:00",
+      contributedAt: "2026-11-15",
     });
   });
 
