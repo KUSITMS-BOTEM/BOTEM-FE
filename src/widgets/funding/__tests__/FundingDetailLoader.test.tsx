@@ -13,6 +13,17 @@ vi.mock("@/hooks/queries/funding/useFundingDetailQuery", () => ({
   useFundingDetailQuery: () => queryState.current,
 }));
 
+const hostState = vi.hoisted(() => ({
+  management: {} as Record<string, unknown>,
+  pending: {} as Record<string, unknown>,
+}));
+vi.mock("@/hooks/queries/funding/useFundingManagementQuery", () => ({
+  useFundingManagementQuery: () => hostState.management,
+}));
+vi.mock("@/hooks/queries/contribution/usePendingContributionItemsQuery", () => ({
+  usePendingContributionItemsQuery: () => hostState.pending,
+}));
+
 vi.mock("@/hooks/mutations/auth/useKakaoLoginUriMutation", () => ({
   useKakaoLoginUriMutation: () => ({ mutate: vi.fn() }),
 }));
@@ -30,8 +41,39 @@ const setQuery = (state: Record<string, unknown>) => {
   queryState.current = { isError: false, isFetchedAfterMount: true, refetch: vi.fn(), ...state };
 };
 
+const setHost = (management: Record<string, unknown>, pending: Record<string, unknown>) => {
+  hostState.management = { isError: false, refetch: vi.fn(), ...management };
+  hostState.pending = { isError: false, refetch: vi.fn(), ...pending };
+};
+
 describe("FundingDetailLoader", () => {
+  beforeEach(() => setHost({ data: undefined }, { data: undefined }));
   afterEach(() => replace.mockClear());
+
+  it("개설자 화면은 관리 정보·확인 대기 목록이 오기 전까지 스켈레톤을 보여준다", () => {
+    setQuery({ data: FUNDING_DETAIL });
+    render(<FundingDetailLoader fundingId="1" variant="owner" />);
+
+    expect(screen.getByLabelText("펀딩 불러오는 중")).toBeInTheDocument();
+  });
+
+  it("개설자 화면은 관리 정보 조회가 실패하면 에러 화면에서 그 쿼리를 다시 시도한다", () => {
+    const refetch = vi.fn();
+    setQuery({ data: FUNDING_DETAIL });
+    setHost({ data: undefined, isError: true, refetch }, { data: undefined });
+    render(<FundingDetailLoader fundingId="1" variant="owner" />);
+
+    screen.getByRole("button", { name: "다시 시도" }).click();
+    expect(refetch).toHaveBeenCalled();
+  });
+
+  it("개설자 화면은 확인 대기 목록 조회가 실패해도 에러 화면을 보여준다", () => {
+    setQuery({ data: FUNDING_DETAIL });
+    setHost({ data: undefined }, { data: undefined, isError: true });
+    render(<FundingDetailLoader fundingId="1" variant="owner" />);
+
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
+  });
 
   it("데이터가 없으면 스켈레톤을 보여준다", () => {
     setQuery({ data: undefined });

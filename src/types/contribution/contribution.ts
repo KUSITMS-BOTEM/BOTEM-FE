@@ -33,6 +33,7 @@ export type PendingContributionItemResponse = {
   participantName: string;
   profileImageUrl: string | null;
   participatedAt: string;
+  amount: number;
 };
 
 export type PendingContributionItemListResponse = {

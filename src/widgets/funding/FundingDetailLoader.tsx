@@ -63,7 +63,7 @@ export default function FundingDetailLoader({
       variant={variant}
       isLoggedIn={isLoggedIn}
       detail={data}
-      management={management.data}
+      management={management.data ?? undefined}
       pendingItems={pending.data?.contributions}
       {...viewProps}
     />

@@ -28,6 +28,15 @@ vi.mock("@/hooks/queries/funding/useFundingDetailQuery", async () => {
   };
 });
 
+vi.mock("@/hooks/queries/funding/useFundingManagementQuery", async () => {
+  const { HOST_QUERIES } = await import("@/widgets/funding/__tests__/fixtures/fundingManagement");
+  return { useFundingManagementQuery: () => HOST_QUERIES.management };
+});
+vi.mock("@/hooks/queries/contribution/usePendingContributionItemsQuery", async () => {
+  const { HOST_QUERIES } = await import("@/widgets/funding/__tests__/fixtures/fundingManagement");
+  return { usePendingContributionItemsQuery: () => HOST_QUERIES.pending };
+});
+
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element

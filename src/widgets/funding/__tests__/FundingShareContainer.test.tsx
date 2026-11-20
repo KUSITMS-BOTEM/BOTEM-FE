@@ -21,6 +21,14 @@ vi.mock("@/hooks/queries/funding/useFundingDetailQuery", async () => {
   };
 });
 
+// 공유(guest) 화면은 개설자용 쿼리를 쓰지 않는다
+vi.mock("@/hooks/queries/funding/useFundingManagementQuery", () => ({
+  useFundingManagementQuery: () => ({ data: undefined, isError: false }),
+}));
+vi.mock("@/hooks/queries/contribution/usePendingContributionItemsQuery", () => ({
+  usePendingContributionItemsQuery: () => ({ data: undefined, isError: false }),
+}));
+
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element

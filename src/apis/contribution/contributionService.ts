@@ -13,6 +13,7 @@ import type {
   MessageContributionResponse,
   MyContributionListResponse,
   MyContributionResponse,
+  PendingContributionItemListResponse,
   PendingContributionListResponse,
   SendContributionThankCardRequest,
   UpdateContributionStatusRequest,
@@ -30,6 +31,8 @@ export const contributionService = {
   // TODO(API): 응답 타입은 구 스펙. 바텀시트를 confirm/reject로 옮길 때 PendingContributionItemListResponse로 바꾼다
   getPendingContributions: (fundingId: number) =>
     clientApi.get<PendingContributionListResponse>(`${contributionsPath(fundingId)}/pending`),
+  getPendingContributionItems: (fundingId: number) =>
+    clientApi.get<PendingContributionItemListResponse>(`${contributionsPath(fundingId)}/pending`),
   // TODO(API): Swagger에 없는 구 엔드포인트. 일괄 처리·되돌리기 스펙이 나오면 confirm/reject/confirmAll로 교체한다
   updateContributionStatus: (fundingId: number, body: UpdateContributionStatusRequest) =>
     clientApi.patch<null>(`${contributionsPath(fundingId)}/status`, body),
