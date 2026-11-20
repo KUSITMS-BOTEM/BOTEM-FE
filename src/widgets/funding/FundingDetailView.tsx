@@ -260,7 +260,7 @@ export default function FundingDetailView({
                 <Button size="xlarge" variant="weak" onClick={startMessage}>
                   메시지 보태기
                 </Button>
-                <Button size="xlarge" variant="fill" onClick={startContribute}>
+                <Button size="xlarge" variant="fill" disabled={isClosed} onClick={startContribute}>
                   보태기
                 </Button>
               </>

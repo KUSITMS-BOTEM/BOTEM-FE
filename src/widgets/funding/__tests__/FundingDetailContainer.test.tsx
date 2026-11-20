@@ -7,6 +7,11 @@ const push = vi.fn();
 const back = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back, replace: vi.fn() }) }));
 
+// 로그인 뮤테이션은 QueryClient가 필요하므로 대체한다
+vi.mock("@/hooks/mutations/auth/useKakaoLoginUriMutation", () => ({
+  useKakaoLoginUriMutation: () => ({ mutate: vi.fn() }),
+}));
+
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element

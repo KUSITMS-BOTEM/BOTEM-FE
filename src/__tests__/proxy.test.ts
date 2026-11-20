@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { proxy } from "../proxy";
+import { config, proxy } from "../proxy";
 
 describe("proxy", () => {
   it("로그인 상태로 랜딩 페이지에 접근하면 /home으로 리다이렉트한다", () => {
@@ -59,21 +59,8 @@ describe("proxy", () => {
     expect(response.headers.get("location")).toBe("http://localhost/friends/5");
   });
 
-  it("비로그인 상태로 펀딩 공유 링크에 접근하면 리다이렉트하지 않는다", () => {
-    const request = new NextRequest("http://localhost/share/7");
-
-    const response = proxy(request);
-
-    expect(response.headers.get("location")).toBeNull();
-  });
-
-  it("로그인 상태로 펀딩 공유 링크에 접근하면 회원용 펀딩 상세로 리다이렉트한다", () => {
-    const request = new NextRequest("http://localhost/share/7", {
-      headers: { cookie: "isLoggedIn=true" },
-    });
-
-    const response = proxy(request);
-
-    expect(response.headers.get("location")).toBe("http://localhost/funding/7");
+  it("펀딩 공유 링크는 proxy가 다루지 않아 참여 회원이 share에 머문다 (개설자 분기는 page에서 한다)", () => {
+    expect(config.matcher).not.toContain("/share/:fundingId");
+    expect(config.matcher).toContain("/share/profile/:userId");
   });
 });
