@@ -75,7 +75,9 @@ function ConfettiBody({ piece }: { piece: ConfettiPiece }) {
 
 export default function FundingCompleteConfetti() {
   return (
-    <div aria-hidden className="pointer-events-none absolute top-0 left-1/2 w-90 -translate-x-1/2">
+    <div
+      aria-hidden
+      className="pointer-events-none absolute top-0 left-1/2 z-10 w-90 -translate-x-1/2">
       {CONFETTI_PIECES.map((piece, index) => {
         const { cx, cy, deg, delay, duration, dx, spin } = piece;
         return (
