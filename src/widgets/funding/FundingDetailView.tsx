@@ -23,6 +23,7 @@ import { getClosedLabel } from "@/utils/funding/fundingProgress";
 import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
 import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
 import BotemPopup from "@/widgets/funding/BotemPopup";
+import MyBotemSheet, { type MyBotemSheetFriend } from "@/widgets/funding/MyBotemSheet";
 import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
 import FundingGiftProofView from "@/widgets/funding/FundingGiftProofView";
@@ -75,8 +76,16 @@ const MOCK_FUNDING = {
   messageCount: 8,
   friends: [
     { id: 1, name: "민수", contributedAt: "2026-11-10T09:00:00", thankCardSent: false },
-    { id: 2, name: "서연", contributedAt: "2026-11-12T18:30:00", thankCardSent: true },
-  ],
+    {
+      id: 2,
+      name: "서연",
+      contributedAt: "2026-11-12T18:30:00",
+      thankCardSent: true,
+      // TODO(API): 참여자 화면의 '내 보탬'(isMine)·개설자 확인 여부(isConfirmed)를 내 보탬 조회 API 값으로 교체한다
+      isMine: true,
+      isConfirmed: false,
+    },
+  ] satisfies MyBotemSheetFriend[],
   account: {
     bank: "TOSS_BANK",
     accountHolder: "김지유",
@@ -301,32 +310,47 @@ export default function FundingDetailView({
             setMemberCheckFrom(null);
           }}
         />
-        {/* TODO: 팝업 내부 동작(미확인·수정·메세지·보태기)은 보탬 폼 디자인이 정해지면 연결한다 */}
-        <BotemPopup
-          open={isPopupOpen}
-          unconfirmedCount={unconfirmedCount}
-          friends={funding.friends}
-          ownerName={funding.hostName}
-          isClosed={isClosed}
-          isHost={isSurprise}
-          isOwner={isOwner}
-          messageCount={funding.messageCount}
-          onClose={closePopup}
-          // 팝업은 닫지 않는다 — 나중에 showModal된 다이얼로그가 top layer에서 위에 쌓인다
-          onUnconfirmedClick={confirmsDeposits ? () => setIsDepositOpen(true) : noop}
-          onEditClick={() => {
-            closePopup();
-            setIsEditOpen(true);
-          }}
-          onMessageClick={() => {
-            closePopup();
-            startMessage();
-          }}
-          onContributeClick={() => {
-            closePopup();
-            startContribute();
-          }}
-        />
+        {isGuest ? (
+          <MyBotemSheet
+            open={isPopupOpen}
+            unconfirmedCount={unconfirmedCount}
+            friends={funding.friends}
+            ownerName={funding.hostName}
+            isClosed={isClosed}
+            onClose={closePopup}
+            onEditClick={() => {
+              closePopup();
+              setIsEditOpen(true);
+            }}
+          />
+        ) : (
+          // TODO: 팝업 내부 동작(미확인·수정·메세지·보태기)은 보탬 폼 디자인이 정해지면 연결한다
+          <BotemPopup
+            open={isPopupOpen}
+            unconfirmedCount={unconfirmedCount}
+            friends={funding.friends}
+            ownerName={funding.hostName}
+            isClosed={isClosed}
+            isHost={isSurprise}
+            isOwner={isOwner}
+            messageCount={funding.messageCount}
+            onClose={closePopup}
+            // 팝업은 닫지 않는다 — 나중에 showModal된 다이얼로그가 top layer에서 위에 쌓인다
+            onUnconfirmedClick={confirmsDeposits ? () => setIsDepositOpen(true) : noop}
+            onEditClick={() => {
+              closePopup();
+              setIsEditOpen(true);
+            }}
+            onMessageClick={() => {
+              closePopup();
+              startMessage();
+            }}
+            onContributeClick={() => {
+              closePopup();
+              startContribute();
+            }}
+          />
+        )}
         {/* TODO(API): 실제 API 연결 시 입금 처리 결과를 서버에 반영하고, 팝업의 확인 대기 건수(unconfirmedCount)와 프로필 알림 점도 그 값으로 갱신한다. 지금은 funding.deposits.length로 고정이라 처리 후에도 줄지 않는다 */}
         <DepositConfirmSheet
           open={isDepositOpen}

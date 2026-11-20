@@ -41,7 +41,7 @@ type BotemPopupProps = {
   onContributeClick: () => void;
 };
 
-const getUnconfirmedText = ({
+export const getUnconfirmedText = ({
   count,
   ownerName,
   isHost,
