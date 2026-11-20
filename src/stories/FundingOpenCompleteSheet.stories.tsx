@@ -69,7 +69,7 @@ function FundingOpenCompleteSheetDemo({
           targetAmount: "429000",
           deadline: addDays(getTodayDate(), 7),
         }}
-        fundingId={1}
+        shareKey="share-key-1"
         onClose={() => setOpen(false)}
       />
     </QueryClientProvider>
