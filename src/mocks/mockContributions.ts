@@ -1,5 +1,5 @@
 import type {
-  ContributionStatus,
+  ContributionDecisionStatus,
   PendingContributionResponse,
 } from "@/types/contribution/contribution";
 
@@ -12,58 +12,114 @@ const MOCK_CONTRIBUTIONS: MockContribution[] = [
   {
     contributionId: 1,
     fundingId: 12,
-    senderName: "하린이",
-    depositMethod: "토스뱅크 계좌",
+    participantName: "하린",
+    profileImageUrl: null,
+    participatedAt: "2026-11-18T11:20:00",
     percentage: 10,
   },
   {
     contributionId: 2,
     fundingId: 12,
-    senderName: "도윤이",
-    depositMethod: "토스뱅크 계좌",
+    participantName: "도윤",
+    profileImageUrl: null,
+    participatedAt: "2026-11-16T09:05:00",
     percentage: 10,
   },
   {
     contributionId: 3,
     fundingId: 15,
-    senderName: "서준이",
-    depositMethod: "토스뱅크 계좌",
+    participantName: "서준",
+    profileImageUrl: null,
+    participatedAt: "2026-11-19T20:10:00",
     percentage: 7.5,
   },
   {
     contributionId: 4,
     fundingId: 15,
-    senderName: "지아",
-    depositMethod: "토스뱅크 계좌",
+    participantName: "지아",
+    profileImageUrl: null,
+    participatedAt: "2026-11-19T08:40:00",
     percentage: 7.5,
+  },
+  {
+    contributionId: 5,
+    fundingId: 17,
+    participantName: "민지",
+    profileImageUrl: null,
+    participatedAt: "2026-11-20T14:03:00",
+    percentage: 5,
+  },
+  {
+    contributionId: 6,
+    fundingId: 17,
+    participantName: "예준",
+    profileImageUrl: null,
+    participatedAt: "2026-11-18T21:45:00",
+    percentage: 5,
+  },
+  {
+    contributionId: 7,
+    fundingId: 18,
+    participantName: "수아",
+    profileImageUrl: null,
+    participatedAt: "2026-11-19T12:30:00",
+    percentage: 5,
+  },
+  {
+    contributionId: 8,
+    fundingId: 18,
+    participantName: "지우",
+    profileImageUrl: null,
+    participatedAt: "2026-11-19T10:15:00",
+    percentage: 5,
   },
 ];
 
-const statusById = new Map<number, ContributionStatus>(
-  MOCK_CONTRIBUTIONS.map(({ contributionId }) => [contributionId, "PENDING"]),
+const statusById = new Map<number, ContributionDecisionStatus>(
+  MOCK_CONTRIBUTIONS.map(({ contributionId }) => [contributionId, "PENDING_CONFIRMATION"]),
 );
 
+const statusOf = (contributionId: number) => statusById.get(contributionId);
+
+const contributionsOf = (fundingId: number) =>
+  MOCK_CONTRIBUTIONS.filter(contribution => contribution.fundingId === fundingId);
+
 export const getMockPendingContributions = (fundingId: number): PendingContributionResponse[] =>
-  MOCK_CONTRIBUTIONS.filter(
-    contribution =>
-      contribution.fundingId === fundingId &&
-      statusById.get(contribution.contributionId) === "PENDING",
-  ).map(({ contributionId, senderName, depositMethod }) => ({
-    contributionId,
-    senderName,
-    depositMethod,
+  contributionsOf(fundingId)
+    .filter(({ contributionId }) => statusOf(contributionId) === "PENDING_CONFIRMATION")
+    .map(({ contributionId, participantName, profileImageUrl, participatedAt }) => ({
+      contributionId,
+      participantName,
+      profileImageUrl,
+      participatedAt,
+    }));
+
+export const getMockPendingContributionIds = (fundingId: number): number[] =>
+  getMockPendingContributions(fundingId).map(({ contributionId }) => contributionId);
+
+export const getMockContributionStatus = (
+  fundingId: number,
+  contributionId: number,
+): ContributionDecisionStatus | null =>
+  contributionsOf(fundingId).some(contribution => contribution.contributionId === contributionId)
+    ? (statusOf(contributionId) ?? null)
+    : null;
+
+export const getMockContributionRecords = (fundingId: number) =>
+  contributionsOf(fundingId).map(contribution => ({
+    ...contribution,
+    status: statusOf(contribution.contributionId) ?? "PENDING_CONFIRMATION",
   }));
 
 export const updateMockContributionStatuses = (
   fundingId: number,
   contributionIds: number[],
-  status: ContributionStatus,
+  status: ContributionDecisionStatus,
 ): boolean => {
+  const fundingContributions = contributionsOf(fundingId);
   if (
     !contributionIds.every(id =>
-      MOCK_CONTRIBUTIONS.some(
-        contribution => contribution.contributionId === id && contribution.fundingId === fundingId,
-      ),
+      fundingContributions.some(contribution => contribution.contributionId === id),
     )
   )
     return false;
@@ -72,25 +128,15 @@ export const updateMockContributionStatuses = (
   return true;
 };
 
-export const getMockContributionProgress = (fundingId: number) => {
-  const contributions = MOCK_CONTRIBUTIONS.filter(
-    contribution => contribution.fundingId === fundingId,
+const sumPercentage = (fundingId: number, status: ContributionDecisionStatus) =>
+  contributionsOf(fundingId).reduce(
+    (sum, contribution) =>
+      sum + (statusOf(contribution.contributionId) === status ? contribution.percentage : 0),
+    0,
   );
-  return {
-    pendingContributionCount: contributions.filter(
-      contribution => statusById.get(contribution.contributionId) === "PENDING",
-    ).length,
-    pendingPercentage: contributions.reduce(
-      (sum, contribution) =>
-        sum +
-        (statusById.get(contribution.contributionId) === "PENDING" ? contribution.percentage : 0),
-      0,
-    ),
-    confirmedAddedPercentage: contributions.reduce(
-      (sum, contribution) =>
-        sum +
-        (statusById.get(contribution.contributionId) === "CONFIRMED" ? contribution.percentage : 0),
-      0,
-    ),
-  };
-};
+
+export const getMockContributionProgress = (fundingId: number) => ({
+  pendingContributionCount: getMockPendingContributionIds(fundingId).length,
+  pendingPercentage: sumPercentage(fundingId, "PENDING_CONFIRMATION"),
+  confirmedAddedPercentage: sumPercentage(fundingId, "CONFIRMED"),
+});

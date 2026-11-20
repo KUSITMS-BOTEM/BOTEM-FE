@@ -81,3 +81,37 @@ describe("fundingHandlers POST /api/fundings/surprise", () => {
     });
   });
 });
+
+describe("GET management 핸들러", () => {
+  const getManagement = async (fundingId: number) => {
+    const response = await fetch(`http://localhost/api/fundings/${fundingId}/management`);
+    return { status: response.status, body: await response.json() };
+  };
+
+  it.each([
+    [18, "TARGET_REACHED", 100, 2],
+    [17, "IN_PROGRESS", 30, 2],
+    [13, "CLOSED", 100, 0],
+    [16, "IN_PROGRESS", 10, 0],
+    [14, "NO_PARTICIPANTS", 0, 0],
+  ])(
+    "펀딩 %i는 %s 상태, 확정 %i%%, 확인 대기 %i건으로 응답한다",
+    async (fundingId, state, confirmed, pending) => {
+      const { body } = await getManagement(fundingId);
+
+      expect(body.data).toMatchObject({
+        fundingId,
+        managementState: state,
+        confirmedPercentage: confirmed,
+        pendingContributionCount: pending,
+      });
+    },
+  );
+
+  it("목업에 없는 펀딩은 404 FUNDING_002를 반환한다", async () => {
+    const { status, body } = await getManagement(999);
+
+    expect(status).toBe(404);
+    expect(body.error.code).toBe("FUNDING_002");
+  });
+});

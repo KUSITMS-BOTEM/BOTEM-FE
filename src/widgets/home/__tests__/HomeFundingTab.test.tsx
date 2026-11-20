@@ -26,20 +26,20 @@ const push = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
 }));
-vi.mock("@/widgets/home/PendingContributionBottomSheet", () => ({
+vi.mock("@/widgets/funding/DepositConfirmSheet", () => ({
   default: ({
     open,
     fundingId,
-    onAllConfirmed,
+    onReveal,
   }: {
     open: boolean;
     fundingId: number | null;
-    onAllConfirmed: () => void;
+    onReveal?: () => void;
   }) =>
     open ? (
       <div role="dialog">
         입금 확인 {fundingId}
-        <button onClick={onAllConfirmed}>모두 확인</button>
+        {onReveal && <button onClick={onReveal}>팡! 열어보기</button>}
       </div>
     ) : null,
 }));
@@ -226,6 +226,26 @@ describe("HomeFundingTab", () => {
     expect(screen.getByRole("dialog")).toHaveTextContent("입금 확인 42");
   });
 
+  it("입금 확인 시트에서 팡! 열어보기를 누르면 그 펀딩의 결과 데이터를 받은 뒤 공개 화면으로 이동한다", async () => {
+    vi.mocked(fundingService.getReveal).mockResolvedValue({
+      contributorNames: [],
+      totalAmount: 0,
+      goalAchieved: false,
+    });
+    mockQueries({
+      data: fundingList([
+        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 2 },
+      ]),
+    });
+
+    renderTab();
+    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
+    await userEvent.click(screen.getByRole("button", { name: "팡! 열어보기" }));
+
+    expect(fundingService.getReveal).toHaveBeenCalledWith(42);
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
+  });
+
   it("진행 중(default) 카드를 누르면 펀딩 상세 화면으로 이동한다", async () => {
     mockQueries({ data: fundingList([fundingCard]) });
 
@@ -354,20 +374,5 @@ describe("HomeFundingTab", () => {
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
-  it("입금 확인을 모두 마치면 입금 확인 시트가 닫히고 공개 시트는 열리지 않는다", async () => {
-    mockQueries({
-      data: fundingList([
-        { ...fundingCard, fundingId: 42, cardType: "CLOSED_UNOPENED", pendingContributionCount: 2 },
-      ]),
-    });
-
-    renderTab();
-    await userEvent.click(screen.getByRole("button", { name: "지유님의 생일 펀딩" }));
-    await userEvent.click(screen.getByRole("button", { name: "모두 확인" }));
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.queryByText(/펀딩 공개/)).not.toBeInTheDocument();
   });
 });

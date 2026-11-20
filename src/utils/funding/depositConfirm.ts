@@ -1,7 +1,6 @@
 export type DepositItem = {
   id: number;
   senderName: string;
-  amount: number;
   depositedAt: string;
 };
 

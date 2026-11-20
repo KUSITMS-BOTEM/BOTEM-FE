@@ -33,7 +33,7 @@ const MOCK_PARTICIPANT_PREVIEWS = [
   },
 ];
 
-const MOCK_FUNDING_CARDS = [
+export const MOCK_FUNDING_CARDS = [
   {
     fundingId: 12,
     cardType: "CLOSED_UNOPENED",
@@ -103,6 +103,34 @@ const MOCK_FUNDING_CARDS = [
     confirmedPercentage: 10,
     pendingPercentage: 0,
     pendingContributionCount: 0,
+  },
+  {
+    fundingId: 17,
+    cardType: "IN_PROGRESS",
+    fundingType: "BIRTHDAY",
+    productName: product2.name,
+    productImageUrl: product2.imageUrl,
+    targetAmount: product2.price,
+    participantCount: 3,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS.slice(0, 1),
+    remainingDays: 14,
+    confirmedPercentage: 30,
+    pendingPercentage: 10,
+    pendingContributionCount: 2,
+  },
+  {
+    fundingId: 18,
+    cardType: "IN_PROGRESS",
+    fundingType: "BIRTHDAY",
+    productName: product3.name,
+    productImageUrl: product3.imageUrl,
+    targetAmount: product3.price,
+    participantCount: 5,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS,
+    remainingDays: 3,
+    confirmedPercentage: 100,
+    pendingPercentage: 10,
+    pendingContributionCount: 2,
   },
 ];
 
