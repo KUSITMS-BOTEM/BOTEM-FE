@@ -35,3 +35,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
+
+// 아직 로그인하지 않은 방문자
+export const LoginRequired: Story = {
+  args: { onKakaoLogin: () => {} },
+};
