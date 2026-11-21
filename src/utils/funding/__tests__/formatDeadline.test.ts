@@ -1,4 +1,9 @@
-import { formatDeadline, formatDeadlineShort, getTodayDate } from "@/utils/funding/formatDeadline";
+import {
+  formatDeadline,
+  formatDeadlineShort,
+  formatRevealLabel,
+  getTodayDate,
+} from "@/utils/funding/formatDeadline";
 
 describe("formatDeadline", () => {
   it("날짜를 연.월.일과 요일로 보여준다", () => {
@@ -25,5 +30,12 @@ describe("formatDeadlineShort", () => {
   it("날짜를 'M월 D일' 형식으로 바꾼다", () => {
     expect(formatDeadlineShort("2026-11-13")).toBe("11월 13일");
     expect(formatDeadlineShort("2026-01-05")).toBe("1월 5일");
+  });
+});
+
+describe("formatRevealLabel", () => {
+  it("공개 시각을 'M월 D일 H시' 형식으로 바꾼다", () => {
+    expect(formatRevealLabel("2026-10-13T00:00:00")).toBe("10월 13일 0시");
+    expect(formatRevealLabel("2026-12-25T09:30:00")).toBe("12월 25일 9시");
   });
 });

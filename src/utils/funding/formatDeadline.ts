@@ -11,5 +11,9 @@ export const formatDeadlineShort = (date: string) => {
   return `${Number(month)}월 ${Number(day)}일`;
 };
 
+// "2026-10-13T00:00:00" → "10월 13일 0시"
+export const formatRevealLabel = (dateTime: string) =>
+  `${formatDeadlineShort(dateTime.slice(0, 10))} ${Number(dateTime.slice(11, 13))}시`;
+
 // 기기 로컬 기준 오늘 날짜를 "YYYY-MM-DD"로 만든다 (sv-SE 로케일이 이 형식)
 export const getTodayDate = () => new Date().toLocaleDateString("sv-SE");

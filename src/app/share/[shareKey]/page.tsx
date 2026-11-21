@@ -34,6 +34,13 @@ const getFunding = cache(async (shareKey: string) => {
 export async function generateMetadata({ params }: FundingSharePageProps): Promise<Metadata> {
   try {
     const funding = await getFunding((await params).shareKey);
+    // 받는 사람이 카톡 미리보기로 상품·사연을 미리 보지 못하게 한다
+    if (funding.type === "SURPRISE") {
+      return {
+        title: "서프라이즈가 도착했어요",
+        description: "보탬에서 서프라이즈를 확인해 보세요",
+      };
+    }
     const title = `${funding.celebrantName}님의 보탬`;
     const description = funding.story ?? `${funding.product.name} 펀딩에 함께 보태주세요`;
     return {
@@ -56,8 +63,10 @@ export default async function FundingSharePage({ params, searchParams }: Funding
     : undefined;
   const funding = await getFunding(shareKey);
 
+  const isSurprise = funding.type === "SURPRISE";
   const queryClient = new QueryClient();
-  queryClient.setQueryData(fundingDetailQueryKey(shareKey), funding);
+  // 서프라이즈는 상품·사연이 HTML에 실리지 않게 hydrate하지 않는다. 공개 시각만 따로 넘긴다
+  if (!isSurprise) queryClient.setQueryData(fundingDetailQueryKey(shareKey), funding);
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
@@ -65,6 +74,7 @@ export default async function FundingSharePage({ params, searchParams }: Funding
         shareKey={shareKey}
         memberIntent={memberIntent}
         isLoggedIn={isLoggedIn}
+        surprise={isSurprise ? { revealAt: funding.revealAt } : undefined}
       />
     </HydrationBoundary>
   );

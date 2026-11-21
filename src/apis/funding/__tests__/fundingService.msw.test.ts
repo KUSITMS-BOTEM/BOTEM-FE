@@ -182,6 +182,23 @@ describe("fundingHandlers POST /api/fundings/surprise", () => {
       expect((await getDetail(99, headers)).data.ownerPreview).toBe(true);
       expect((await getDetail(12, headers)).data.ownerPreview).toBe(false);
     });
+
+    it("서프라이즈 id 98은 토큰이 없으면 200, 받는 사람(토큰)이면 403 FUNDING_046이다", async () => {
+      const guest = await getDetail(98);
+      expect(guest.data).toMatchObject({ type: "SURPRISE", revealAt: "2026-12-25T00:00:00" });
+
+      const response = await fetch(`http://localhost/api/fundings/share/${toMockShareKey(98)}`, {
+        headers: { Authorization: "Bearer token" },
+      });
+      expect(response.status).toBe(403);
+      expect((await response.json()).error.code).toBe("FUNDING_046");
+    });
+
+    it("서프라이즈 id 97은 토큰이 있어도 참여자라 200이다", async () => {
+      const body = await getDetail(97, { Authorization: "Bearer token" });
+
+      expect(body.data).toMatchObject({ type: "SURPRISE", fundingId: 97 });
+    });
   });
 });
 

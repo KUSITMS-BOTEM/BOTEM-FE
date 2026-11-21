@@ -22,6 +22,22 @@ describe("FundingLockedView", () => {
     expect(screen.queryByRole("button", { name: "뒤로가기" })).not.toBeInTheDocument();
   });
 
+  it("공개 시각을 모르면 날짜 없이 안내한다", () => {
+    render(<FundingLockedView />);
+
+    expect(screen.getByText("곧 만나요!")).toBeInTheDocument();
+  });
+
+  it("CTA 라벨과 동작을 바꿀 수 있다", async () => {
+    const onCtaClick = vi.fn();
+    render(<FundingLockedView ctaLabel="서프라이즈 참여하기" onCtaClick={onCtaClick} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "서프라이즈 참여하기" }));
+
+    expect(onCtaClick).toHaveBeenCalled();
+    expect(push).not.toHaveBeenCalled();
+  });
+
   it("홈으로 돌아가기를 누르면 /home으로 이동한다", async () => {
     render(<FundingLockedView revealDateLabel="10월 13일 0시" />);
 

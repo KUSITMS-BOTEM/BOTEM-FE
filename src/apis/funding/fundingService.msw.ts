@@ -163,6 +163,7 @@ const MOCK_FUNDING_DETAIL: FundingDetailResponse = {
   story: "올해 생일엔 출퇴근길에 쓸 노캔 헤드폰이 갖고 싶어요. 조금씩 보태주면 감동할게요!",
   promise: "펀딩이 성공하면 헤드폰 끼고 출근하는 인증샷을 꼭 올릴게요!",
   deadline: "2026-12-31T23:59:59",
+  revealAt: null,
   extended: false,
   remainingDays: 41,
   confirmedPercentage: 40,
@@ -181,6 +182,9 @@ const MOCK_FUNDING_DETAIL: FundingDetailResponse = {
   giftVerification: null,
   thankCard: null,
 };
+
+const MOCK_SURPRISE_RECIPIENT_ID = 98;
+const MOCK_SURPRISE_PARTICIPANT_ID = 97;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -308,11 +312,27 @@ export const fundingHandlers = [
     await delay(300);
     const shareKey = String(params.shareKey);
     const fundingId = fromMockShareKey(shareKey);
+    const hasToken = request.headers.has("Authorization");
     // 토큰이 붙은 조회는 개설자 본인으로 보고 ownerPreview를 true로 응답한다 (id 99는 개설자 화면 확인용)
-    const ownerPreview = request.headers.has("Authorization") && fundingId === 99;
+    const ownerPreview = hasToken && fundingId === 99;
+    // id 97·98은 서프라이즈. 98은 토큰이 붙으면 받는 사람으로 보고 403, 97은 토큰이 있어도 참여자라 200이다
+    if (fundingId === MOCK_SURPRISE_RECIPIENT_ID && hasToken) {
+      return HttpResponse.json(
+        {
+          success: false,
+          data: null,
+          error: { code: "FUNDING_046", message: "아직 공개되지 않은 서프라이즈예요." },
+        },
+        { status: 403 },
+      );
+    }
+    const surprise =
+      fundingId === MOCK_SURPRISE_RECIPIENT_ID || fundingId === MOCK_SURPRISE_PARTICIPANT_ID
+        ? { type: "SURPRISE" as const, celebrantName: "서연", revealAt: "2026-12-25T00:00:00" }
+        : {};
     return HttpResponse.json({
       success: true,
-      data: { ...MOCK_FUNDING_DETAIL, fundingId, shareKey, ownerPreview },
+      data: { ...MOCK_FUNDING_DETAIL, ...surprise, fundingId, shareKey, ownerPreview },
       error: null,
     });
   }),
@@ -411,11 +431,11 @@ export const fundingHandlers = [
     return HttpResponse.json({
       success: true,
       data: {
-        fundingId: 2,
-        shareKey: toMockShareKey(2),
+        fundingId: 15,
+        shareKey: toMockShareKey(15),
         type: "SURPRISE",
         status: "FUNDING",
-        shareUrl: "https://botem.example.com/funding/2",
+        shareUrl: "https://botem.example.com/funding/15",
       },
       error: null,
     });
