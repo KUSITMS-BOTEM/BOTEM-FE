@@ -61,6 +61,7 @@ const ownerDetail: OwnerFundingDetailResponse = {
   shareKey: "share-key-1",
   type: "BIRTHDAY",
   title: "지유의 생일",
+  celebrantName: "지유",
   story: "헤드폰을 바꾸고 싶어요.",
   promise: null,
   product: {

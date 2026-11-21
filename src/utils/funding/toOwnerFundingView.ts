@@ -5,15 +5,8 @@ import { isValidUrl } from "@/utils/isValidUrl";
 
 const PROFILE_PREVIEW_COUNT = 3;
 const PARTICIPANT_COLORS: Color[] = ["orange", "lime", "pink", "blue"];
-const FUNDING_TYPE_TITLE = { BIRTHDAY: "생일 펀딩", SURPRISE: "서프라이즈 펀딩" } as const;
 
-export const formatSurpriseTitle = (name: string) => `${name}의\n${FUNDING_TYPE_TITLE.SURPRISE}`;
-
-// 서프라이즈 제목은 서버의 "{닉네임}의 펀딩"에서 닉네임만 떼어 "{닉네임}의\n서프라이즈 펀딩"으로 줄을 나눈다. 형식이 다르면 서버 제목을 그대로 쓴다
-const toSurpriseTitle = (title: string | null) => {
-  const nickname = title?.match(/^(.+)의 펀딩$/)?.[1];
-  return nickname ? formatSurpriseTitle(nickname) : null;
-};
+export const formatSurpriseTitle = (name: string) => `${name}의\n서프라이즈 펀딩`;
 
 type Participant = OwnerFundingDetailResponse["participants"][number];
 
@@ -38,9 +31,9 @@ export function toOwnerFundingView(detail: OwnerFundingDetailResponse) {
     }));
   return {
     title:
-      (detail.type === "SURPRISE" ? toSurpriseTitle(detail.title) : null) ??
-      detail.title ??
-      FUNDING_TYPE_TITLE[detail.type],
+      detail.type === "SURPRISE"
+        ? formatSurpriseTitle(detail.celebrantName)
+        : (detail.title ?? `${detail.celebrantName}의 펀딩`),
     story: detail.story ?? "",
     pledge: detail.promise ?? "",
     productName: detail.product.name,

@@ -239,6 +239,7 @@ const getMockOwnerFundingDetail = (fundingId: number): OwnerFundingDetailRespons
     shareKey: toMockShareKey(fundingId),
     type: card.fundingType as FundingType,
     title: null,
+    celebrantName: card.fundingType === "SURPRISE" ? "서연" : "민재",
     story: "올해 생일엔 꼭 갖고 싶던 선물이 있어요. 조금씩 보태주면 감동할게요!",
     promise: null,
     product: {
@@ -251,7 +252,7 @@ const getMockOwnerFundingDetail = (fundingId: number): OwnerFundingDetailRespons
     productChangedAt: null,
     targetAmount: card.targetAmount,
     deadline: toMockDeadline(card.remainingDays),
-    revealAt: null,
+    revealAt: card.fundingType === "SURPRISE" ? "2026-12-25T00:00:00" : null,
     remainingDays: card.remainingDays,
     confirmedPercentage,
     pendingPercentage: progress.pendingPercentage,

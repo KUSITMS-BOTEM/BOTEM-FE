@@ -107,6 +107,7 @@ const makeManagement = (
   fundingId: 7,
   type: "BIRTHDAY",
   title: null,
+  celebrantName: "지유",
   story: null,
   promise: null,
   product: {

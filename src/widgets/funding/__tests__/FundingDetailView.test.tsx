@@ -171,6 +171,7 @@ const ownerDetail: OwnerFundingDetailResponse = {
   shareKey: "share-key-1",
   type: "BIRTHDAY",
   title: "서연의 졸업",
+  celebrantName: "서연",
   story: "졸업 선물로 노트북을 받고 싶어요.",
   promise: null,
   product: {

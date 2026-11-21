@@ -24,6 +24,7 @@ const detail = (overrides: Partial<OwnerFundingDetailResponse> = {}) =>
   ({
     type: "BIRTHDAY",
     title: "지유의 생일",
+    celebrantName: "지유",
     story: "사연",
     promise: "약속",
     product: {
@@ -77,21 +78,18 @@ describe("toOwnerFundingView", () => {
     expect(toOwnerFundingView(detail({ managementState: "IN_PROGRESS" })).closed).toBe(false);
   });
 
-  it("제목이 없으면 펀딩 종류로 제목을 정하고, 사연·약속이 없으면 빈 문자열로 둔다", () => {
+  it("생일 펀딩은 제목이 없으면 개설자 이름으로 '{이름}의 펀딩'을 만들고, 사연·약속이 없으면 빈 문자열로 둔다", () => {
     expect(
       toOwnerFundingView(detail({ title: null, story: null, promise: null, type: "BIRTHDAY" })),
-    ).toMatchObject({ title: "생일 펀딩", story: "", pledge: "" });
+    ).toMatchObject({ title: "지유의 펀딩", story: "", pledge: "" });
   });
 
-  it("서프라이즈 펀딩은 '{닉네임}의 펀딩' 제목을 두 줄로 나누고, 형식이 다르면 서버 제목을 쓴다", () => {
-    expect(toOwnerFundingView(detail({ type: "SURPRISE", title: "지유의 펀딩" })).title).toBe(
+  it("서프라이즈 펀딩은 서버 제목과 상관없이 받는 사람 이름으로 두 줄 제목을 만든다", () => {
+    expect(toOwnerFundingView(detail({ type: "SURPRISE", title: null })).title).toBe(
       "지유의\n서프라이즈 펀딩",
     );
-    expect(toOwnerFundingView(detail({ type: "SURPRISE", title: "지유의 생일" })).title).toBe(
-      "지유의 생일",
-    );
-    expect(toOwnerFundingView(detail({ type: "SURPRISE", title: null })).title).toBe(
-      "서프라이즈 펀딩",
+    expect(toOwnerFundingView(detail({ type: "SURPRISE", title: "예전 제목" })).title).toBe(
+      "지유의\n서프라이즈 펀딩",
     );
   });
 
