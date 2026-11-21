@@ -24,7 +24,7 @@ import { cn } from "@/utils/cn";
 import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
 import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import { getClosedLabel } from "@/utils/funding/fundingProgress";
-import { toOwnerFundingView } from "@/utils/funding/toOwnerFundingView";
+import { formatSurpriseTitle, toOwnerFundingView } from "@/utils/funding/toOwnerFundingView";
 import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
 import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
 import BotemPopup, { type BotemPopupFriend } from "@/widgets/funding/BotemPopup";
@@ -92,7 +92,11 @@ const MOCK_FUNDING = {
 // 공유용 상세 응답에는 금액이 없고 달성률만 있어, 화면이 쓰는 모양으로 옮겨 담는다
 const toShareFundingView = (detail: FundingDetailResponse) => ({
   hostName: detail.celebrantName,
-  title: detail.title ?? `${detail.celebrantName}의 펀딩`,
+  title:
+    detail.title ??
+    (detail.type === "SURPRISE"
+      ? formatSurpriseTitle(detail.celebrantName)
+      : `${detail.celebrantName}의 펀딩`),
   story: detail.story ?? undefined,
   pledge: detail.promise ?? undefined,
   productName: detail.product.name,

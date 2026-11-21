@@ -53,21 +53,21 @@ export default function FundingDetailLoader({
     if (isHostOnShare && data) router.replace(`/funding/${data.fundingId}`);
   }, [isHostOnShare, router, data]);
 
-  const revealDateLabel = surprise?.revealAt ? formatRevealLabel(surprise.revealAt) : undefined;
-
   if (needsLogin)
     return (
       <FundingLockedView
-        revealDateLabel={revealDateLabel}
-        ctaLabel="서프라이즈 참여하기"
-        onCtaClick={() =>
+        onKakaoLogin={() =>
           handleKakaoLoginClick(requestKakaoLogin, `/share/${encodeURIComponent(shareKey)}`)
         }
       />
     );
   // 로그인한 받는 사람은 공개 전까지 내용을 볼 수 없다
   if (isError && error instanceof ApiError && error.code === SURPRISE_LOCKED)
-    return <FundingLockedView revealDateLabel={revealDateLabel} />;
+    return (
+      <FundingLockedView
+        revealDateLabel={surprise?.revealAt ? formatRevealLabel(surprise.revealAt) : undefined}
+      />
+    );
   if (isError)
     return <ErrorView onRetry={() => void refetch()} onClose={() => router.replace("/")} />;
   if (!data || verifying || isHostOnShare) return <FundingDetailViewSkeleton />;

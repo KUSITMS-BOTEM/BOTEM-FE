@@ -3,7 +3,7 @@ import type {
   OwnerFundingParticipantResponse,
 } from "@/types/funding/ownerFundingDetail";
 import { calcFundingPercent } from "@/utils/funding/fundingProgress";
-import { toOwnerFundingView } from "@/utils/funding/toOwnerFundingView";
+import { formatSurpriseTitle, toOwnerFundingView } from "@/utils/funding/toOwnerFundingView";
 
 const participant = (
   contributionId: number,
@@ -93,6 +93,10 @@ describe("toOwnerFundingView", () => {
     expect(toOwnerFundingView(detail({ type: "SURPRISE", title: null })).title).toBe(
       "서프라이즈 펀딩",
     );
+  });
+
+  it("formatSurpriseTitle은 이름 뒤에서 줄을 나눠 서프라이즈 제목을 만든다", () => {
+    expect(formatSurpriseTitle("서연")).toBe("서연의\n서프라이즈 펀딩");
   });
 
   it.each([0, 1, 33, 45, 99, 100])(
