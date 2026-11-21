@@ -194,6 +194,12 @@ describe("fundingHandlers POST /api/fundings/surprise", () => {
       expect((await response.json()).error.code).toBe("FUNDING_046");
     });
 
+    it("숫자만 있는 공유 키도 펀딩 id로 읽는다", async () => {
+      const response = await fetch("http://localhost/api/fundings/share/97");
+
+      expect((await response.json()).data).toMatchObject({ type: "SURPRISE", fundingId: 97 });
+    });
+
     it("서프라이즈 id 97은 토큰이 있어도 참여자라 200이다", async () => {
       const body = await getDetail(97, { Authorization: "Bearer token" });
 
