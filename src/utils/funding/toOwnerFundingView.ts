@@ -7,6 +7,12 @@ const PROFILE_PREVIEW_COUNT = 3;
 const PARTICIPANT_COLORS: Color[] = ["orange", "lime", "pink", "blue"];
 const FUNDING_TYPE_TITLE = { BIRTHDAY: "생일 펀딩", SURPRISE: "서프라이즈 펀딩" } as const;
 
+// 서프라이즈 제목은 서버의 "{닉네임}의 펀딩"에서 닉네임만 떼어 "{닉네임}의\n서프라이즈 펀딩"으로 줄을 나눈다. 형식이 다르면 서버 제목을 그대로 쓴다
+const toSurpriseTitle = (title: string | null) => {
+  const nickname = title?.match(/^(.+)의 펀딩$/)?.[1];
+  return nickname ? `${nickname}의\n${FUNDING_TYPE_TITLE.SURPRISE}` : null;
+};
+
 type Participant = OwnerFundingDetailResponse["participants"][number];
 
 const toSafeImageUrl = (url: string | null) => (url && isValidUrl(url) ? url : undefined);
@@ -29,7 +35,10 @@ export function toOwnerFundingView(detail: OwnerFundingDetailResponse) {
       imageUrl: toSafeImageUrl(profileImageUrl),
     }));
   return {
-    title: detail.title ?? FUNDING_TYPE_TITLE[detail.type],
+    title:
+      (detail.type === "SURPRISE" ? toSurpriseTitle(detail.title) : null) ??
+      detail.title ??
+      FUNDING_TYPE_TITLE[detail.type],
     story: detail.story ?? "",
     pledge: detail.promise ?? "",
     productName: detail.product.name,

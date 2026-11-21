@@ -83,6 +83,18 @@ describe("toOwnerFundingView", () => {
     ).toMatchObject({ title: "생일 펀딩", story: "", pledge: "" });
   });
 
+  it("서프라이즈 펀딩은 '{닉네임}의 펀딩' 제목을 두 줄로 나누고, 형식이 다르면 서버 제목을 쓴다", () => {
+    expect(toOwnerFundingView(detail({ type: "SURPRISE", title: "지유의 펀딩" })).title).toBe(
+      "지유의\n서프라이즈 펀딩",
+    );
+    expect(toOwnerFundingView(detail({ type: "SURPRISE", title: "지유의 생일" })).title).toBe(
+      "지유의 생일",
+    );
+    expect(toOwnerFundingView(detail({ type: "SURPRISE", title: null })).title).toBe(
+      "서프라이즈 펀딩",
+    );
+  });
+
   it.each([0, 1, 33, 45, 99, 100])(
     "확정 달성률 %i%%를 진행 카드가 다시 계산해도 같은 값이 나오는 금액으로 바꾼다",
     confirmedPercentage => {

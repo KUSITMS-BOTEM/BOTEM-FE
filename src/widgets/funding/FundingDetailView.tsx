@@ -44,7 +44,6 @@ import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
 import IconShare from "@/assets/icons/icon-share.svg?react";
 import IconDotVertical from "@/assets/icons/icon-dotvertical.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
-import IconLock from "@/assets/icons/icon-lock.svg?react";
 import ProfilePink from "@/assets/icons/multicolor/profile-pink.svg?react";
 
 type FundingDetailViewBaseProps = {
@@ -268,14 +267,11 @@ export default function FundingDetailView({
             isGuest && "pb-[calc(8rem+env(safe-area-inset-bottom))]",
           )}>
           <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2.5 py-1">
+            <div className="flex items-start gap-2.5 py-1">
               <ProfilePink aria-hidden className="size-6 shrink-0" />
-              <h1 className="text-semantic-text-strong min-w-0 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-title-a2-z-large)]">
+              <h1 className="text-semantic-text-strong min-w-0 [letter-spacing:var(--letter-spacing-default)] whitespace-pre-line [font:var(--semantic-title-a2-z-large)]">
                 {funding.title}
               </h1>
-              {isSurprise && (
-                <IconLock role="img" aria-label="서프라이즈 펀딩" className="size-6 shrink-0" />
-              )}
             </div>
             <FundingMessage story={funding.story} pledge={funding.pledge} />
           </div>

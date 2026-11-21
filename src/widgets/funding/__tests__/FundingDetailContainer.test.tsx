@@ -115,6 +115,17 @@ beforeAll(() => server.listen());
 afterAll(() => server.close());
 afterEach(() => server.resetHandlers());
 
+const useSurpriseResponse = () =>
+  server.use(
+    http.get("*/api/fundings/:fundingId/management", () =>
+      HttpResponse.json({
+        success: true,
+        data: { ...ownerDetail, type: "SURPRISE", title: "지유의 펀딩" },
+        error: null,
+      }),
+    ),
+  );
+
 const render = (ui: ReactElement) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) =>
@@ -125,19 +136,39 @@ const render = (ui: ReactElement) => {
 describe("FundingDetailContainer", () => {
   afterEach(() => vi.clearAllMocks());
 
-  it("서프라이즈 펀딩 상세로 자물쇠와 확인 대기 안내를 보여준다", async () => {
+  it("서프라이즈 펀딩 상세는 '{닉네임}의 서프라이즈 펀딩' 제목과 확인 대기 안내를 보여준다", async () => {
+    useSurpriseResponse();
     render(<FundingDetailContainer fundingId="1" friendId="7" />);
 
-    expect(await screen.findByRole("img", { name: "서프라이즈 펀딩" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: /지유의\s서프라이즈 펀딩/ }),
+    ).toBeInTheDocument();
     expect(screen.getByText("확인 대기 2건이 있어요")).toBeInTheDocument();
   });
 
   it("뒤로가기를 누르면 친구 프로필로 이동한다", async () => {
+    useSurpriseResponse();
     render(<FundingDetailContainer fundingId="1" friendId="7" />);
 
     await userEvent.click(await screen.findByRole("button", { name: "뒤로가기" }));
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/friends/7"));
+  });
+
+  it("친구 id가 있어도 일반 펀딩이면 서프라이즈 화면이 아니다", async () => {
+    render(<FundingDetailContainer fundingId="1" friendId="7" />);
+
+    expect(await screen.findByRole("heading", { name: "지유의 생일" })).toBeInTheDocument();
+    expect(screen.queryByText(/확인 대기 \d+건이 있어요/)).not.toBeInTheDocument();
+  });
+
+  it("친구 id가 없는 일반 펀딩도 뒤로가기가 있고, 누르면 이전 화면으로 돌아간다", async () => {
+    render(<FundingDetailContainer fundingId="1" />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "뒤로가기" }));
+
+    await waitFor(() => expect(back).toHaveBeenCalled());
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("친구 id가 없으면 펀딩 주인 화면으로 관리 상세를 불러오는 동안 스켈레톤을 보여준다", () => {
@@ -146,12 +177,11 @@ describe("FundingDetailContainer", () => {
     expect(container.querySelector("[aria-busy='true']")).not.toBeNull();
   });
 
-  it("펀딩 주인 화면은 관리 상세의 제목·달성률을 보여주고 툴팁·자물쇠는 없다", async () => {
+  it("펀딩 주인 화면은 관리 상세의 제목·달성률을 보여주고 툴팁은 없다", async () => {
     render(<FundingDetailContainer fundingId="1" />);
 
     expect(await screen.findByRole("heading", { name: "지유의 생일" })).toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "45");
-    expect(screen.queryByRole("img", { name: "서프라이즈 펀딩" })).not.toBeInTheDocument();
     expect(screen.queryByText("나도 민재님께 보태볼까요?")).not.toBeInTheDocument();
   });
 
