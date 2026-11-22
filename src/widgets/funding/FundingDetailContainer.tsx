@@ -25,9 +25,9 @@ export default function FundingDetailContainer({
   // 생일 펀딩의 롤링페이퍼는 개설자가 결과(팡)를 연 뒤에 공개된다
   const resultQuery = useFundingResultQuery(Number(fundingId), variant === "owner" && isClosed);
 
-  // push로 프로필에 가면 이 화면이 히스토리에 남아 프로필에서 뒤로 갈 때 다시 돌아온다. 되돌아갈 히스토리가 없을 때만 프로필로 보낸다
+  // 공유 링크를 새 탭으로 열면 되돌아갈 히스토리가 없다. 이때만 프로필(없으면 홈)로 보내되, push하면 이 화면이 히스토리에 남아 프로필에서 뒤로 갈 때 다시 돌아오므로 replace한다
   const handleBack = () => {
-    if (friendId && window.history.length <= 1) router.push(`/friends/${friendId}`);
+    if (window.history.length <= 1) router.replace(friendId ? `/friends/${friendId}` : "/home");
     else router.back();
   };
 

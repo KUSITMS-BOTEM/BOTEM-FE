@@ -35,6 +35,8 @@ type BotemPopupProps = {
   isOwner?: boolean;
   // 개설자가 이 펀딩에 이미 보탰는지. 보탰으면 보태기 버튼 대신 수정 행을 보여준다
   hasMyBotem?: boolean;
+  // 내 보탬 조회 중이면 이미 보탰는지 몰라 신규 참여 버튼을 막는다
+  isCheckingMyBotem?: boolean;
   messageCount?: number;
   onClose: () => void;
   onUnconfirmedClick: () => void;
@@ -86,6 +88,7 @@ export default function BotemPopup({
   isHost = false,
   isOwner = false,
   hasMyBotem = false,
+  isCheckingMyBotem = false,
   messageCount = 0,
   onClose,
   onUnconfirmedClick,
@@ -260,13 +263,18 @@ export default function BotemPopup({
               className="from-semantic-background-default/0 to-semantic-background-default h-9 w-full bg-gradient-to-b"
             />
             <div className="bg-semantic-background-default pointer-events-auto flex w-full gap-2 px-4 pt-6 pb-4">
-              <Button variant="weak" size="large" className="flex-1" onClick={onMessageClick}>
+              <Button
+                variant="weak"
+                size="large"
+                className="flex-1"
+                disabled={isCheckingMyBotem}
+                onClick={onMessageClick}>
                 메세지 보태기
               </Button>
               <Button
                 size="large"
                 className="flex-1"
-                disabled={isClosed}
+                disabled={isClosed || isCheckingMyBotem}
                 onClick={onContributeClick}>
                 보태기
               </Button>

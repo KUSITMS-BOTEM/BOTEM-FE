@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { LetterPaperProps } from "@/widgets/letter-paper/LetterPaper";
 import RollingPaperWheel from "@/widgets/rolling-paper/RollingPaperWheel";
 import type { RollingPaperVoice } from "@/widgets/rolling-paper/toRollingPaperVoice";
+import { PX_PER_STEP } from "@/widgets/rolling-paper/wheelGeometry";
 
 const toVoices = (count: number): RollingPaperVoice[] =>
   Array.from({ length: count }, (_, index) => ({
@@ -301,6 +302,35 @@ describe("RollingPaperWheel", () => {
     render(<RollingPaperWheel letters={toLetters(5)} voices={toVoices(5)} />);
 
     expect(screen.getByTestId("rolling-paper-wheel")).toHaveClass("select-none");
+  });
+
+  it("5개를 넘어도 카드는 5장만 그리고, 끌어서 6번째 이후 편지의 음성까지 볼 수 있다", () => {
+    vi.stubGlobal("Audio", vi.fn());
+    render(<RollingPaperWheel letters={toLetters(6)} voices={toVoices(6)} />);
+    const wheel = screen.getByTestId("rolling-paper-wheel");
+    expect(screen.getAllByTestId("wheel-card")).toHaveLength(5);
+
+    // 위로 5칸 끌면 가운데에 여섯 번째 편지가 온다
+    dragVertically(wheel, -PX_PER_STEP * 5);
+    fireEvent.keyDown(wheel, { key: "Enter" });
+
+    const voicePlayer = screen.getByTestId("voice-player");
+    expect(voicePlayer).toHaveAttribute("aria-hidden", "false");
+    expect(voicePlayer).toHaveTextContent("친구6님의 녹음");
+    vi.unstubAllGlobals();
+  });
+
+  it("재생 버튼에서 누른 Enter는 휠이 가로채지 않는다", () => {
+    vi.stubGlobal("Audio", vi.fn());
+    render(<RollingPaperWheel letters={toLetters(5)} voices={toVoices(5)} />);
+    fireEvent.click(screen.getAllByTestId("wheel-card")[0]);
+
+    const notPrevented = fireEvent.keyDown(screen.getByRole("button", { name: "재생" }), {
+      key: "Enter",
+    });
+
+    expect(notPrevented).toBe(true);
+    vi.unstubAllGlobals();
   });
 
   it("1개면 드래그해도 움직이지 않는다", () => {

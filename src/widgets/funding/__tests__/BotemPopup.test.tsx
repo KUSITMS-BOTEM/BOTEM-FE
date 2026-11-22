@@ -87,6 +87,13 @@ describe("BotemPopup 개설자의 내 보탬", () => {
     expect(screen.getByRole("button", { name: "보태기" })).toBeInTheDocument();
   });
 
+  it("내 보탬 조회 중에는 신규 참여 버튼을 비활성화한다", () => {
+    renderPopup({ isHost: true, isCheckingMyBotem: true });
+
+    expect(screen.getByRole("button", { name: "메세지 보태기" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "보태기" })).toBeDisabled();
+  });
+
   it("개설자가 이미 보탰으면 보태기 버튼을 숨기고 수정 행을 보여준다", () => {
     const { onEditClick } = renderPopup({ isHost: true, hasMyBotem: true });
 

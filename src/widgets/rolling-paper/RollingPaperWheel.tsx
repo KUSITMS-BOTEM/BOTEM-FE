@@ -7,6 +7,7 @@ import {
   animate,
   motion,
   useMotionValue,
+  useMotionValueEvent,
   useReducedMotion,
   type AnimationPlaybackControls,
 } from "framer-motion";
@@ -27,6 +28,7 @@ import {
   PX_PER_STEP,
   WHEEL_ITEM_COUNT,
   clampProgress,
+  toLetterIndex,
   toSnapTarget,
   toWheelOffset,
 } from "@/widgets/rolling-paper/wheelGeometry";
@@ -48,12 +50,16 @@ type RollingPaperWheelProps = {
   voices?: (RollingPaperVoice | null)[];
 };
 
-// 5개 미만은 순환 없이 양 끝에서 멈추고, 1개는 드래그해도 움직이지 않는다
+// 5개 미만은 순환 없이 양 끝에서 멈추고, 1개는 드래그해도 움직이지 않는다.
+// 5개를 넘으면 슬롯 5개를 돌려 쓰며 편지 전체를 순환한다
 export default function RollingPaperWheel({ letters, voices = [] }: RollingPaperWheelProps) {
   const itemCount = Math.min(letters.length, WHEEL_ITEM_COUNT);
   const items = Array.from({ length: itemCount }, (_, index) => index);
   const reduceMotion = useReducedMotion() ?? false;
   const progress = useMotionValue(0);
+  // 가운데에 있는 편지 번호. 슬롯이 어느 편지를 그릴지 정한다
+  const [center, setCenter] = useState(0);
+  useMotionValueEvent(progress, "change", value => setCenter(Math.round(value)));
   const [ready, setReady] = useState(reduceMotion);
   // 확대되면 편지지가 커지고 프로필이 숨겨지며 Voice Player가 올라온다
   const [expanded, setExpanded] = useState(false);
@@ -74,7 +80,7 @@ export default function RollingPaperWheel({ letters, voices = [] }: RollingPaper
     const center = clampProgress(Math.round(progress.get()), itemCount);
     snapRef.current = animate(progress, center, SNAP_SPRING);
     // 5장 이상은 progress가 순환해 범위를 넘을 수 있어 편지지 번호로 접는다
-    setActiveIndex(((center % itemCount) + itemCount) % itemCount);
+    setActiveIndex(((center % letters.length) + letters.length) % letters.length);
     setExpanded(true);
   };
   const collapse = () => setExpanded(false);
@@ -119,7 +125,8 @@ export default function RollingPaperWheel({ letters, voices = [] }: RollingPaper
       return;
     }
     if (!ready) return;
-    if (event.key === "Enter") {
+    // 재생 버튼 같은 자식에서 올라온 Enter는 버튼의 기본 동작에 맡긴다
+    if (event.key === "Enter" && event.target === event.currentTarget) {
       event.preventDefault();
       expand();
       return;
@@ -179,7 +186,7 @@ export default function RollingPaperWheel({ letters, voices = [] }: RollingPaper
           {items.map(index => (
             <RollingPaperWheelCard
               key={`card-${index}`}
-              letter={letters[index]}
+              letter={letters[toLetterIndex(index, center, itemCount, letters.length)]}
               index={index}
               count={itemCount}
               progress={progress}

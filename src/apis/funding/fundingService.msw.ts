@@ -170,6 +170,16 @@ const MOCK_ROLLING_PAPER_MESSAGES: RollingPaperMessage[] = [
     "오늘은 네가 주인공이야. 선물 마음에 들었으면 좋겠다!",
     "PINK_COLOR_DOT",
   ),
+  toMockRollingPaperMessage(
+    6,
+    "도윤",
+    "지유야 태어나줘서 고마워. 올 한 해도 건강하고 행복하자!",
+    "LIME_DOT_GRID",
+    { decorationCode: "CAKE|" },
+  ),
+  toMockRollingPaperMessage(7, "지아", "생일 축하해! 사랑해~", "BLUE_SOLID", {
+    decorationCode: "|HEART",
+  }),
 ];
 
 const getMockResult = (fundingId: number): FundingResultResponse =>

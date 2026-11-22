@@ -171,6 +171,7 @@ export default function FundingDetailView({
     myContributions,
     memberHasNoBotem,
     isCheckingMember,
+    isCheckingMyBotem,
     hasConfirmedMyBotem,
     myUnconfirmedCount,
     myBotemFriends,
@@ -473,6 +474,7 @@ export default function FundingDetailView({
           <BotemPopup
             open={isPopupOpen}
             hasMyBotem={hasConfirmedMyBotem}
+            isCheckingMyBotem={isCheckingMyBotem}
             unconfirmedCount={unconfirmedCount}
             friends={funding.friends}
             ownerName={funding.hostName}

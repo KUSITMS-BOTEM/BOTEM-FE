@@ -11,7 +11,8 @@ import FundingDetailContainer from "@/widgets/funding/FundingDetailContainer";
 
 const push = vi.fn();
 const back = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back, replace: vi.fn() }) }));
+const replace = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back, replace }) }));
 
 // 로그인 뮤테이션은 QueryClient가 필요하므로 대체한다
 vi.mock("@/hooks/mutations/auth/useKakaoLoginUriMutation", () => ({
@@ -135,7 +136,10 @@ const render = (ui: ReactElement) => {
 };
 
 describe("FundingDetailContainer", () => {
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+  });
 
   it("서프라이즈 펀딩 상세는 '{닉네임}의 서프라이즈 펀딩' 제목과 확인 대기 안내를 보여준다", async () => {
     useSurpriseResponse();
@@ -156,7 +160,6 @@ describe("FundingDetailContainer", () => {
 
     await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
     expect(push).not.toHaveBeenCalled();
-    vi.restoreAllMocks();
   });
 
   it("친구 id 없이 열어도 서프라이즈 펀딩이면 서프라이즈 개설자 화면으로 보여준다", async () => {
@@ -175,6 +178,7 @@ describe("FundingDetailContainer", () => {
   });
 
   it("마감된 펀딩 상세는 뒤로가기 버튼이 있고, 누르면 이전 화면으로 돌아간다", async () => {
+    vi.spyOn(window.history, "length", "get").mockReturnValue(3);
     server.use(
       http.get("*/api/fundings/:fundingId/management", () =>
         HttpResponse.json({
@@ -217,7 +221,17 @@ describe("FundingDetailContainer", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: "뒤로가기" }));
 
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/friends/7"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/friends/7"));
+    expect(back).not.toHaveBeenCalled();
+  });
+
+  it("되돌아갈 히스토리가 없고 친구 id도 없으면 뒤로가기는 홈으로 이동한다", async () => {
+    render(<FundingDetailContainer fundingId="1" />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "뒤로가기" }));
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/home"));
+    expect(back).not.toHaveBeenCalled();
   });
 
   it("친구 id가 있어도 일반 펀딩이면 서프라이즈 화면이 아니다", async () => {
@@ -228,6 +242,7 @@ describe("FundingDetailContainer", () => {
   });
 
   it("친구 id가 없는 일반 펀딩도 뒤로가기가 있고, 누르면 이전 화면으로 돌아간다", async () => {
+    vi.spyOn(window.history, "length", "get").mockReturnValue(3);
     render(<FundingDetailContainer fundingId="1" />);
 
     await userEvent.click(await screen.findByRole("button", { name: "뒤로가기" }));

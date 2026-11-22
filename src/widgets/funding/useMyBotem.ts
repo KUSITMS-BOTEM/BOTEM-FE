@@ -34,6 +34,8 @@ export function useMyBotem({ shareKey, isGuest, isMember, memberIntent, particip
   // 회원 조회가 끝나기 전에는 하단 버튼을 정할 수 없어 비워 둔다. 조회에 실패하면 두 버튼을 보여주고 중복은 서버가 막는다
   const isCheckingMember = isGuest && isMember && myContributions.isPending;
   const hasConfirmedMyBotem = hasGuestIdentity || !!memberHasBotem;
+  // 서프라이즈 개설자(isGuest=false)도 조회한다. 응답 전에는 이미 보탰는지 몰라 팝업의 신규 참여 버튼을 막는 데 쓴다
+  const isCheckingMyBotem = isMember && myContributions.isPending;
   // 비회원이 보태기를 마치고 돌아오면 본인 확인 응답이 비어 있어 송금 확인 대기·반려 상태를 알 수 없다. 저장해 둔 이름·비밀번호로 한 번 받아 온다
   const autoAccessedShareKeyRef = useRef<string | null>(null);
   useEffect(() => {
@@ -84,6 +86,7 @@ export function useMyBotem({ shareKey, isGuest, isMember, memberIntent, particip
     myContributions,
     memberHasNoBotem,
     isCheckingMember,
+    isCheckingMyBotem,
     hasConfirmedMyBotem,
     myUnconfirmedCount,
     myBotemFriends,
