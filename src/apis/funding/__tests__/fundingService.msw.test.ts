@@ -182,6 +182,7 @@ describe("fundingHandlers POST /api/fundings/surprise", () => {
       const headers = { Authorization: "Bearer token" };
 
       expect((await getDetail(99, headers)).data.ownerPreview).toBe(true);
+      expect((await getDetail(15, headers)).data.ownerPreview).toBe(true);
       expect((await getDetail(12, headers)).data.ownerPreview).toBe(false);
     });
 

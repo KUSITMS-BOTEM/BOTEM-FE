@@ -314,8 +314,8 @@ export const fundingHandlers = [
     const shareKey = String(params.shareKey);
     const fundingId = fromMockShareKey(shareKey);
     const hasToken = request.headers.has("Authorization");
-    // 토큰이 붙은 조회는 개설자 본인으로 보고 ownerPreview를 true로 응답한다 (id 99는 개설자 화면 확인용)
-    const ownerPreview = hasToken && fundingId === 99;
+    // 토큰이 붙은 조회는 개설자 본인으로 보고 ownerPreview를 true로 응답한다 (id 99는 개설자 화면, 15는 서프라이즈 개설자 확인용)
+    const ownerPreview = hasToken && (fundingId === 99 || fundingId === 15);
     // id 97·98은 서프라이즈. 98은 토큰이 붙으면 받는 사람으로 보고 403, 97은 토큰이 있어도 참여자라 200이다
     if (fundingId === MOCK_SURPRISE_RECIPIENT_ID && hasToken) {
       return HttpResponse.json(

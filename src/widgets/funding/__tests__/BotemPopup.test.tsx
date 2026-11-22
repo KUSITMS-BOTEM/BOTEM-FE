@@ -78,6 +78,31 @@ describe("BotemPopup 개설자 확인 대기 행", () => {
   });
 });
 
+describe("BotemPopup 개설자의 내 보탬", () => {
+  it("개설자가 보태지 않았으면 수정 행 없이 보태기 버튼을 보여준다", () => {
+    renderPopup({ isHost: true, hasMyBotem: false });
+
+    expect(screen.queryByText("내 보탬 수정하기")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "메세지 보태기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "보태기" })).toBeInTheDocument();
+  });
+
+  it("개설자가 이미 보탰으면 보태기 버튼을 숨기고 수정 행을 보여준다", () => {
+    const { onEditClick } = renderPopup({ isHost: true, hasMyBotem: true });
+
+    expect(screen.queryByRole("button", { name: "메세지 보태기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "보태기" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /내 보탬 수정하기/ }));
+    expect(onEditClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("개설자가 보탰어도 마감됐으면 수정 행은 숨긴다", () => {
+    renderPopup({ isHost: true, hasMyBotem: true, isClosed: true });
+
+    expect(screen.queryByText("내 보탬 수정하기")).not.toBeInTheDocument();
+  });
+});
+
 describe("BotemPopup 마감 상태", () => {
   it("마감 전이면 수정 행과 하단 버튼이 동작한다", () => {
     const { onEditClick, onMessageClick, onContributeClick } = renderPopup();

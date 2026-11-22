@@ -156,7 +156,8 @@ export default function FundingDetailView({
   const [memberCheckFrom, setMemberCheckFrom] = useState<ShareMemberIntent | null>(null);
   const { mutate: requestKakaoLogin } = useKakaoLoginUriMutation();
   const [isGuestFindOpen, setIsGuestFindOpen] = useState(false);
-  const isMember = memberIntent !== undefined || isLoggedIn;
+  // 서프라이즈 개설자 화면은 로그인한 개설자만 열 수 있다
+  const isMember = memberIntent !== undefined || isLoggedIn || isSurprise;
   // 비회원이 '보태러가기'에서 확인을 마치거나 회원이 보태러가기로 돌아오면 하단이 '메시지 보태기'/'보태기'로 바뀐다
   const [isContributeReady, setIsContributeReady] = useState(memberIntent === "contribute");
   const {
@@ -443,9 +444,9 @@ export default function FundingDetailView({
             }}
           />
         ) : (
-          // TODO: 팝업 내부 동작(미확인·수정·메세지·보태기)은 보탬 폼 디자인이 정해지면 연결한다
           <BotemPopup
             open={isPopupOpen}
+            hasMyBotem={hasConfirmedMyBotem}
             unconfirmedCount={unconfirmedCount}
             friends={funding.friends}
             ownerName={funding.hostName}

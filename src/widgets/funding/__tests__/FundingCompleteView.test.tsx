@@ -60,6 +60,14 @@ describe("FundingCompleteView", () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
+  it("closePath가 있으면 닫기 버튼이 공유 페이지 대신 그 경로로 이동한다", async () => {
+    render(<FundingCompleteView shareKey="7" funding={FUNDING} closePath="/funding/15" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/funding/15"));
+  });
+
   describe("모션 타임라인", () => {
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());

@@ -45,7 +45,12 @@ export default function FundingCompleteContainer({
     );
   if (!data || !contribution.hasLetter) return <FundingDetailViewSkeleton />;
 
+  // 서프라이즈 개설자는 공유 화면이 아니라 자기 펀딩 화면으로 돌아간다
   return (
-    <FundingCompleteView shareKey={shareKey} funding={toFundingCompleteData(data, contribution)} />
+    <FundingCompleteView
+      shareKey={shareKey}
+      funding={toFundingCompleteData(data, contribution)}
+      closePath={data.ownerPreview ? `/funding/${data.fundingId}` : undefined}
+    />
   );
 }

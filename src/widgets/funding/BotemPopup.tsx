@@ -33,6 +33,8 @@ type BotemPopupProps = {
   isHost?: boolean;
   // 내 펀딩의 주인이 보는 팝업이면 받은 보탬 확인·메세지·감사카드만 보여주고 보태기 버튼은 없다
   isOwner?: boolean;
+  // 개설자가 이 펀딩에 이미 보탰는지. 보탰으면 보태기 버튼 대신 수정 행을 보여준다
+  hasMyBotem?: boolean;
   messageCount?: number;
   onClose: () => void;
   onUnconfirmedClick: () => void;
@@ -83,6 +85,7 @@ export default function BotemPopup({
   isClosed,
   isHost = false,
   isOwner = false,
+  hasMyBotem = false,
   messageCount = 0,
   onClose,
   onUnconfirmedClick,
@@ -164,7 +167,8 @@ export default function BotemPopup({
               description="펀딩 완료 후 볼 수 있어요"
             />
           ) : (
-            !isClosed && (
+            !isClosed &&
+            (!isHost || hasMyBotem) && (
               <BotemPopupRow
                 icon={<IconTerms />}
                 title="내 보탬 수정하기"
@@ -247,6 +251,8 @@ export default function BotemPopup({
             aria-hidden
             className="from-semantic-background-default/0 to-semantic-background-default pointer-events-none absolute inset-x-0 bottom-0 h-[71px] bg-gradient-to-b"
           />
+        ) : isHost && hasMyBotem ? (
+          <div className="h-4 w-full shrink-0" />
         ) : (
           <div className="pointer-events-none relative -mt-9 flex w-full flex-col">
             <div

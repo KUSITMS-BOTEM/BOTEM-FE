@@ -16,8 +16,10 @@ vi.mock("@/hooks/queries/funding/useFundingDetailQuery", () => ({
 }));
 
 vi.mock("@/widgets/funding/FundingCompleteView", () => ({
-  default: ({ funding }: { funding: { giverName: string } }) => (
-    <div data-testid="view">{funding.giverName}</div>
+  default: ({ funding, closePath }: { funding: { giverName: string }; closePath?: string }) => (
+    <div data-testid="view" data-close-path={closePath}>
+      {funding.giverName}
+    </div>
   ),
 }));
 
@@ -71,6 +73,19 @@ describe("FundingCompleteContainer", () => {
     renderContainer();
 
     expect(screen.getByTestId("view")).toHaveTextContent("민지");
+  });
+
+  it("개설자(ownerPreview)면 닫기 경로를 자기 펀딩 화면으로 넘기고, 아니면 넘기지 않는다", () => {
+    setLetter();
+    mockQuery({ data: { ...detail, ownerPreview: true }, isError: false, refetch: vi.fn() });
+    const { unmount } = renderContainer();
+    expect(screen.getByTestId("view")).toHaveAttribute("data-close-path", "/funding/12");
+    unmount();
+
+    setLetter();
+    mockQuery({ data: { ...detail, ownerPreview: false }, isError: false, refetch: vi.fn() });
+    renderContainer();
+    expect(screen.getByTestId("view")).not.toHaveAttribute("data-close-path");
   });
 
   it("새로고침으로 편지 입력값이 사라졌으면 공유 페이지로 돌려보낸다", () => {

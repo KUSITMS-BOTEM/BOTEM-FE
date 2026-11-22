@@ -27,8 +27,8 @@ export function useMyBotem({ shareKey, isGuest, isMember, memberIntent, particip
     : undefined;
   // 이 펀딩에서 이름·비밀번호(비회원)나 로그인(회원)으로 내 보탬을 확인하고 나면 하단은 '내 보탬 확인' 버튼만 남는다
   const hasGuestIdentity = useGuestBotemStore(state => state.shareKey === shareKey);
-  // 회원은 서버가 이 펀딩에 보탠 내역이 있는지 알려준다. 비로그인 화면에서는 401이 나가지 않도록 조회하지 않는다
-  const myContributions = useMyContributionsQuery(shareKey, isGuest && isMember);
+  // 회원은 서버가 이 펀딩에 보탠 내역이 있는지 알려준다. 비로그인 화면에서는 401이 나가지 않도록 조회하지 않는다 (서프라이즈 개설자도 회원이라 조회한다)
+  const myContributions = useMyContributionsQuery(shareKey, isMember);
   const memberHasBotem = myContributions.data && myContributions.data.contributions.length > 0;
   const memberHasNoBotem = myContributions.data && myContributions.data.contributions.length === 0;
   // 회원 조회가 끝나기 전에는 하단 버튼을 정할 수 없어 비워 둔다. 조회에 실패하면 두 버튼을 보여주고 중복은 서버가 막는다

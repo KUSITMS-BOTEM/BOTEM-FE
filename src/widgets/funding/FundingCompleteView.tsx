@@ -30,9 +30,15 @@ const EASE: Easing = [0.87, 0, 0.13, 1];
 type FundingCompleteViewProps = {
   shareKey: string;
   funding: FundingCompleteData;
+  // 닫기 뒤 돌아갈 곳. 서프라이즈 개설자처럼 공유 화면 대신 자기 펀딩 화면으로 가야 할 때 넘긴다
+  closePath?: string;
 };
 
-export default function FundingCompleteView({ shareKey, funding }: FundingCompleteViewProps) {
+export default function FundingCompleteView({
+  shareKey,
+  funding,
+  closePath = `/share/${shareKey}`,
+}: FundingCompleteViewProps) {
   const router = useRouter();
   const { pageExit, exitPage } = usePageExit();
   const reduceMotion = useReducedMotion() ?? false;
@@ -76,7 +82,7 @@ export default function FundingCompleteView({ shareKey, funding }: FundingComple
               icon: <IconClose />,
               ariaLabel: "닫기",
               // 완료 페이지를 히스토리에서 지워 뒤로가기로 돌아오지 않게 한다
-              onClick: () => exitPage("fade", () => router.replace(`/share/${shareKey}`)),
+              onClick: () => exitPage("fade", () => router.replace(closePath)),
             },
           ]}
         />
