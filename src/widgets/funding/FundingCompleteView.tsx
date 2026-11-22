@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion, type Easing } from "framer-motion";
+import { motion, useReducedMotion, type Easing } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -16,14 +16,12 @@ import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
 import FundingBragCard from "@/widgets/funding/FundingBragCard";
 import FundingCompleteConfetti from "@/widgets/funding/FundingCompleteConfetti";
 import FundingCompleteTitle from "@/widgets/funding/FundingCompleteTitle";
-import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
-import FundingRiseBubble from "@/widgets/funding/FundingRiseBubble";
 import IconClose from "@/assets/icons/icon-close.svg?react";
 import IconShare from "@/assets/icons/icon-share.svg?react";
 
-// Figma 12.2초 타임라인(한 번만 재생): 진행률 장면 → 2.3초에 자랑 장면으로 전환 → 공유 버튼은 전환 2.26초 뒤에 등장
-const SHARE_SCENE_AT_MS = 2300;
-const CTA_AT_MS = 4560;
+// Figma 타임라인(한 번만 재생)의 빈 화면 대기를 절반으로 줄였다: 1.15초에 자랑 카드·제목 등장 → 공유 버튼은 Figma 간격(2.26초) 그대로 그 뒤에 등장
+const SHARE_SCENE_AT_MS = 1150;
+const CTA_AT_MS = 3410;
 
 const SAVE_FAIL_TOAST_MS = 2000;
 
@@ -32,19 +30,13 @@ const EASE: Easing = [0.87, 0, 0.13, 1];
 type FundingCompleteViewProps = {
   shareKey: string;
   funding: FundingCompleteData;
-  // 금액 없이 메시지만 보탠 경우에는 올라간 달성률이 없다
-  isMessageOnly: boolean;
 };
 
-export default function FundingCompleteView({
-  shareKey,
-  funding,
-  isMessageOnly,
-}: FundingCompleteViewProps) {
+export default function FundingCompleteView({ shareKey, funding }: FundingCompleteViewProps) {
   const router = useRouter();
   const { pageExit, exitPage } = usePageExit();
   const reduceMotion = useReducedMotion() ?? false;
-  // 0: 진행률 장면, 1: 자랑 장면, 2: 자랑 장면 + 공유 버튼
+  // 0: 빈 화면, 1: 자랑 카드, 2: 자랑 카드 + 공유 버튼
   const [step, setStep] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
   const [saveFailed, setSaveFailed] = useState(false);
@@ -88,87 +80,53 @@ export default function FundingCompleteView({
             },
           ]}
         />
+        {!reduceMotion && <FundingCompleteConfetti />}
         <div className="relative px-5 pt-3">
-          {!reduceMotion && <FundingCompleteConfetti />}
           <div className="relative grid">
-            <AnimatePresence initial={false}>
-              {!isShareScene && (
-                <motion.div
-                  key="progress-title"
-                  exit={{ opacity: 0, y: -10, transition: { duration: 0.28, ease: EASE } }}
-                  className="col-start-1 row-start-1">
-                  <FundingCompleteTitle
-                    title={`${funding.hostName}에게\n보탬이 되었어요`}
-                    description={`${funding.hostName}가 확인하면 확정돼요`}
-                  />
-                </motion.div>
-              )}
-              {isShareScene && (
-                <motion.div
-                  key="share-title"
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.217, duration: 0.28, ease: EASE }}
-                  className="col-start-1 row-start-1">
-                  <FundingCompleteTitle
-                    title={`${funding.hostName}에게\n${funding.contributionOrder}번째로 보탬!`}
-                    description={`${funding.hostName}에게 보탠 내용을 공유해볼까요?`}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {isShareScene && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.217, duration: 0.28, ease: EASE }}
+                className="col-start-1 row-start-1">
+                <FundingCompleteTitle
+                  title={`${funding.hostName}에게\n${funding.contributionOrder}번째로 보탬!`}
+                  description={`보탬이 확인되면 진행률에 반영돼요\n${funding.hostName}에게 보탠 내용을 공유해볼까요?`}
+                />
+              </motion.div>
+            )}
           </div>
           <div className="relative mt-5.5 grid">
-            {/* initial={false}를 주면 처음부터 있던 자식(진행률 카드·뱃지)의 등장 모션이 전부 꺼진다 */}
-            <AnimatePresence>
-              {!isShareScene && (
-                <motion.div
-                  key="progress-card"
-                  exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.55, ease: "linear" } }}
-                  className="relative col-start-1 row-start-1">
-                  <FundingProgressCard
-                    fundingId={funding.fundingId}
-                    productImageUrl={funding.productImageUrl}
-                    productName={funding.productName}
-                    deadline={funding.deadline}
-                    percent={funding.percent}
-                    targetAmount={funding.targetAmount}
-                    popStatus>
-                    {!isMessageOnly && <FundingRiseBubble risePercent={funding.risePercent} />}
-                  </FundingProgressCard>
-                </motion.div>
-              )}
-              {isShareScene && (
-                <motion.div
-                  key="brag-card"
-                  initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
-                  animate={
-                    reduceMotion
-                      ? { opacity: 1, scale: 1 }
-                      : { opacity: 1, scale: [0.94, 1.027, 0.991, 1] }
-                  }
-                  transition={{
-                    opacity: { duration: 0.55, ease: "linear" },
-                    scale: {
-                      duration: 0.85,
-                      times: [0, 0.647, 0.8, 1],
-                      ease: [[0.3, 0, 0.3, 1], "linear", "linear"],
-                    },
-                  }}
-                  ref={cardRef}
-                  // 저장되는 이미지는 이 틀 그대로라 흰 배경과 둥근 모서리를 여기서 정한다
-                  className="bg-semantic-fill-default relative col-start-1 row-start-1 aspect-320/401 w-full overflow-clip rounded-[32px]">
-                  <FundingBragCard
-                    giverName={funding.giverName}
-                    recipientName={funding.hostName}
-                    productImageUrl={funding.productImageUrl}
-                    productName={funding.productName}
-                    deadline={funding.deadline}
-                    reduceMotion={reduceMotion}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {isShareScene && (
+              <motion.div
+                key="brag-card"
+                initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
+                animate={
+                  reduceMotion
+                    ? { opacity: 1, scale: 1 }
+                    : { opacity: 1, scale: [0.94, 1.027, 0.991, 1] }
+                }
+                transition={{
+                  opacity: { duration: 0.55, ease: "linear" },
+                  scale: {
+                    duration: 0.85,
+                    times: [0, 0.647, 0.8, 1],
+                    ease: [[0.3, 0, 0.3, 1], "linear", "linear"],
+                  },
+                }}
+                ref={cardRef}
+                // 저장되는 이미지는 이 틀 그대로라 흰 배경과 둥근 모서리를 여기서 정한다
+                className="bg-semantic-fill-default relative col-start-1 row-start-1 aspect-320/401 w-full overflow-clip rounded-[32px]">
+                <FundingBragCard
+                  giverName={funding.giverName}
+                  recipientName={funding.hostName}
+                  productImageUrl={funding.productImageUrl}
+                  productName={funding.productName}
+                  deadline={funding.deadline}
+                  reduceMotion={reduceMotion}
+                />
+              </motion.div>
+            )}
           </div>
         </div>
         {scene >= 2 && (
