@@ -10,10 +10,12 @@ import { useCreateSurpriseFundingMutation } from "@/hooks/mutations/funding/useC
 import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
 import { toCreateSurpriseFundingRequest } from "@/utils/funding/toCreateSurpriseFundingRequest";
+import { formatSurpriseTitle } from "@/utils/funding/toOwnerFundingView";
 import FundingAccountStep, {
   type FundingAccountValues,
 } from "@/widgets/funding/FundingAccountStep";
 import FundingOpenCompleteSheet from "@/widgets/funding/FundingOpenCompleteSheet";
+import FundingPreviewSheet from "@/widgets/funding/FundingPreviewSheet";
 import SurpriseConfirmSheet from "@/widgets/funding/SurpriseConfirmSheet";
 import SurpriseInfoStep, { type SurpriseInfoValues } from "@/widgets/funding/SurpriseInfoStep";
 import SurpriseProfileExposureSheet from "@/widgets/funding/SurpriseProfileExposureSheet";
@@ -57,6 +59,7 @@ export default function SurpriseOpenSheet({
   const [exposureOpen, setExposureOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [createdFundingId, setCreatedFundingId] = useState<number | null>(null);
   const [createdShareKey, setCreatedShareKey] = useState<string | null>(null);
   // 확인 시트를 연 채로 그 위에 띄우는 수정 시트
@@ -82,6 +85,7 @@ export default function SurpriseOpenSheet({
     setExposureOpen(false);
     setConfirmOpen(false);
     setCompleteOpen(false);
+    setPreviewOpen(false);
     setCreatedFundingId(null);
     setCreatedShareKey(null);
     setEditing(null);
@@ -214,6 +218,7 @@ export default function SurpriseOpenSheet({
             submitting={submitting || isPending}
             onClose={handleConfirmClose}
             onConfirm={handleConfirm}
+            onPreview={() => setPreviewOpen(true)}
             onEditInfo={() => setEditing("info")}
             onEditExposure={() => setEditingExposure(true)}
             onEditAccount={() => setEditing("account")}
@@ -253,6 +258,15 @@ export default function SurpriseOpenSheet({
               setEditingExposure(false);
             }}
             onClose={() => setEditingExposure(false)}
+          />
+          <FundingPreviewSheet
+            open={previewOpen}
+            wish={wish}
+            info={confirmInfo}
+            title={formatSurpriseTitle(recipientName)}
+            locked
+            onClose={() => setPreviewOpen(false)}
+            className={className}
           />
           {createdShareKey !== null && (
             <FundingOpenCompleteSheet

@@ -40,6 +40,7 @@ const renderSheet = (props = {}) =>
       showOnRecipientProfile
       onClose={vi.fn()}
       onConfirm={vi.fn()}
+      onPreview={vi.fn()}
       onEditInfo={vi.fn()}
       onEditExposure={vi.fn()}
       onEditAccount={vi.fn()}
@@ -100,6 +101,15 @@ describe("SurpriseConfirmSheet", () => {
     await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
 
     expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("미리보기를 누르면 onPreview를 호출한다", async () => {
+    const onPreview = vi.fn();
+    renderSheet({ onPreview });
+
+    await userEvent.click(screen.getByRole("button", { name: "미리보기" }));
+
+    expect(onPreview).toHaveBeenCalledTimes(1);
   });
 
   it("개설 요청 중에는 변경하기가 비활성화된다", () => {

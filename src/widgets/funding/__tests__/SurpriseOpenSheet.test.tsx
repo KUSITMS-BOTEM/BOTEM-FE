@@ -94,6 +94,23 @@ beforeEach(() => {
 
 afterEach(() => vi.useRealTimers());
 
+describe("SurpriseOpenSheet 미리보기", () => {
+  it("확인 시트에서 미리보기를 누르면 입력한 값이 담긴 미리보기가 열린다", async () => {
+    await openConfirm();
+
+    await userEvent.click(confirmSheet().getByRole("button", { name: "미리보기" }));
+
+    const preview = within(await screen.findByRole("dialog", { name: "미리보기" }));
+    expect(preview.getByText("민지의 서프라이즈 펀딩")).toBeInTheDocument();
+    expect(preview.getByText("상품468")).toBeInTheDocument();
+    expect(preview.getByText("목표가 1,000원")).toBeInTheDocument();
+    expect(preview.getByRole("progressbar", { name: "펀딩 달성률" })).toHaveAttribute(
+      "aria-valuenow",
+      "60",
+    );
+  });
+});
+
 describe("SurpriseOpenSheet", () => {
   it("펀딩 정보부터 시작한다", () => {
     render(<Harness />);
