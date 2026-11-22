@@ -157,6 +157,8 @@ describe("fundingHandlers POST /api/fundings/surprise", () => {
       type: "SURPRISE",
       status: "FUNDING",
       shareUrl: expect.any(String),
+      deadline: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T23:59:59/),
+      revealAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T00:00:00$/),
     });
   });
 

@@ -190,11 +190,35 @@ describe("SurpriseOpenSheet", () => {
         accountNumber: "100159014821",
         targetAmount: 1000,
         deadline: "2027-12-25",
-        revealAt: "2027-12-26T00:00:00",
+        revealAt: "2027-12-26",
         showOnRecipientProfile: false,
       });
       expect(await screen.findByText("서프라이즈가 시작됐어요!")).toBeInTheDocument();
       expect(push).not.toHaveBeenCalled();
+    });
+
+    it("완료 화면 카드는 입력값이 아니라 응답의 deadline으로 마감일을 보여준다", async () => {
+      createSurprise.mockResolvedValue({ fundingId: 8, deadline: "2027-12-30T23:59:59.999999" });
+      await openConfirm();
+      await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
+
+      const completeSheet = (await screen.findByText("서프라이즈가 시작됐어요!")).closest(
+        "dialog",
+      ) as HTMLElement;
+
+      expect(within(completeSheet).getByText("12월 30일까지")).toBeInTheDocument();
+    });
+
+    it("응답에 deadline이 없으면 완료 화면 카드는 입력한 마감일을 보여준다", async () => {
+      createSurprise.mockResolvedValue({ fundingId: 8 });
+      await openConfirm();
+      await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
+
+      const completeSheet = (await screen.findByText("서프라이즈가 시작됐어요!")).closest(
+        "dialog",
+      ) as HTMLElement;
+
+      expect(within(completeSheet).getByText("12월 25일까지")).toBeInTheDocument();
     });
 
     it("완료 화면을 닫으면 응답 fundingId와 friendId를 달고 히스토리를 교체해 상세로 이동한다", async () => {

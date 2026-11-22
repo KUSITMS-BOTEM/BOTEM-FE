@@ -62,6 +62,7 @@ export default function SurpriseOpenSheet({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [createdFundingId, setCreatedFundingId] = useState<number | null>(null);
   const [createdShareKey, setCreatedShareKey] = useState<string | null>(null);
+  const [createdDeadline, setCreatedDeadline] = useState<string | null>(null);
   // 확인 시트를 연 채로 그 위에 띄우는 수정 시트
   const [editing, setEditing] = useState<Step | null>(null);
   const [editingExposure, setEditingExposure] = useState(false);
@@ -88,6 +89,7 @@ export default function SurpriseOpenSheet({
     setPreviewOpen(false);
     setCreatedFundingId(null);
     setCreatedShareKey(null);
+    setCreatedDeadline(null);
     setEditing(null);
     setEditingExposure(false);
     setDraftInfo(null);
@@ -150,6 +152,7 @@ export default function SurpriseOpenSheet({
       );
       setCreatedFundingId(created.fundingId);
       setCreatedShareKey(created.shareKey);
+      setCreatedDeadline(created.deadline ?? null);
     } catch {
       // 에러 안내는 전역 MutationCache onError가 처리하므로 여기서는 재시도할 수 있게 잠금만 푼다
       setSubmitting(false);
@@ -275,7 +278,7 @@ export default function SurpriseOpenSheet({
               variant="surprise"
               recipientName={recipientName}
               wish={wish}
-              info={confirmInfo}
+              info={{ ...confirmInfo, deadline: createdDeadline ?? confirmInfo.deadline }}
               shareKey={createdShareKey}
               onClose={handleCompleteClose}
               className={className}

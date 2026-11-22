@@ -427,8 +427,12 @@ export const fundingHandlers = [
       error: null,
     });
   }),
-  http.post("*/api/fundings/surprise", async () => {
+  http.post("*/api/fundings/surprise", async ({ request }) => {
     await delay(1000);
+    const body = (await request.json().catch(() => ({}))) as {
+      deadline?: string;
+      revealAt?: string;
+    };
     return HttpResponse.json({
       success: true,
       data: {
@@ -437,6 +441,9 @@ export const fundingHandlers = [
         type: "SURPRISE",
         status: "FUNDING",
         shareUrl: "https://botem.example.com/funding/15",
+        // 실서버처럼 요청 날짜를 마감일은 그날 끝, 공개일은 그날 0시로 정규화해 돌려준다
+        deadline: `${body.deadline ?? "2026-12-12"}T23:59:59.999999`,
+        revealAt: `${body.revealAt ?? "2026-12-15"}T00:00:00`,
       },
       error: null,
     });
