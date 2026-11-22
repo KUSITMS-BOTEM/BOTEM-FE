@@ -60,6 +60,24 @@ describe("FundingPreviewSheet", () => {
     expect(screen.getByText(/마감 11월 13일/)).toBeInTheDocument();
   });
 
+  it("입력한 사연을 제목 아래에 보여준다", () => {
+    renderSheet({ info: { ...info, story: "생일 선물" } });
+
+    expect(screen.getByText("생일 선물")).toBeInTheDocument();
+  });
+
+  it("공약만 있어도 보여준다", () => {
+    renderSheet({ info: { ...info, pledge: "춤추기" } });
+
+    expect(screen.getByText("춤추기")).toBeInTheDocument();
+  });
+
+  it("사연·공약이 없으면 메시지 박스를 그리지 않는다", () => {
+    renderSheet();
+
+    expect(screen.queryByText("생일 선물")).not.toBeInTheDocument();
+  });
+
   it("locked면 카드 마감일 옆에만 자물쇠를 보여주고, 아니면 보여주지 않는다", () => {
     const { container, rerender } = renderSheet({ locked: true });
     const lockedCount = container.ownerDocument.querySelectorAll("svg[aria-hidden]").length;
