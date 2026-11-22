@@ -69,7 +69,7 @@ describe("SurpriseInfoStep", () => {
 
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: /^펀딩 공개일/ }));
-    // 고를 수 있는 날짜가 마감일 다음 날 하나뿐이라 휠이 그 날짜로 열린다
+    // 휠은 고를 수 있는 첫 날짜(마감일 다음 날)에서 열린다
     const sheet = screen.getByRole("dialog", { name: "펀딩 공개일 선택" });
     await user.click(within(sheet).getByRole("button", { name: "확인" }));
     await user.click(screen.getByRole("button", { name: "다음" }));
@@ -121,6 +121,27 @@ describe("SurpriseInfoStep", () => {
     expect(screen.getByRole("button", { name: "펀딩 공개일 선택해주세요" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "다음" })).not.toBeInTheDocument();
   });
+
+  it("마감일을 다시 골라도 공개일이 새 범위(마감일 다음 날~30일 뒤) 안이면 유지된다", async () => {
+    renderStep({ recipientBirthday: "12-26", recipientBirthdayDday: 408 });
+    await goToReveal();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "생일 12월 26일 사용" }));
+
+    await user.click(screen.getByRole("button", { name: /^마감일/ }));
+    await pickWheelDate(user, { year: 2027, month: 12, day: 24 });
+
+    expect(screen.getByRole("button", { name: /^펀딩 공개일.*2027.12.26/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "다음" })).toBeEnabled();
+  });
+
+  it("상품 가격보다 큰 목표 금액을 입력하면 상품 가격으로 제한된다", () => {
+    renderStep();
+
+    fireEvent.change(screen.getByLabelText("목표 금액"), { target: { value: "999999" } });
+
+    expect(screen.getByLabelText("목표 금액")).toHaveValue("468,000");
+  });
 });
 
 describe("SurpriseInfoStep 수정 모드", () => {
@@ -142,9 +163,9 @@ describe("SurpriseInfoStep 수정 모드", () => {
     const onNext = vi.fn();
     renderStep({ initialValues, submitLabel: "수정 완료", onNext });
 
-    fireEvent.change(screen.getByLabelText("목표 금액"), { target: { value: "500000" } });
+    fireEvent.change(screen.getByLabelText("목표 금액"), { target: { value: "450000" } });
     await userEvent.click(screen.getByRole("button", { name: "수정 완료" }));
 
-    expect(onNext).toHaveBeenCalledWith({ ...initialValues, targetAmount: "500000" });
+    expect(onNext).toHaveBeenCalledWith({ ...initialValues, targetAmount: "450000" });
   });
 });

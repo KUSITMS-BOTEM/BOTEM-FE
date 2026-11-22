@@ -15,6 +15,7 @@ import { cn } from "@/utils/cn";
 import { addDays } from "@/utils/funding/addDays";
 import { formatDeadline, getTodayDate } from "@/utils/funding/formatDeadline";
 import { getBirthdayReveal } from "@/utils/funding/getBirthdayReveal";
+import { getRevealDateRange } from "@/utils/funding/getRevealDateRange";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
 
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
@@ -79,8 +80,9 @@ export default function SurpriseInfoStep({
   const inputRef = useRef<HTMLInputElement>(null);
   const basePriceText = wish.price.toLocaleString("ko-KR");
   const today = getTodayDate();
-  // 백엔드는 공개 시각을 마감일 다음 날 안에서만 허용하고 공개 시간이 자정이라 고를 수 있는 날짜는 하루뿐이다
-  const allowedRevealDate = deadline ? addDays(deadline, 1) : undefined;
+  const revealRange = deadline ? getRevealDateRange(deadline) : undefined;
+  const isInRevealRange = (date: string, range = revealRange) =>
+    range !== undefined && date >= range.minDate && date <= range.maxDate;
   const { revealDate: birthdayRevealDate, canUse: canUseBirthday } = getBirthdayReveal(
     today,
     recipientBirthday,
@@ -97,7 +99,8 @@ export default function SurpriseInfoStep({
     // 달력·휠 시트는 blur 없이 닫히므로 날짜를 확정하는 즉시 공개일을 연다
     if (next) setShowReveal(true);
     // 마감일이 바뀌어 기존 공개일이 허용 범위를 벗어나면 비운다
-    if (revealDate !== (next ? addDays(next, 1) : "")) setRevealDate("");
+    if (!isInRevealRange(revealDate, next ? getRevealDateRange(next) : undefined))
+      setRevealDate("");
   };
 
   const isChanged =
@@ -157,7 +160,7 @@ export default function SurpriseInfoStep({
                 selected={revealDate === birthdayRevealDate}
                 disabled={!canUseBirthday}
                 onClick={() => {
-                  // 백엔드는 공개일을 마감일 다음 날로만 허용하므로 마감일을 생일 전날로 함께 맞춘다
+                  // 생일 하루 전까지 모으고 생일 자정에 공개하도록 마감일을 생일 전날로 함께 맞춘다
                   setDeadline(addDays(birthdayRevealDate, -1));
                   setRevealDate(birthdayRevealDate);
                 }}
@@ -169,11 +172,11 @@ export default function SurpriseInfoStep({
             label="펀딩 공개일"
             value={formatDeadline(revealDate)}
             dateValue={revealDate}
-            minDate={allowedRevealDate}
-            maxDate={allowedRevealDate}
+            minDate={revealRange?.minDate}
+            maxDate={revealRange?.maxDate}
             pickerTitle="펀딩 공개일 선택"
             helperText="공개 시간은 밤 12시예요"
-            onDeadlineChange={date => setRevealDate(date === allowedRevealDate ? date : "")}
+            onDeadlineChange={date => setRevealDate(isInRevealRange(date) ? date : "")}
           />
         </motion.div>
       )}
@@ -216,7 +219,11 @@ export default function SurpriseInfoStep({
             if (wish.price > 0) setShowDeadline(true);
           }}
           value={targetAmount ? Number(targetAmount).toLocaleString("ko-KR") : ""}
-          onChange={event => setTargetAmount(event.target.value.replace(/\D/g, ""))}
+          onChange={event => {
+            const digits = event.target.value.replace(/\D/g, "");
+            // 상품 가격보다 큰 목표 금액은 받을 수 없어 가격으로 맞춘다
+            setTargetAmount(Number(digits) > wish.price ? String(wish.price) : digits);
+          }}
           onBlur={revealDeadline}
           onKeyDown={event => {
             if (event.key === "Enter") event.currentTarget.blur();

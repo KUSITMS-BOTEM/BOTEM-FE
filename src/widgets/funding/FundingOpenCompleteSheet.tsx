@@ -9,7 +9,6 @@ import OpenSheet from "@/components/OpenSheet";
 import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
-import { useShareLink } from "@/hooks/useShareLink";
 import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
 import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
@@ -43,13 +42,11 @@ export default function FundingOpenCompleteSheet({
   open,
   wish,
   info,
-  shareKey,
   onClose,
   className,
   ...props
 }: FundingOpenCompleteSheetProps) {
   const { data: profile } = useMyProfileQuery();
-  const { toast, share } = useShareLink();
   const isSurprise = props.variant === "surprise";
   const cardTitle =
     props.variant === "surprise" ? `${props.recipientName}의\n생일 펀딩` : props.cardTitle;
@@ -58,14 +55,6 @@ export default function FundingOpenCompleteSheet({
   const failTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => () => clearTimeout(failTimerRef.current), []);
-
-  const handleShare = () => {
-    if (props.variant !== "surprise") return;
-    share({
-      title: `${props.recipientName}님 서프라이즈 펀딩`,
-      url: `${window.location.origin}/share/${shareKey}`,
-    });
-  };
 
   const handleSave = async () => {
     if (!cardRef.current) return;
@@ -126,22 +115,12 @@ export default function FundingOpenCompleteSheet({
       </div>
       {isSurprise && (
         <BottomCTA direction="horizontal">
-          <Button color="brand" size="xlarge" onClick={handleShare}>
+          <Button color="brand" size="xlarge" onClick={handleSave}>
             공유하기
           </Button>
         </BottomCTA>
       )}
-      <ToastMessage
-        show={saveFailed || toast !== null}
-        state={!saveFailed && toast === "success"}
-        text={
-          saveFailed
-            ? "이미지를 저장하지 못했어요"
-            : toast === "fail"
-              ? "링크를 복사하지 못했어요"
-              : "링크를 복사했어요"
-        }
-      />
+      <ToastMessage show={saveFailed} state={false} text="이미지를 저장하지 못했어요" />
     </OpenSheet>
   );
 }

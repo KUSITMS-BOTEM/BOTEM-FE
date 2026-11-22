@@ -91,6 +91,12 @@ describe("FundingShareCard", () => {
     expect(screen.getByText("지유가 여는")).toBeInTheDocument();
   });
 
+  it("개설자 이름에 받침이 있으면 '이'를 붙인다", () => {
+    render(<FundingShareCard {...baseProps} openerName="이정민" />);
+
+    expect(screen.getByText("이정민이 여는")).toBeInTheDocument();
+  });
+
   it("title의 줄바꿈 문자를 보존해 두 줄로 나눈다", () => {
     render(<FundingShareCard {...baseProps} />);
 

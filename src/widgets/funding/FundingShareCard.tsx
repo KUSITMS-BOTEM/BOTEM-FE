@@ -4,6 +4,7 @@ import Badge from "@/components/Badge";
 import { cn } from "@/utils/cn";
 import { formatDeadlineShort } from "@/utils/funding/formatDeadline";
 import { getDDayLabel } from "@/utils/funding/getDDayLabel";
+import { withSubjectParticle } from "@/utils/withSubjectParticle";
 import ProfileOrange from "@/assets/icons/multicolor/profile-orange.svg?react";
 
 type FundingShareCardSize = "medium" | "large";
@@ -107,7 +108,7 @@ export default function FundingShareCard({
           <div className="bg-base-gray-50 flex items-center gap-1.5 rounded-full px-2 py-1">
             <ProfileOrange aria-hidden className="size-5 shrink-0" />
             <span className="text-semantic-text-secondary [font:var(--semantic-label-x-small-weak)]">
-              {openerName}가 여는
+              {withSubjectParticle(openerName)} 여는
             </span>
           </div>
           {dDay && (
