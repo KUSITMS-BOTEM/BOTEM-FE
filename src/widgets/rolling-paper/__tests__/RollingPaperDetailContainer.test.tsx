@@ -9,11 +9,18 @@ vi.mock("@/hooks/queries/funding/useRollingPaperQuery", () => ({
   useRollingPaperQuery: vi.fn(),
 }));
 vi.mock("@/widgets/rolling-paper/RollingPaperWheel", () => ({
-  default: ({ letters }: { letters: { senderName: string }[] }) => (
+  default: ({
+    letters,
+    voices,
+  }: {
+    letters: { senderName: string }[];
+    voices: ({ senderName: string } | null)[];
+  }) => (
     <div
       data-testid="rolling-paper-wheel"
       data-count={letters.length}
       data-senders={letters.map(letter => letter.senderName).join(",")}
+      data-voices={voices.map(voice => voice?.senderName ?? "-").join(",")}
     />
   ),
 }));
@@ -81,6 +88,16 @@ describe("RollingPaperDetailContainer", () => {
     const wheel = screen.getByTestId("rolling-paper-wheel");
     expect(wheel).toHaveAttribute("data-count", "7");
     expect(wheel.getAttribute("data-senders")?.split(",")[0]).toBe("친구1");
+  });
+
+  it("음성이 있는 메세지만 음성 정보를 휠에 넘긴다", () => {
+    const messages = toMessages(3);
+    messages[0] = { ...messages[0], voiceUrl: "https://cdn.example.com/voice.wav" };
+    mockQuery({ messages });
+
+    render(<RollingPaperDetailContainer rollingPaperId="12" />);
+
+    expect(screen.getByTestId("rolling-paper-wheel")).toHaveAttribute("data-voices", "친구1,-,-");
   });
 
   it("뒤로 가기 버튼은 페이드인을 위해 투명하게 시작한다", () => {

@@ -50,6 +50,18 @@ describe("toLetterPaperProps", () => {
     expect(none.smallIcon).toBeFalsy();
   });
 
+  it("사진·스티커가 없는 슬롯은 감추고, 있는 슬롯은 보여준다", () => {
+    const empty = toLetterPaperProps(message());
+    expect(empty.hidePhotoSlot).toBe(true);
+    expect(empty.hideEmptyIconSlots).toBe(true);
+
+    const withPhoto = toLetterPaperProps(message({ photoUrl: "https://image.example.com/a.jpg" }));
+    expect(withPhoto.hidePhotoSlot).toBe(false);
+    expect(toLetterPaperProps(message({ photoUrl: "javascript:alert(1)" })).hidePhotoSlot).toBe(
+      true,
+    );
+  });
+
   it("음성이 있을 때만 음성 배지를 표시한다", () => {
     expect(toLetterPaperProps(message()).hasVoiceMessage).toBe(false);
     expect(

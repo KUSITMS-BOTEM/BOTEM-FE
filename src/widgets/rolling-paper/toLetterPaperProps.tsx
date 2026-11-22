@@ -3,7 +3,8 @@ import { toLetterValues } from "@/utils/contribution/toLetterValues";
 import { isValidUrl } from "@/utils/isValidUrl";
 import type { LetterPaperProps } from "@/widgets/letter-paper/LetterPaper";
 
-// 서버 응답 URL이라 http/https만 사진으로 쓴다. 음성은 카드가 inert라 재생하지 않고 배지만 보인다
+// 서버 응답 URL이라 http/https만 사진으로 쓴다. 음성은 카드가 inert라 재생하지 않고 배지만 보인다.
+// 롤링페이퍼에서는 사진·스티커가 없는 슬롯을 점선 없이 감춘다
 export function toLetterPaperProps(message: RollingPaperMessage): LetterPaperProps {
   const { text, name, color, paperStyle, largeSticker, smallSticker } = toLetterValues({
     participantName: message.participantName,
@@ -12,13 +13,17 @@ export function toLetterPaperProps(message: RollingPaperMessage): LetterPaperPro
     decorationCode: message.decorationCode,
   });
 
+  const photoSrc = message.photoUrl && isValidUrl(message.photoUrl) ? message.photoUrl : undefined;
+
   return {
     style: paperStyle,
     color,
     text,
     senderName: name,
     hasVoiceMessage: message.voiceUrl !== null,
-    photoSrc: message.photoUrl && isValidUrl(message.photoUrl) ? message.photoUrl : undefined,
+    photoSrc,
+    hidePhotoSlot: !photoSrc,
+    hideEmptyIconSlots: true,
     largeIcon: largeSticker && <largeSticker.Icon aria-hidden className="size-full" />,
     smallIcon: smallSticker && <smallSticker.Icon aria-hidden className="size-full" />,
   };

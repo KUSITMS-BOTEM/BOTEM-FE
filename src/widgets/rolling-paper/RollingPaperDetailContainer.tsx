@@ -16,6 +16,7 @@ import {
   ARRIVAL_BG_TRANSITION,
 } from "@/widgets/rolling-paper/rollingPaperMotion";
 import { toLetterPaperProps } from "@/widgets/rolling-paper/toLetterPaperProps";
+import { toRollingPaperVoice } from "@/widgets/rolling-paper/toRollingPaperVoice";
 
 const INTERIOR_BG_GRADIENT =
   "linear-gradient(180deg, rgba(238, 238, 238, 0) 0%, rgb(238, 238, 238) 100%), linear-gradient(90deg, rgb(255, 255, 255) 0%, rgb(255, 255, 255) 100%)";
@@ -59,7 +60,12 @@ export default function RollingPaperDetailContainer({
         </p>
       );
     }
-    return <RollingPaperWheel letters={rollingPaper.messages.map(toLetterPaperProps)} />;
+    return (
+      <RollingPaperWheel
+        letters={rollingPaper.messages.map(toLetterPaperProps)}
+        voices={rollingPaper.messages.map(toRollingPaperVoice)}
+      />
+    );
   };
 
   return (

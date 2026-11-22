@@ -87,6 +87,31 @@ MOCK_RESULTS[20] = {
   resultOpenedAt: "2025-10-14T00:00:00",
 };
 
+const MOCK_VOICE_URL = "https://cdn.example.com/mock-voice.wav";
+const MOCK_VOICE_SECONDS = 8;
+
+// 재생 모션을 눈으로 확인할 수 있게 무음 WAV(8kHz·8bit·모노)를 만들어 내려준다
+const toSilentWav = (seconds: number) => {
+  const sampleRate = 8000;
+  const samples = new Uint8Array(sampleRate * seconds).fill(128);
+  const header = new DataView(new ArrayBuffer(44));
+  const writeText = (offset: number, text: string) =>
+    [...text].forEach((char, index) => header.setUint8(offset + index, char.charCodeAt(0)));
+  writeText(0, "RIFF");
+  header.setUint32(4, 36 + samples.length, true);
+  writeText(8, "WAVEfmt ");
+  header.setUint32(16, 16, true);
+  header.setUint16(20, 1, true);
+  header.setUint16(22, 1, true);
+  header.setUint32(24, sampleRate, true);
+  header.setUint32(28, sampleRate, true);
+  header.setUint16(32, 1, true);
+  header.setUint16(34, 8, true);
+  writeText(36, "data");
+  header.setUint32(40, samples.length, true);
+  return new Blob([header, samples], { type: "audio/wav" });
+};
+
 const toMockRollingPaperMessage = (
   messageId: number,
   participantName: string,
@@ -101,9 +126,10 @@ const toMockRollingPaperMessage = (
   paperTemplateCode,
   decorationCode: null,
   photoUrl: null,
-  voiceUrl: null,
-  voiceDurationSeconds: null,
-  voiceTranscript: null,
+  // 모든 편지지에 음성이 있다고 가정한다. 자막은 본문과 같게 둔다
+  voiceUrl: MOCK_VOICE_URL,
+  voiceDurationSeconds: MOCK_VOICE_SECONDS,
+  voiceTranscript: content,
   ...extra,
 });
 
@@ -117,8 +143,6 @@ const MOCK_ROLLING_PAPER_MESSAGES: RollingPaperMessage[] = [
     {
       decorationCode: "CAKE|HEART",
       photoUrl: "https://picsum.photos/seed/rolling-paper-1/200/200",
-      voiceUrl: "https://example.com/voice-1.m4a",
-      voiceDurationSeconds: 23,
     },
   ),
   toMockRollingPaperMessage(
@@ -540,6 +564,7 @@ export const fundingHandlers = [
       error: null,
     });
   }),
+  http.get(MOCK_VOICE_URL, () => new HttpResponse(toSilentWav(MOCK_VOICE_SECONDS))),
   http.get("*/api/fundings/:fundingId/rolling-paper", async ({ params }) => {
     await delay(800);
     return HttpResponse.json({
