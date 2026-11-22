@@ -33,40 +33,16 @@ vi.mock("@/widgets/funding/FundingCompleteConfetti", () => ({
 const SHARE_BUTTON = { name: "공유하기" };
 
 const FUNDING = {
-  fundingId: 7,
   hostName: "민재",
   giverName: "민지",
   contributionOrder: 3,
-  risePercent: 20,
   productName: "소니 WH-1000XM5",
   productImageUrl: "/product.png",
   deadline: "2026-12-31",
-  percent: 60,
-  targetAmount: 123456789,
 };
 
-const renderView = (props: { shareKey?: string; isMessageOnly?: boolean } = {}) =>
-  render(
-    <FundingCompleteView
-      shareKey={props.shareKey ?? "1"}
-      funding={FUNDING}
-      isMessageOnly={props.isMessageOnly ?? false}
-    />,
-  );
-
-describe("FundingCompleteView 올랐어요 뱃지", () => {
-  it("금액을 보탠 경우에는 올랐어요 뱃지를 보여준다", () => {
-    renderView();
-
-    expect(screen.getByText("올랐어요")).toBeInTheDocument();
-  });
-
-  it("메시지만 보탠 경우에는 올랐어요 뱃지를 숨긴다", () => {
-    renderView({ isMessageOnly: true });
-
-    expect(screen.queryByText("올랐어요")).not.toBeInTheDocument();
-  });
-});
+const renderView = (props: { shareKey?: string } = {}) =>
+  render(<FundingCompleteView shareKey={props.shareKey ?? "1"} funding={FUNDING} />);
 
 describe("FundingCompleteView", () => {
   afterEach(() => {
@@ -74,35 +50,52 @@ describe("FundingCompleteView", () => {
     vi.mocked(useReducedMotion).mockReturnValue(false);
   });
 
+  // 아래 가짜 타이머 테스트가 framer-motion 프레임 루프를 멈추므로, 퇴장 애니메이션을 기다리는 이 테스트를 먼저 둔다
+  it("닫기 버튼을 누르면 push가 아니라 replace로 공유 페이지에 이동한다", async () => {
+    renderView({ shareKey: "7" });
+
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/7"));
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("closePath가 있으면 닫기 버튼이 공유 페이지 대신 그 경로로 이동한다", async () => {
+    render(<FundingCompleteView shareKey="7" funding={FUNDING} closePath="/funding/15" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/funding/15"));
+  });
+
   describe("모션 타임라인", () => {
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());
 
-    it("처음에는 진행률 장면 제목을 보여주고 공유하기 버튼은 없다", () => {
+    it("처음에는 빈 화면이라 제목도 공유하기 버튼도 없다", () => {
       renderView({ shareKey: "1" });
 
-      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-        "민재에게 보탬이 되었어요",
-      );
+      expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", SHARE_BUTTON)).not.toBeInTheDocument();
     });
 
-    it("2.3초 뒤에는 3번째로 보탬 제목으로 바뀌지만 공유하기 버튼은 아직 없다", () => {
+    it("1.15초 뒤에는 3번째로 보탬 제목과 안내 문구가 나타나지만 공유하기 버튼은 아직 없다", () => {
       renderView({ shareKey: "1" });
 
       act(() => {
-        vi.advanceTimersByTime(2300);
+        vi.advanceTimersByTime(1150);
       });
 
       expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("3번째로 보탬!");
+      expect(screen.getByText(/보탬이 확인되면 진행률에 반영돼요/)).toBeInTheDocument();
       expect(screen.queryByRole("button", SHARE_BUTTON)).not.toBeInTheDocument();
     });
 
-    it("4.6초 뒤에 공유하기 버튼이 나타난다", () => {
+    it("3.41초 뒤에 공유하기 버튼이 나타난다", () => {
       renderView({ shareKey: "1" });
 
       act(() => {
-        vi.advanceTimersByTime(4600);
+        vi.advanceTimersByTime(3410);
       });
 
       expect(screen.getByRole("button", SHARE_BUTTON)).toBeInTheDocument();
@@ -126,19 +119,10 @@ describe("FundingCompleteView", () => {
     });
   });
 
-  it("모션 감소가 아니면 컨페티를 그린다", () => {
+  it("모션 감소가 아니면 컨페티를 그린다", async () => {
     renderView({ shareKey: "1" });
 
-    expect(screen.getByTestId("confetti")).toBeInTheDocument();
-  });
-
-  it("닫기 버튼을 누르면 push가 아니라 replace로 공유 페이지에 이동한다", async () => {
-    renderView({ shareKey: "7" });
-
-    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
-
-    await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/7"));
-    expect(pushMock).not.toHaveBeenCalled();
+    expect(await screen.findByTestId("confetti")).toBeInTheDocument();
   });
 
   describe("공유하기", () => {

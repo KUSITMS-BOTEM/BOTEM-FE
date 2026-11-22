@@ -37,7 +37,7 @@ describe("ClosedFundingList", () => {
     expect(within(lists[1]).getAllByRole("listitem")).toHaveLength(2);
   });
 
-  it("내가 연 펀딩만 상세 화면으로 이동하는 링크가 된다", () => {
+  it("내가 연 펀딩은 관리 상세, 받은 서프라이즈는 받은 서프라이즈 상세로 이동하고 참여한 펀딩은 링크가 아니다", () => {
     render(
       <ClosedFundingList
         fundings={[
@@ -49,7 +49,6 @@ describe("ClosedFundingList", () => {
     );
 
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(1);
-    expect(links[0]).toHaveAttribute("href", "/funding/10");
+    expect(links.map(link => link.getAttribute("href"))).toEqual(["/funding/10", "/surprised/11"]);
   });
 });

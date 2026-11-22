@@ -4,10 +4,34 @@ import {
   toCardPose,
   toProfilePose,
   clampProgress,
+  toLetterIndex,
   toSnapTarget,
   toWheelOffset,
   wrapOffset,
 } from "@/widgets/rolling-paper/wheelGeometry";
+
+describe("toLetterIndex", () => {
+  it("편지가 슬롯 수 이하면 슬롯 번호가 곧 편지 번호다", () => {
+    expect(toLetterIndex(3, 2, 5, 5)).toBe(3);
+    expect(toLetterIndex(1, 0, 3, 3)).toBe(1);
+  });
+
+  it("편지가 슬롯보다 많으면 가운데 편지 기준으로 위아래 편지를 가리킨다", () => {
+    // 가운데(슬롯 0)=편지 0, 아래로 1·2, 위로 -2·-1(=끝에서 두 번째·마지막)
+    expect([0, 1, 2, 3, 4].map(slot => toLetterIndex(slot, 0, 5, 8))).toEqual([0, 1, 2, 6, 7]);
+  });
+
+  it("가운데가 끝 편지를 지나면 처음 편지로 이어진다", () => {
+    expect([0, 1, 2, 3, 4].map(slot => toLetterIndex(slot, 7, 5, 8))).toEqual([5, 6, 7, 0, 1]);
+  });
+
+  it("가운데 슬롯이 항상 가운데 편지를 가리킨다", () => {
+    for (let center = -12; center <= 12; center += 1) {
+      const slot = ((center % 5) + 5) % 5;
+      expect(toLetterIndex(slot, center, 5, 8)).toBe(((center % 8) + 8) % 8);
+    }
+  });
+});
 
 describe("wrapOffset", () => {
   it("progress와 같은 번호의 아이템이 중앙(0)에 온다", () => {

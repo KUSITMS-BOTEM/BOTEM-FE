@@ -16,6 +16,7 @@ import type {
   OwnerFundingParticipantResponse,
 } from "@/types/funding/ownerFundingDetail";
 import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
+import type { RollingPaperMessage } from "@/types/funding/rollingPaper";
 import type { FundingType } from "@/types/home/home";
 
 const toContributions = (names: string[]): FundingResultContributionResponse[] =>
@@ -85,6 +86,101 @@ MOCK_RESULTS[20] = {
   contributions: toContributions(["하린이", "도윤이", "서준이"]),
   resultOpenedAt: "2025-10-14T00:00:00",
 };
+
+const MOCK_VOICE_URL = "https://cdn.example.com/mock-voice.wav";
+const MOCK_VOICE_SECONDS = 8;
+
+// 재생 모션을 눈으로 확인할 수 있게 무음 WAV(8kHz·8bit·모노)를 만들어 내려준다
+const toSilentWav = (seconds: number) => {
+  const sampleRate = 8000;
+  const samples = new Uint8Array(sampleRate * seconds).fill(128);
+  const header = new DataView(new ArrayBuffer(44));
+  const writeText = (offset: number, text: string) =>
+    [...text].forEach((char, index) => header.setUint8(offset + index, char.charCodeAt(0)));
+  writeText(0, "RIFF");
+  header.setUint32(4, 36 + samples.length, true);
+  writeText(8, "WAVEfmt ");
+  header.setUint32(16, 16, true);
+  header.setUint16(20, 1, true);
+  header.setUint16(22, 1, true);
+  header.setUint32(24, sampleRate, true);
+  header.setUint32(28, sampleRate, true);
+  header.setUint16(32, 1, true);
+  header.setUint16(34, 8, true);
+  writeText(36, "data");
+  header.setUint32(40, samples.length, true);
+  return new Blob([header, samples], { type: "audio/wav" });
+};
+
+const toMockRollingPaperMessage = (
+  messageId: number,
+  participantName: string,
+  content: string,
+  paperTemplateCode: string,
+  extra: Partial<RollingPaperMessage> = {},
+): RollingPaperMessage => ({
+  messageId,
+  participantName,
+  participantProfileImageUrl: null,
+  content,
+  paperTemplateCode,
+  decorationCode: null,
+  photoUrl: null,
+  // 모든 편지지에 음성이 있다고 가정한다. 자막은 본문과 같게 둔다
+  voiceUrl: MOCK_VOICE_URL,
+  voiceDurationSeconds: MOCK_VOICE_SECONDS,
+  voiceTranscript: content,
+  ...extra,
+});
+
+// paperTemplateCode·decorationCode는 FE가 정한 규칙(`색_스타일`, `큰|작은`)을 따른다
+const MOCK_ROLLING_PAPER_MESSAGES: RollingPaperMessage[] = [
+  toMockRollingPaperMessage(
+    1,
+    "민지",
+    "지유야 생일 축하해! 올해도 같이 많이 웃자",
+    "ORANGE_WHITE_DOT",
+    {
+      decorationCode: "CAKE|HEART",
+      photoUrl: "https://picsum.photos/seed/rolling-paper-1/200/200",
+    },
+  ),
+  toMockRollingPaperMessage(
+    2,
+    "서준",
+    "항상 곁에서 힘이 돼줘서 고마워. 앞으로도 오래오래 함께하자. 사랑해!",
+    "LIME_DOT_GRID",
+    { decorationCode: "GIFT|" },
+  ),
+  toMockRollingPaperMessage(
+    3,
+    "하은",
+    "생일 축하해! 맛있는 거 많이 먹고 행복한 하루 보내~",
+    "PINK_VIVID_SOLID",
+    {
+      photoUrl: "https://picsum.photos/seed/rolling-paper-3/200/200",
+    },
+  ),
+  toMockRollingPaperMessage(4, "예준", "지유야 생일 정말 정말 축하해!", "BLUE_SOLID", {
+    decorationCode: "|SPARKLES",
+  }),
+  toMockRollingPaperMessage(
+    5,
+    "수아",
+    "오늘은 네가 주인공이야. 선물 마음에 들었으면 좋겠다!",
+    "PINK_COLOR_DOT",
+  ),
+  toMockRollingPaperMessage(
+    6,
+    "도윤",
+    "지유야 태어나줘서 고마워. 올 한 해도 건강하고 행복하자!",
+    "LIME_DOT_GRID",
+    { decorationCode: "CAKE|" },
+  ),
+  toMockRollingPaperMessage(7, "지아", "생일 축하해! 사랑해~", "BLUE_SOLID", {
+    decorationCode: "|HEART",
+  }),
+];
 
 const getMockResult = (fundingId: number): FundingResultResponse =>
   MOCK_RESULTS[fundingId] ?? {
@@ -213,6 +309,7 @@ const MOCK_FUNDING_DETAIL: FundingDetailResponse = {
   story: "올해 생일엔 출퇴근길에 쓸 노캔 헤드폰이 갖고 싶어요. 조금씩 보태주면 감동할게요!",
   promise: "펀딩이 성공하면 헤드폰 끼고 출근하는 인증샷을 꼭 올릴게요!",
   deadline: "2026-12-31T23:59:59",
+  revealAt: null,
   extended: false,
   remainingDays: 41,
   confirmedPercentage: 40,
@@ -232,6 +329,9 @@ const MOCK_FUNDING_DETAIL: FundingDetailResponse = {
   thankCard: null,
 };
 
+const MOCK_SURPRISE_RECIPIENT_ID = 98;
+const MOCK_SURPRISE_PARTICIPANT_ID = 97;
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const toMockDeadline = (remainingDays: number | null) =>
@@ -250,6 +350,7 @@ const getMockClosedOwnerDetail = (fundingId: number): OwnerFundingDetailResponse
     fundingId,
     shareKey: toMockShareKey(fundingId),
     type: item.fundingType,
+    celebrantName: item.celebrantName,
     title: null,
     story: null,
     promise: null,
@@ -340,6 +441,7 @@ const getMockOwnerFundingDetail = (fundingId: number): OwnerFundingDetailRespons
     shareKey: toMockShareKey(fundingId),
     type: card.fundingType as FundingType,
     title: null,
+    celebrantName: card.fundingType === "SURPRISE" ? "서연" : "민재",
     story: "올해 생일엔 꼭 갖고 싶던 선물이 있어요. 조금씩 보태주면 감동할게요!",
     promise: null,
     product: {
@@ -352,7 +454,7 @@ const getMockOwnerFundingDetail = (fundingId: number): OwnerFundingDetailRespons
     productChangedAt: null,
     targetAmount: card.targetAmount,
     deadline: toMockDeadline(card.remainingDays),
-    revealAt: null,
+    revealAt: card.fundingType === "SURPRISE" ? "2026-12-25T00:00:00" : null,
     remainingDays: card.remainingDays,
     confirmedPercentage,
     pendingPercentage: progress.pendingPercentage,
@@ -413,11 +515,76 @@ export const fundingHandlers = [
     await delay(300);
     const shareKey = String(params.shareKey);
     const fundingId = fromMockShareKey(shareKey);
-    // 토큰이 붙은 조회는 개설자 본인으로 보고 ownerPreview를 true로 응답한다 (id 99는 개설자 화면 확인용)
-    const ownerPreview = request.headers.has("Authorization") && fundingId === 99;
+    const hasToken = request.headers.has("Authorization");
+    // 토큰이 붙은 조회는 개설자 본인으로 보고 ownerPreview를 true로 응답한다 (id 99는 개설자 화면, 15는 서프라이즈 개설자 확인용)
+    const ownerPreview = hasToken && (fundingId === 99 || fundingId === 15);
+    // id 97·98은 서프라이즈. 98은 토큰이 붙으면 받는 사람으로 보고 403, 97은 토큰이 있어도 참여자라 200이다
+    if (fundingId === MOCK_SURPRISE_RECIPIENT_ID && hasToken) {
+      return HttpResponse.json(
+        {
+          success: false,
+          data: null,
+          error: { code: "FUNDING_046", message: "아직 공개되지 않은 서프라이즈예요." },
+        },
+        { status: 403 },
+      );
+    }
+    const surprise =
+      fundingId === MOCK_SURPRISE_RECIPIENT_ID || fundingId === MOCK_SURPRISE_PARTICIPANT_ID
+        ? { type: "SURPRISE" as const, celebrantName: "서연", revealAt: "2026-12-25T00:00:00" }
+        : {};
     return HttpResponse.json({
       success: true,
-      data: { ...MOCK_FUNDING_DETAIL, fundingId, shareKey, ownerPreview },
+      data: { ...MOCK_FUNDING_DETAIL, ...surprise, fundingId, shareKey, ownerPreview },
+      error: null,
+    });
+  }),
+  // id 98은 공개 전(404 FUNDING_016)으로 응답해 잠금 안내를 확인할 수 있다
+  http.get("*/api/fundings/:fundingId/surprise", async ({ params }) => {
+    await delay(300);
+    const fundingId = Number(params.fundingId);
+    if (fundingId === MOCK_SURPRISE_RECIPIENT_ID) {
+      return HttpResponse.json(
+        {
+          success: false,
+          data: null,
+          error: { code: "FUNDING_016", message: "공개된 서프라이즈를 찾을 수 없습니다." },
+        },
+        { status: 404 },
+      );
+    }
+    return HttpResponse.json({
+      success: true,
+      data: {
+        fundingId,
+        recipientName: "서준",
+        organizerName: "하린",
+        productName: "에어팟 프로 2",
+        productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
+        confirmedAmount: 420000,
+        targetAmount: 459000,
+        confirmedPercentage: 91,
+        deadline: "2025-10-10T23:59:59",
+        participantCount: 6,
+        messageCount: 6,
+        revealAt: "2025-10-11T00:00:00",
+        openedAt: "2025-10-11T09:00:00",
+        messages: [],
+      },
+      error: null,
+    });
+  }),
+  http.get(MOCK_VOICE_URL, () => new HttpResponse(toSilentWav(MOCK_VOICE_SECONDS))),
+  http.get("*/api/fundings/:fundingId/rolling-paper", async ({ params }) => {
+    await delay(800);
+    return HttpResponse.json({
+      success: true,
+      data: {
+        fundingId: Number(params.fundingId),
+        celebrantName: "지유",
+        messageCount: MOCK_ROLLING_PAPER_MESSAGES.length,
+        messages: MOCK_ROLLING_PAPER_MESSAGES,
+      },
       error: null,
     });
   }),
@@ -511,16 +678,23 @@ export const fundingHandlers = [
       error: null,
     });
   }),
-  http.post("*/api/fundings/surprise", async () => {
+  http.post("*/api/fundings/surprise", async ({ request }) => {
     await delay(1000);
+    const body = (await request.json().catch(() => ({}))) as {
+      deadline?: string;
+      revealAt?: string;
+    };
     return HttpResponse.json({
       success: true,
       data: {
-        fundingId: 2,
-        shareKey: toMockShareKey(2),
+        fundingId: 15,
+        shareKey: toMockShareKey(15),
         type: "SURPRISE",
         status: "FUNDING",
-        shareUrl: "https://botem.example.com/funding/2",
+        shareUrl: "https://botem.example.com/funding/15",
+        // 실서버처럼 요청 날짜를 마감일은 그날 끝, 공개일은 그날 0시로 정규화해 돌려준다
+        deadline: `${body.deadline ?? "2026-12-12"}T23:59:59.999999`,
+        revealAt: `${body.revealAt ?? "2026-12-15"}T00:00:00`,
       },
       error: null,
     });

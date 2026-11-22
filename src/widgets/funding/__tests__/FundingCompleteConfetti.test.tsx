@@ -1,18 +1,26 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 
 import FundingCompleteConfetti from "@/widgets/funding/FundingCompleteConfetti";
-import { CONFETTI_PIECES } from "@/widgets/funding/confettiPieces";
+
+vi.mock("lottie-react", () => ({
+  LottieSvg: ({ src, loop }: { src: string; loop: boolean }) => (
+    <div data-testid="lottie" data-src={src} data-loop={String(loop)} />
+  ),
+}));
 
 describe("FundingCompleteConfetti", () => {
-  it("장식 요소라 스크린리더에서 숨긴다", () => {
-    const { container } = render(<FundingCompleteConfetti />);
+  it("public의 컨페티 로티 파일을 불러온다", () => {
+    render(<FundingCompleteConfetti />);
 
-    expect(container.firstElementChild).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByTestId("lottie")).toHaveAttribute(
+      "data-src",
+      "/lottie/funding-complete-confetti.json",
+    );
   });
 
-  it("CONFETTI_PIECES 개수만큼 조각을 그린다", () => {
-    const { container } = render(<FundingCompleteConfetti />);
+  it("반복 없이 한 번만 재생한다", () => {
+    render(<FundingCompleteConfetti />);
 
-    expect(container.firstElementChild?.children).toHaveLength(CONFETTI_PIECES.length);
+    expect(screen.getByTestId("lottie")).toHaveAttribute("data-loop", "false");
   });
 });

@@ -5,7 +5,8 @@ import { isValidUrl } from "@/utils/isValidUrl";
 
 const PROFILE_PREVIEW_COUNT = 3;
 const PARTICIPANT_COLORS: Color[] = ["orange", "lime", "pink", "blue"];
-const FUNDING_TYPE_TITLE = { BIRTHDAY: "생일 펀딩", SURPRISE: "서프라이즈 펀딩" } as const;
+
+export const formatSurpriseTitle = (name: string) => `${name}의\n서프라이즈 펀딩`;
 
 type Participant = OwnerFundingDetailResponse["participants"][number];
 
@@ -29,7 +30,10 @@ export function toOwnerFundingView(detail: OwnerFundingDetailResponse) {
       imageUrl: toSafeImageUrl(profileImageUrl),
     }));
   return {
-    title: detail.title ?? FUNDING_TYPE_TITLE[detail.type],
+    title:
+      detail.type === "SURPRISE"
+        ? formatSurpriseTitle(detail.celebrantName)
+        : (detail.title ?? `${detail.celebrantName}의 펀딩`),
     story: detail.story ?? "",
     pledge: detail.promise ?? "",
     productName: detail.product.name,

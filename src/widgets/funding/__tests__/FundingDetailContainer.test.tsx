@@ -11,7 +11,8 @@ import FundingDetailContainer from "@/widgets/funding/FundingDetailContainer";
 
 const push = vi.fn();
 const back = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back, replace: vi.fn() }) }));
+const replace = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back, replace }) }));
 
 // 로그인 뮤테이션은 QueryClient가 필요하므로 대체한다
 vi.mock("@/hooks/mutations/auth/useKakaoLoginUriMutation", () => ({
@@ -61,6 +62,7 @@ const ownerDetail: OwnerFundingDetailResponse = {
   shareKey: "share-key-1",
   type: "BIRTHDAY",
   title: "지유의 생일",
+  celebrantName: "지유",
   story: "헤드폰을 바꾸고 싶어요.",
   promise: null,
   product: {
@@ -115,6 +117,17 @@ beforeAll(() => server.listen());
 afterAll(() => server.close());
 afterEach(() => server.resetHandlers());
 
+const useSurpriseResponse = () =>
+  server.use(
+    http.get("*/api/fundings/:fundingId/management", () =>
+      HttpResponse.json({
+        success: true,
+        data: { ...ownerDetail, type: "SURPRISE", title: "지유의 펀딩" },
+        error: null,
+      }),
+    ),
+  );
+
 const render = (ui: ReactElement) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) =>
@@ -123,13 +136,30 @@ const render = (ui: ReactElement) => {
 };
 
 describe("FundingDetailContainer", () => {
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+  });
 
-  it("서프라이즈 펀딩 상세로 자물쇠와 확인 대기 안내를 보여준다", async () => {
+  it("서프라이즈 펀딩 상세는 '{닉네임}의 서프라이즈 펀딩' 제목과 확인 대기 안내를 보여준다", async () => {
+    useSurpriseResponse();
     render(<FundingDetailContainer fundingId="1" friendId="7" />);
 
-    expect(await screen.findByRole("img", { name: "서프라이즈 펀딩" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: /지유의\s서프라이즈 펀딩/ }),
+    ).toBeInTheDocument();
     expect(screen.getByText("확인 대기 2건이 있어요")).toBeInTheDocument();
+  });
+
+  it("되돌아갈 히스토리가 있으면 뒤로가기는 이전 화면으로 돌아간다", async () => {
+    vi.spyOn(window.history, "length", "get").mockReturnValue(3);
+    useSurpriseResponse();
+    render(<FundingDetailContainer fundingId="1" friendId="7" />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "뒤로가기" }));
+
+    await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("친구 id 없이 열어도 서프라이즈 펀딩이면 서프라이즈 개설자 화면으로 보여준다", async () => {
@@ -144,10 +174,11 @@ describe("FundingDetailContainer", () => {
     );
     render(<FundingDetailContainer fundingId="1" />);
 
-    expect(await screen.findByRole("img", { name: "서프라이즈 펀딩" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /서프라이즈 펀딩/ })).toBeInTheDocument();
   });
 
   it("마감된 펀딩 상세는 뒤로가기 버튼이 있고, 누르면 이전 화면으로 돌아간다", async () => {
+    vi.spyOn(window.history, "length", "get").mockReturnValue(3);
     server.use(
       http.get("*/api/fundings/:fundingId/management", () =>
         HttpResponse.json({
@@ -184,12 +215,40 @@ describe("FundingDetailContainer", () => {
     await waitFor(() => expect(button).toBeEnabled());
   });
 
-  it("뒤로가기를 누르면 친구 프로필로 이동한다", async () => {
+  it("되돌아갈 히스토리가 없으면 뒤로가기는 친구 프로필로 이동한다", async () => {
+    useSurpriseResponse();
     render(<FundingDetailContainer fundingId="1" friendId="7" />);
 
     await userEvent.click(await screen.findByRole("button", { name: "뒤로가기" }));
 
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/friends/7"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/friends/7"));
+    expect(back).not.toHaveBeenCalled();
+  });
+
+  it("되돌아갈 히스토리가 없고 친구 id도 없으면 뒤로가기는 홈으로 이동한다", async () => {
+    render(<FundingDetailContainer fundingId="1" />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "뒤로가기" }));
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/home"));
+    expect(back).not.toHaveBeenCalled();
+  });
+
+  it("친구 id가 있어도 일반 펀딩이면 서프라이즈 화면이 아니다", async () => {
+    render(<FundingDetailContainer fundingId="1" friendId="7" />);
+
+    expect(await screen.findByRole("heading", { name: "지유의 생일" })).toBeInTheDocument();
+    expect(screen.queryByText(/확인 대기 \d+건이 있어요/)).not.toBeInTheDocument();
+  });
+
+  it("친구 id가 없는 일반 펀딩도 뒤로가기가 있고, 누르면 이전 화면으로 돌아간다", async () => {
+    vi.spyOn(window.history, "length", "get").mockReturnValue(3);
+    render(<FundingDetailContainer fundingId="1" />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "뒤로가기" }));
+
+    await waitFor(() => expect(back).toHaveBeenCalled());
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("친구 id가 없으면 펀딩 주인 화면으로 관리 상세를 불러오는 동안 스켈레톤을 보여준다", () => {
@@ -198,12 +257,11 @@ describe("FundingDetailContainer", () => {
     expect(container.querySelector("[aria-busy='true']")).not.toBeNull();
   });
 
-  it("펀딩 주인 화면은 관리 상세의 제목·달성률을 보여주고 툴팁·자물쇠는 없다", async () => {
+  it("펀딩 주인 화면은 관리 상세의 제목·달성률을 보여주고 툴팁은 없다", async () => {
     render(<FundingDetailContainer fundingId="1" />);
 
     expect(await screen.findByRole("heading", { name: "지유의 생일" })).toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "45");
-    expect(screen.queryByRole("img", { name: "서프라이즈 펀딩" })).not.toBeInTheDocument();
     expect(screen.queryByText("나도 민재님께 보태볼까요?")).not.toBeInTheDocument();
   });
 

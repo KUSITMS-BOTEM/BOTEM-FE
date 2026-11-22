@@ -24,7 +24,7 @@ import { cn } from "@/utils/cn";
 import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
 import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import { getClosedLabel } from "@/utils/funding/fundingProgress";
-import { toOwnerFundingView } from "@/utils/funding/toOwnerFundingView";
+import { formatSurpriseTitle, toOwnerFundingView } from "@/utils/funding/toOwnerFundingView";
 import BotemEditFlow from "@/widgets/funding/BotemEditFlow";
 import BotemEditSheet from "@/widgets/funding/BotemEditSheet";
 import BotemPopup, { type BotemPopupFriend } from "@/widgets/funding/BotemPopup";
@@ -41,10 +41,10 @@ import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
 import FundingTransferGuideSheet from "@/widgets/funding/FundingTransferGuideSheet";
 import ThankCardSheet from "@/widgets/funding/ThankCardSheet";
 import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
+import RollingPaperContainer from "@/widgets/rolling-paper/RollingPaperContainer";
 import IconShare from "@/assets/icons/icon-share.svg?react";
 import IconDotVertical from "@/assets/icons/icon-dotvertical.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
-import IconLock from "@/assets/icons/icon-lock.svg?react";
 import ProfilePink from "@/assets/icons/multicolor/profile-pink.svg?react";
 
 type FundingDetailViewBaseProps = {
@@ -76,6 +76,9 @@ const PROFILE_COLORS = ["orange", "blue", "pink", "lime"] as const;
 const MOCK_FUNDING = {
   hostName: "지유",
   closed: false,
+  // 보태기 버튼은 참여자 화면(guest)에만 있고, 그쪽은 공유용 상세 응답 값이 덮어쓴다
+  canContributeAmount: true,
+  canParticipate: true,
   extended: false,
   actions: { canCloseEarly: true, canReissueShareCard: true },
   pendingContributionCount: 3,
@@ -95,9 +98,17 @@ const MOCK_FUNDING = {
 // 공유용 상세 응답에는 금액이 없고 달성률만 있어, 화면이 쓰는 모양으로 옮겨 담는다
 const toShareFundingView = (detail: FundingDetailResponse) => ({
   hostName: detail.celebrantName,
-  title: detail.title ?? `${detail.celebrantName}의 펀딩`,
+  title:
+    detail.title ??
+    (detail.type === "SURPRISE"
+      ? formatSurpriseTitle(detail.celebrantName)
+      : `${detail.celebrantName}의 펀딩`),
   story: detail.story ?? undefined,
   pledge: detail.promise ?? undefined,
+  // 목표 달성·조기 마감이면 금액 보태기가 닫힌다. 조기 마감은 달성률·마감일로 알 수 없어 서버 값을 쓴다
+  closed: !detail.canContributeAmount,
+  canContributeAmount: detail.canContributeAmount,
+  canParticipate: detail.canParticipate,
   productName: detail.product.name,
   productImageUrl: detail.product.imageUrl,
   // 응답은 "YYYY-MM-DDTHH:mm:ss"라 날짜만 쓴다
@@ -150,7 +161,8 @@ export default function FundingDetailView({
   const [memberCheckFrom, setMemberCheckFrom] = useState<ShareMemberIntent | null>(null);
   const { mutate: requestKakaoLogin } = useKakaoLoginUriMutation();
   const [isGuestFindOpen, setIsGuestFindOpen] = useState(false);
-  const isMember = memberIntent !== undefined || isLoggedIn;
+  // 서프라이즈 개설자 화면은 로그인한 개설자만 열 수 있다
+  const isMember = memberIntent !== undefined || isLoggedIn || isSurprise;
   // 비회원이 '보태러가기'에서 확인을 마치거나 회원이 보태러가기로 돌아오면 하단이 '메시지 보태기'/'보태기'로 바뀐다
   const [isContributeReady, setIsContributeReady] = useState(memberIntent === "contribute");
   const {
@@ -159,6 +171,7 @@ export default function FundingDetailView({
     myContributions,
     memberHasNoBotem,
     isCheckingMember,
+    isCheckingMyBotem,
     hasConfirmedMyBotem,
     myUnconfirmedCount,
     myBotemFriends,
@@ -186,6 +199,7 @@ export default function FundingDetailView({
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [isRollingPaperOpen, setIsRollingPaperOpen] = useState(false);
   const [thankCardFriend, setThankCardFriend] = useState<BotemPopupFriend | null>(null);
   const closePopup = () => setIsPopupOpen(false);
   const {
@@ -224,6 +238,10 @@ export default function FundingDetailView({
   // 금액 달성(마감)·기간 마감·서버가 알려준 조기 마감 모두 닫힌 펀딩이다
   const closedLabel = getClosedLabel({ percent: funding.progress, deadline: funding.deadline });
   const isClosed = funding.closed || closedLabel !== null;
+  // 메시지 보태기까지 닫히면(마감 후) 보태기 버튼을 모두 숨긴다. 이전에 보탠 사람의 '내 보탬 확인'은 남긴다
+  const isContributeMode = !hasConfirmedMyBotem && (isContributeReady || memberHasNoBotem);
+  const showBottomCta =
+    isGuest && !isCheckingMember && (!isContributeMode || funding.canParticipate);
 
   // 공유 링크로 들어온 친구에게 마감 후 선물 인증을 보여주는 화면이라 개설자 화면은 해당하지 않는다
   if (!confirmsDeposits && isClosed && funding.hasGiftProof) {
@@ -272,14 +290,11 @@ export default function FundingDetailView({
             isGuest && "pb-[calc(8rem+env(safe-area-inset-bottom))]",
           )}>
           <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2.5 py-1">
+            <div className="flex items-start gap-2.5 py-1">
               <ProfilePink aria-hidden className="size-6 shrink-0" />
-              <h1 className="text-semantic-text-strong min-w-0 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-title-a2-z-large)]">
+              <h1 className="text-semantic-text-strong min-w-0 [letter-spacing:var(--letter-spacing-default)] whitespace-pre-line [font:var(--semantic-title-a2-z-large)]">
                 {funding.title}
               </h1>
-              {isSurprise && (
-                <IconLock role="img" aria-label="서프라이즈 펀딩" className="size-6 shrink-0" />
-              )}
             </div>
             <FundingMessage story={funding.story} pledge={funding.pledge} />
           </div>
@@ -307,7 +322,7 @@ export default function FundingDetailView({
               onClick={() => setIsPopupOpen(true)}
               className="flex cursor-pointer items-center gap-2 self-end">
               {/* Figma FUND-PG-008: 펀딩 주인 화면은 툴팁 없이 프로필 묶음만 보여준다 */}
-              {!isOwner && (
+              {!isOwner && funding.canParticipate && (
                 <Tooltip>
                   {isSurprise
                     ? `확인 대기 ${unconfirmedCount}건이 있어요`
@@ -329,37 +344,53 @@ export default function FundingDetailView({
         </div>
         {showRollingPaperCta && (
           <BottomCTA>
-            <Button size="xlarge" variant="fill" disabled={!rollingPaperOpened}>
+            <Button
+              size="xlarge"
+              variant="fill"
+              disabled={!rollingPaperOpened}
+              onClick={() => setIsRollingPaperOpen(true)}>
               롤링페이퍼 보기
             </Button>
           </BottomCTA>
         )}
-        {isGuest && !isCheckingMember && (
+        {showRollingPaperCta && (
+          <RollingPaperContainer
+            fundingId={Number(fundingId)}
+            open={isRollingPaperOpen}
+            showGiftCta={false}
+            onClose={() => setIsRollingPaperOpen(false)}
+          />
+        )}
+        {showBottomCta && (
           <BottomCTA>
             {hasConfirmedMyBotem ? (
               <Button size="xlarge" variant="fill" onClick={() => setIsPopupOpen(true)}>
                 내 보탬 확인
               </Button>
-            ) : isContributeReady || memberHasNoBotem ? (
+            ) : isContributeMode ? (
               <>
                 <Button size="xlarge" variant="weak" onClick={startMessage}>
                   메시지 보태기
                 </Button>
-                <Button size="xlarge" variant="fill" disabled={isClosed} onClick={startContribute}>
-                  보태기
-                </Button>
+                {funding.canContributeAmount && (
+                  <Button size="xlarge" variant="fill" onClick={startContribute}>
+                    보태기
+                  </Button>
+                )}
               </>
             ) : (
               <>
                 <Button size="xlarge" variant="weak" onClick={() => setMemberCheckFrom("myBotem")}>
                   내 보탬 확인
                 </Button>
-                <Button
-                  size="xlarge"
-                  variant="fill"
-                  onClick={() => setMemberCheckFrom("contribute")}>
-                  보태러 가기
-                </Button>
+                {funding.canParticipate && (
+                  <Button
+                    size="xlarge"
+                    variant="fill"
+                    onClick={() => setMemberCheckFrom("contribute")}>
+                    보태러 가기
+                  </Button>
+                )}
               </>
             )}
           </BottomCTA>
@@ -440,9 +471,10 @@ export default function FundingDetailView({
             }}
           />
         ) : (
-          // TODO: 팝업 내부 동작(미확인·수정·메세지·보태기)은 보탬 폼 디자인이 정해지면 연결한다
           <BotemPopup
             open={isPopupOpen}
+            hasMyBotem={hasConfirmedMyBotem}
+            isCheckingMyBotem={isCheckingMyBotem}
             unconfirmedCount={unconfirmedCount}
             friends={funding.friends}
             ownerName={funding.hostName}

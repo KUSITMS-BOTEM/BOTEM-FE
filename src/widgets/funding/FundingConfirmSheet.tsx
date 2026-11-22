@@ -19,6 +19,7 @@ type FundingConfirmSheetProps = {
   submitting?: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  onPreview: () => void;
   onEditInfo: () => void;
   onEditAccount: () => void;
 };
@@ -31,6 +32,7 @@ export default function FundingConfirmSheet({
   submitting = false,
   onClose,
   onConfirm,
+  onPreview,
   onEditInfo,
   onEditAccount,
 }: FundingConfirmSheetProps) {
@@ -44,6 +46,7 @@ export default function FundingConfirmSheet({
       buttons={{
         leftLabel: "미리보기",
         leftColor: "brand",
+        onLeftClick: onPreview,
         rightLabel: "펀딩 열기",
         rightLoading: submitting,
         onRightClick: onConfirm,

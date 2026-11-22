@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Dialog from "@/components/Dialog";
 import OpenSheet from "@/components/OpenSheet";
 import { useCreateFundingMutation } from "@/hooks/mutations/funding/useCreateFundingMutation";
+import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
 import { toCreateFundingRequest } from "@/utils/funding/toCreateFundingRequest";
@@ -15,6 +16,7 @@ import FundingAccountStep, {
 } from "@/widgets/funding/FundingAccountStep";
 import FundingConfirmSheet from "@/widgets/funding/FundingConfirmSheet";
 import FundingInfoStep, { type FundingInfoValues } from "@/widgets/funding/FundingInfoStep";
+import FundingPreviewSheet from "@/widgets/funding/FundingPreviewSheet";
 import FundingWishSelectStep from "@/widgets/funding/FundingWishSelectStep";
 
 type FundingOpenSheetProps = {
@@ -37,6 +39,8 @@ export default function FundingOpenSheet({
 }: FundingOpenSheetProps) {
   const router = useRouter();
   const { mutateAsync: createFunding, isPending } = useCreateFundingMutation();
+  const { data: profile } = useMyProfileQuery();
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedWish, setSelectedWish] = useState<FundingWish | null>(initialWish ?? null);
   const [step, setStep] = useState<Step>("info");
   // 계좌 단계는 처음 진입할 때 마운트해 대표 계좌 조회와 등장 모션이 그때 시작되게 한다
@@ -64,6 +68,7 @@ export default function FundingOpenSheet({
     setInfo(null);
     setAccount(null);
     setConfirmOpen(false);
+    setPreviewOpen(false);
     setEditing(null);
     setDraftInfo(null);
     setDraftAccount(null);
@@ -167,8 +172,17 @@ export default function FundingOpenSheet({
             onClose={handleConfirmClose}
             submitting={submitting || isPending}
             onConfirm={handleConfirm}
+            onPreview={() => setPreviewOpen(true)}
             onEditInfo={() => setEditing("info")}
             onEditAccount={() => setEditing("account")}
+          />
+          <FundingPreviewSheet
+            open={previewOpen}
+            wish={selectedWish}
+            info={confirmInfo}
+            title={profile?.name ? `${profile.name}의 펀딩` : "내 펀딩"}
+            onClose={() => setPreviewOpen(false)}
+            className={className}
           />
           <OpenSheet
             open={editing !== null}

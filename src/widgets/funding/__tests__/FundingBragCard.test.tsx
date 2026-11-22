@@ -38,6 +38,21 @@ describe("FundingBragCard", () => {
     ).toBeInTheDocument();
   });
 
+  it("보탠 사람 이름에 받침이 있으면 '이'를 붙인다", () => {
+    render(
+      <FundingBragCard
+        giverName="이정민"
+        recipientName="서연"
+        productImageUrl="/product.png"
+        productName="소니 WH-1000XM5"
+        deadline="2026-11-20"
+        reduceMotion
+      />,
+    );
+
+    expect(screen.getByText(/이정민이 서연에게\s*보탰어요!/)).toBeInTheDocument();
+  });
+
   it("마감일까지 남은 일수를 D-day 배지로 보여준다", () => {
     renderCard("2026-11-20");
 

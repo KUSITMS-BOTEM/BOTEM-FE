@@ -16,13 +16,11 @@ vi.mock("@/hooks/queries/funding/useFundingDetailQuery", () => ({
 }));
 
 vi.mock("@/widgets/funding/FundingCompleteView", () => ({
-  default: ({
-    funding,
-    isMessageOnly,
-  }: {
-    funding: { giverName: string };
-    isMessageOnly: boolean;
-  }) => <div data-testid="view">{`${funding.giverName}/${isMessageOnly}`}</div>,
+  default: ({ funding, closePath }: { funding: { giverName: string }; closePath?: string }) => (
+    <div data-testid="view" data-close-path={closePath}>
+      {funding.giverName}
+    </div>
+  ),
 }));
 
 const detail = {
@@ -69,21 +67,25 @@ describe("FundingCompleteContainer", () => {
     expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
   });
 
-  it("조회가 끝나면 스토어의 이름·금액으로 완료 화면을 그린다", () => {
-    useFundingContributionStore.getState().setAmount(30000);
+  it("조회가 끝나면 스토어의 이름으로 완료 화면을 그린다", () => {
     setLetter();
     mockQuery({ data: detail, isError: false, refetch: vi.fn() });
     renderContainer();
 
-    expect(screen.getByTestId("view")).toHaveTextContent("민지/false");
+    expect(screen.getByTestId("view")).toHaveTextContent("민지");
   });
 
-  it("금액이 0이면 메시지만 보탠 화면으로 넘긴다", () => {
+  it("개설자(ownerPreview)면 닫기 경로를 자기 펀딩 화면으로 넘기고, 아니면 넘기지 않는다", () => {
     setLetter();
-    mockQuery({ data: detail, isError: false, refetch: vi.fn() });
-    renderContainer();
+    mockQuery({ data: { ...detail, ownerPreview: true }, isError: false, refetch: vi.fn() });
+    const { unmount } = renderContainer();
+    expect(screen.getByTestId("view")).toHaveAttribute("data-close-path", "/funding/12");
+    unmount();
 
-    expect(screen.getByTestId("view")).toHaveTextContent("/true");
+    setLetter();
+    mockQuery({ data: { ...detail, ownerPreview: false }, isError: false, refetch: vi.fn() });
+    renderContainer();
+    expect(screen.getByTestId("view")).not.toHaveAttribute("data-close-path");
   });
 
   it("새로고침으로 편지 입력값이 사라졌으면 공유 페이지로 돌려보낸다", () => {

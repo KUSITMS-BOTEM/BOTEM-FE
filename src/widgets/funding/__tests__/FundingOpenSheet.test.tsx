@@ -275,6 +275,20 @@ describe("FundingOpenSheet", () => {
         expect(confirmSheet().getByText("100159014821")).toBeInTheDocument();
       });
 
+      it("미리보기를 누르면 내 닉네임 제목과 입력한 값이 담긴 미리보기가 열린다", async () => {
+        await openConfirm();
+
+        await userEvent.click(confirmSheet().getByRole("button", { name: "미리보기" }));
+
+        const preview = within(await screen.findByRole("dialog", { name: "미리보기" }));
+        expect(preview.getByText("지유의 펀딩")).toBeInTheDocument();
+        expect(preview.getByText("목표가 1,000원")).toBeInTheDocument();
+        expect(preview.getByRole("progressbar", { name: "펀딩 달성률" })).toHaveAttribute(
+          "aria-valuenow",
+          "60",
+        );
+      });
+
       it("펀딩 열기로 개설 요청을 보내고 성공하면 완료 화면 없이 /home으로 이동한다", async () => {
         createFunding.mockResolvedValue({});
         await openConfirm();

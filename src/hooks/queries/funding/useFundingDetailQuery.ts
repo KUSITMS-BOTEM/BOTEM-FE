@@ -5,9 +5,18 @@ import { fundingService } from "@/apis/funding/fundingService";
 export const fundingDetailQueryKey = (shareKey: string) => ["fundings", "share", shareKey] as const;
 
 // asMember: 토큰을 붙여 조회해야 ownerPreview(개설자 여부)가 채워진다. 비회원 조회는 서버 prefetch 값을 그대로 쓴다
-export const fundingDetailQueryOptions = (shareKey: string, asMember: boolean) =>
+// enabled: 서프라이즈는 로그인 전에 조회하지 않는다. skipGlobalError: 받는 사람의 403은 화면이 직접 처리한다
+type FundingDetailQueryConfig = { enabled?: boolean; skipGlobalError?: boolean };
+
+export const fundingDetailQueryOptions = (
+  shareKey: string,
+  asMember: boolean,
+  { enabled = true, skipGlobalError = false }: FundingDetailQueryConfig = {},
+) =>
   queryOptions({
     queryKey: fundingDetailQueryKey(shareKey),
+    enabled,
+    meta: { skipGlobalError },
     queryFn: () =>
       asMember
         ? fundingService.getFundingDetailAsMember(shareKey)
@@ -18,5 +27,8 @@ export const fundingDetailQueryOptions = (shareKey: string, asMember: boolean) =
     retry: false,
   });
 
-export const useFundingDetailQuery = (shareKey: string, asMember: boolean) =>
-  useQuery(fundingDetailQueryOptions(shareKey, asMember));
+export const useFundingDetailQuery = (
+  shareKey: string,
+  asMember: boolean,
+  config?: FundingDetailQueryConfig,
+) => useQuery(fundingDetailQueryOptions(shareKey, asMember, config));

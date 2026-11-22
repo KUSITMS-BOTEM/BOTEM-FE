@@ -27,13 +27,15 @@ export function useMyBotem({ shareKey, isGuest, isMember, memberIntent, particip
     : undefined;
   // 이 펀딩에서 이름·비밀번호(비회원)나 로그인(회원)으로 내 보탬을 확인하고 나면 하단은 '내 보탬 확인' 버튼만 남는다
   const hasGuestIdentity = useGuestBotemStore(state => state.shareKey === shareKey);
-  // 회원은 서버가 이 펀딩에 보탠 내역이 있는지 알려준다. 비로그인 화면에서는 401이 나가지 않도록 조회하지 않는다
-  const myContributions = useMyContributionsQuery(shareKey, isGuest && isMember);
+  // 회원은 서버가 이 펀딩에 보탠 내역이 있는지 알려준다. 비로그인 화면에서는 401이 나가지 않도록 조회하지 않는다 (서프라이즈 개설자도 회원이라 조회한다)
+  const myContributions = useMyContributionsQuery(shareKey, isMember);
   const memberHasBotem = myContributions.data && myContributions.data.contributions.length > 0;
   const memberHasNoBotem = myContributions.data && myContributions.data.contributions.length === 0;
   // 회원 조회가 끝나기 전에는 하단 버튼을 정할 수 없어 비워 둔다. 조회에 실패하면 두 버튼을 보여주고 중복은 서버가 막는다
   const isCheckingMember = isGuest && isMember && myContributions.isPending;
   const hasConfirmedMyBotem = hasGuestIdentity || !!memberHasBotem;
+  // 서프라이즈 개설자(isGuest=false)도 조회한다. 응답 전에는 이미 보탰는지 몰라 팝업의 신규 참여 버튼을 막는 데 쓴다
+  const isCheckingMyBotem = isMember && myContributions.isPending;
   // 비회원이 보태기를 마치고 돌아오면 본인 확인 응답이 비어 있어 송금 확인 대기·반려 상태를 알 수 없다. 저장해 둔 이름·비밀번호로 한 번 받아 온다
   const autoAccessedShareKeyRef = useRef<string | null>(null);
   useEffect(() => {
@@ -84,6 +86,7 @@ export function useMyBotem({ shareKey, isGuest, isMember, memberIntent, particip
     myContributions,
     memberHasNoBotem,
     isCheckingMember,
+    isCheckingMyBotem,
     hasConfirmedMyBotem,
     myUnconfirmedCount,
     myBotemFriends,

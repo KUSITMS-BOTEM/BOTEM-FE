@@ -15,8 +15,8 @@ vi.mock("@/hooks/queries/payout-account/usePayoutAccountsQuery", () => ({
     data: [{ accountNumber: "100159014821", bank: "TOSS_BANK", isDefault: true }],
   }),
 }));
-const { push } = vi.hoisted(() => ({ push: vi.fn() }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+const { push, replace } = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace }) }));
 vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
   useMyProfileQuery: () => ({ data: { name: "지유" } }),
 }));
@@ -86,6 +86,7 @@ const confirmSheet = () =>
 
 beforeEach(() => {
   push.mockClear();
+  replace.mockClear();
   createSurprise.mockReset();
   mockPointer("coarse");
   vi.useFakeTimers({ toFake: ["Date"] });
@@ -93,6 +94,23 @@ beforeEach(() => {
 });
 
 afterEach(() => vi.useRealTimers());
+
+describe("SurpriseOpenSheet 미리보기", () => {
+  it("확인 시트에서 미리보기를 누르면 입력한 값이 담긴 미리보기가 열린다", async () => {
+    await openConfirm();
+
+    await userEvent.click(confirmSheet().getByRole("button", { name: "미리보기" }));
+
+    const preview = within(await screen.findByRole("dialog", { name: "미리보기" }));
+    expect(preview.getByText("민지의 서프라이즈 펀딩")).toBeInTheDocument();
+    expect(preview.getByText("상품468")).toBeInTheDocument();
+    expect(preview.getByText("목표가 1,000원")).toBeInTheDocument();
+    expect(preview.getByRole("progressbar", { name: "펀딩 달성률" })).toHaveAttribute(
+      "aria-valuenow",
+      "60",
+    );
+  });
+});
 
 describe("SurpriseOpenSheet", () => {
   it("펀딩 정보부터 시작한다", () => {
@@ -172,14 +190,38 @@ describe("SurpriseOpenSheet", () => {
         accountNumber: "100159014821",
         targetAmount: 1000,
         deadline: "2027-12-25",
-        revealAt: "2027-12-26T00:00:00",
+        revealAt: "2027-12-26",
         showOnRecipientProfile: false,
       });
       expect(await screen.findByText("서프라이즈가 시작됐어요!")).toBeInTheDocument();
       expect(push).not.toHaveBeenCalled();
     });
 
-    it("완료 화면을 닫으면 응답 fundingId와 friendId를 달고 상세로 이동한다", async () => {
+    it("완료 화면 카드는 입력값이 아니라 응답의 deadline으로 마감일을 보여준다", async () => {
+      createSurprise.mockResolvedValue({ fundingId: 8, deadline: "2027-12-30T23:59:59.999999" });
+      await openConfirm();
+      await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
+
+      const completeSheet = (await screen.findByText("서프라이즈가 시작됐어요!")).closest(
+        "dialog",
+      ) as HTMLElement;
+
+      expect(within(completeSheet).getByText("12월 30일까지")).toBeInTheDocument();
+    });
+
+    it("응답에 deadline이 없으면 완료 화면 카드는 입력한 마감일을 보여준다", async () => {
+      createSurprise.mockResolvedValue({ fundingId: 8 });
+      await openConfirm();
+      await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
+
+      const completeSheet = (await screen.findByText("서프라이즈가 시작됐어요!")).closest(
+        "dialog",
+      ) as HTMLElement;
+
+      expect(within(completeSheet).getByText("12월 25일까지")).toBeInTheDocument();
+    });
+
+    it("완료 화면을 닫으면 응답 fundingId와 friendId를 달고 히스토리를 교체해 상세로 이동한다", async () => {
       createSurprise.mockResolvedValue({ fundingId: 8 });
       await openConfirm();
       await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
@@ -189,7 +231,8 @@ describe("SurpriseOpenSheet", () => {
       ) as HTMLElement;
       await userEvent.click(within(completeSheet).getByRole("button", { name: "닫기" }));
 
-      expect(push).toHaveBeenCalledWith("/funding/8?friendId=7");
+      expect(replace).toHaveBeenCalledWith("/funding/8?friendId=7");
+      expect(push).not.toHaveBeenCalled();
     });
 
     it("프로필 노출 변경하기에서 예를 고르면 문구와 요청 값이 바뀐다", async () => {

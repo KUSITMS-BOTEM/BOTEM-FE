@@ -7,14 +7,21 @@ type FundingShareContainerProps = {
   shareKey: string;
   memberIntent?: ShareMemberIntent;
   isLoggedIn?: boolean;
+  surprise?: { revealAt: string | null };
 };
 
 export default function FundingShareContainer({
   shareKey,
   memberIntent,
   isLoggedIn,
+  surprise,
 }: FundingShareContainerProps) {
   return (
-    <FundingDetailLoader shareKey={shareKey} memberIntent={memberIntent} isLoggedIn={isLoggedIn} />
+    <FundingDetailLoader
+      shareKey={shareKey}
+      memberIntent={memberIntent}
+      isLoggedIn={isLoggedIn}
+      surprise={surprise}
+    />
   );
 }

@@ -83,6 +83,17 @@ describe("friendHandlers - GET /api/friends/:friendId/wishes/:wishId", () => {
     expect(body.data.sellerName).toEqual(expect.any(String));
   });
 
+  it("진행 중 서프라이즈가 있는 친구의 첫 위시는 그 펀딩 ID를 응답한다", async () => {
+    const { body: profileBody } = await getJson(`${BASE_URL}/6/profile`);
+    const { fundings, wishes } = profileBody.data as FriendProfileResponse;
+
+    const { body: first } = await getJson(`${BASE_URL}/6/wishes/${wishes[0].wishId}`);
+    const { body: second } = await getJson(`${BASE_URL}/6/wishes/${wishes[1].wishId}`);
+
+    expect(first.data.activeSurpriseFundingId).toBe(fundings[0].fundingId);
+    expect(second.data.activeSurpriseFundingId).toBeNull();
+  });
+
   it("없는 위시는 404를 응답한다", async () => {
     const { status } = await getJson(`${BASE_URL}/2/wishes/999`);
 

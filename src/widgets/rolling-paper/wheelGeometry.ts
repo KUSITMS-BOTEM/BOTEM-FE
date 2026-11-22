@@ -41,6 +41,20 @@ export function wrapOffset(index: number, progress: number, count = WHEEL_ITEM_C
   return distance > count / 2 ? distance - count : distance;
 }
 
+// 슬롯은 최대 5개만 그리고 편지는 그보다 많을 수 있다. 가운데에 편지 center가 올 때 slot이 가리키는 편지 번호.
+// 슬롯이 -2.5↔2.5로 넘어가는 순간은 투명한 구간이라 편지가 바뀌어도 보이지 않는다
+export function toLetterIndex(
+  slot: number,
+  center: number,
+  slotCount: number,
+  letterCount: number,
+) {
+  if (letterCount <= slotCount) return slot;
+  const distance = (((slot - center) % slotCount) + slotCount) % slotCount;
+  const offset = distance > slotCount / 2 ? distance - slotCount : distance;
+  return (((center + offset) % letterCount) + letterCount) % letterCount;
+}
+
 // 중앙에서 한 칸 이상 멀어지면 같은 값으로 고정되는 0~1 거리
 const sideRatio = (offset: number) => Math.min(Math.abs(offset), 1);
 

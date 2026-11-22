@@ -10,10 +10,12 @@ import { useCreateSurpriseFundingMutation } from "@/hooks/mutations/funding/useC
 import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
 import { toCreateSurpriseFundingRequest } from "@/utils/funding/toCreateSurpriseFundingRequest";
+import { formatSurpriseTitle } from "@/utils/funding/toOwnerFundingView";
 import FundingAccountStep, {
   type FundingAccountValues,
 } from "@/widgets/funding/FundingAccountStep";
 import FundingOpenCompleteSheet from "@/widgets/funding/FundingOpenCompleteSheet";
+import FundingPreviewSheet from "@/widgets/funding/FundingPreviewSheet";
 import SurpriseConfirmSheet from "@/widgets/funding/SurpriseConfirmSheet";
 import SurpriseInfoStep, { type SurpriseInfoValues } from "@/widgets/funding/SurpriseInfoStep";
 import SurpriseProfileExposureSheet from "@/widgets/funding/SurpriseProfileExposureSheet";
@@ -57,8 +59,10 @@ export default function SurpriseOpenSheet({
   const [exposureOpen, setExposureOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [createdFundingId, setCreatedFundingId] = useState<number | null>(null);
   const [createdShareKey, setCreatedShareKey] = useState<string | null>(null);
+  const [createdDeadline, setCreatedDeadline] = useState<string | null>(null);
   // 확인 시트를 연 채로 그 위에 띄우는 수정 시트
   const [editing, setEditing] = useState<Step | null>(null);
   const [editingExposure, setEditingExposure] = useState(false);
@@ -82,8 +86,10 @@ export default function SurpriseOpenSheet({
     setExposureOpen(false);
     setConfirmOpen(false);
     setCompleteOpen(false);
+    setPreviewOpen(false);
     setCreatedFundingId(null);
     setCreatedShareKey(null);
+    setCreatedDeadline(null);
     setEditing(null);
     setEditingExposure(false);
     setDraftInfo(null);
@@ -108,9 +114,10 @@ export default function SurpriseOpenSheet({
     handleClose();
   };
 
-  // 시트를 닫지 않고 이동만 한다. 이동이 끝나 이 화면이 언마운트될 때 함께 사라져 뒤 화면이 비치지 않는다
+  // 시트를 닫지 않고 이동만 한다. 이동이 끝나 이 화면이 언마운트될 때 함께 사라져 뒤 화면이 비치지 않는다.
+  // 위시 상세를 히스토리에서 교체해야 상세에서 뒤로 갈 때 위시 상세를 거치지 않고 친구 프로필로 간다
   const handleCompleteClose = () => {
-    router.push(`/funding/${createdFundingId}?friendId=${encodeURIComponent(recipientId)}`);
+    router.replace(`/funding/${createdFundingId}?friendId=${encodeURIComponent(recipientId)}`);
   };
 
   const handleInfoNext = (values: SurpriseInfoValues) => {
@@ -145,6 +152,7 @@ export default function SurpriseOpenSheet({
       );
       setCreatedFundingId(created.fundingId);
       setCreatedShareKey(created.shareKey);
+      setCreatedDeadline(created.deadline ?? null);
     } catch {
       // 에러 안내는 전역 MutationCache onError가 처리하므로 여기서는 재시도할 수 있게 잠금만 푼다
       setSubmitting(false);
@@ -214,6 +222,7 @@ export default function SurpriseOpenSheet({
             submitting={submitting || isPending}
             onClose={handleConfirmClose}
             onConfirm={handleConfirm}
+            onPreview={() => setPreviewOpen(true)}
             onEditInfo={() => setEditing("info")}
             onEditExposure={() => setEditingExposure(true)}
             onEditAccount={() => setEditing("account")}
@@ -254,13 +263,22 @@ export default function SurpriseOpenSheet({
             }}
             onClose={() => setEditingExposure(false)}
           />
+          <FundingPreviewSheet
+            open={previewOpen}
+            wish={wish}
+            info={confirmInfo}
+            title={formatSurpriseTitle(recipientName)}
+            locked
+            onClose={() => setPreviewOpen(false)}
+            className={className}
+          />
           {createdShareKey !== null && (
             <FundingOpenCompleteSheet
               open={completeOpen}
               variant="surprise"
               recipientName={recipientName}
               wish={wish}
-              info={confirmInfo}
+              info={{ ...confirmInfo, deadline: createdDeadline ?? confirmInfo.deadline }}
               shareKey={createdShareKey}
               onClose={handleCompleteClose}
               className={className}
