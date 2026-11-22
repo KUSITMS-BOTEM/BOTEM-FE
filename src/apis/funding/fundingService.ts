@@ -16,6 +16,7 @@ import type {
   ExtendFundingResponse,
 } from "@/types/funding/fundingManagement";
 import type { FundingResultResponse } from "@/types/funding/fundingResult";
+import type { RollingPaperResponse } from "@/types/funding/rollingPaper";
 import type {
   CreateRollingPaperAttachmentUploadUrlRequest,
   RollingPaperAttachmentUploadUrlResponse,
@@ -87,6 +88,8 @@ export const fundingService = {
       { searchParams: { excludePendingContributions } },
     ),
 
+  getRollingPaper: (fundingId: number) =>
+    clientApi.get<RollingPaperResponse>(`/api/fundings/${fundingId}/rolling-paper`),
   createRollingPaperAttachmentUploadUrl: (
     shareKey: string,
     body: CreateRollingPaperAttachmentUploadUrlRequest,

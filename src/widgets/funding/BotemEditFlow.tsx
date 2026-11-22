@@ -78,7 +78,7 @@ export default function BotemEditFlow({
 
   return (
     <>
-      {/* TODO(API): 확인 시트(owner·surprise 팝업에서 진입)의 onSubmit은 아직 연결 전이다. 회원·비회원 내 보탬 시트 경로는 skipIdentity로 이 시트를 건너뛴다 */}
+      {/* 회원·비회원·서프라이즈 개설자 경로는 모두 skipIdentity로 이 시트를 건너뛴다. 이 시트는 skipIdentity가 아닐 때만 열리며 onSubmit은 아직 서버 확인과 연결 전이다 */}
       <BotemEditSheet
         open={open && !skipIdentity}
         onClose={onClose}

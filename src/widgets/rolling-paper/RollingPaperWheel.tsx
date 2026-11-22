@@ -7,13 +7,15 @@ import {
   animate,
   motion,
   useMotionValue,
+  useMotionValueEvent,
   useReducedMotion,
   type AnimationPlaybackControls,
 } from "framer-motion";
 
-// TODO: 임시 Play 버튼. 디자이너의 VoicePlayer·PlayButton 컴포넌트가 나와 분리할 때 이 import와 아래 사용처를 함께 제거할 것
-import IconPlayButton from "@/assets/icons/multicolor/icon-play-button.svg?react";
-import { DUMMY_LETTERS } from "@/widgets/rolling-paper/dummyLetters";
+import { useAudioPlayback } from "@/hooks/useAudioPlayback";
+import type { LetterPaperProps } from "@/widgets/letter-paper/LetterPaper";
+import PlayButton from "@/widgets/letter-paper/PlayButton";
+import type { RollingPaperVoice } from "@/widgets/rolling-paper/toRollingPaperVoice";
 import RollingPaperWheelCard from "@/widgets/rolling-paper/RollingPaperWheelCard";
 import RollingPaperWheelProfile from "@/widgets/rolling-paper/RollingPaperWheelProfile";
 import {
@@ -26,6 +28,7 @@ import {
   PX_PER_STEP,
   WHEEL_ITEM_COUNT,
   clampProgress,
+  toLetterIndex,
   toSnapTarget,
   toWheelOffset,
 } from "@/widgets/rolling-paper/wheelGeometry";
@@ -42,18 +45,30 @@ type DragState = { startY: number; startProgress: number; moved: boolean };
 
 // 편지지와 프로필이 하나의 progress를 공유해 세로 드래그로 함께 회전한다
 type RollingPaperWheelProps = {
-  count: number;
+  letters: LetterPaperProps[];
+  // letters와 같은 순서. 음성이 없는 편지지는 null이라 확대해도 Voice Player가 나오지 않는다
+  voices?: (RollingPaperVoice | null)[];
 };
 
-// 5개 미만은 순환 없이 양 끝에서 멈추고, 1개는 드래그해도 움직이지 않는다
-export default function RollingPaperWheel({ count }: RollingPaperWheelProps) {
-  const itemCount = Math.min(count, WHEEL_ITEM_COUNT);
+// 5개 미만은 순환 없이 양 끝에서 멈추고, 1개는 드래그해도 움직이지 않는다.
+// 5개를 넘으면 슬롯 5개를 돌려 쓰며 편지 전체를 순환한다
+export default function RollingPaperWheel({ letters, voices = [] }: RollingPaperWheelProps) {
+  const itemCount = Math.min(letters.length, WHEEL_ITEM_COUNT);
   const items = Array.from({ length: itemCount }, (_, index) => index);
   const reduceMotion = useReducedMotion() ?? false;
   const progress = useMotionValue(0);
+  // 가운데에 있는 편지 번호. 슬롯이 어느 편지를 그릴지 정한다
+  const [center, setCenter] = useState(0);
+  useMotionValueEvent(progress, "change", value => setCenter(Math.round(value)));
   const [ready, setReady] = useState(reduceMotion);
   // 확대되면 편지지가 커지고 프로필이 숨겨지며 Voice Player가 올라온다
   const [expanded, setExpanded] = useState(false);
+  // 확대된 순간 가운데에 있던 편지지 번호. Voice Player가 이 편지지의 음성을 보여준다
+  const [activeIndex, setActiveIndex] = useState(0);
+  // 닫히는 모션 동안 내용이 비지 않도록 voice는 유지하고, 재생만 확대 중일 때로 한정한다
+  const voice = voices[activeIndex] ?? null;
+  const showVoicePlayer = expanded && voice !== null;
+  const { isPlaying, toggle } = useAudioPlayback(showVoicePlayer ? voice.url : undefined);
   const dragRef = useRef<DragState | null>(null);
   // 터치는 드래그 뒤에도 click이 올 수 있어, 직전 제스처가 드래그였는지 기억해 카드 탭으로 오인하지 않게 한다
   const movedRef = useRef(false);
@@ -62,11 +77,10 @@ export default function RollingPaperWheel({ count }: RollingPaperWheelProps) {
   // 스냅이 진행 중이어도 지금 가운데 편지지로 휠을 확정해, 확대된 뒤 휠이 다른 카드로 계속 도는 일이 없게 한다
   const expand = () => {
     snapRef.current?.stop();
-    snapRef.current = animate(
-      progress,
-      clampProgress(Math.round(progress.get()), itemCount),
-      SNAP_SPRING,
-    );
+    const center = clampProgress(Math.round(progress.get()), itemCount);
+    snapRef.current = animate(progress, center, SNAP_SPRING);
+    // 5장 이상은 progress가 순환해 범위를 넘을 수 있어 편지지 번호로 접는다
+    setActiveIndex(((center % letters.length) + letters.length) % letters.length);
     setExpanded(true);
   };
   const collapse = () => setExpanded(false);
@@ -111,7 +125,8 @@ export default function RollingPaperWheel({ count }: RollingPaperWheelProps) {
       return;
     }
     if (!ready) return;
-    if (event.key === "Enter") {
+    // 재생 버튼 같은 자식에서 올라온 Enter는 버튼의 기본 동작에 맡긴다
+    if (event.key === "Enter" && event.target === event.currentTarget) {
       event.preventDefault();
       expand();
       return;
@@ -153,7 +168,7 @@ export default function RollingPaperWheel({ count }: RollingPaperWheelProps) {
       role="group"
       aria-label="롤링페이퍼 편지지 목록. 위아래 방향키로 이동"
       tabIndex={0}
-      className="absolute inset-0 touch-none overflow-hidden"
+      className="absolute inset-0 touch-none overflow-hidden select-none"
       onKeyDown={handleKeyDown}
       onClick={() => expanded && collapse()}
       onPointerDown={handlePointerDown}
@@ -171,7 +186,7 @@ export default function RollingPaperWheel({ count }: RollingPaperWheelProps) {
           {items.map(index => (
             <RollingPaperWheelCard
               key={`card-${index}`}
-              letter={DUMMY_LETTERS[index]}
+              letter={letters[toLetterIndex(index, center, itemCount, letters.length)]}
               index={index}
               count={itemCount}
               progress={progress}
@@ -200,22 +215,30 @@ export default function RollingPaperWheel({ count }: RollingPaperWheelProps) {
         {/* TODO: 디자이너의 VoicePlayer 컴포넌트가 나오면 분리 예정. 그 전까지는 문구·크기를 하드코딩한다 */}
         <motion.div
           data-testid="voice-player"
-          aria-hidden={!expanded}
+          aria-hidden={!showVoicePlayer}
           className="bg-semantic-fill-default/70 absolute inset-x-[17px] bottom-[86px] flex flex-col gap-5 rounded-[17px] px-4 pt-4 pb-3 shadow-[0px_4px_16px_0px_var(--color-semantic-shadow-weak)]"
           variants={VOICE_PLAYER_VARIANTS}
           initial={false}
-          animate={expanded ? "shown" : "hidden"}
+          animate={showVoicePlayer ? "shown" : "hidden"}
           onClick={event => event.stopPropagation()}>
-          <p className="text-semantic-text-strong [letter-spacing:var(--letter-spacing-default)] opacity-[0.37] [font:var(--semantic-label-small-strong)]">
-            지유야 생일 진짜 축하해! 올해는 꼭 같이 여행 가자. 선물 잘 쓰고 맛있는 것도 많이 먹어.
-            사랑해!
-          </p>
-          <div className="flex items-center justify-between">
-            <p className="text-semantic-text-strong [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-x-small-weak)]">
-              23초 · 민지님의 녹음
+          {voice?.transcript && (
+            <p className="text-semantic-text-strong [letter-spacing:var(--letter-spacing-default)] opacity-[0.37] [font:var(--semantic-label-small-strong)]">
+              {voice.transcript}
             </p>
-            <IconPlayButton className="size-7.5" />
-          </div>
+          )}
+          {voice && (
+            <div className="flex items-center justify-between">
+              <p className="text-semantic-text-strong [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-x-small-weak)]">
+                {voice.durationSeconds !== null && `${voice.durationSeconds}초 · `}
+                {voice.senderName}님의 녹음
+              </p>
+              <PlayButton
+                color={letters[activeIndex]?.color ?? "orange"}
+                isPlaying={isPlaying}
+                onClick={toggle}
+              />
+            </div>
+          )}
         </motion.div>
       </MotionConfig>
     </div>

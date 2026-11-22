@@ -20,8 +20,7 @@ export function toCreateSurpriseFundingRequest(
     accountNumber: account.accountNumber,
     targetAmount: Number(info.targetAmount),
     deadline: info.deadline,
-    // 공개 시간은 밤 12시(자정)로 고정이다
-    revealAt: `${info.revealDate}T00:00:00`,
+    revealAt: info.revealDate,
     showOnRecipientProfile,
   };
 }

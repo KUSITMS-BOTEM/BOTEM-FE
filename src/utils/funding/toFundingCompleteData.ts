@@ -1,23 +1,19 @@
 import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
 
 export type FundingCompleteData = {
-  fundingId: number;
   hostName: string;
   giverName: string;
   contributionOrder: number;
-  risePercent: number;
   productName: string;
   productImageUrl: string;
   deadline: string;
-  percent: number;
-  targetAmount: number;
 };
 
-type ContributionInput = { giverName: string; amount: number };
+type ContributionInput = { giverName: string };
 
 export function toFundingCompleteData(
   detail: FundingDetailResponse,
-  { giverName, amount }: ContributionInput,
+  { giverName }: ContributionInput,
 ): FundingCompleteData {
   // 서버가 내 참여를 표시해 주지 않아 이름으로 찾고, 못 찾으면 방금 보탠 마지막 순번으로 본다
   const order =
@@ -25,15 +21,11 @@ export function toFundingCompleteData(
     detail.participantCount;
 
   return {
-    fundingId: detail.fundingId,
     hostName: detail.celebrantName,
     giverName,
     contributionOrder: order,
-    risePercent: detail.targetAmount > 0 ? Math.round((amount / detail.targetAmount) * 100) : 0,
     productName: detail.product.name,
     productImageUrl: detail.product.imageUrl,
     deadline: detail.deadline,
-    percent: Math.min(100, detail.confirmedPercentage + detail.pendingPercentage),
-    targetAmount: detail.targetAmount,
   };
 }

@@ -117,7 +117,6 @@ export default function FundingRevealContainer() {
         </BottomCTA>
         <RollingPaperContainer
           fundingId={id}
-          count={result.messageCount}
           open={messagesOpen}
           onClose={() => setMessagesOpen(false)}
         />

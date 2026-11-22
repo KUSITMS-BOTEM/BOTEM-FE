@@ -93,24 +93,32 @@ const createFundings = (count: number): FriendFundingResponse[] =>
     };
   });
 
-const createWishes = (count: number): FriendWishDetailResponse[] =>
-  MOCK_RECOMMENDED_PRODUCTS.slice(0, count).map(product => ({
+// activeSurpriseFundingId가 있으면 첫 위시가 그 서프라이즈의 상품이다(createFundings의 첫 펀딩과 같은 상품)
+const createWishes = (
+  count: number,
+  activeSurpriseFundingId: number | null = null,
+): FriendWishDetailResponse[] =>
+  MOCK_RECOMMENDED_PRODUCTS.slice(0, count).map((product, index) => ({
     wishId: 200 + product.id,
     productName: product.name,
     productImageUrl: product.imageUrl,
     price: product.price,
     sellerName: product.sellerName,
     productUrl: "https://link.coupang.com/a/example",
-    activeSurpriseFundingId: null,
+    activeSurpriseFundingId: index === 0 ? activeSurpriseFundingId : null,
   }));
 
 // 친구 프로필 4가지 분기(펀딩 O/X × 위시 O/X)를 친구별로 확인할 수 있게 배정한다. 목록에 없는 친구는 404
-const PROFILE_CASES: Record<number, { fundingCount: number; wishCount: number }> = {
+const PROFILE_CASES: Record<
+  number,
+  { fundingCount: number; wishCount: number; activeSurpriseFundingId?: number }
+> = {
   2: { fundingCount: 5, wishCount: 2 },
   3: { fundingCount: 1, wishCount: 0 },
   4: { fundingCount: 0, wishCount: 2 },
   5: { fundingCount: 0, wishCount: 0 },
-  6: { fundingCount: 1, wishCount: 2 },
+  // 하린: 진행 중 서프라이즈(펀딩 100)의 상품이 첫 위시라 위시 상세에서 "같이 보태기"가 나온다
+  6: { fundingCount: 1, wishCount: 2, activeSurpriseFundingId: 100 },
   7: { fundingCount: 0, wishCount: 0 },
 };
 
@@ -183,7 +191,7 @@ export const friendHandlers = [
     await delay(500);
     const found = findFriendCase(Number(params.friendId));
     const wish = found
-      ? createWishes(found.profileCase.wishCount).find(
+      ? createWishes(found.profileCase.wishCount, found.profileCase.activeSurpriseFundingId).find(
           item => item.wishId === Number(params.wishId),
         )
       : undefined;

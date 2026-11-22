@@ -45,6 +45,8 @@ export type FundingDetailResponse = {
   story: string | null;
   promise: string | null;
   deadline: string;
+  // 서프라이즈의 공개 시각(마감일과 별개로 받는 사람 생일 당일 0시). 생일 펀딩은 null
+  revealAt: string | null;
   extended: boolean;
   remainingDays: number | null;
   confirmedPercentage: number;

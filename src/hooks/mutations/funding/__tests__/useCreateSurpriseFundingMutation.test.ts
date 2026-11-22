@@ -20,7 +20,7 @@ const body: CreateSurpriseFundingRequest = {
   accountNumber: "100159014821",
   targetAmount: 350000,
   deadline: "2026-11-30",
-  revealAt: "2026-12-01T00:00:00",
+  revealAt: "2026-12-01",
   showOnRecipientProfile: true,
 };
 const created = {

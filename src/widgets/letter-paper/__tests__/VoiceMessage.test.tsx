@@ -85,6 +85,16 @@ describe("VoiceMessage", () => {
       expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2);
     });
 
+    it("audioUrl이 있으면 그 주소를 재생하고 object URL은 만들지 않는다", async () => {
+      render(<VoiceMessage audioUrl="https://cdn.example.com/voice.m4a" />);
+
+      await userEvent.click(screen.getByRole("button", { name: "음성 메시지 재생" }));
+
+      expect(Audio).toHaveBeenCalledWith("https://cdn.example.com/voice.m4a");
+      expect(URL.createObjectURL).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "음성 메시지 정지" })).toBeInTheDocument();
+    });
+
     it("재생이 끝나면 원래 색으로 돌아온다", async () => {
       render(<VoiceMessage audio={audio} />);
 

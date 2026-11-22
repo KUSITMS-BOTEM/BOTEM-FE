@@ -33,7 +33,10 @@ export type OwnerFundingDetailResponse = {
   fundingId: number;
   shareKey: string;
   type: FundingType;
+  // 예전에 개설자가 입력한 선택 제목. 제목 입력이 없어진 뒤 개설된 펀딩과 서프라이즈는 null이다
   title: string | null;
+  // 화면 제목을 조합할 이름. 생일 펀딩은 개설자, 서프라이즈는 받는 사람(탈퇴했으면 '탈퇴한 사용자')
+  celebrantName: string;
   story: string | null;
   promise: string | null;
   product: FundingDetailProductResponse;

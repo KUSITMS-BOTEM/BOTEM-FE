@@ -33,6 +33,10 @@ type BotemPopupProps = {
   isHost?: boolean;
   // 내 펀딩의 주인이 보는 팝업이면 받은 보탬 확인·메세지·감사카드만 보여주고 보태기 버튼은 없다
   isOwner?: boolean;
+  // 개설자가 이 펀딩에 이미 보탰는지. 보탰으면 보태기 버튼 대신 수정 행을 보여준다
+  hasMyBotem?: boolean;
+  // 내 보탬 조회 중이면 이미 보탰는지 몰라 신규 참여 버튼을 막는다
+  isCheckingMyBotem?: boolean;
   messageCount?: number;
   onClose: () => void;
   onUnconfirmedClick: () => void;
@@ -83,6 +87,8 @@ export default function BotemPopup({
   isClosed,
   isHost = false,
   isOwner = false,
+  hasMyBotem = false,
+  isCheckingMyBotem = false,
   messageCount = 0,
   onClose,
   onUnconfirmedClick,
@@ -164,7 +170,8 @@ export default function BotemPopup({
               description="펀딩 완료 후 볼 수 있어요"
             />
           ) : (
-            !isClosed && (
+            !isClosed &&
+            (!isHost || hasMyBotem) && (
               <BotemPopupRow
                 icon={<IconTerms />}
                 title="내 보탬 수정하기"
@@ -248,20 +255,26 @@ export default function BotemPopup({
             className="from-semantic-background-default/0 to-semantic-background-default pointer-events-none absolute inset-x-0 bottom-0 h-[71px] bg-gradient-to-b"
           />
         )}
-        {!isOwner && !(isHost && isClosed) && (
+        {!isOwner && isHost && (hasMyBotem || isClosed) && <div className="h-4 w-full shrink-0" />}
+        {!isOwner && !(isHost && (hasMyBotem || isClosed)) && (
           <div className="pointer-events-none relative -mt-9 flex w-full flex-col">
             <div
               aria-hidden
               className="from-semantic-background-default/0 to-semantic-background-default h-9 w-full bg-gradient-to-b"
             />
             <div className="bg-semantic-background-default pointer-events-auto flex w-full gap-2 px-4 pt-6 pb-4">
-              <Button variant="weak" size="large" className="flex-1" onClick={onMessageClick}>
+              <Button
+                variant="weak"
+                size="large"
+                className="flex-1"
+                disabled={isCheckingMyBotem}
+                onClick={onMessageClick}>
                 메세지 보태기
               </Button>
               <Button
                 size="large"
                 className="flex-1"
-                disabled={isClosed}
+                disabled={isClosed || isCheckingMyBotem}
                 onClick={onContributeClick}>
                 보태기
               </Button>

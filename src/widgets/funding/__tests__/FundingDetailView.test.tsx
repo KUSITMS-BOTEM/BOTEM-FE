@@ -171,6 +171,7 @@ const ownerDetail: OwnerFundingDetailResponse = {
   shareKey: "share-key-1",
   type: "BIRTHDAY",
   title: "서연의 졸업",
+  celebrantName: "서연",
   story: "졸업 선물로 노트북을 받고 싶어요.",
   promise: null,
   product: {
@@ -515,19 +516,34 @@ describe("FundingDetailView", () => {
       expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
     });
 
-    it("기간이 마감되면 '보태기'는 비활성이고 '메시지 보태기'만 누를 수 있다", async () => {
-      vi.useFakeTimers({ toFake: ["Date"], now: new Date("2027-01-02T00:00:00") });
-      try {
-        const user = userEvent.setup();
-        render(<FundingDetailView detail={DETAIL} fundingId="1" />);
+    it("금액 보태기가 닫히면(목표 달성·조기 마감) '메시지 보태기'만 보인다", async () => {
+      const user = userEvent.setup();
+      render(
+        <FundingDetailView detail={{ ...DETAIL, canContributeAmount: false }} fundingId="1" />,
+      );
 
-        await enterGuestContributeMode(user);
+      await enterGuestContributeMode(user);
 
-        expect(screen.getByRole("button", { name: "보태기" })).toBeDisabled();
-        expect(screen.getByRole("button", { name: "메시지 보태기" })).toBeEnabled();
-      } finally {
-        vi.useRealTimers();
-      }
+      expect(screen.getByRole("button", { name: "메시지 보태기" })).toBeEnabled();
+      expect(screen.queryByRole("button", { name: "보태기" })).not.toBeInTheDocument();
+    });
+
+    it("메시지 보태기까지 닫히면(마감 후) 보태기 버튼이 모두 사라지고 툴팁도 숨긴다", async () => {
+      const user = userEvent.setup();
+      render(
+        <FundingDetailView
+          detail={{ ...DETAIL, canContributeAmount: false, canParticipate: false }}
+          fundingId="1"
+        />,
+      );
+
+      expect(screen.queryByRole("button", { name: "보태러 가기" })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "내 보탬 확인" })).toBeInTheDocument();
+      expect(screen.queryByText(/메시지로 보탤까요|메시지만 보낼 수/)).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "내 보탬 확인" }));
+      await user.click(screen.getByRole("button", { name: "아니오" }));
+      expect(screen.queryByRole("button", { name: "메시지 보태기" })).not.toBeInTheDocument();
     });
 
     it("메시지 보태기는 금액·송금 안내 없이 편지 → 비밀번호 → 완료 페이지로 이동하고 스토어에 편지·비밀번호만 담긴다", async () => {

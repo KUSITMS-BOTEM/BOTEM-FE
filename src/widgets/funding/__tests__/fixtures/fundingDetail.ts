@@ -19,6 +19,7 @@ export const FUNDING_DETAIL: FundingDetailResponse = {
   story: "올해 생일엔 출퇴근길에 쓸 노캔 헤드폰이 갖고 싶어요. 조금씩 보태주면 감동할게요!",
   promise: "펀딩이 성공하면 헤드폰 끼고 출근하는 인증샷을 꼭 올릴게요!",
   deadline: "2026-12-31T23:59:59",
+  revealAt: null,
   extended: false,
   remainingDays: 41,
   confirmedPercentage: 60,

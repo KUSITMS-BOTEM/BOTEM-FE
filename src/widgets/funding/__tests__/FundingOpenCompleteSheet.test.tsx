@@ -71,32 +71,30 @@ describe("FundingOpenCompleteSheet", () => {
     mockProfile("이정민");
     renderSheet();
 
-    expect(screen.getByText("이정민가 여는")).toBeInTheDocument();
+    expect(screen.getByText("이정민이 여는")).toBeInTheDocument();
   });
 
   describe("공유하기", () => {
-    const originalShare = Object.getOwnPropertyDescriptor(navigator, "share");
-    afterEach(() => {
-      if (originalShare) Object.defineProperty(navigator, "share", originalShare);
-      else delete (navigator as unknown as Record<string, unknown>).share;
-    });
-
-    it("클릭하면 수신자 이름이 든 제목과 /share/1 링크로 공유한다", async () => {
+    it("클릭하면 링크 대신 카드를 이미지로 공유한다", async () => {
       mockProfile("지유");
-      const share = vi.fn().mockResolvedValue(undefined);
-      Object.defineProperty(navigator, "share", {
-        value: share,
-        configurable: true,
-        writable: true,
-      });
       renderSheet();
 
       await userEvent.click(screen.getByRole("button", { name: "공유하기" }));
 
-      expect(share).toHaveBeenCalledWith({
-        title: "민지님 서프라이즈 펀딩",
-        url: `${window.location.origin}/share/1`,
-      });
+      expect(saveNodeAsImageMock).toHaveBeenCalledWith(
+        expect.any(HTMLElement),
+        "민지의\n생일 펀딩-공유-카드.png",
+      );
+    });
+
+    it("이미지 생성에 실패하면 실패 토스트를 보여준다", async () => {
+      mockProfile("지유");
+      saveNodeAsImageMock.mockRejectedValueOnce(new Error("fail"));
+      renderSheet();
+
+      await userEvent.click(screen.getByRole("button", { name: "공유하기" }));
+
+      expect(await screen.findByText("이미지를 저장하지 못했어요")).toBeInTheDocument();
     });
   });
 
