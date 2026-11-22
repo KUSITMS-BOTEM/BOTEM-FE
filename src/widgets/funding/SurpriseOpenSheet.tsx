@@ -112,9 +112,10 @@ export default function SurpriseOpenSheet({
     handleClose();
   };
 
-  // 시트를 닫지 않고 이동만 한다. 이동이 끝나 이 화면이 언마운트될 때 함께 사라져 뒤 화면이 비치지 않는다
+  // 시트를 닫지 않고 이동만 한다. 이동이 끝나 이 화면이 언마운트될 때 함께 사라져 뒤 화면이 비치지 않는다.
+  // 위시 상세를 히스토리에서 교체해야 상세에서 뒤로 갈 때 위시 상세를 거치지 않고 친구 프로필로 간다
   const handleCompleteClose = () => {
-    router.push(`/funding/${createdFundingId}?friendId=${encodeURIComponent(recipientId)}`);
+    router.replace(`/funding/${createdFundingId}?friendId=${encodeURIComponent(recipientId)}`);
   };
 
   const handleInfoNext = (values: SurpriseInfoValues) => {

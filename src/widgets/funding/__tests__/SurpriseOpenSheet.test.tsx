@@ -15,8 +15,8 @@ vi.mock("@/hooks/queries/payout-account/usePayoutAccountsQuery", () => ({
     data: [{ accountNumber: "100159014821", bank: "TOSS_BANK", isDefault: true }],
   }),
 }));
-const { push } = vi.hoisted(() => ({ push: vi.fn() }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+const { push, replace } = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace }) }));
 vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
   useMyProfileQuery: () => ({ data: { name: "지유" } }),
 }));
@@ -86,6 +86,7 @@ const confirmSheet = () =>
 
 beforeEach(() => {
   push.mockClear();
+  replace.mockClear();
   createSurprise.mockReset();
   mockPointer("coarse");
   vi.useFakeTimers({ toFake: ["Date"] });
@@ -196,7 +197,7 @@ describe("SurpriseOpenSheet", () => {
       expect(push).not.toHaveBeenCalled();
     });
 
-    it("완료 화면을 닫으면 응답 fundingId와 friendId를 달고 상세로 이동한다", async () => {
+    it("완료 화면을 닫으면 응답 fundingId와 friendId를 달고 히스토리를 교체해 상세로 이동한다", async () => {
       createSurprise.mockResolvedValue({ fundingId: 8 });
       await openConfirm();
       await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
@@ -206,7 +207,8 @@ describe("SurpriseOpenSheet", () => {
       ) as HTMLElement;
       await userEvent.click(within(completeSheet).getByRole("button", { name: "닫기" }));
 
-      expect(push).toHaveBeenCalledWith("/funding/8?friendId=7");
+      expect(replace).toHaveBeenCalledWith("/funding/8?friendId=7");
+      expect(push).not.toHaveBeenCalled();
     });
 
     it("프로필 노출 변경하기에서 예를 고르면 문구와 요청 값이 바뀐다", async () => {

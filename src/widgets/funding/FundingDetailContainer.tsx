@@ -20,13 +20,19 @@ export default function FundingDetailContainer({
   const router = useRouter();
   const ownerQuery = useFundingManagementQuery(Number(fundingId));
 
+  // push로 프로필에 가면 이 화면이 히스토리에 남아 프로필에서 뒤로 갈 때 다시 돌아온다. 되돌아갈 히스토리가 없을 때만 프로필로 보낸다
+  const handleBack = () => {
+    if (friendId && window.history.length <= 1) router.push(`/friends/${friendId}`);
+    else router.back();
+  };
+
   if (ownerQuery.data) {
     return (
       <FundingDetailView
         fundingId={fundingId}
         variant={ownerQuery.data.type === "SURPRISE" ? "surprise" : "owner"}
         ownerDetail={ownerQuery.data}
-        onBack={() => (friendId ? router.push(`/friends/${friendId}`) : router.back())}
+        onBack={handleBack}
       />
     );
   }

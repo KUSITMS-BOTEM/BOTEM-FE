@@ -147,7 +147,19 @@ describe("FundingDetailContainer", () => {
     expect(screen.getByText("확인 대기 2건이 있어요")).toBeInTheDocument();
   });
 
-  it("뒤로가기를 누르면 친구 프로필로 이동한다", async () => {
+  it("되돌아갈 히스토리가 있으면 뒤로가기는 이전 화면으로 돌아간다", async () => {
+    vi.spyOn(window.history, "length", "get").mockReturnValue(3);
+    useSurpriseResponse();
+    render(<FundingDetailContainer fundingId="1" friendId="7" />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "뒤로가기" }));
+
+    await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
+    expect(push).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
+  it("되돌아갈 히스토리가 없으면 뒤로가기는 친구 프로필로 이동한다", async () => {
     useSurpriseResponse();
     render(<FundingDetailContainer fundingId="1" friendId="7" />);
 
