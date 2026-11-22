@@ -18,6 +18,10 @@ export type SurpriseRevealResponse = {
   productName: string;
   productImageUrl: string;
   confirmedAmount: number;
+  // targetAmount·achievementPercentage·deadline은 BE에 추가를 요청한 필드다(2026-11-22). 아직 Swagger에 없다
+  targetAmount: number;
+  achievementPercentage: number;
+  deadline: string;
   participantCount: number;
   messageCount: number;
   revealAt: string;

@@ -443,6 +443,42 @@ export const fundingHandlers = [
       error: null,
     });
   }),
+  // id 98은 공개 전(403)으로 응답해 잠금 안내를 확인할 수 있다
+  http.get("*/api/fundings/:fundingId/surprise", async ({ params }) => {
+    await delay(300);
+    const fundingId = Number(params.fundingId);
+    if (fundingId === MOCK_SURPRISE_RECIPIENT_ID) {
+      return HttpResponse.json(
+        {
+          success: false,
+          data: null,
+          error: { code: "FUNDING_046", message: "아직 공개되지 않은 서프라이즈예요." },
+        },
+        { status: 403 },
+      );
+    }
+    return HttpResponse.json({
+      success: true,
+      data: {
+        fundingId,
+        recipientName: "서준",
+        organizerName: "하린",
+        productName: "에어팟 프로 2",
+        productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
+        confirmedAmount: 420000,
+        targetAmount: 459000,
+        achievementPercentage: 91,
+        deadline: "2025-10-10T23:59:59",
+        participantCount: 6,
+        messageCount: 6,
+        revealAt: "2025-10-11T00:00:00",
+        openedAt: "2025-10-11T09:00:00",
+        thankCardSent: false,
+        messages: [],
+      },
+      error: null,
+    });
+  }),
   http.get("*/api/fundings/:fundingId/result", async ({ params }) => {
     await delay(300);
     const data = getMockResult(Number(params.fundingId));
