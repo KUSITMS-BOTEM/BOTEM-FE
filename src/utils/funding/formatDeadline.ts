@@ -5,9 +5,9 @@ export const formatDeadline = (date: string) => {
   return `${date.replace(/-/g, ".")} (${weekday})`;
 };
 
-// "2026-11-13" → "11월 13일"
+// "2026-11-13" · "2026-11-13T23:59:59" → "11월 13일". 서버가 마감일을 시각까지 붙여 내려줘도 날짜 부분만 쓴다
 export const formatDeadlineShort = (date: string) => {
-  const [, month, day] = date.split("-");
+  const [, month, day] = date.slice(0, 10).split("-");
   return `${Number(month)}월 ${Number(day)}일`;
 };
 
