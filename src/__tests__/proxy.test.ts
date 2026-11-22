@@ -41,26 +41,11 @@ describe("proxy", () => {
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("비로그인 상태로 공유받은 친구 프로필에 접근하면 리다이렉트하지 않는다", () => {
-    const request = new NextRequest("http://localhost/share/profile/5");
-
-    const response = proxy(request);
-
-    expect(response.headers.get("location")).toBeNull();
-  });
-
-  it("로그인 상태로 공유받은 친구 프로필에 접근하면 친구 프로필 화면으로 리다이렉트한다", () => {
-    const request = new NextRequest("http://localhost/share/profile/5", {
-      headers: { cookie: "isLoggedIn=true" },
-    });
-
-    const response = proxy(request);
-
-    expect(response.headers.get("location")).toBe("http://localhost/friends/5");
-  });
-
   it("펀딩 공유 링크는 proxy가 다루지 않아 참여 회원이 share에 머문다 (개설자 분기는 page에서 한다)", () => {
     expect(config.matcher).not.toContain("/share/:fundingId");
-    expect(config.matcher).toContain("/share/profile/:userId");
+  });
+
+  it("위시 프로필 링크는 proxy가 다루지 않는다 (로그인 방문자의 친구 맺기는 화면에서 한다)", () => {
+    expect(config.matcher.some(path => path.startsWith("/share/profile"))).toBe(false);
   });
 });
