@@ -29,11 +29,17 @@ describe("friendHandlers - GET /api/friends", () => {
   it("곧 생일인 친구 중 민지는 펀딩 중, 서준은 서프라이즈 펀딩 중으로 응답한다", async () => {
     const response = await fetch(BASE_URL);
     const { data } = (await response.json()) as { data: FriendListResponse };
-    const statusOf = (name: string) =>
-      data.upcomingBirthdayFriends.find(friend => friend.name === name)?.fundingStatus;
+    const friendOf = (name: string) =>
+      data.upcomingBirthdayFriends.find(friend => friend.name === name);
 
-    expect(statusOf("민지")).toBe("FUNDING");
-    expect(statusOf("서준")).toBe("SURPRISE_FUNDING");
+    expect(friendOf("민지")).toMatchObject({
+      fundingInProgress: true,
+      surpriseFundingInProgress: false,
+    });
+    expect(friendOf("서준")).toMatchObject({
+      fundingInProgress: false,
+      surpriseFundingInProgress: true,
+    });
   });
 });
 

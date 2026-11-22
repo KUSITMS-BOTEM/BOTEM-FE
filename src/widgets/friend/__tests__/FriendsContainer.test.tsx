@@ -21,6 +21,8 @@ const friend = (userId: number, name: string, birthdayDday: number | null): Frie
   birthday: birthdayDday === null ? null : "12-01",
   birthdayDday,
   wishCount: 1,
+  fundingInProgress: false,
+  surpriseFundingInProgress: false,
 });
 
 const mockData = (data: FriendListResponse) => useFriendsQuery.mockReturnValue({ data });
@@ -47,8 +49,8 @@ describe("FriendsContainer", () => {
   });
 
   it("펀딩 상태에 따라 「펀딩 중」·「서프라이즈 펀딩중」 배지를 보여준다", () => {
-    const a = { ...friend(1, "가", 3), fundingStatus: "FUNDING" as const };
-    const b = { ...friend(2, "나", 5), fundingStatus: "SURPRISE_FUNDING" as const };
+    const a = { ...friend(1, "가", 3), fundingInProgress: true };
+    const b = { ...friend(2, "나", 5), surpriseFundingInProgress: true };
     mockData({ totalCount: 2, upcomingBirthdayFriends: [a, b], friends: [a, b] });
     render(<FriendsContainer />);
 
@@ -56,9 +58,18 @@ describe("FriendsContainer", () => {
     expect(screen.getByText("서프라이즈 펀딩중")).toBeInTheDocument();
   });
 
-  it("펀딩 상태가 없거나 NONE이면 배지를 보여주지 않는다", () => {
+  it("둘 다 진행 중이면 「서프라이즈 펀딩중」 배지 하나만 보여준다", () => {
+    const a = { ...friend(1, "가", 3), fundingInProgress: true, surpriseFundingInProgress: true };
+    mockData({ totalCount: 1, upcomingBirthdayFriends: [a], friends: [a] });
+    render(<FriendsContainer />);
+
+    expect(screen.getByText("서프라이즈 펀딩중")).toBeInTheDocument();
+    expect(screen.queryByText("펀딩 중")).not.toBeInTheDocument();
+  });
+
+  it("진행 중인 펀딩이 없으면 배지를 보여주지 않는다", () => {
     const a = friend(1, "가", 3);
-    const b = { ...friend(2, "나", null), fundingStatus: "NONE" as const };
+    const b = friend(2, "나", null);
     mockData({ totalCount: 2, upcomingBirthdayFriends: [a], friends: [a, b] });
     render(<FriendsContainer />);
 

@@ -12,7 +12,7 @@ import List from "@/components/List";
 import ListHeader from "@/components/ListHeader";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFriendsQuery } from "@/hooks/queries/friend/useFriendsQuery";
-import type { FriendFundingStatus, FriendResponse } from "@/types/friend/friend";
+import type { FriendResponse } from "@/types/friend/friend";
 import { toFriendItemProps } from "@/utils/friend/toFriendItemProps";
 import FriendListItem from "@/widgets/friend/FriendListItem";
 import FriendsSkeleton from "@/widgets/friend/skeleton/FriendsSkeleton";
@@ -23,19 +23,25 @@ import IconSurprise from "@/assets/icons/multicolor/icon-surprise.svg?react";
 
 const COLLAPSED_COUNT = 2;
 
-const FUNDING_BADGE: Record<FriendFundingStatus, ComponentProps<typeof FriendListItem>["badge"]> = {
-  NONE: undefined,
-  FUNDING: { label: "펀딩 중", color: "neutral" },
-  SURPRISE_FUNDING: {
-    label: "서프라이즈 펀딩중",
-    color: "brand",
-    icon: <IconSurprise aria-hidden className="shrink-0" />,
-  },
+type FriendBadge = ComponentProps<typeof FriendListItem>["badge"];
+
+const FUNDING_BADGE: FriendBadge = { label: "펀딩 중", color: "neutral" };
+const SURPRISE_FUNDING_BADGE: FriendBadge = {
+  label: "서프라이즈 펀딩중",
+  color: "brand",
+  icon: <IconSurprise aria-hidden className="shrink-0" />,
+};
+
+// 배지는 하나만 보여주므로 둘 다 진행 중이면 서프라이즈를 우선한다
+const getFundingBadge = (friend: FriendResponse): FriendBadge => {
+  if (friend.surpriseFundingInProgress) return SURPRISE_FUNDING_BADGE;
+  if (friend.fundingInProgress) return FUNDING_BADGE;
+  return undefined;
 };
 
 const toFriendListItemProps = (friend: FriendResponse, withDday = false) => ({
   ...toFriendItemProps(friend, withDday),
-  badge: FUNDING_BADGE[friend.fundingStatus ?? "NONE"],
+  badge: getFundingBadge(friend),
 });
 
 export default function FriendsContainer() {

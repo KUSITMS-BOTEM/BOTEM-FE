@@ -19,7 +19,8 @@ const upcoming: FriendResponse[] = [
     birthday: "11-16",
     birthdayDday: 3,
     wishCount: 3,
-    fundingStatus: "FUNDING",
+    fundingInProgress: true,
+    surpriseFundingInProgress: false,
   },
   {
     userId: 3,
@@ -28,7 +29,8 @@ const upcoming: FriendResponse[] = [
     birthday: "11-20",
     birthdayDday: 7,
     wishCount: 6,
-    fundingStatus: "SURPRISE_FUNDING",
+    fundingInProgress: false,
+    surpriseFundingInProgress: true,
   },
   {
     userId: 4,
@@ -37,6 +39,8 @@ const upcoming: FriendResponse[] = [
     birthday: "12-03",
     birthdayDday: 20,
     wishCount: 0,
+    fundingInProgress: false,
+    surpriseFundingInProgress: false,
   },
   {
     userId: 5,
@@ -45,6 +49,8 @@ const upcoming: FriendResponse[] = [
     birthday: "12-07",
     birthdayDday: 24,
     wishCount: 6,
+    fundingInProgress: false,
+    surpriseFundingInProgress: false,
   },
 ];
 const others: FriendResponse[] = [
@@ -55,6 +61,8 @@ const others: FriendResponse[] = [
     birthday: "03-28",
     birthdayDday: 135,
     wishCount: 4,
+    fundingInProgress: false,
+    surpriseFundingInProgress: false,
   },
   {
     userId: 7,
@@ -63,6 +71,8 @@ const others: FriendResponse[] = [
     birthday: null,
     birthdayDday: null,
     wishCount: 0,
+    fundingInProgress: false,
+    surpriseFundingInProgress: false,
   },
 ];
 

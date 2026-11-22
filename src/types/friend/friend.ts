@@ -1,6 +1,3 @@
-// TODO(API): 친구 목록 응답에 아직 없는 필드다. BE가 추가하면 이름·값을 맞추고 optional을 뗀다
-export type FriendFundingStatus = "NONE" | "FUNDING" | "SURPRISE_FUNDING";
-
 export type FriendResponse = {
   userId: number;
   name: string;
@@ -8,7 +5,10 @@ export type FriendResponse = {
   birthday: string | null;
   birthdayDday: number | null;
   wishCount: number;
-  fundingStatus?: FriendFundingStatus;
+  // 친구가 연 생일 펀딩이 진행 중('펀딩 중' 배지)
+  fundingInProgress: boolean;
+  // 친구가 받는 사람이고 프로필 노출에 동의한 공개 전 서프라이즈가 있음('서프라이즈 펀딩중' 배지)
+  surpriseFundingInProgress: boolean;
 };
 
 export type FriendListResponse = {
@@ -43,7 +43,7 @@ export type FriendWishResponse = {
 
 export type FriendWishDetailResponse = FriendWishResponse & {
   productUrl: string;
-  sellerName: string;
+  sellerName: string | null;
   /** 친구가 받는 사람인 진행 중 서프라이즈 ID. 없으면 null */
   activeSurpriseFundingId: number | null;
 };
