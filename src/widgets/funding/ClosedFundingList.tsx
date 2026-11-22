@@ -1,17 +1,12 @@
-import FundedCard, { type FundedCardProofStatus } from "@/widgets/funding/FundedCard";
+import FundedCard from "@/widgets/funding/FundedCard";
 import ListHeader from "@/components/ListHeader";
-import type { ClosedFundingResponse, GiftVerificationStatus } from "@/types/funding/closedFunding";
+import type { ClosedFundingResponse } from "@/types/funding/closedFunding";
 
 type ClosedFundingListProps = {
   fundings: ClosedFundingResponse[];
 };
 
-const PROOF_STATUS: Record<GiftVerificationStatus, FundedCardProofStatus> = {
-  REQUIRED: "NEED",
-  COMPLETED: "DONE",
-};
-
-// "2025-10-13T23:59:59.999999" → "2025.10.13"
+// "2025-10-13T23:59:59" → "2025.10.13"
 const formatDeadline = (deadline: string) => deadline.slice(0, 10).replaceAll("-", ".");
 
 // 서버가 마감일 최근순으로 내려주므로 같은 날짜끼리 인접해 있다
@@ -38,15 +33,13 @@ export default function ClosedFundingList({ fundings }: ClosedFundingListProps) 
                 <FundedCard
                   productName={funding.productName}
                   productImageUrl={funding.productImageUrl}
-                  fundingType={funding.type}
-                  goalAchieved={funding.targetReached}
-                  participantCount={funding.participantCount}
-                  proofStatus={
-                    funding.giftVerificationStatus
-                      ? PROOF_STATUS[funding.giftVerificationStatus]
-                      : undefined
+                  relationship={funding.relationship}
+                  fundingType={funding.fundingType}
+                  celebrantName={funding.celebrantName}
+                  rollingPaperCount={funding.rollingPaperCount}
+                  href={
+                    funding.relationship === "OPENED" ? `/funding/${funding.fundingId}` : undefined
                   }
-                  recipientName={funding.recipientName ?? undefined}
                 />
               </li>
             ))}

@@ -14,7 +14,7 @@ type ClosedFundingSheetProps = {
 
 export default function ClosedFundingSheet({ open, onClose }: ClosedFundingSheetProps) {
   const { data, isPending, isError, isFetching, refetch } = useClosedFundingsQuery(open);
-  const fundings = data?.fundings ?? [];
+  const fundings = data?.years.flatMap(({ fundings }) => fundings) ?? [];
 
   return (
     <CloseSheet open={open} title="마감된 펀딩" closeType="back" onClose={onClose}>

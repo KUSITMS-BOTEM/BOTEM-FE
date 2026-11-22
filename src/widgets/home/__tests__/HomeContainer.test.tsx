@@ -6,6 +6,9 @@ import { markWishPromptPending } from "@/utils/wish/wishPromptStorage";
 import HomeContainer from "@/widgets/home/HomeContainer";
 
 vi.mock("@/hooks/queries/home/useHomeFundingsQuery");
+vi.mock("@/hooks/queries/funding/useClosedFundingsQuery", () => ({
+  useClosedFundingsQuery: () => ({ data: { tabCounts: { all: 4 }, years: [] } }),
+}));
 vi.mock("@/hooks/queries/wish/useHomeWishesQuery", () => ({ useHomeWishesQuery: vi.fn() }));
 const push = vi.fn();
 const replace = vi.fn();
@@ -29,7 +32,12 @@ vi.mock("@/widgets/home/GiftVerificationBannerLayer", () => ({
 }));
 vi.mock("@/widgets/home/HomeWishTab", () => ({ default: () => <div>위시 탭 내용</div> }));
 vi.mock("@/widgets/user/MyMenuSheet", () => ({
-  default: ({ open }: { open: boolean }) => (open ? <div>메뉴 시트</div> : null),
+  default: ({ open, closedFundingCount }: { open: boolean; closedFundingCount: number }) =>
+    open ? (
+      <div>
+        메뉴 시트<span aria-label="마감된 펀딩 수">{closedFundingCount}</span>
+      </div>
+    ) : null,
 }));
 
 describe("HomeContainer", () => {
@@ -133,6 +141,13 @@ describe("HomeContainer", () => {
     await userEvent.click(screen.getByRole("button", { name: "펀딩 탭 위시 추가" }));
 
     expect(push).toHaveBeenCalledWith("/wish/recommended");
+  });
+
+  it("메뉴의 마감된 펀딩 수는 마감된 펀딩 목록 응답의 전체 개수를 보여준다", () => {
+    searchParams = new URLSearchParams("menu=open");
+    render(<HomeContainer />);
+
+    expect(screen.getByLabelText("마감된 펀딩 수")).toHaveTextContent("4");
   });
 
   it("온보딩 직후(위시 프롬프트 대기 중)에도 진입 시 자동으로 이동하지 않는다", () => {

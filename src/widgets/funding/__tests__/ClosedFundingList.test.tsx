@@ -5,15 +5,15 @@ import ClosedFundingList from "@/widgets/funding/ClosedFundingList";
 
 const base: ClosedFundingResponse = {
   fundingId: 1,
-  shareKey: "share-key-1",
-  type: "BIRTHDAY",
+  relationship: "OPENED",
+  fundingType: "BIRTHDAY",
+  opener: { name: "서준", profileImageUrl: null },
+  celebrantName: "서준",
   productName: "에어팟 프로 2",
   productImageUrl: "",
-  deadline: "2025-10-13T23:59:59.999999",
-  targetReached: true,
-  participantCount: 8,
-  recipientName: null,
-  giftVerificationStatus: null,
+  deadline: "2025-10-13T23:59:59",
+  rollingPaperCount: 8,
+  representativeMessage: null,
 };
 
 describe("ClosedFundingList", () => {
@@ -22,7 +22,7 @@ describe("ClosedFundingList", () => {
       <ClosedFundingList
         fundings={[
           base,
-          { ...base, fundingId: 2, deadline: "2025-10-10T23:59:59.999999" },
+          { ...base, fundingId: 2, deadline: "2025-10-10T23:59:59" },
           { ...base, fundingId: 3, deadline: "2025-10-10T01:00:00" },
         ]}
       />,
@@ -37,29 +37,19 @@ describe("ClosedFundingList", () => {
     expect(within(lists[1]).getAllByRole("listitem")).toHaveLength(2);
   });
 
-  it("생일 펀딩의 인증 상태를 뱃지로 보여준다", () => {
+  it("내가 연 펀딩만 상세 화면으로 이동하는 링크가 된다", () => {
     render(
       <ClosedFundingList
         fundings={[
-          { ...base, giftVerificationStatus: "REQUIRED" },
-          { ...base, fundingId: 2, giftVerificationStatus: "COMPLETED" },
+          { ...base, fundingId: 10 },
+          { ...base, fundingId: 11, relationship: "RECEIVED", fundingType: "SURPRISE" },
+          { ...base, fundingId: 12, relationship: "PARTICIPATED" },
         ]}
       />,
     );
 
-    expect(screen.getByText("인증 필요")).toBeInTheDocument();
-    expect(screen.getByText("인증 완료")).toBeInTheDocument();
-    expect(screen.getAllByText("내 생일")).toHaveLength(2);
-  });
-
-  it("서프라이즈 펀딩은 받는 사람 이름 뱃지를 보여준다", () => {
-    render(
-      <ClosedFundingList
-        fundings={[{ ...base, type: "SURPRISE", recipientName: "서준", targetReached: false }]}
-      />,
-    );
-
-    expect(screen.getByText("서준 서프라이즈")).toBeInTheDocument();
-    expect(screen.getByText("모인 만큼 전달 · 8명 참여")).toBeInTheDocument();
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAttribute("href", "/funding/10");
   });
 });

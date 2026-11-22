@@ -132,6 +132,58 @@ describe("FundingDetailContainer", () => {
     expect(screen.getByText("확인 대기 2건이 있어요")).toBeInTheDocument();
   });
 
+  it("친구 id 없이 열어도 서프라이즈 펀딩이면 서프라이즈 개설자 화면으로 보여준다", async () => {
+    server.use(
+      http.get("*/api/fundings/:fundingId/management", () =>
+        HttpResponse.json({
+          success: true,
+          data: { ...ownerDetail, type: "SURPRISE" },
+          error: null,
+        }),
+      ),
+    );
+    render(<FundingDetailContainer fundingId="1" />);
+
+    expect(await screen.findByRole("img", { name: "서프라이즈 펀딩" })).toBeInTheDocument();
+  });
+
+  it("마감된 펀딩 상세는 뒤로가기 버튼이 있고, 누르면 이전 화면으로 돌아간다", async () => {
+    server.use(
+      http.get("*/api/fundings/:fundingId/management", () =>
+        HttpResponse.json({
+          success: true,
+          data: { ...ownerDetail, managementState: "CLOSED", remainingDays: null },
+          error: null,
+        }),
+      ),
+    );
+    render(<FundingDetailContainer fundingId="1" />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "뒤로가기" }));
+
+    await waitFor(() => expect(back).toHaveBeenCalled());
+  });
+
+  it("마감된 내 생일 펀딩은 결과 팡을 연 뒤에만 '롤링페이퍼 보기'를 누를 수 있다", async () => {
+    const closed = { ...ownerDetail, managementState: "CLOSED", remainingDays: null };
+    server.use(
+      http.get("*/api/fundings/:fundingId/management", () =>
+        HttpResponse.json({ success: true, data: closed, error: null }),
+      ),
+      http.get("*/api/fundings/:fundingId/result", () =>
+        HttpResponse.json({
+          success: true,
+          data: { resultOpenedAt: "2026-11-25T10:00:00" },
+          error: null,
+        }),
+      ),
+    );
+    render(<FundingDetailContainer fundingId="1" />);
+
+    const button = await screen.findByRole("button", { name: "롤링페이퍼 보기" });
+    await waitFor(() => expect(button).toBeEnabled());
+  });
+
   it("뒤로가기를 누르면 친구 프로필로 이동한다", async () => {
     render(<FundingDetailContainer fundingId="1" friendId="7" />);
 
