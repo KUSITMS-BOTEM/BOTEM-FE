@@ -32,23 +32,23 @@ export default function FundingDetailContainer({
   const role: ViewerRole = friendId ? "host" : MOCK_VIEWER_ROLE;
   const isHostRole = role === "owner" || role === "host";
   const ownerQuery = useFundingManagementQuery(Number(fundingId), { enabled: isHostRole });
-  const isClosedBirthday =
-    ownerQuery.data?.type === "BIRTHDAY" && ownerQuery.data.managementState === "CLOSED";
+  const variant = role === "host" || ownerQuery.data?.type === "SURPRISE" ? "surprise" : "owner";
+  const isClosed = ownerQuery.data?.managementState === "CLOSED";
   // 생일 펀딩의 롤링페이퍼는 개설자가 결과(팡)를 연 뒤에 공개된다
-  const resultQuery = useFundingResultQuery(Number(fundingId), isClosedBirthday);
+  const resultQuery = useFundingResultQuery(Number(fundingId), variant === "owner" && isClosed);
 
   if (isHostRole) {
     if (ownerQuery.data) {
       return (
         <FundingDetailView
           fundingId={fundingId}
-          variant={role === "host" || ownerQuery.data.type === "SURPRISE" ? "surprise" : "owner"}
+          variant={variant}
           ownerDetail={ownerQuery.data}
           rollingPaperOpened={Boolean(resultQuery.data?.resultOpenedAt)}
           onBack={
             role === "host"
               ? () => router.push(`/friends/${friendId}`)
-              : ownerQuery.data.managementState === "CLOSED"
+              : isClosed
                 ? () => router.back()
                 : undefined
           }

@@ -242,12 +242,13 @@ export default function BotemPopup({
             </ul>
           )}
         </div>
-        {isOwner ? (
+        {isOwner && (
           <div
             aria-hidden
             className="from-semantic-background-default/0 to-semantic-background-default pointer-events-none absolute inset-x-0 bottom-0 h-[71px] bg-gradient-to-b"
           />
-        ) : isHost && isClosed ? null : (
+        )}
+        {!isOwner && !(isHost && isClosed) && (
           <div className="pointer-events-none relative -mt-9 flex w-full flex-col">
             <div
               aria-hidden
