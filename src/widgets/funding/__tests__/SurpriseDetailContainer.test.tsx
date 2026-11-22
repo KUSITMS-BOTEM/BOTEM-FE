@@ -26,13 +26,12 @@ const surprise: SurpriseRevealResponse = {
   productImageUrl: "",
   confirmedAmount: 420000,
   targetAmount: 459000,
-  achievementPercentage: 91,
+  confirmedPercentage: 91,
   deadline: "2025-10-10T23:59:59",
   participantCount: 6,
   messageCount: 6,
   revealAt: "2025-10-11T00:00:00",
   openedAt: "2025-10-11T09:00:00",
-  thankCardSent: false,
   messages: [],
 };
 
@@ -77,16 +76,16 @@ describe("SurpriseDetailContainer", () => {
     expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeInTheDocument();
   });
 
-  it("공개 전(403 FUNDING_046)이면 잠금 안내를 보여준다", async () => {
+  it("공개 전(404 FUNDING_016)이면 잠금 안내를 보여준다", async () => {
     server.use(
       http.get("*/api/fundings/:fundingId/surprise", () =>
         HttpResponse.json(
           {
             success: false,
             data: null,
-            error: { code: "FUNDING_046", message: "아직 공개되지 않은 서프라이즈예요." },
+            error: { code: "FUNDING_016", message: "공개된 서프라이즈를 찾을 수 없습니다." },
           },
-          { status: 403 },
+          { status: 404 },
         ),
       ),
     );

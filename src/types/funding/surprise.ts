@@ -18,15 +18,14 @@ export type SurpriseRevealResponse = {
   productName: string;
   productImageUrl: string;
   confirmedAmount: number;
-  // targetAmount·achievementPercentage·deadline은 BE에 추가를 요청한 필드다(2026-11-22). 아직 Swagger에 없다
   targetAmount: number;
-  achievementPercentage: number;
+  // 확정 금액 기준 달성률(소수점 버림, 초과 달성 시 100 초과 가능)
+  confirmedPercentage: number;
   deadline: string;
   participantCount: number;
   messageCount: number;
   revealAt: string;
   openedAt: string | null;
-  thankCardSent: boolean;
   messages: SurpriseMessage[];
 };
 

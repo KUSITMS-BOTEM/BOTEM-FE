@@ -16,6 +16,7 @@ import type {
   OwnerFundingParticipantResponse,
 } from "@/types/funding/ownerFundingDetail";
 import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
+import type { RollingPaperMessage } from "@/types/funding/rollingPaper";
 import type { FundingType } from "@/types/home/home";
 
 const toContributions = (names: string[]): FundingResultContributionResponse[] =>
@@ -85,6 +86,67 @@ MOCK_RESULTS[20] = {
   contributions: toContributions(["하린이", "도윤이", "서준이"]),
   resultOpenedAt: "2025-10-14T00:00:00",
 };
+
+const toMockRollingPaperMessage = (
+  messageId: number,
+  participantName: string,
+  content: string,
+  paperTemplateCode: string,
+  extra: Partial<RollingPaperMessage> = {},
+): RollingPaperMessage => ({
+  messageId,
+  participantName,
+  participantProfileImageUrl: null,
+  content,
+  paperTemplateCode,
+  decorationCode: null,
+  photoUrl: null,
+  voiceUrl: null,
+  voiceDurationSeconds: null,
+  voiceTranscript: null,
+  ...extra,
+});
+
+// paperTemplateCode·decorationCode는 FE가 정한 규칙(`색_스타일`, `큰|작은`)을 따른다
+const MOCK_ROLLING_PAPER_MESSAGES: RollingPaperMessage[] = [
+  toMockRollingPaperMessage(
+    1,
+    "민지",
+    "지유야 생일 축하해! 올해도 같이 많이 웃자",
+    "ORANGE_WHITE_DOT",
+    {
+      decorationCode: "CAKE|HEART",
+      photoUrl: "https://picsum.photos/seed/rolling-paper-1/200/200",
+      voiceUrl: "https://example.com/voice-1.m4a",
+      voiceDurationSeconds: 23,
+    },
+  ),
+  toMockRollingPaperMessage(
+    2,
+    "서준",
+    "항상 곁에서 힘이 돼줘서 고마워. 앞으로도 오래오래 함께하자. 사랑해!",
+    "LIME_DOT_GRID",
+    { decorationCode: "GIFT|" },
+  ),
+  toMockRollingPaperMessage(
+    3,
+    "하은",
+    "생일 축하해! 맛있는 거 많이 먹고 행복한 하루 보내~",
+    "PINK_VIVID_SOLID",
+    {
+      photoUrl: "https://picsum.photos/seed/rolling-paper-3/200/200",
+    },
+  ),
+  toMockRollingPaperMessage(4, "예준", "지유야 생일 정말 정말 축하해!", "BLUE_SOLID", {
+    decorationCode: "|SPARKLES",
+  }),
+  toMockRollingPaperMessage(
+    5,
+    "수아",
+    "오늘은 네가 주인공이야. 선물 마음에 들었으면 좋겠다!",
+    "PINK_COLOR_DOT",
+  ),
+];
 
 const getMockResult = (fundingId: number): FundingResultResponse =>
   MOCK_RESULTS[fundingId] ?? {
@@ -443,7 +505,7 @@ export const fundingHandlers = [
       error: null,
     });
   }),
-  // id 98은 공개 전(403)으로 응답해 잠금 안내를 확인할 수 있다
+  // id 98은 공개 전(404 FUNDING_016)으로 응답해 잠금 안내를 확인할 수 있다
   http.get("*/api/fundings/:fundingId/surprise", async ({ params }) => {
     await delay(300);
     const fundingId = Number(params.fundingId);
@@ -452,9 +514,9 @@ export const fundingHandlers = [
         {
           success: false,
           data: null,
-          error: { code: "FUNDING_046", message: "아직 공개되지 않은 서프라이즈예요." },
+          error: { code: "FUNDING_016", message: "공개된 서프라이즈를 찾을 수 없습니다." },
         },
-        { status: 403 },
+        { status: 404 },
       );
     }
     return HttpResponse.json({
@@ -467,14 +529,26 @@ export const fundingHandlers = [
         productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
         confirmedAmount: 420000,
         targetAmount: 459000,
-        achievementPercentage: 91,
+        confirmedPercentage: 91,
         deadline: "2025-10-10T23:59:59",
         participantCount: 6,
         messageCount: 6,
         revealAt: "2025-10-11T00:00:00",
         openedAt: "2025-10-11T09:00:00",
-        thankCardSent: false,
         messages: [],
+      },
+      error: null,
+    });
+  }),
+  http.get("*/api/fundings/:fundingId/rolling-paper", async ({ params }) => {
+    await delay(800);
+    return HttpResponse.json({
+      success: true,
+      data: {
+        fundingId: Number(params.fundingId),
+        celebrantName: "지유",
+        messageCount: MOCK_ROLLING_PAPER_MESSAGES.length,
+        messages: MOCK_ROLLING_PAPER_MESSAGES,
       },
       error: null,
     });

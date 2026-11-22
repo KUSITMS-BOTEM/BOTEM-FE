@@ -41,6 +41,7 @@ import FundingProgressCard from "@/widgets/funding/FundingProgressCard";
 import FundingTransferGuideSheet from "@/widgets/funding/FundingTransferGuideSheet";
 import ThankCardSheet from "@/widgets/funding/ThankCardSheet";
 import LetterWriteSheet from "@/widgets/letter-paper/LetterWriteSheet";
+import RollingPaperContainer from "@/widgets/rolling-paper/RollingPaperContainer";
 import IconShare from "@/assets/icons/icon-share.svg?react";
 import IconDotVertical from "@/assets/icons/icon-dotvertical.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
@@ -197,6 +198,7 @@ export default function FundingDetailView({
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [isRollingPaperOpen, setIsRollingPaperOpen] = useState(false);
   const [thankCardFriend, setThankCardFriend] = useState<BotemPopupFriend | null>(null);
   const closePopup = () => setIsPopupOpen(false);
   const {
@@ -341,10 +343,22 @@ export default function FundingDetailView({
         </div>
         {showRollingPaperCta && (
           <BottomCTA>
-            <Button size="xlarge" variant="fill" disabled={!rollingPaperOpened}>
+            <Button
+              size="xlarge"
+              variant="fill"
+              disabled={!rollingPaperOpened}
+              onClick={() => setIsRollingPaperOpen(true)}>
               롤링페이퍼 보기
             </Button>
           </BottomCTA>
+        )}
+        {showRollingPaperCta && (
+          <RollingPaperContainer
+            fundingId={Number(fundingId)}
+            open={isRollingPaperOpen}
+            showGiftCta={false}
+            onClose={() => setIsRollingPaperOpen(false)}
+          />
         )}
         {showBottomCta && (
           <BottomCTA>

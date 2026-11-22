@@ -39,10 +39,8 @@ vi.mock("@/widgets/funding/FundingExtendFlow", () => ({
     ) : null,
 }));
 vi.mock("@/widgets/rolling-paper/RollingPaperContainer", () => ({
-  default: ({ open, count, fundingId }: { open: boolean; count: number; fundingId: number }) =>
-    open ? (
-      <div data-testid="rolling-paper" data-count={count} data-funding-id={fundingId} />
-    ) : null,
+  default: ({ open, fundingId }: { open: boolean; fundingId: number }) =>
+    open ? <div data-testid="rolling-paper" data-funding-id={fundingId} /> : null,
 }));
 
 const replace = vi.fn();
@@ -211,7 +209,7 @@ describe("FundingRevealContainer", () => {
     ).toBeInTheDocument();
   });
 
-  it("'메시지 열어보기'를 누르면 팡을 열고 메세지 도착 시트를 메세지 개수와 함께 띄운다", async () => {
+  it("'메시지 열어보기'를 누르면 팡을 열고 메세지 도착 시트를 띄운다", async () => {
     const result = makeResult(5, 59, 215000);
     mockQuery({ data: result });
     resolveOpenWith({ ...result, resultOpenedAt: "2026-11-15T00:00:00" });
@@ -221,9 +219,7 @@ describe("FundingRevealContainer", () => {
     await userEvent.click(screen.getByRole("button", { name: "메시지 열어보기" }));
 
     expect(mutate).toHaveBeenCalledWith(12, expect.any(Object));
-    const sheet = screen.getByTestId("rolling-paper");
-    expect(sheet).toHaveAttribute("data-count", "5");
-    expect(sheet).toHaveAttribute("data-funding-id", "12");
+    expect(screen.getByTestId("rolling-paper")).toHaveAttribute("data-funding-id", "12");
   });
 
   it("남긴 메세지가 없으면 시트 없이 선물 확인 화면으로 이동한다", async () => {

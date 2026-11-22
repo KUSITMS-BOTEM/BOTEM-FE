@@ -13,8 +13,8 @@ type SurpriseDetailContainerProps = {
   fundingId: string;
 };
 
-// 받는 사람이 공개 전에 조회할 때 서버가 주는 코드
-const SURPRISE_LOCKED = "FUNDING_046";
+// 공개 전에는 존재 여부를 숨기려고 서버가 404로 주는 코드
+const SURPRISE_LOCKED = "FUNDING_016";
 
 export default function SurpriseDetailContainer({ fundingId }: SurpriseDetailContainerProps) {
   const router = useRouter();
