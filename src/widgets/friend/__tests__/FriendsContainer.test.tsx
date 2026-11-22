@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { useFriendsEntryStore } from "@/store/friendsEntryStore";
 import FriendsContainer from "@/widgets/friend/FriendsContainer";
 import type { FriendListResponse, FriendResponse } from "@/types/friend/friend";
 
@@ -39,6 +40,14 @@ describe("FriendsContainer", () => {
     await userEvent.setup().click(screen.getByRole("button", { name: "뒤로가기" }));
 
     await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
+  });
+
+  it("마이 메뉴에서 들어오면 진입 후 슬라이드 표시를 꺼, 뒤로 돌아올 땐 다시 슬라이드되지 않는다", () => {
+    useFriendsEntryStore.setState({ slideIn: true });
+    mockData({ totalCount: 0, upcomingBirthdayFriends: [], friends: [] });
+    render(<FriendsContainer />);
+
+    expect(useFriendsEntryStore.getState().slideIn).toBe(false);
   });
 
   it("불러오는 중이면 친구 목록 스켈레톤을 보여준다", () => {
@@ -109,7 +118,7 @@ describe("FriendsContainer", () => {
     expect(screen.getByText("다 · 위시 1개")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "접기" }));
-    expect(screen.queryByText("다 · 위시 1개")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("다 · 위시 1개")).not.toBeInTheDocument());
   });
 
   it("곧 생일인 친구는 아래 일반 친구 목록에서 제외한다", () => {
