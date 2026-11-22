@@ -13,7 +13,7 @@ import {
 
 // TODO: 임시 Play 버튼. 디자이너의 VoicePlayer·PlayButton 컴포넌트가 나와 분리할 때 이 import와 아래 사용처를 함께 제거할 것
 import IconPlayButton from "@/assets/icons/multicolor/icon-play-button.svg?react";
-import { DUMMY_LETTERS } from "@/widgets/rolling-paper/dummyLetters";
+import type { LetterPaperProps } from "@/widgets/letter-paper/LetterPaper";
 import RollingPaperWheelCard from "@/widgets/rolling-paper/RollingPaperWheelCard";
 import RollingPaperWheelProfile from "@/widgets/rolling-paper/RollingPaperWheelProfile";
 import {
@@ -42,12 +42,12 @@ type DragState = { startY: number; startProgress: number; moved: boolean };
 
 // 편지지와 프로필이 하나의 progress를 공유해 세로 드래그로 함께 회전한다
 type RollingPaperWheelProps = {
-  count: number;
+  letters: LetterPaperProps[];
 };
 
 // 5개 미만은 순환 없이 양 끝에서 멈추고, 1개는 드래그해도 움직이지 않는다
-export default function RollingPaperWheel({ count }: RollingPaperWheelProps) {
-  const itemCount = Math.min(count, WHEEL_ITEM_COUNT);
+export default function RollingPaperWheel({ letters }: RollingPaperWheelProps) {
+  const itemCount = Math.min(letters.length, WHEEL_ITEM_COUNT);
   const items = Array.from({ length: itemCount }, (_, index) => index);
   const reduceMotion = useReducedMotion() ?? false;
   const progress = useMotionValue(0);
@@ -171,7 +171,7 @@ export default function RollingPaperWheel({ count }: RollingPaperWheelProps) {
           {items.map(index => (
             <RollingPaperWheelCard
               key={`card-${index}`}
-              letter={DUMMY_LETTERS[index]}
+              letter={letters[index]}
               index={index}
               count={itemCount}
               progress={progress}

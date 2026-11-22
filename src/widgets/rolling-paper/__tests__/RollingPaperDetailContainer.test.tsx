@@ -1,15 +1,20 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
+import { useRollingPaperQuery } from "@/hooks/queries/funding/useRollingPaperQuery";
+import type { RollingPaperMessage } from "@/types/funding/rollingPaper";
 import RollingPaperDetailContainer from "@/widgets/rolling-paper/RollingPaperDetailContainer";
 
-vi.mock("@/hooks/queries/funding/useFundingResultQuery", () => ({
-  useFundingResultQuery: vi.fn(),
+vi.mock("@/hooks/queries/funding/useRollingPaperQuery", () => ({
+  useRollingPaperQuery: vi.fn(),
 }));
 vi.mock("@/widgets/rolling-paper/RollingPaperWheel", () => ({
-  default: ({ count }: { count: number }) => (
-    <div data-testid="rolling-paper-wheel" data-count={count} />
+  default: ({ letters }: { letters: { senderName: string }[] }) => (
+    <div
+      data-testid="rolling-paper-wheel"
+      data-count={letters.length}
+      data-senders={letters.map(letter => letter.senderName).join(",")}
+    />
   ),
 }));
 
@@ -20,28 +25,46 @@ vi.mock("next/navigation", () => ({
 
 const refetch = vi.fn();
 
-const mockQuery = (value: { data?: { messageCount: number }; isLoading?: boolean }) => {
-  vi.mocked(useFundingResultQuery).mockReturnValue({
-    data: undefined,
-    isLoading: false,
+const toMessages = (count: number): RollingPaperMessage[] =>
+  Array.from({ length: count }, (_, index) => ({
+    messageId: index + 1,
+    participantName: `친구${index + 1}`,
+    participantProfileImageUrl: null,
+    content: `축하해 ${index + 1}`,
+    paperTemplateCode: "ORANGE_WHITE_DOT",
+    decorationCode: null,
+    photoUrl: null,
+    voiceUrl: null,
+    voiceDurationSeconds: null,
+    voiceTranscript: null,
+  }));
+
+const mockQuery = (value: { messages?: RollingPaperMessage[]; isLoading?: boolean }) => {
+  vi.mocked(useRollingPaperQuery).mockReturnValue({
+    data: value.messages && {
+      fundingId: 12,
+      celebrantName: "지유",
+      messageCount: value.messages.length,
+      messages: value.messages,
+    },
+    isLoading: value.isLoading ?? false,
     refetch,
-    ...value,
-  } as unknown as ReturnType<typeof useFundingResultQuery>);
+  } as unknown as ReturnType<typeof useRollingPaperQuery>);
 };
 
 beforeEach(() => vi.clearAllMocks());
 
 describe("RollingPaperDetailContainer", () => {
-  it("rollingPaperId를 펀딩 id로 보고 숫자로 바꿔 결과를 조회한다", () => {
+  it("rollingPaperId를 펀딩 id로 보고 숫자로 바꿔 롤링페이퍼를 조회한다", () => {
     mockQuery({ isLoading: true });
 
     render(<RollingPaperDetailContainer rollingPaperId="12" />);
 
-    expect(useFundingResultQuery).toHaveBeenCalledWith(12);
+    expect(useRollingPaperQuery).toHaveBeenCalledWith(12);
   });
 
   it("뒤로 가기 버튼을 누르면 이전 페이지로 돌아간다", async () => {
-    mockQuery({ data: { messageCount: 5 } });
+    mockQuery({ messages: toMessages(5) });
     const user = userEvent.setup();
     render(<RollingPaperDetailContainer rollingPaperId="12" />);
 
@@ -50,16 +73,18 @@ describe("RollingPaperDetailContainer", () => {
     await waitFor(() => expect(backMock).toHaveBeenCalledTimes(1));
   });
 
-  it("결과의 메세지 개수만큼 편지지 휠을 그린다", () => {
-    mockQuery({ data: { messageCount: 7 } });
+  it("조회한 메세지를 편지지로 바꿔 휠에 넘긴다", () => {
+    mockQuery({ messages: toMessages(7) });
 
     render(<RollingPaperDetailContainer rollingPaperId="12" />);
 
-    expect(screen.getByTestId("rolling-paper-wheel")).toHaveAttribute("data-count", "7");
+    const wheel = screen.getByTestId("rolling-paper-wheel");
+    expect(wheel).toHaveAttribute("data-count", "7");
+    expect(wheel.getAttribute("data-senders")?.split(",")[0]).toBe("친구1");
   });
 
   it("뒤로 가기 버튼은 페이드인을 위해 투명하게 시작한다", () => {
-    mockQuery({ data: { messageCount: 5 } });
+    mockQuery({ messages: toMessages(5) });
 
     render(<RollingPaperDetailContainer rollingPaperId="12" />);
 
@@ -88,7 +113,7 @@ describe("RollingPaperDetailContainer", () => {
   });
 
   it("메세지가 0개면 빈 안내를 보여주고 휠은 그리지 않는다", () => {
-    mockQuery({ data: { messageCount: 0 } });
+    mockQuery({ messages: [] });
 
     render(<RollingPaperDetailContainer rollingPaperId="12" />);
 
