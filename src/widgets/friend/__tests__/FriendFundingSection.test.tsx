@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import type { FriendFundingResponse } from "@/types/friend/friend";
@@ -55,6 +55,6 @@ describe("FriendFundingSection", () => {
     expect(screen.getByRole("button", { name: "접기" })).toHaveAttribute("aria-expanded", "true");
 
     await user.click(screen.getByRole("button", { name: "접기" }));
-    expect(visibleItems()).toHaveLength(2);
+    await waitFor(() => expect(visibleItems()).toHaveLength(2));
   });
 });
