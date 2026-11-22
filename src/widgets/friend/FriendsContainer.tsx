@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
 import PageExitMotion from "@/components/effects/PageExitMotion";
-import List from "@/components/List";
 import ListHeader from "@/components/ListHeader";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFriendsQuery } from "@/hooks/queries/friend/useFriendsQuery";
@@ -20,6 +19,7 @@ import IconDown from "@/assets/icons/icon-down.svg?react";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 import IconUp from "@/assets/icons/icon-up.svg?react";
 import IconSurprise from "@/assets/icons/multicolor/icon-surprise.svg?react";
+import BotemSymbol from "@/assets/logo/botem-symbol.svg?react";
 
 const COLLAPSED_COUNT = 2;
 
@@ -61,15 +61,17 @@ export default function FriendsContainer() {
           }}
         />
         <main className="flex w-full flex-col gap-4 px-5">
-          <List
-            title="보탬에 친구와 함께해요!"
-            description={"초대링크로 가입하면 바로 친구가 되고,\n서로의 위시를 볼 수 있어요"}
-            right={
-              <Button color="brand" size="small">
-                초대링크 전송
-              </Button>
-            }
-          />
+          <div className="bg-semantic-fill-neutral-weak -mx-5 flex items-center justify-between gap-2 px-5 py-[15px]">
+            <div className="flex min-w-0 items-center gap-2">
+              <BotemSymbol aria-hidden className="h-5 w-[22.21px] shrink-0" />
+              <p className="text-semantic-text-primary truncate text-[15px] font-semibold tracking-[-0.3px]">
+                보탬에 친구와 함께해요!
+              </p>
+            </div>
+            <Button color="brand" size="small" className="shrink-0">
+              초대링크 전송
+            </Button>
+          </div>
           {isPending && <FriendsSkeleton />}
           {isError && (
             <div className="flex w-full flex-col items-center gap-3 py-10">
