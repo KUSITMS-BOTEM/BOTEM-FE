@@ -13,5 +13,5 @@ export const fundingResultQueryOptions = (fundingId: number) =>
     staleTime: 60_000,
   });
 
-export const useFundingResultQuery = (fundingId: number) =>
-  useQuery(fundingResultQueryOptions(fundingId));
+export const useFundingResultQuery = (fundingId: number, enabled = true) =>
+  useQuery({ ...fundingResultQueryOptions(fundingId), enabled });

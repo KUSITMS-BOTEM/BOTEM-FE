@@ -32,10 +32,10 @@ describe("ClosedFundingSheet", () => {
   });
 
   it("마감된 펀딩이 없으면 빈 상태 문구를 보여준다", () => {
-    mockQuery({ data: { fundings: [] } });
+    mockQuery({ data: { tabCounts: { all: 0, received: 0, participated: 0 }, years: [] } });
     render(<ClosedFundingSheet open onClose={vi.fn()} />);
 
-    expect(screen.getByText("마감된 펀딩이 없어요.")).toBeInTheDocument();
+    expect(screen.getByText("아직 끝난 펀딩이 없어요")).toBeInTheDocument();
   });
 
   it("조회에 실패하면 안내와 다시 시도 버튼을 보여주고, 누르면 refetch한다", async () => {
@@ -60,17 +60,25 @@ describe("ClosedFundingSheet", () => {
     mockQuery({
       isError: true,
       data: {
-        fundings: [
+        tabCounts: { all: 1, received: 0, participated: 0 },
+        years: [
           {
-            fundingId: 1,
-            type: "SURPRISE",
-            productName: "에어팟 프로 2",
-            productImageUrl: "",
-            deadline: "2025-10-13T23:59:59.999999",
-            targetReached: false,
-            participantCount: 6,
-            recipientName: "서준",
-            giftVerificationStatus: null,
+            year: 2025,
+            fundingCount: 1,
+            fundings: [
+              {
+                fundingId: 1,
+                relationship: "OPENED",
+                fundingType: "BIRTHDAY",
+                opener: { name: "서준", profileImageUrl: null },
+                celebrantName: "서준",
+                productName: "에어팟 프로 2",
+                productImageUrl: "",
+                deadline: "2025-10-13T23:59:59",
+                rollingPaperCount: 8,
+                representativeMessage: null,
+              },
+            ],
           },
         ],
       },
@@ -84,17 +92,25 @@ describe("ClosedFundingSheet", () => {
   it("마감된 펀딩이 있으면 날짜별 목록을 보여준다", () => {
     mockQuery({
       data: {
-        fundings: [
+        tabCounts: { all: 1, received: 0, participated: 0 },
+        years: [
           {
-            fundingId: 1,
-            type: "BIRTHDAY",
-            productName: "에어팟 프로 2",
-            productImageUrl: "",
-            deadline: "2025-10-13T23:59:59.999999",
-            targetReached: true,
-            participantCount: 8,
-            recipientName: null,
-            giftVerificationStatus: "REQUIRED",
+            year: 2025,
+            fundingCount: 1,
+            fundings: [
+              {
+                fundingId: 1,
+                relationship: "OPENED",
+                fundingType: "BIRTHDAY",
+                opener: { name: "서준", profileImageUrl: null },
+                celebrantName: "서준",
+                productName: "에어팟 프로 2",
+                productImageUrl: "",
+                deadline: "2025-10-13T23:59:59",
+                rollingPaperCount: 8,
+                representativeMessage: null,
+              },
+            ],
           },
         ],
       },
@@ -103,11 +119,11 @@ describe("ClosedFundingSheet", () => {
 
     expect(screen.getByText("2025.10.13")).toBeInTheDocument();
     expect(screen.getByText("에어팟 프로 2")).toBeInTheDocument();
-    expect(screen.getByText("인증 필요")).toBeInTheDocument();
+    expect(screen.getByText("8명 참여")).toBeInTheDocument();
   });
 
   it("닫기 대신 뒤로 가기 버튼이 있고, 누르면 onClose를 호출한다", async () => {
-    mockQuery({ data: { fundings: [] } });
+    mockQuery({ data: { tabCounts: { all: 0, received: 0, participated: 0 }, years: [] } });
     const onClose = vi.fn();
     render(<ClosedFundingSheet open onClose={onClose} />);
 

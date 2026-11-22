@@ -3,6 +3,7 @@
 import CloseSheet from "@/components/CloseSheet";
 import TextButton from "@/components/TextButton";
 import { useClosedFundingsQuery } from "@/hooks/queries/funding/useClosedFundingsQuery";
+import ClosedFundingEmptyView from "@/widgets/funding/ClosedFundingEmptyView";
 import ClosedFundingList from "@/widgets/funding/ClosedFundingList";
 import ClosedFundingListSkeleton from "@/widgets/funding/skeleton/ClosedFundingListSkeleton";
 
@@ -13,7 +14,7 @@ type ClosedFundingSheetProps = {
 
 export default function ClosedFundingSheet({ open, onClose }: ClosedFundingSheetProps) {
   const { data, isPending, isError, isFetching, refetch } = useClosedFundingsQuery(open);
-  const fundings = data?.fundings ?? [];
+  const fundings = data?.years.flatMap(({ fundings }) => fundings) ?? [];
 
   return (
     <CloseSheet open={open} title="마감된 펀딩" closeType="back" onClose={onClose}>
@@ -31,9 +32,7 @@ export default function ClosedFundingSheet({ open, onClose }: ClosedFundingSheet
           />
         </div>
       ) : fundings.length === 0 ? (
-        <p className="text-semantic-text-secondary flex flex-1 items-center justify-center">
-          마감된 펀딩이 없어요.
-        </p>
+        <ClosedFundingEmptyView />
       ) : (
         <ClosedFundingList fundings={fundings} />
       )}
