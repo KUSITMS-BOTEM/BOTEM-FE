@@ -180,7 +180,7 @@ export default function FundingOpenSheet({
             open={previewOpen}
             wish={selectedWish}
             info={confirmInfo}
-            title={`${profile?.name ?? "내"}의 펀딩`}
+            title={profile?.name ? `${profile.name}의 펀딩` : "내 펀딩"}
             onClose={() => setPreviewOpen(false)}
             className={className}
           />

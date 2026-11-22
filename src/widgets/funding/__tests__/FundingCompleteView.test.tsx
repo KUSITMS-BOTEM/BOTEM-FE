@@ -119,10 +119,10 @@ describe("FundingCompleteView", () => {
     });
   });
 
-  it("모션 감소가 아니면 컨페티를 그린다", () => {
+  it("모션 감소가 아니면 컨페티를 그린다", async () => {
     renderView({ shareKey: "1" });
 
-    expect(screen.getByTestId("confetti")).toBeInTheDocument();
+    expect(await screen.findByTestId("confetti")).toBeInTheDocument();
   });
 
   describe("공유하기", () => {

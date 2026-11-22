@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion, type Easing } from "framer-motion";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -14,10 +15,14 @@ import { usePageExit } from "@/hooks/usePageExit";
 import type { FundingCompleteData } from "@/utils/funding/toFundingCompleteData";
 import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
 import FundingBragCard from "@/widgets/funding/FundingBragCard";
-import FundingCompleteConfetti from "@/widgets/funding/FundingCompleteConfetti";
 import FundingCompleteTitle from "@/widgets/funding/FundingCompleteTitle";
 import IconClose from "@/assets/icons/icon-close.svg?react";
 import IconShare from "@/assets/icons/icon-share.svg?react";
+
+// 장식용 로티라 첫 화면 번들에서 빼고, 모션을 끈 사용자는 아예 내려받지 않는다
+const FundingCompleteConfetti = dynamic(() => import("@/widgets/funding/FundingCompleteConfetti"), {
+  ssr: false,
+});
 
 // Figma 타임라인(한 번만 재생)의 빈 화면 대기를 절반으로 줄였다: 1.15초에 자랑 카드·제목 등장 → 공유 버튼은 Figma 간격(2.26초) 그대로 그 뒤에 등장
 const SHARE_SCENE_AT_MS = 1150;

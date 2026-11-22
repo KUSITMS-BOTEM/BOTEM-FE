@@ -222,7 +222,9 @@ export default function SurpriseInfoStep({
           onChange={event => {
             const digits = event.target.value.replace(/\D/g, "");
             // 상품 가격보다 큰 목표 금액은 받을 수 없어 가격으로 맞춘다
-            setTargetAmount(Number(digits) > wish.price ? String(wish.price) : digits);
+            setTargetAmount(
+              wish.price > 0 && Number(digits) > wish.price ? String(wish.price) : digits,
+            );
           }}
           onBlur={revealDeadline}
           onKeyDown={event => {
