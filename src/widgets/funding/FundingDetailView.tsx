@@ -73,6 +73,9 @@ const PROFILE_COLORS = ["orange", "blue", "pink", "lime"] as const;
 const MOCK_FUNDING = {
   hostName: "지유",
   closed: false,
+  // 보태기 버튼은 참여자 화면(guest)에만 있고, 그쪽은 공유용 상세 응답 값이 덮어쓴다
+  canContributeAmount: true,
+  canParticipate: true,
   extended: false,
   actions: { canCloseEarly: true, canReissueShareCard: true },
   pendingContributionCount: 3,
@@ -99,6 +102,10 @@ const toShareFundingView = (detail: FundingDetailResponse) => ({
       : `${detail.celebrantName}의 펀딩`),
   story: detail.story ?? undefined,
   pledge: detail.promise ?? undefined,
+  // 목표 달성·조기 마감이면 금액 보태기가 닫힌다. 조기 마감은 달성률·마감일로 알 수 없어 서버 값을 쓴다
+  closed: !detail.canContributeAmount,
+  canContributeAmount: detail.canContributeAmount,
+  canParticipate: detail.canParticipate,
   productName: detail.product.name,
   productImageUrl: detail.product.imageUrl,
   // 응답은 "YYYY-MM-DDTHH:mm:ss"라 날짜만 쓴다
@@ -223,6 +230,10 @@ export default function FundingDetailView({
   // 금액 달성(마감)·기간 마감·서버가 알려준 조기 마감 모두 닫힌 펀딩이다
   const closedLabel = getClosedLabel({ percent: funding.progress, deadline: funding.deadline });
   const isClosed = funding.closed || closedLabel !== null;
+  // 메시지 보태기까지 닫히면(마감 후) 보태기 버튼을 모두 숨긴다. 이전에 보탠 사람의 '내 보탬 확인'은 남긴다
+  const isContributeMode = !hasConfirmedMyBotem && (isContributeReady || memberHasNoBotem);
+  const showBottomCta =
+    isGuest && !isCheckingMember && (!isContributeMode || funding.canParticipate);
 
   // 공유 링크로 들어온 친구에게 마감 후 선물 인증을 보여주는 화면이라 개설자 화면은 해당하지 않는다
   if (!confirmsDeposits && isClosed && funding.hasGiftProof) {
@@ -302,7 +313,7 @@ export default function FundingDetailView({
               onClick={() => setIsPopupOpen(true)}
               className="flex cursor-pointer items-center gap-2 self-end">
               {/* Figma FUND-PG-008: 펀딩 주인 화면은 툴팁 없이 프로필 묶음만 보여준다 */}
-              {!isOwner && (
+              {!isOwner && funding.canParticipate && (
                 <Tooltip>
                   {isSurprise
                     ? `확인 대기 ${unconfirmedCount}건이 있어요`
@@ -322,32 +333,36 @@ export default function FundingDetailView({
             </button>
           )}
         </div>
-        {isGuest && !isCheckingMember && (
+        {showBottomCta && (
           <BottomCTA>
             {hasConfirmedMyBotem ? (
               <Button size="xlarge" variant="fill" onClick={() => setIsPopupOpen(true)}>
                 내 보탬 확인
               </Button>
-            ) : isContributeReady || memberHasNoBotem ? (
+            ) : isContributeMode ? (
               <>
                 <Button size="xlarge" variant="weak" onClick={startMessage}>
                   메시지 보태기
                 </Button>
-                <Button size="xlarge" variant="fill" disabled={isClosed} onClick={startContribute}>
-                  보태기
-                </Button>
+                {funding.canContributeAmount && (
+                  <Button size="xlarge" variant="fill" onClick={startContribute}>
+                    보태기
+                  </Button>
+                )}
               </>
             ) : (
               <>
                 <Button size="xlarge" variant="weak" onClick={() => setMemberCheckFrom("myBotem")}>
                   내 보탬 확인
                 </Button>
-                <Button
-                  size="xlarge"
-                  variant="fill"
-                  onClick={() => setMemberCheckFrom("contribute")}>
-                  보태러 가기
-                </Button>
+                {funding.canParticipate && (
+                  <Button
+                    size="xlarge"
+                    variant="fill"
+                    onClick={() => setMemberCheckFrom("contribute")}>
+                    보태러 가기
+                  </Button>
+                )}
               </>
             )}
           </BottomCTA>
