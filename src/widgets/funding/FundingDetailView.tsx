@@ -300,7 +300,8 @@ export default function FundingDetailView({
               className="pointer-events-none absolute inset-x-0 top-full z-20 w-full max-w-none"
             />
           </div>
-          {!isGuest && !showRollingPaperCta && (
+          {/* 마감된 내 펀딩도 확인 대기 입금이 남아 있으면 입금 확인 진입점(프로필 버튼)을 유지한다 */}
+          {!isGuest && (!showRollingPaperCta || unconfirmedCount > 0) && (
             <button
               type="button"
               onClick={() => setIsPopupOpen(true)}

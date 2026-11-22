@@ -689,6 +689,19 @@ describe("FundingDetailView", () => {
       expect(container.querySelector("button.self-end")).not.toBeInTheDocument();
     });
 
+    it("마감된 내 생일 펀딩도 확인 대기 입금이 남아 있으면 프로필 묶음과 롤링페이퍼 버튼을 함께 보여준다", () => {
+      const { container } = render(
+        <FundingDetailView
+          fundingId="1"
+          variant="owner"
+          ownerDetail={{ ...closedOwnerDetail, pendingContributionCount: 3 }}
+        />,
+      );
+
+      expect(container.querySelector("button.self-end")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeInTheDocument();
+    });
+
     it("롤링페이퍼가 공개되기 전에는 '롤링페이퍼 보기'가 비활성이고, 공개되면 활성이다", () => {
       const { rerender } = render(
         <FundingDetailView fundingId="1" variant="owner" ownerDetail={closedOwnerDetail} />,
