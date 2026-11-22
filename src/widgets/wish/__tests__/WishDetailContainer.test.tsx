@@ -13,6 +13,9 @@ import WishDetailContainer from "@/widgets/wish/WishDetailContainer";
 vi.mock("@/hooks/mutations/funding/useCreateFundingMutation", () => ({
   useCreateFundingMutation: () => ({ mutate: vi.fn(), isPending: false }),
 }));
+vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
+  useMyProfileQuery: () => ({ data: { name: "민지" } }),
+}));
 vi.mock("@/hooks/queries/wish/useWishQuery", () => ({ useWishQuery: vi.fn() }));
 vi.mock("@/hooks/mutations/wish/useDeleteWishMutation", () => ({
   useDeleteWishMutation: vi.fn(),
