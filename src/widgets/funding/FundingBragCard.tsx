@@ -5,6 +5,7 @@ import { motion, type Easing, type TargetAndTransition } from "framer-motion";
 
 import Badge from "@/components/Badge";
 import { getDDayLabel } from "@/utils/funding/getDDayLabel";
+import { withSubjectParticle } from "@/utils/withSubjectParticle";
 import ProductInfo from "@/widgets/funding/ProductInfo";
 import ConfettiSubtle from "@/assets/images/funding-complete/confetti-subtle.svg?react";
 import GiftBox from "@/assets/images/funding-complete/gift-box.svg?react";
@@ -81,7 +82,7 @@ export default function FundingBragCard({
               y: { delay: TITLE_DELAY, duration: 0.35, ease: "linear" },
             }}
             className="text-semantic-text-strong [letter-spacing:var(--letter-spacing-default)] whitespace-pre-line [font:var(--semantic-title-a2-z-medium)]">
-            {title ?? `${giverName}가 ${recipientName}에게\n보탰어요!`}
+            {title ?? `${withSubjectParticle(giverName)} ${recipientName}에게\n보탰어요!`}
           </motion.p>
           {badgeNode && (
             <motion.div
