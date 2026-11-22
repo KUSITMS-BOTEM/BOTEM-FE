@@ -12,48 +12,53 @@ vi.mock("next/image", () => ({
 const BASE = {
   productName: "에어팟",
   productImageUrl: "/airpods.png",
-  participantCount: 8,
-};
+  relationship: "OPENED",
+  fundingType: "BIRTHDAY",
+  celebrantName: "서준",
+  rollingPaperCount: 8,
+} as const;
 
 describe("FundedCard", () => {
-  it("목표를 달성하면 '목표 달성', 아니면 '모인 만큼 전달'과 참여 인원을 보여준다", () => {
-    const { rerender } = render(<FundedCard {...BASE} fundingType="BIRTHDAY" goalAchieved />);
-    expect(screen.getByText("목표 달성 · 8명 참여")).toBeInTheDocument();
+  it("롤링페이퍼 개수를 참여 인원으로 보여주고, 공개 전(null)이면 설명을 그리지 않는다", () => {
+    const { rerender } = render(<FundedCard {...BASE} />);
+    expect(screen.getByText("8명 참여")).toBeInTheDocument();
 
-    rerender(<FundedCard {...BASE} fundingType="BIRTHDAY" goalAchieved={false} />);
-    expect(screen.getByText("모인 만큼 전달 · 8명 참여")).toBeInTheDocument();
+    rerender(<FundedCard {...BASE} rollingPaperCount={null} />);
+    expect(screen.queryByText(/명 참여/)).not.toBeInTheDocument();
   });
 
   it.each([
-    ["NEED", ["인증 필요", "내 생일"]],
-    ["DONE", ["인증 완료", "내 생일"]],
-    [undefined, ["내 생일"]],
-  ] as const)("내 생일 펀딩은 인증 상태 %s에 맞는 배지를 보여준다", (proofStatus, labels) => {
+    ["OPENED", "BIRTHDAY", ["내가 열었어요", "내 생일"]],
+    ["OPENED", "SURPRISE", ["내가 열었어요", "서준 서프라이즈"]],
+    ["RECEIVED", "SURPRISE", ["내가 받았어요", "서준 서프라이즈"]],
+    ["PARTICIPATED", "BIRTHDAY", ["내가 참여했어요", "서준의 생일"]],
+  ] as const)("%s·%s 배지를 보여준다", (relationship, fundingType, labels) => {
     const { container } = render(
-      <FundedCard {...BASE} fundingType="BIRTHDAY" goalAchieved proofStatus={proofStatus} />,
+      <FundedCard {...BASE} relationship={relationship} fundingType={fundingType} />,
     );
 
     const badges = [...container.querySelectorAll("span.rounded-lg")].map(el => el.textContent);
     expect(badges).toEqual(labels);
   });
 
-  it("서프라이즈 펀딩은 받는 사람 이름의 서프라이즈 배지만 보여준다", () => {
-    render(<FundedCard {...BASE} fundingType="SURPRISE" goalAchieved recipientName="서준" />);
+  it("href가 있으면 링크로 그리고, 없으면 링크와 chevron 없이 그린다", () => {
+    const { container, rerender } = render(<FundedCard {...BASE} href="/funding/1" />);
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/funding/1");
+    expect(container.querySelector("svg")).toBeInTheDocument();
 
-    expect(screen.getByText("서준 서프라이즈")).toBeInTheDocument();
-    expect(screen.queryByText("내 생일")).not.toBeInTheDocument();
+    rerender(<FundedCard {...BASE} />);
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(container.querySelector("svg")).not.toBeInTheDocument();
   });
 
   it("이미지 URL이 비어 있으면 이미지를 그리지 않는다", () => {
-    const { container } = render(
-      <FundedCard {...BASE} productImageUrl="" fundingType="BIRTHDAY" goalAchieved />,
-    );
+    const { container } = render(<FundedCard {...BASE} productImageUrl="" />);
 
     expect(container.querySelector("img")).not.toBeInTheDocument();
   });
 
   it("이미지 로드에 실패하면 이미지를 지운다", () => {
-    const { container } = render(<FundedCard {...BASE} fundingType="BIRTHDAY" goalAchieved />);
+    const { container } = render(<FundedCard {...BASE} />);
 
     fireEvent.error(container.querySelector("img")!);
 

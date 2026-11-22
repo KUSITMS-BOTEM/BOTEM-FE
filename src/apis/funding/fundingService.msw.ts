@@ -73,6 +73,19 @@ const MOCK_RESULTS: Record<number, FundingResultResponse> = {
   },
 };
 
+// 마감된 펀딩 목록(20)에서 열어 본 생일 펀딩. 팡을 이미 열어 롤링페이퍼 보기가 활성화된다
+MOCK_RESULTS[20] = {
+  ...MOCK_PRODUCT,
+  fundingId: 20,
+  confirmedAmount: 364000,
+  achievementPercentage: 100,
+  targetReached: true,
+  participantCount: 8,
+  messageCount: 8,
+  contributions: toContributions(["하린이", "도윤이", "서준이"]),
+  resultOpenedAt: "2025-10-14T00:00:00",
+};
+
 const getMockResult = (fundingId: number): FundingResultResponse =>
   MOCK_RESULTS[fundingId] ?? {
     ...MOCK_PRODUCT,
@@ -104,42 +117,79 @@ const toFundingProduct = (wishId: number): OwnerFundingDetailResponse["product"]
 };
 
 const MOCK_CLOSED_FUNDINGS: ClosedFundingListResponse = {
-  fundings: [
+  tabCounts: { all: 4, received: 1, participated: 1 },
+  years: [
     {
-      fundingId: 12,
-      shareKey: toMockShareKey(12),
-      type: "BIRTHDAY",
-      productName: "에어팟 프로 2",
-      productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
-      deadline: "2025-10-13T23:59:59.999999",
-      targetReached: true,
-      participantCount: 8,
-      recipientName: null,
-      giftVerificationStatus: "REQUIRED",
-    },
-    {
-      fundingId: 11,
-      shareKey: toMockShareKey(11),
-      type: "BIRTHDAY",
-      productName: "에어팟 프로 2",
-      productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
-      deadline: "2025-10-10T23:59:59.999999",
-      targetReached: true,
-      participantCount: 8,
-      recipientName: null,
-      giftVerificationStatus: "COMPLETED",
-    },
-    {
-      fundingId: 9,
-      shareKey: toMockShareKey(9),
-      type: "SURPRISE",
-      productName: "에어팟 프로 2",
-      productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
-      deadline: "2025-10-10T23:59:59.999999",
-      targetReached: false,
-      participantCount: 6,
-      recipientName: "서준",
-      giftVerificationStatus: null,
+      year: 2025,
+      fundingCount: 4,
+      fundings: [
+        {
+          fundingId: 20,
+          relationship: "OPENED",
+          fundingType: "BIRTHDAY",
+          opener: { name: "서준", profileImageUrl: null },
+          celebrantName: "서준",
+          deadline: "2025-10-13T23:59:59",
+          productName: "에어팟 프로 2",
+          productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
+          rollingPaperCount: 8,
+          representativeMessage: {
+            writerName: "하린",
+            writerProfileImageUrl: null,
+            content: "생일 진짜 축하해!",
+            paperTemplateCode: "LIME_DOT_GRID",
+            hasVoice: false,
+          },
+        },
+        {
+          fundingId: 21,
+          relationship: "OPENED",
+          fundingType: "SURPRISE",
+          opener: { name: "서준", profileImageUrl: null },
+          celebrantName: "지유",
+          deadline: "2025-10-10T23:59:59",
+          productName: "에어팟 프로 2",
+          productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
+          rollingPaperCount: null,
+          representativeMessage: null,
+        },
+        {
+          fundingId: 22,
+          relationship: "RECEIVED",
+          fundingType: "SURPRISE",
+          opener: { name: "하린", profileImageUrl: null },
+          celebrantName: "서준",
+          deadline: "2025-10-10T23:59:59",
+          productName: "에어팟 프로 2",
+          productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
+          rollingPaperCount: 6,
+          representativeMessage: {
+            writerName: "하린",
+            writerProfileImageUrl: null,
+            content: "생일 진짜 축하해!",
+            paperTemplateCode: "LIME_DOT_GRID",
+            hasVoice: false,
+          },
+        },
+        {
+          fundingId: 23,
+          relationship: "PARTICIPATED",
+          fundingType: "BIRTHDAY",
+          opener: { name: "도윤", profileImageUrl: null },
+          celebrantName: "도윤",
+          deadline: "2025-09-02T23:59:59",
+          productName: "에어팟 프로 2",
+          productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
+          rollingPaperCount: 5,
+          representativeMessage: {
+            writerName: "하린",
+            writerProfileImageUrl: null,
+            content: "생일 진짜 축하해!",
+            paperTemplateCode: "LIME_DOT_GRID",
+            hasVoice: false,
+          },
+        },
+      ],
     },
   ],
 };
@@ -193,10 +243,66 @@ const toMockDeadline = (remainingDays: number | null) =>
     ? "2026-11-10T23:59:59.999999"
     : `${new Date(Date.now() + remainingDays * DAY_MS).toISOString().slice(0, 10)}T23:59:59.999999`;
 
+// 마감된 펀딩 목록에서 내가 연 펀딩은 홈 카드에 없어, 마감 상태 관리 상세를 목록 항목에서 만든다
+const getMockClosedOwnerDetail = (fundingId: number): OwnerFundingDetailResponse | null => {
+  const item = MOCK_CLOSED_FUNDINGS.years
+    .flatMap(({ fundings }) => fundings)
+    .find(funding => funding.fundingId === fundingId && funding.relationship === "OPENED");
+  if (!item) return null;
+
+  return {
+    fundingId,
+    shareKey: toMockShareKey(fundingId),
+    type: item.fundingType,
+    celebrantName: item.celebrantName,
+    title: null,
+    story: null,
+    promise: null,
+    product: {
+      name: item.productName,
+      imageUrl: item.productImageUrl,
+      price: MOCK_PRODUCT.targetAmount,
+      url: "https://link.coupang.com/a/example",
+    },
+    productChanged: false,
+    productChangedAt: null,
+    targetAmount: MOCK_PRODUCT.targetAmount,
+    deadline: item.deadline,
+    revealAt: item.fundingType === "SURPRISE" ? item.deadline : null,
+    remainingDays: null,
+    confirmedPercentage: 100,
+    pendingPercentage: 0,
+    pendingContributionCount: 0,
+    targetReached: true,
+    extended: false,
+    earlyClosedAt: null,
+    giftPreparedAt: null,
+    participantCount: 3,
+    participants: ["하린이", "도윤이", "서준이"].map((name, index) => ({
+      contributionId: fundingId * 100 + index,
+      order: index + 1,
+      name,
+      profileImageUrl: null,
+      status: "CONFIRMED" as const,
+      participatedAt: "2025-10-05T10:00:00",
+      thankCardSent: false,
+      thankCardSentAt: null,
+    })),
+    messageCount: item.rollingPaperCount ?? 3,
+    managementState: "CLOSED",
+    actions: {
+      canCloseEarly: false,
+      canExtend: false,
+      canChangeProduct: false,
+      canReissueShareCard: false,
+    },
+  };
+};
+
 // 홈 카드 목업을 원본으로 삼아 홈과 상세의 달성률·확인 대기 건수가 어긋나지 않게 한다
 const getMockOwnerFundingDetail = (fundingId: number): OwnerFundingDetailResponse | null => {
   const card = MOCK_FUNDING_CARDS.find(item => item.fundingId === fundingId);
-  if (!card) return null;
+  if (!card) return getMockClosedOwnerDetail(fundingId);
 
   const progress = getMockContributionProgress(fundingId);
   const confirmedPercentage = card.confirmedPercentage + progress.confirmedAddedPercentage;

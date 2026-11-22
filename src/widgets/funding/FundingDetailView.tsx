@@ -56,6 +56,8 @@ type FundingDetailViewBaseProps = {
   memberIntent?: ShareMemberIntent;
   // 서버가 쿠키로 확인한 로그인 여부. 새로고침해 복귀 쿼리가 사라져도 회원임을 유지한다
   isLoggedIn?: boolean;
+  // 마감된 내 생일 펀딩의 '롤링페이퍼 보기'를 누를 수 있는지 (롤링페이퍼 공개 여부)
+  rollingPaperOpened?: boolean;
 };
 
 // 공유 화면(guest)은 공개 상세 detail, 개설자 화면(owner·surprise)은 관리 상세 ownerDetail로 그린다
@@ -137,6 +139,7 @@ export default function FundingDetailView({
   onBack,
   memberIntent,
   isLoggedIn = false,
+  rollingPaperOpened = false,
   ...source
 }: FundingDetailViewProps) {
   const { pageExit, exitPage } = usePageExit();
@@ -151,6 +154,7 @@ export default function FundingDetailView({
   const isSurprise = variant === "surprise";
   const isOwner = variant === "owner";
   const isGuest = variant === "guest";
+  const showRollingPaperCta = isOwner && funding.closed;
   // 하단 CTA 버튼을 누르면 회원/비회원 구분 Dialog를 띄운다. 값은 어느 버튼에서 왔는지
   // 어느 버튼에서 왔는지에 따라 '예'(로그인 후 복귀 경로)·'아니오'(비회원 플로우)가 갈린다
   const [memberCheckFrom, setMemberCheckFrom] = useState<ShareMemberIntent | null>(null);
@@ -308,7 +312,8 @@ export default function FundingDetailView({
               className="pointer-events-none absolute inset-x-0 top-full z-20 w-full max-w-none"
             />
           </div>
-          {!isGuest && (
+          {/* 마감된 내 펀딩도 확인 대기 입금이 남아 있으면 입금 확인 진입점(프로필 버튼)을 유지한다 */}
+          {!isGuest && (!showRollingPaperCta || unconfirmedCount > 0) && (
             <button
               type="button"
               onClick={() => setIsPopupOpen(true)}
@@ -334,6 +339,13 @@ export default function FundingDetailView({
             </button>
           )}
         </div>
+        {showRollingPaperCta && (
+          <BottomCTA>
+            <Button size="xlarge" variant="fill" disabled={!rollingPaperOpened}>
+              롤링페이퍼 보기
+            </Button>
+          </BottomCTA>
+        )}
         {showBottomCta && (
           <BottomCTA>
             {hasConfirmedMyBotem ? (

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
+import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import FundingDetailView from "@/widgets/funding/FundingDetailView";
 import FundingProgressCardSkeleton from "@/widgets/funding/skeleton/FundingProgressCardSkeleton";
@@ -19,6 +20,10 @@ export default function FundingDetailContainer({
 }: FundingDetailContainerProps) {
   const router = useRouter();
   const ownerQuery = useFundingManagementQuery(Number(fundingId));
+  const variant = ownerQuery.data?.type === "SURPRISE" ? "surprise" : "owner";
+  const isClosed = ownerQuery.data?.managementState === "CLOSED";
+  // 생일 펀딩의 롤링페이퍼는 개설자가 결과(팡)를 연 뒤에 공개된다
+  const resultQuery = useFundingResultQuery(Number(fundingId), variant === "owner" && isClosed);
 
   // push로 프로필에 가면 이 화면이 히스토리에 남아 프로필에서 뒤로 갈 때 다시 돌아온다. 되돌아갈 히스토리가 없을 때만 프로필로 보낸다
   const handleBack = () => {
@@ -30,8 +35,9 @@ export default function FundingDetailContainer({
     return (
       <FundingDetailView
         fundingId={fundingId}
-        variant={ownerQuery.data.type === "SURPRISE" ? "surprise" : "owner"}
+        variant={variant}
         ownerDetail={ownerQuery.data}
+        rollingPaperOpened={Boolean(resultQuery.data?.resultOpenedAt)}
         onBack={handleBack}
       />
     );

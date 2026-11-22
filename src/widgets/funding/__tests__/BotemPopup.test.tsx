@@ -116,6 +116,20 @@ describe("BotemPopup 마감 상태", () => {
     expect(onContributeClick).toHaveBeenCalledTimes(1);
   });
 
+  it("마감된 서프라이즈 개설자 팝업에는 메세지 보태기·보태기 버튼이 없다", () => {
+    renderPopup({ isHost: true, isClosed: true });
+
+    expect(screen.queryByRole("button", { name: "메세지 보태기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "보태기" })).not.toBeInTheDocument();
+  });
+
+  it("마감 전 서프라이즈 개설자 팝업은 기존대로 두 버튼을 보여준다", () => {
+    renderPopup({ isHost: true, isClosed: false });
+
+    expect(screen.getByRole("button", { name: "메세지 보태기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "보태기" })).toBeInTheDocument();
+  });
+
   it("마감됐으면 수정 행을 숨기고 보태기만 비활성화하며 메세지 보태기는 동작한다", () => {
     const { onMessageClick } = renderPopup({ isClosed: true });
 
