@@ -297,6 +297,12 @@ describe("RollingPaperWheel", () => {
     });
   });
 
+  it("마우스로 드래그해도 편지지 글자가 선택되지 않는다", () => {
+    render(<RollingPaperWheel letters={toLetters(5)} voices={toVoices(5)} />);
+
+    expect(screen.getByTestId("rolling-paper-wheel")).toHaveClass("select-none");
+  });
+
   it("1개면 드래그해도 움직이지 않는다", () => {
     render(<RollingPaperWheel letters={toLetters(1)} voices={toVoices(1)} />);
     const wheel = screen.getByTestId("rolling-paper-wheel");

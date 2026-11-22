@@ -161,7 +161,7 @@ export default function RollingPaperWheel({ letters, voices = [] }: RollingPaper
       role="group"
       aria-label="롤링페이퍼 편지지 목록. 위아래 방향키로 이동"
       tabIndex={0}
-      className="absolute inset-0 touch-none overflow-hidden"
+      className="absolute inset-0 touch-none overflow-hidden select-none"
       onKeyDown={handleKeyDown}
       onClick={() => expanded && collapse()}
       onPointerDown={handlePointerDown}
