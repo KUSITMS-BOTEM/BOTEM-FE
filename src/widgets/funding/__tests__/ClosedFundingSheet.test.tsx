@@ -35,7 +35,7 @@ describe("ClosedFundingSheet", () => {
     mockQuery({ data: { fundings: [] } });
     render(<ClosedFundingSheet open onClose={vi.fn()} />);
 
-    expect(screen.getByText("마감된 펀딩이 없어요.")).toBeInTheDocument();
+    expect(screen.getByText("아직 끝난 펀딩이 없어요")).toBeInTheDocument();
   });
 
   it("조회에 실패하면 안내와 다시 시도 버튼을 보여주고, 누르면 refetch한다", async () => {
