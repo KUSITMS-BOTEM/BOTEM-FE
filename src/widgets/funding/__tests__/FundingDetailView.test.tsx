@@ -673,6 +673,75 @@ describe("FundingDetailView", () => {
     });
   });
 
+  describe("마감된 펀딩 상세", () => {
+    const closedOwnerDetail: OwnerFundingDetailResponse = {
+      ...ownerDetail,
+      managementState: "CLOSED",
+      remainingDays: null,
+    };
+
+    it("내 생일 펀딩이 마감되면 프로필 묶음을 숨기고 '롤링페이퍼 보기' 버튼을 보여준다", () => {
+      const { container } = render(
+        <FundingDetailView fundingId="1" variant="owner" ownerDetail={closedOwnerDetail} />,
+      );
+
+      expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeInTheDocument();
+      expect(container.querySelector("button.self-end")).not.toBeInTheDocument();
+    });
+
+    it("마감된 내 생일 펀딩도 확인 대기 입금이 남아 있으면 프로필 묶음과 롤링페이퍼 버튼을 함께 보여준다", () => {
+      const { container } = render(
+        <FundingDetailView
+          fundingId="1"
+          variant="owner"
+          ownerDetail={{ ...closedOwnerDetail, pendingContributionCount: 3 }}
+        />,
+      );
+
+      expect(container.querySelector("button.self-end")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeInTheDocument();
+    });
+
+    it("롤링페이퍼가 공개되기 전에는 '롤링페이퍼 보기'가 비활성이고, 공개되면 활성이다", () => {
+      const { rerender } = render(
+        <FundingDetailView fundingId="1" variant="owner" ownerDetail={closedOwnerDetail} />,
+      );
+      expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeDisabled();
+
+      rerender(
+        <FundingDetailView
+          fundingId="1"
+          variant="owner"
+          ownerDetail={closedOwnerDetail}
+          rollingPaperOpened
+        />,
+      );
+      expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeEnabled();
+    });
+
+    it("마감 전 내 생일 펀딩은 프로필 묶음을 그대로 두고 롤링페이퍼 버튼이 없다", () => {
+      const { container } = render(
+        <FundingDetailView fundingId="1" variant="owner" ownerDetail={ownerDetail} />,
+      );
+
+      expect(container.querySelector("button.self-end")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "롤링페이퍼 보기" })).not.toBeInTheDocument();
+    });
+
+    it("마감된 서프라이즈 개설자 화면은 프로필 묶음을 그대로 두고 롤링페이퍼 버튼이 없다", () => {
+      const { container } = render(
+        <FundingDetailView
+          fundingId="1"
+          variant="surprise"
+          ownerDetail={{ ...closedOwnerDetail, type: "SURPRISE" }}
+        />,
+      );
+
+      expect(container.querySelector("button.self-end")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "롤링페이퍼 보기" })).not.toBeInTheDocument();
+    });
+  });
+
   describe("더보기", () => {
     it("개설자가 더보기를 누르면 메뉴와 연장 안내가 담긴 시트가 열린다", async () => {
       const user = userEvent.setup();
