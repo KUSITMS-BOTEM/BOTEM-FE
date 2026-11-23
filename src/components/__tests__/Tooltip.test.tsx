@@ -28,4 +28,11 @@ describe("Tooltip", () => {
 
     expect(screen.getByText("안내")).toHaveClass("whitespace-nowrap");
   });
+
+  it("direction=down이면 내용을 보여주고 꼬리는 스크린리더에서 숨긴다", () => {
+    const { container } = render(<Tooltip direction="down">나도 받고 싶은게 있다면?</Tooltip>);
+
+    expect(screen.getByText("나도 받고 싶은게 있다면?")).toBeInTheDocument();
+    expect(container.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+  });
 });

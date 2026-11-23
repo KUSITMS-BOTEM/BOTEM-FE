@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useCompleteGiftVerificationMutation } from "@/hooks/mutations/gift-verification/useCompleteGiftVerificationMutation";
 import { useGiftVerificationTargetsQuery } from "@/hooks/queries/home/useGiftVerificationTargetsQuery";
 import type { GiftVerificationTargetResponse } from "@/types/home/home";
@@ -13,7 +14,7 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/hooks/queries/home/useGiftVerificationTargetsQuery");
 vi.mock("@/hooks/mutations/gift-verification/useCompleteGiftVerificationMutation");
-vi.mock("@/components/effects/hero-motion/HeroMotion", () => ({ default: () => null }));
+vi.mock("@/hooks/queries/funding/useFundingManagementQuery");
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element
@@ -63,6 +64,10 @@ beforeEach(() => {
     mutate,
     isPending: false,
   } as unknown as ReturnType<typeof useCompleteGiftVerificationMutation>);
+  vi.mocked(useFundingManagementQuery).mockReturnValue({
+    data: undefined,
+    isError: false,
+  } as unknown as ReturnType<typeof useFundingManagementQuery>);
 });
 
 describe("FundingGiftVerifyContainer", () => {
@@ -124,18 +129,56 @@ describe("FundingGiftVerifyContainer", () => {
     });
   });
 
-  it("인증을 보내고 나면 완료 화면과 '친구에게 공유하기'를 보여준다", () => {
+  it("인증을 보내고 나면 함께한 친구 공유 시트를 띄우고, 공유 키를 받기 전에 닫으면 /home으로 replace한다", async () => {
     mockQuery({ targets: [target] });
     vi.mocked(useCompleteGiftVerificationMutation).mockReturnValue({
       mutate,
       isPending: false,
       isSuccess: true,
     } as unknown as ReturnType<typeof useCompleteGiftVerificationMutation>);
+    vi.mocked(useFundingManagementQuery).mockReturnValue({
+      data: undefined,
+      isError: false,
+    } as unknown as ReturnType<typeof useFundingManagementQuery>);
 
     render(<FundingGiftVerifyContainer />);
 
-    expect(screen.getByText(/선물 도착 인증을 보냈어요!/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "친구에게 공유하기" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "선물 도착 인증 보내기" })).not.toBeInTheDocument();
+    const sheet = screen.getByRole("dialog", { name: "공유하기" });
+    expect(sheet).toBeInTheDocument();
+    expect(useFundingManagementQuery).toHaveBeenCalledWith(12, { enabled: true });
+
+    await userEvent.click(within(sheet).getByRole("button", { name: "닫기" }));
+
+    expect(replace).toHaveBeenCalledWith("/home");
+  });
+
+  it("공유 시트를 닫으면 친구들이 보게 될 인증 결과 화면으로 replace한다", async () => {
+    mockQuery({ targets: [target] });
+    vi.mocked(useCompleteGiftVerificationMutation).mockReturnValue({
+      mutate,
+      isPending: false,
+      isSuccess: true,
+    } as unknown as ReturnType<typeof useCompleteGiftVerificationMutation>);
+    vi.mocked(useFundingManagementQuery).mockReturnValue({
+      data: {
+        shareKey: "abc123",
+        type: "BIRTHDAY",
+        title: null,
+        celebrantName: "세윤",
+        product: { name: "에어팟", imageUrl: "/airpods.png" },
+        deadline: "2026-10-13T23:59:59",
+        targetAmount: 300000,
+        confirmedPercentage: 100,
+        participants: [],
+        participantCount: 0,
+      },
+      isError: false,
+    } as unknown as ReturnType<typeof useFundingManagementQuery>);
+    render(<FundingGiftVerifyContainer />);
+
+    const sheet = screen.getByRole("dialog", { name: "공유하기" });
+    await userEvent.click(within(sheet).getByRole("button", { name: "닫기" }));
+
+    expect(replace).toHaveBeenCalledWith("/share/abc123/gift");
   });
 });

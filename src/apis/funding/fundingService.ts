@@ -14,6 +14,7 @@ import type {
   CloseFundingResponse,
   ExtendFundingRequest,
   ExtendFundingResponse,
+  GiftChoiceResponse,
 } from "@/types/funding/fundingManagement";
 import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import type { RollingPaperResponse } from "@/types/funding/rollingPaper";
@@ -60,6 +61,9 @@ export const fundingService = {
     clientApi.post<ExtendFundingResponse>(`/api/fundings/${fundingId}/extension`, body),
   changeFundingProduct: (fundingId: number, body: ChangeFundingProductRequest) =>
     clientApi.patch<ChangeFundingProductResponse>(`/api/fundings/${fundingId}/product`, body),
+  // Swagger 요약은 '생일 펀딩'이지만 서프라이즈를 뺀 모든 펀딩의 선물 확인(FUND-PG-011/012)에서 쓴다
+  chooseGift: (fundingId: number) =>
+    clientApi.post<GiftChoiceResponse>(`/api/fundings/${fundingId}/gift-choice`),
 
   getResult: (fundingId: number) =>
     clientApi.get<FundingResultResponse>(`/api/fundings/${fundingId}/result`),

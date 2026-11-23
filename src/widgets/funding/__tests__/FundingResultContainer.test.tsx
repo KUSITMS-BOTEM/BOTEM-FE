@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { useChooseGiftMutation } from "@/hooks/mutations/funding/useChooseGiftMutation";
 import { useExtendFundingMutation } from "@/hooks/mutations/funding/useExtendFundingMutation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
@@ -24,6 +25,9 @@ vi.mock("@/hooks/queries/funding/useFundingManagementQuery", () => ({
 vi.mock("@/hooks/mutations/funding/useExtendFundingMutation", () => ({
   useExtendFundingMutation: vi.fn(),
 }));
+vi.mock("@/hooks/mutations/funding/useChooseGiftMutation", () => ({
+  useChooseGiftMutation: vi.fn(),
+}));
 vi.mock("@/widgets/funding/FundingResultCelebration", () => ({
   default: ({ contributors }: { contributors: unknown[] }) => (
     <div data-testid="celebration" data-count={contributors.length} />
@@ -42,6 +46,7 @@ beforeAll(() => {
 
 const refetchResult = vi.fn();
 const extendMutate = vi.fn();
+const chooseGiftMutate = vi.fn();
 const refetchManagement = vi.fn();
 
 type QueryState<T> = { data?: T; isLoading?: boolean };
@@ -69,6 +74,10 @@ const mockQueries = ({
     mutate: extendMutate,
     isPending: false,
   } as unknown as ReturnType<typeof useExtendFundingMutation>);
+  vi.mocked(useChooseGiftMutation).mockReturnValue({
+    mutateAsync: chooseGiftMutate,
+    isPending: false,
+  } as unknown as ReturnType<typeof useChooseGiftMutation>);
 };
 
 const makeResult = (
@@ -270,40 +279,82 @@ describe("FundingResultContainer", () => {
     expect(replace).toHaveBeenCalledWith("/home");
   });
 
-  it("구매 버튼을 누르면 관리 상세의 상품 링크를 새 탭(noopener)으로 연다", async () => {
-    mockQueries({
-      result: { data: makeResult(100, 364000) },
-      management: { data: makeManagement() },
+  describe("구매", () => {
+    const makeTab = () =>
+      ({ opener: {}, location: { href: "" }, close: vi.fn() }) as unknown as Window;
+
+    // mockReset은 mock 자신을 반환하는데, beforeEach가 함수를 반환하면 Vitest가 테스트 뒤 정리 함수로 호출한다
+    beforeEach(() => {
+      chooseGiftMutate.mockReset();
     });
-    const open = vi.spyOn(window, "open").mockImplementation(() => null);
-    render(<FundingResultContainer fundingId="7" />);
 
-    await userEvent.click(screen.getByRole("button", { name: "쿠팡에서 선물 사러 가기" }));
+    it.each([
+      ["목표 달성", 100, "쿠팡에서 선물 사러 가기"],
+      ["목표 미달", 50, "차액으로 구매"],
+    ])("%s: '%s' 버튼을 누르면 선물 선택을 저장한다", async (_, percentage, label) => {
+      mockQueries({
+        result: { data: makeResult(percentage as number, 200000) },
+        management: { data: makeManagement() },
+      });
+      const open = vi.spyOn(window, "open").mockImplementation(() => makeTab());
+      render(<FundingResultContainer fundingId="7" />);
 
-    expect(open).toHaveBeenCalledWith(
-      "https://shop.example.com/airpods",
-      "_blank",
-      "noopener,noreferrer",
-    );
-    open.mockRestore();
-  });
+      await userEvent.click(screen.getByRole("button", { name: label as string }));
 
-  it("상품 링크가 http(s)가 아니면 열지 않는다", async () => {
-    mockQueries({
-      result: { data: makeResult(100, 364000) },
-      management: {
-        data: makeManagement({
-          product: { name: "x", imageUrl: "", price: 1, url: "javascript:alert(1)" },
-        }),
-      },
+      expect(chooseGiftMutate).toHaveBeenCalledTimes(1);
+      open.mockRestore();
     });
-    const open = vi.spyOn(window, "open").mockImplementation(() => null);
-    render(<FundingResultContainer fundingId="7" />);
 
-    await userEvent.click(screen.getByRole("button", { name: "쿠팡에서 선물 사러 가기" }));
+    it("응답을 기다리기 전에 빈 탭을 열고, 성공하면 응답의 상품 링크로 보낸다", async () => {
+      mockQueries({
+        result: { data: makeResult(100, 364000) },
+        management: { data: makeManagement() },
+      });
+      const tab = makeTab();
+      const open = vi.spyOn(window, "open").mockImplementation(() => tab);
+      chooseGiftMutate.mockResolvedValue({ productUrl: "https://www.coupang.com/vp/products/1" });
+      render(<FundingResultContainer fundingId="7" />);
 
-    expect(open).not.toHaveBeenCalled();
-    open.mockRestore();
+      await userEvent.click(screen.getByRole("button", { name: "쿠팡에서 선물 사러 가기" }));
+      expect(open).toHaveBeenCalledWith("", "_blank");
+
+      expect(tab.opener).toBeNull();
+      expect(tab.location.href).toBe("https://www.coupang.com/vp/products/1");
+      open.mockRestore();
+    });
+
+    it("응답의 상품 링크가 http(s)가 아니면 열어 둔 탭을 닫는다", async () => {
+      mockQueries({
+        result: { data: makeResult(100, 364000) },
+        management: { data: makeManagement() },
+      });
+      const tab = makeTab();
+      const open = vi.spyOn(window, "open").mockImplementation(() => tab);
+      chooseGiftMutate.mockResolvedValue({ productUrl: "javascript:alert(1)" });
+      render(<FundingResultContainer fundingId="7" />);
+
+      await userEvent.click(screen.getByRole("button", { name: "쿠팡에서 선물 사러 가기" }));
+
+      expect(tab.close).toHaveBeenCalled();
+      expect(tab.location.href).toBe("");
+      open.mockRestore();
+    });
+
+    it("선물 선택 저장에 실패하면 열어 둔 탭을 닫는다", async () => {
+      mockQueries({
+        result: { data: makeResult(50, 200000) },
+        management: { data: makeManagement() },
+      });
+      const tab = makeTab();
+      const open = vi.spyOn(window, "open").mockImplementation(() => tab);
+      chooseGiftMutate.mockRejectedValue(new Error("선물 선택 실패"));
+      render(<FundingResultContainer fundingId="7" />);
+
+      await userEvent.click(screen.getByRole("button", { name: "차액으로 구매" }));
+
+      expect(tab.close).toHaveBeenCalled();
+      open.mockRestore();
+    });
   });
 
   it("닫기를 누르면 다른 선물 고르기에서 기억해 둔 상태를 비운다", async () => {
