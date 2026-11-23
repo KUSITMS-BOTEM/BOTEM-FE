@@ -637,6 +637,33 @@ export const fundingHandlers = [
       error: null,
     });
   }),
+  // 버튼 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다. 실서버는 같은 펀딩에 다시 요청해도 같은 결과를 돌려준다
+  http.post("*/api/fundings/:fundingId/gift-choice", async ({ params }) => {
+    await delay(800);
+    const fundingId = Number(params.fundingId);
+    const detail = getMockManagement(fundingId);
+    if (!detail) {
+      return HttpResponse.json(
+        {
+          success: false,
+          data: null,
+          error: { code: "FUNDING_002", message: "펀딩을 찾을 수 없습니다.", detail: null },
+        },
+        { status: 404 },
+      );
+    }
+    return HttpResponse.json({
+      success: true,
+      data: {
+        fundingId,
+        giftVerificationId: fundingId,
+        productName: detail.product.name,
+        productImageUrl: detail.product.imageUrl,
+        productUrl: detail.product.url,
+      },
+      error: null,
+    });
+  }),
   http.post("*/api/fundings/:fundingId/extension", async ({ params, request }) => {
     await delay(800);
     const fundingId = Number(params.fundingId);

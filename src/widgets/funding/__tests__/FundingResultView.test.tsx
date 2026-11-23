@@ -31,9 +31,14 @@ const handlers = {
   onExtend: vi.fn(),
 };
 
-const renderView = (result: Partial<FundingResult> = {}) =>
+const renderView = (result: Partial<FundingResult> = {}, buyPending = false) =>
   render(
-    <FundingResultView result={{ ...RESULT, ...result }} reduceMotion={false} {...handlers} />,
+    <FundingResultView
+      result={{ ...RESULT, ...result }}
+      reduceMotion={false}
+      buyPending={buyPending}
+      {...handlers}
+    />,
   );
 
 beforeEach(() => vi.clearAllMocks());
@@ -58,6 +63,12 @@ describe("FundingResultView", () => {
       await userEvent.click(screen.getByRole("button", { name: "쿠팡에서 선물 사러 가기" }));
 
       expect(handlers.onBuy).toHaveBeenCalledTimes(1);
+    });
+
+    it("선물 선택을 저장하는 중이면 쿠팡 버튼을 막는다", () => {
+      renderView({}, true);
+
+      expect(screen.getByRole("button", { name: "쿠팡에서 선물 사러 가기" })).toBeDisabled();
     });
   });
 
@@ -96,6 +107,12 @@ describe("FundingResultView", () => {
 
       expect(handlers.onBuy).toHaveBeenCalledTimes(1);
       expect(handlers.onChangeGift).not.toHaveBeenCalled();
+    });
+
+    it("선물 선택을 저장하는 중이면 '차액으로 구매'를 막는다", () => {
+      renderView(missed, true);
+
+      expect(screen.getByRole("button", { name: "차액으로 구매" })).toBeDisabled();
     });
 
     it("연장할 수 있으면 기간연장 버튼으로 onExtend를 호출한다", async () => {

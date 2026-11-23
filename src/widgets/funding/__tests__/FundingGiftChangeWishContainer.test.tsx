@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useChangeFundingProductMutation } from "@/hooks/mutations/funding/useChangeFundingProductMutation";
+import { useChooseGiftMutation } from "@/hooks/mutations/funding/useChooseGiftMutation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
@@ -26,6 +27,9 @@ vi.mock("@/hooks/queries/funding/useFundingManagementQuery", () => ({
 vi.mock("@/hooks/mutations/funding/useChangeFundingProductMutation", () => ({
   useChangeFundingProductMutation: vi.fn(),
 }));
+vi.mock("@/hooks/mutations/funding/useChooseGiftMutation", () => ({
+  useChooseGiftMutation: vi.fn(),
+}));
 
 const mockWish: WishResponse = {
   id: 1,
@@ -48,12 +52,14 @@ const mockManagement = {
 } as OwnerFundingDetailResponse;
 
 const changeMutate = vi.fn();
+const chooseGiftMutate = vi.fn();
 
 const mockQueries = ({
   wish = mockWish as WishResponse | null,
   isLoading = false,
   isPending = false,
   isSuccess = false,
+  chooseGiftPending = false,
 } = {}) => {
   vi.mocked(useWishQuery).mockReturnValue({
     data: wish,
@@ -71,6 +77,10 @@ const mockQueries = ({
     isPending,
     isSuccess,
   } as unknown as ReturnType<typeof useChangeFundingProductMutation>);
+  vi.mocked(useChooseGiftMutation).mockReturnValue({
+    mutate: chooseGiftMutate,
+    isPending: chooseGiftPending,
+  } as unknown as ReturnType<typeof useChooseGiftMutation>);
 };
 
 beforeEach(() => {
@@ -109,16 +119,30 @@ describe("FundingGiftChangeWishContainer", () => {
     expect(screen.getByRole("button", { name: /이 선물로 변경하기/ })).toBeDisabled();
   });
 
-  it("바꾼 뒤에는 구매 안내와 쿠팡 구매 버튼을 보여주고, 누르면 위시 링크를 새 탭으로 연다", async () => {
+  it("바꾼 뒤 쿠팡 구매 버튼을 누르면 빈 탭을 먼저 열고, 선물 선택이 저장되면 응답의 상품 링크로 보낸다", async () => {
     mockQueries({ isSuccess: true });
-    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    const tab = { opener: {}, location: { href: "" }, close: vi.fn() } as unknown as Window;
+    const open = vi.spyOn(window, "open").mockImplementation(() => tab);
     render(<FundingGiftChangeWishContainer />);
 
     expect(screen.getByText("24시간 안에 구매 후 인증해 주세요")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "쿠팡에서 선물 사러 가기" }));
 
-    expect(open).toHaveBeenCalledWith(mockWish.productUrl, "_blank", "noopener,noreferrer");
+    expect(open).toHaveBeenCalledWith("", "_blank");
+    expect(chooseGiftMutate).toHaveBeenCalledTimes(1);
+    const { onSuccess } = chooseGiftMutate.mock.lastCall![1] as {
+      onSuccess: (data: { productUrl: string }) => void;
+    };
+    onSuccess({ productUrl: mockWish.productUrl });
+    expect(tab.location.href).toBe(mockWish.productUrl);
     open.mockRestore();
+  });
+
+  it("선물 선택을 저장하는 중에는 쿠팡 구매 버튼을 다시 누를 수 없다", () => {
+    mockQueries({ isSuccess: true, chooseGiftPending: true });
+    render(<FundingGiftChangeWishContainer />);
+
+    expect(screen.getByRole("button", { name: /쿠팡에서 선물 사러 가기/ })).toBeDisabled();
   });
 
   it("이미 이 펀딩의 선물인 위시로 들어오면 바로 구매 버튼을 보여준다", () => {

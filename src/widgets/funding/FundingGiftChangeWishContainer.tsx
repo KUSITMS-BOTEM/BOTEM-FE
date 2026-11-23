@@ -9,12 +9,13 @@ import ProductDetailView from "@/components/ProductDetailView";
 import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
 import TextButton from "@/components/TextButton";
 import { useChangeFundingProductMutation } from "@/hooks/mutations/funding/useChangeFundingProductMutation";
+import { useChooseGiftMutation } from "@/hooks/mutations/funding/useChooseGiftMutation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import { type OriginalGift, useGiftChangeStore } from "@/store/giftChangeStore";
 import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
-import { isValidUrl } from "@/utils/isValidUrl";
+import { openPendingTab } from "@/utils/openPendingTab";
 import type { GiftChangeProduct } from "@/widgets/funding/FundingGiftChangeView";
 import FundingOriginalGiftSheet from "@/widgets/funding/FundingOriginalGiftSheet";
 
@@ -27,6 +28,7 @@ export default function FundingGiftChangeWishContainer() {
   const { data: result } = useFundingResultQuery(fundingId);
   const { data: management } = useFundingManagementQuery(fundingId);
   const changeMutation = useChangeFundingProductMutation(fundingId);
+  const chooseGiftMutation = useChooseGiftMutation(fundingId);
   const storedFundingId = useGiftChangeStore(state => state.fundingId);
   const storedOriginalGift = useGiftChangeStore(state => state.originalGift);
   // 위시 변경에서 뒤로 가면 다른 선물 고르기가 아니라 선물 확인으로 돌아간다
@@ -53,10 +55,15 @@ export default function FundingGiftChangeWishContainer() {
     management,
   );
 
+  // 바꾼 상품을 선물로 정해야 선물 인증 대기로 바뀐다
   const handleBuy = () => {
-    if (!isValidUrl(wish.productUrl)) return;
-    window.open(wish.productUrl, "_blank", "noopener,noreferrer");
+    const tab = openPendingTab();
+    chooseGiftMutation.mutate(undefined, {
+      onSuccess: data => tab.navigate(data?.productUrl),
+      onError: tab.close,
+    });
   };
+  const ctaPending = changeMutation.isPending || chooseGiftMutation.isPending;
 
   return (
     <>
@@ -68,8 +75,8 @@ export default function FundingGiftChangeWishContainer() {
         onBack={backToResult}
         ctaLabel={isChanged ? "쿠팡에서 선물 사러 가기" : "이 선물로 변경하기"}
         ctaColor={isChanged ? "brand" : "neutral"}
-        ctaPending={changeMutation.isPending}
-        ctaDisabled={changeMutation.isPending}
+        ctaPending={ctaPending}
+        ctaDisabled={ctaPending}
         onCtaClick={isChanged ? handleBuy : () => changeMutation.mutate(wish.id)}
         ctaUpper={
           isChanged && (
