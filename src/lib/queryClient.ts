@@ -11,7 +11,8 @@ import { setLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 // meta 키를 타입으로 등록해, skipGlobalError 같은 키 오타를 컴파일 타임에 잡는다
 declare module "@tanstack/react-query" {
   interface Register {
-    queryMeta: { skipGlobalError?: boolean };
+    // quietCodes: 해당 에러 코드만 전역 안내를 건너뛴다(정상 흐름인 409 등). 나머지 에러는 그대로 안내한다
+    queryMeta: { skipGlobalError?: boolean; quietCodes?: string[] };
     mutationMeta: { skipGlobalError?: boolean };
   }
 }
@@ -81,6 +82,7 @@ export const queryClient = new QueryClient({
     onError: (error, query) => {
       reportUnexpectedError(error);
       if (query.meta?.skipGlobalError) return;
+      if (error instanceof ApiError && query.meta?.quietCodes?.includes(error.code)) return;
       showGlobalErrorDialog(error);
     },
   }),

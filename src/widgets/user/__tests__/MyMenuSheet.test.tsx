@@ -146,13 +146,25 @@ describe("MyMenuSheet", () => {
     ["마감된 펀딩", () => mockClosedFundings(FAILED)],
     ["친구", () => mockFriends(FAILED)],
     ["대표 계좌", () => mockAccounts(FAILED)],
-  ])("%s 조회가 실패하면 스켈레톤을 유지하고 에러 다이얼로그를 띄운다", (_, makeFailed) => {
-    makeFailed();
+  ])(
+    "%s 조회가 실패하면 에러 다이얼로그를 띄우고 스켈레톤 대신 기본값으로 메뉴를 보여준다",
+    (_, makeFailed) => {
+      makeFailed();
+      renderSheet();
+
+      expect(screen.queryByRole("status", { name: "메뉴 불러오는 중" })).not.toBeInTheDocument();
+      expect(screen.getByText("내 프로필")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "로그아웃" })).toBeInTheDocument();
+      expect(showGlobalErrorDialog).toHaveBeenCalledWith(FAILED.error);
+    },
+  );
+
+  it("친구 조회가 실패하면 친구 수는 0명으로 보이고 나머지 값은 그대로 보인다", () => {
+    mockFriends(FAILED);
     renderSheet();
 
-    expect(screen.getByRole("status", { name: "메뉴 불러오는 중" })).toBeInTheDocument();
-    expect(screen.queryByText("내 프로필")).not.toBeInTheDocument();
-    expect(showGlobalErrorDialog).toHaveBeenCalledWith(FAILED.error);
+    expect(screen.getByText("0명")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /마감된 펀딩.*3개/ })).toBeInTheDocument();
   });
 
   it("재조회 중인 error는 재시도가 끝나기 전까지 다이얼로그를 띄우지 않는다", () => {
@@ -181,7 +193,7 @@ describe("MyMenuSheet", () => {
   });
 
   it("스켈레톤이 보이는 동안에도 로그아웃할 수 있다", async () => {
-    mockClosedFundings(FAILED);
+    mockClosedFundings(PENDING);
     logout.mockImplementation((_, options) => options.onSuccess());
     renderSheet();
 

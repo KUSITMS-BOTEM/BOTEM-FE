@@ -25,7 +25,7 @@ export default function FundingDetailContainer({
     ownerQuery.data?.managementState === "CLOSED" ||
     ownerQuery.data?.managementState === "TARGET_REACHED";
   // 생일 펀딩의 롤링페이퍼는 개설자가 결과(팡)를 연 뒤에 공개된다
-  // 조기 마감처럼 아직 결과를 열 수 없는 409(FUNDING_005)는 정상이라 안내·재시도 없이 버튼 문구로만 알린다
+  // 조기 마감처럼 아직 결과를 열 수 없는 409(FUNDING_005)는 정상이라 안내·재시도 없이 버튼 문구로만 알린다(그 외 에러는 전역 안내)
   const resultQuery = useFundingResultQuery(
     Number(fundingId),
     variant === "owner" && isClosed,

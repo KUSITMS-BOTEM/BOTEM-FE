@@ -10,7 +10,7 @@ import { consumeLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 vi.mock("@/utils/auth/clearLoggedInCookie", () => ({ clearLoggedInCookie: vi.fn() }));
 
-const failQuery = (error: Error, meta?: { skipGlobalError: boolean }) =>
+const failQuery = (error: Error, meta?: { skipGlobalError?: boolean; quietCodes?: string[] }) =>
   queryClient
     .fetchQuery({
       queryKey: [Math.random()],
@@ -60,6 +60,14 @@ describe("queryClient 전역 onError", () => {
     await failQuery(new ApiError("USER_002"), { skipGlobalError: true });
 
     expect(useErrorDialogStore.getState().message).toBeNull();
+  });
+
+  it("quietCodes에 든 코드만 Dialog를 건너뛰고 다른 에러는 그대로 띄운다", async () => {
+    await failQuery(new ApiError("FUNDING_005"), { quietCodes: ["FUNDING_005"] });
+    expect(useErrorDialogStore.getState().message).toBeNull();
+
+    await failQuery(new ApiError("UNKNOWN_ERROR"), { quietCodes: ["FUNDING_005"] });
+    expect(useErrorDialogStore.getState().message).not.toBeNull();
   });
 
   it("운영 신호 코드만 Sentry에 보고한다", async () => {

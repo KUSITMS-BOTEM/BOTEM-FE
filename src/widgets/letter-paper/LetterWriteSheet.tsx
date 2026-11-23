@@ -505,28 +505,26 @@ export default function LetterWriteSheet({
           </motion.div>
         </BottomCTA>
         {/* 외부 브라우저로 여는 방법은 카카오톡 것만 알아, 다른 앱은 안내만 하고 닫는다 */}
-        {micBlockedApp === "kakaotalk" ? (
-          <Dialog
-            kind="confirm"
-            open
-            title="카카오톡에서는 녹음을 쓸 수 없어요"
-            description={"다른 브라우저에서 녹음할 수 있어요.\n지금까지 쓴 내용은 옮겨지지 않아요."}
-            confirmLabel="다른 브라우저로 열기"
-            cancelLabel="텍스트로만 쓸게요"
-            confirmColor="neutral"
-            direction="vertical"
-            onConfirm={() => openInKakaoExternalBrowser(window.location.href)}
-            onCancel={() => setMicBlockedApp(null)}
-          />
-        ) : (
-          <Dialog
-            kind="alert"
-            open={micBlockedApp === "other"}
-            title="이 앱에서는 녹음을 쓸 수 없어요"
-            description={"다른 브라우저에서 녹음할 수 있어요.\n지금까지 쓴 내용은 옮겨지지 않아요."}
-            onConfirm={() => setMicBlockedApp(null)}
-          />
-        )}
+        <Dialog
+          kind="confirm"
+          open={micBlockedApp === "kakaotalk"}
+          title="카카오톡에서는 녹음을 쓸 수 없어요"
+          description={"다른 브라우저에서 녹음할 수 있어요.\n지금까지 쓴 내용은 옮겨지지 않아요."}
+          confirmLabel="다른 브라우저로 열기"
+          cancelLabel="텍스트로만 쓸게요"
+          confirmColor="neutral"
+          direction="vertical"
+          onConfirm={() => openInKakaoExternalBrowser(window.location.href)}
+          onCancel={() => setMicBlockedApp(null)}
+        />
+        <Dialog
+          kind="alert"
+          open={micBlockedApp === "other"}
+          title="이 앱에서는 녹음을 쓸 수 없어요"
+          description={"다른 브라우저에서 녹음할 수 있어요.\n지금까지 쓴 내용은 옮겨지지 않아요."}
+          onConfirm={() => setMicBlockedApp(null)}
+        />
+
         {isEdit && (
           <Dialog
             kind="confirm"

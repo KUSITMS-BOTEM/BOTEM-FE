@@ -68,9 +68,11 @@ export default function MyMenuSheet({ open, onClose, slideInOnOpen }: MyMenuShee
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
 
   const queries = [closedFundingsQuery, friendsQuery, payoutAccountsQuery];
-  const isReady = queries.every(query => query.isSuccess);
   // 재조회 중에는 이전 error가 남아 있으므로 재시도가 끝난 error만 본다
-  const loadError = queries.find(query => query.isError && !query.isFetching)?.error;
+  const isFailed = (query: (typeof queries)[number]) => query.isError && !query.isFetching;
+  const loadError = queries.find(isFailed)?.error;
+  // 실패해도 스켈레톤을 걷고 값이 없는 항목은 기본값(0명·0개·빈 계좌명)으로 보여 나머지 메뉴를 쓸 수 있게 한다
+  const isReady = queries.every(query => query.isSuccess || isFailed(query));
   const errorShownRef = useRef(false);
 
   // 메뉴를 한 번 열 때 한 번만 알린다. 확인 뒤 포커스 복귀 재조회가 또 실패해도 다시 띄우지 않는다
