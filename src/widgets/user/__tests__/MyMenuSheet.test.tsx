@@ -7,6 +7,7 @@ import { useClosedFundingsQuery } from "@/hooks/queries/funding/useClosedFunding
 import { useFriendsQuery } from "@/hooks/queries/friend/useFriendsQuery";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
+import { useFriendsEntryStore } from "@/store/friendsEntryStore";
 import type { PayoutAccountResponse } from "@/types/payout-account/payoutAccount";
 import type { MyProfile } from "@/types/user/profile";
 import MyMenuSheet from "@/widgets/user/MyMenuSheet";
@@ -219,6 +220,16 @@ describe("MyMenuSheet", () => {
     await userEvent.click(screen.getByRole("button", { name: /지유/ }));
 
     expect(push).toHaveBeenCalledWith("/my/profile");
+  });
+
+  it("친구 행을 누르면 슬라이드 진입을 켜고 /friends로 이동한다", async () => {
+    useFriendsEntryStore.setState({ slideIn: false });
+    renderSheet();
+
+    await userEvent.click(screen.getByRole("button", { name: /친구.*8명/ }));
+
+    expect(useFriendsEntryStore.getState().slideIn).toBe(true);
+    expect(push).toHaveBeenCalledWith("/friends");
   });
 
   it("로그아웃에 성공하면 랜딩으로 이동한다", async () => {

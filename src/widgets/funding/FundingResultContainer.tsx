@@ -6,12 +6,13 @@ import { useState } from "react";
 
 import Button from "@/components/Button";
 import LoadingAnimation from "@/components/LoadingAnimation";
+import { useChooseGiftMutation } from "@/hooks/mutations/funding/useChooseGiftMutation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useGiftChangeStore } from "@/store/giftChangeStore";
 import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import type { FundingResultResponse } from "@/types/funding/fundingResult";
-import { isValidUrl } from "@/utils/isValidUrl";
+import { openPendingTab } from "@/utils/openPendingTab";
 import FundingExtendFlow from "@/widgets/funding/FundingExtendFlow";
 import FundingResultView, { type FundingResult } from "@/widgets/funding/FundingResultView";
 
@@ -45,6 +46,7 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
   const [extendOpen, setExtendOpen] = useState(false);
   const resultQuery = useFundingResultQuery(Number(fundingId));
   const managementQuery = useFundingManagementQuery(Number(fundingId));
+  const chooseGiftMutation = useChooseGiftMutation(Number(fundingId));
 
   if (resultQuery.isLoading || managementQuery.isLoading) {
     return (
@@ -70,10 +72,16 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
   }
 
   const result = toFundingResult(resultQuery.data, managementQuery.data);
-  const { url: productUrl } = managementQuery.data.product;
-  const handleBuy = () => {
-    if (!isValidUrl(productUrl)) return;
-    window.open(productUrl, "_blank", "noopener,noreferrer");
+  // 쿠팡으로 가는 순간 선물을 정해야 선물 인증 대기로 바뀐다.
+  // mutate 호출별 콜백은 응답 전에 화면을 떠나면 실행되지 않아, 열어 둔 탭이 빈 채로 남지 않게 mutateAsync로 처리한다
+  const handleBuy = async () => {
+    const tab = openPendingTab();
+    try {
+      const data = await chooseGiftMutation.mutateAsync();
+      tab.navigate(data?.productUrl);
+    } catch {
+      tab.close();
+    }
   };
   // 선물 확인을 떠나면 다른 선물 고르기에서 기억해 둔 기존 선물도 더는 필요 없다
   const handleClose = () => {
@@ -88,6 +96,7 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
         reduceMotion={reduceMotion}
         onClose={handleClose}
         onBuy={handleBuy}
+        buyPending={chooseGiftMutation.isPending}
         onChangeGift={() => router.push(`/funding/${fundingId}/change-gift`)}
         onExtend={() => setExtendOpen(true)}
       />

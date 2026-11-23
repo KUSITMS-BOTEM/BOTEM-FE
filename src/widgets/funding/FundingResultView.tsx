@@ -29,6 +29,7 @@ type FundingResultViewProps = {
   reduceMotion: boolean;
   onClose: () => void;
   onBuy: () => void;
+  buyPending?: boolean;
   onChangeGift: () => void;
   onExtend: () => void;
 };
@@ -38,9 +39,11 @@ export default function FundingResultView({
   reduceMotion,
   onClose,
   onBuy,
+  buyPending = false,
   onChangeGift,
   onExtend,
 }: FundingResultViewProps) {
+  const buyState = buyPending ? "loading" : "default";
   const copy = getFundingResultCopy(result);
   const image =
     typeof result.productImage === "string" && !isValidUrl(result.productImage)
@@ -83,7 +86,7 @@ export default function FundingResultView({
               24시간 안에 구매 후 인증해 주세요
             </p>
           }>
-          <Button color="brand" size="xlarge" onClick={onBuy}>
+          <Button color="brand" size="xlarge" states={buyState} onClick={onBuy}>
             쿠팡에서 선물 사러 가기
           </Button>
         </BottomCTA>
@@ -97,7 +100,7 @@ export default function FundingResultView({
           <Button color="neutral" variant="weak" size="xlarge" onClick={onChangeGift}>
             다른 선물 고르기
           </Button>
-          <Button color="neutral" size="xlarge" onClick={onBuy}>
+          <Button color="neutral" size="xlarge" states={buyState} onClick={onBuy}>
             차액으로 구매
           </Button>
         </BottomCTA>

@@ -7,6 +7,8 @@ const base = {
   birthday: "10-24",
   birthdayDday: 3,
   wishCount: 3,
+  fundingInProgress: false,
+  surpriseFundingInProgress: false,
 };
 
 describe("toFriendItemProps", () => {

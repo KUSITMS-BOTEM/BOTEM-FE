@@ -4,6 +4,10 @@ import { withSentryConfig } from "@sentry/nextjs/config";
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  // BE가 내려주는 위시 프로필 링크(wishProfileUrl)가 /@{wishProfileKey} 형식이라 주소는 그대로 두고 화면만 연결한다
+  async rewrites() {
+    return [{ source: "/@:wishProfileKey", destination: "/share/profile/:wishProfileKey" }];
+  },
   turbopack: {
     rules: {
       "*.css": {

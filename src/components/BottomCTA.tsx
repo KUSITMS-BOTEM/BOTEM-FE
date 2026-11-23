@@ -22,11 +22,13 @@ type KakaoButtonAreaProps = {
 
 type BottomCTAProps = (DefaultButtonAreaProps | KakaoButtonAreaProps) & {
   upper?: ReactNode;
+  // 상단 그라데이션 위에 겹쳐 버튼을 가리키는 말풍선. upper와 달리 CTA 높이를 늘리지 않는다
+  tooltip?: ReactNode;
   lower?: ReactNode;
   className?: string;
 };
 
-export default function BottomCTA({ upper, lower, className, ...props }: BottomCTAProps) {
+export default function BottomCTA({ upper, tooltip, lower, className, ...props }: BottomCTAProps) {
   const direction = props.type === "kakao" ? "horizontal" : (props.direction ?? "horizontal");
 
   return (
@@ -40,6 +42,7 @@ export default function BottomCTA({ upper, lower, className, ...props }: BottomC
         aria-hidden
         className="to-semantic-background-default h-9 w-full bg-linear-to-b from-transparent"
       />
+      {tooltip && <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">{tooltip}</div>}
       <div className="bg-semantic-background-default pointer-events-auto flex w-full flex-col pb-[calc(var(--padding-large)+env(safe-area-inset-bottom))]">
         {upper && <div className="flex justify-center px-6 pb-6">{upper}</div>}
         <div

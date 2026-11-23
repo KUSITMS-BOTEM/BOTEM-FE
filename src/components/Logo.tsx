@@ -7,6 +7,7 @@ type LogoSize = "large" | "medium";
 type LogoProps = {
   color?: "default" | "gray";
   size?: LogoSize;
+  type?: "full" | "symbol";
   className?: string;
 };
 
@@ -15,7 +16,12 @@ const SIZE_STYLE: Record<LogoSize, { gap: string; symbol: string; wordmark: stri
   medium: { gap: "gap-0.5", symbol: "h-5 w-[22.21px]", wordmark: "h-[14.23px] w-[48.85px]" },
 };
 
-export default function Logo({ color = "default", size = "large", className }: LogoProps) {
+export default function Logo({
+  color = "default",
+  size = "large",
+  type = "full",
+  className,
+}: LogoProps) {
   const sizeStyle = SIZE_STYLE[size];
 
   return (
@@ -29,7 +35,9 @@ export default function Logo({ color = "default", size = "large", className }: L
         className,
       )}>
       <BotemSymbol aria-hidden className={cn("shrink-0", sizeStyle.symbol)} />
-      <BotemWordmark aria-hidden className={cn("shrink-0", sizeStyle.wordmark)} />
+      {type === "full" && (
+        <BotemWordmark aria-hidden className={cn("shrink-0", sizeStyle.wordmark)} />
+      )}
     </div>
   );
 }

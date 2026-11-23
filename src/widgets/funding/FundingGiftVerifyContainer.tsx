@@ -9,10 +9,10 @@ import PageExitMotion from "@/components/effects/PageExitMotion";
 import { useCompleteGiftVerificationMutation } from "@/hooks/mutations/gift-verification/useCompleteGiftVerificationMutation";
 import { useGiftVerificationTargetsQuery } from "@/hooks/queries/home/useGiftVerificationTargetsQuery";
 import { usePageExit } from "@/hooks/usePageExit";
-import FundingGiftVerifyCompleteView from "@/widgets/funding/FundingGiftVerifyCompleteView";
 import FundingGiftVerifyView, {
   type GiftVerifySubmitValues,
 } from "@/widgets/funding/FundingGiftVerifyView";
+import GiftVerifyShareSheet from "@/widgets/funding/GiftVerifyShareSheet";
 import IconClose from "@/assets/icons/icon-close.svg?react";
 
 const HOME_PATH = "/home";
@@ -37,7 +37,6 @@ export default function FundingGiftVerifyContainer() {
   };
 
   const renderContent = () => {
-    if (isSuccess) return <FundingGiftVerifyCompleteView fundingId={fundingId} />;
     if (isLoading) {
       return (
         <div role="status" className="flex flex-1 items-center justify-center">
@@ -90,6 +89,12 @@ export default function FundingGiftVerifyContainer() {
           ]}
         />
         {renderContent()}
+        {/* 인증은 이미 끝났으므로 시트를 닫으면 작성 화면으로 돌아가지 않고 친구들이 보게 될 인증 결과 화면으로 보낸다 */}
+        <GiftVerifyShareSheet
+          open={isSuccess}
+          fundingId={Number(fundingId)}
+          onClose={shareKey => (shareKey ? router.replace(`/share/${shareKey}/gift`) : goHome())}
+        />
       </main>
     </PageExitMotion>
   );

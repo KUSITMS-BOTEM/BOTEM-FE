@@ -32,3 +32,11 @@ export type ChangeFundingProductResponse = {
   product: FundingProduct;
   productChangedAt: string;
 };
+
+export type GiftChoiceResponse = {
+  fundingId: number;
+  giftVerificationId: number;
+  productName: string;
+  productImageUrl: string;
+  productUrl: string;
+};

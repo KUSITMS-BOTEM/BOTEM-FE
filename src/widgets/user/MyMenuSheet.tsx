@@ -16,6 +16,7 @@ import { useClosedFundingsQuery } from "@/hooks/queries/funding/useClosedFunding
 import { useFriendsQuery } from "@/hooks/queries/friend/useFriendsQuery";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
+import { useFriendsEntryStore } from "@/store/friendsEntryStore";
 import { handleLogoutClick } from "@/utils/auth/handleLogoutClick";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
 import { getDisplayName } from "@/utils/user/getDisplayName";
@@ -106,7 +107,10 @@ export default function MyMenuSheet({ open, onClose, slideInOnOpen }: MyMenuShee
               <List
                 leading={<IconFriend />}
                 title="친구"
-                onClick={() => router.push("/friends")}
+                onClick={() => {
+                  useFriendsEntryStore.getState().setSlideIn(true);
+                  router.push("/friends");
+                }}
                 right={
                   <span
                     className={cn("[font:var(--semantic-label-small)]", MENU_TEXT_BUTTON_CLASS)}>

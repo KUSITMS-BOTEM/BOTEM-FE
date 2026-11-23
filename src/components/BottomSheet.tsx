@@ -29,6 +29,7 @@ type BottomSheetProps = {
   headerType?: "title" | "handle";
   showHandleClose?: boolean;
   buttons?: BottomSheetButtons;
+  showButtonFade?: boolean;
   toast?: ReactNode;
   enterTransition?: BottomSheetEnterTransition;
   onClose: () => void;
@@ -59,6 +60,7 @@ export default function BottomSheet({
   headerType = "title",
   showHandleClose,
   buttons,
+  showButtonFade = true,
   toast,
   enterTransition = DEFAULT_ENTER_TRANSITION,
   onClose,
@@ -154,7 +156,9 @@ export default function BottomSheet({
                   )}
                   {buttons && (
                     <>
-                      <div className="from-semantic-background-default/0 to-semantic-background-default h-9 w-full bg-gradient-to-b" />
+                      {showButtonFade && (
+                        <div className="from-semantic-background-default/0 to-semantic-background-default h-9 w-full bg-gradient-to-b" />
+                      )}
                       <div className="bg-semantic-background-default flex w-full flex-col pb-5">
                         {buttons.upper && (
                           <div className="flex w-full justify-center px-6 pb-6">

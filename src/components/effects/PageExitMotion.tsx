@@ -18,11 +18,12 @@ const RESTING_TARGET = { x: 0, opacity: 1 };
 
 type PageExitMotionProps = {
   exit: PageExit | null;
+  slideIn?: boolean;
   children: ReactNode;
 };
 
 // App Router는 이동 즉시 페이지를 언마운트해 퇴장 애니메이션을 못 붙이므로, 애니메이션이 끝난 뒤에 이동한다
-export default function PageExitMotion({ exit, children }: PageExitMotionProps) {
+export default function PageExitMotion({ exit, slideIn, children }: PageExitMotionProps) {
   return (
     <MotionConfig reducedMotion="user">
       {/* transform이 걸린 요소는 fixed 자식(고정 헤더·BottomCTA)의 기준 박스가 된다.
@@ -39,6 +40,7 @@ export default function PageExitMotion({ exit, children }: PageExitMotionProps) 
           style={
             exit ? { marginTop: `calc(env(safe-area-inset-top) - ${exit.scrollY}px)` } : undefined
           }
+          initial={slideIn ? { x: "100%" } : false}
           animate={exit ? EXIT_TARGET[exit.type] : RESTING_TARGET}
           transition={SLIDE_TRANSITION}
           // 원위치 애니메이션의 완료 이벤트가 퇴장 직후에 늦게 도착할 수 있어, 퇴장 목표로 끝났을 때만 이동한다
