@@ -8,6 +8,7 @@ import { useFriendsQuery } from "@/hooks/queries/friend/useFriendsQuery";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { useFriendsEntryStore } from "@/store/friendsEntryStore";
+import { ApiError, AUTH_EXPIRED } from "@/types/api";
 import type { PayoutAccountResponse } from "@/types/payout-account/payoutAccount";
 import type { MyProfile } from "@/types/user/profile";
 import MyMenuSheet from "@/widgets/user/MyMenuSheet";
@@ -190,6 +191,27 @@ describe("MyMenuSheet", () => {
     rerender(<MyMenuSheet open onClose={vi.fn()} />);
 
     expect(showGlobalErrorDialog).toHaveBeenCalledTimes(2);
+  });
+
+  it("일반 오류가 먼저 실패한 조회에 있어도 인증 만료 오류를 골라 알린다", () => {
+    const authExpired = new ApiError(AUTH_EXPIRED);
+    mockClosedFundings(FAILED);
+    mockAccounts({ ...FAILED, error: authExpired });
+    renderSheet();
+
+    expect(showGlobalErrorDialog).toHaveBeenCalledTimes(1);
+    expect(showGlobalErrorDialog).toHaveBeenCalledWith(authExpired);
+  });
+
+  it("일반 오류를 이미 알린 뒤 인증 만료가 나중에 실패해도 알린다", () => {
+    const authExpired = new ApiError(AUTH_EXPIRED);
+    mockClosedFundings(FAILED);
+    const { rerender } = renderSheet();
+    mockAccounts({ ...FAILED, error: authExpired });
+    rerender(<MyMenuSheet open onClose={vi.fn()} />);
+
+    expect(showGlobalErrorDialog).toHaveBeenCalledTimes(2);
+    expect(showGlobalErrorDialog).toHaveBeenLastCalledWith(authExpired);
   });
 
   it("스켈레톤이 보이는 동안에도 로그아웃할 수 있다", async () => {

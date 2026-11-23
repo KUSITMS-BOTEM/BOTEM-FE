@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { useSendThankCardMutation } from "@/hooks/mutations/contribution/useSendThankCardMutation";
@@ -245,6 +245,21 @@ describe("ThankCardSheet 완료 단계", () => {
     await goToSentStepWithSuccess("  고마워  ");
 
     expect(screen.getByText("고마워").textContent).toBe("고마워");
+  });
+
+  it("요청 중 입력을 바꿔도 완료 카드에는 보낸 시점의 메시지를 보여준다", async () => {
+    let onSuccess: () => void = () => {};
+    mutate.mockImplementation((_vars, options) => {
+      onSuccess = options.onSuccess;
+    });
+    renderSheet();
+
+    await goToSentStep("고마워");
+    await userEvent.type(textarea(), " 바뀐 글");
+    act(() => onSuccess());
+
+    expect(screen.getByText("고마워")).toBeInTheDocument();
+    expect(screen.queryByText(/바뀐 글/)).not.toBeInTheDocument();
   });
 
   it("공유하기를 누르면 API 호출 없이 카드를 받는 사람 이름의 PNG로 공유한다", async () => {

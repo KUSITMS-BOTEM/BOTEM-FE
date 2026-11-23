@@ -1,4 +1,4 @@
-import { getMicBlockedInApp, openInKakaoExternalBrowser } from "@/utils/getMicBlockedInApp";
+import { getMicBlockedInApp } from "@/utils/getMicBlockedInApp";
 
 const IOS = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15";
 
@@ -23,24 +23,5 @@ describe("getMicBlockedInApp", () => {
     ["일반 Chrome", "Mozilla/5.0 (Linux; Android 14) Chrome/120 Mobile Safari/537.36"],
   ])("%s는 대상이 아니다", (_, ua) => {
     expect(getMicBlockedInApp(ua)).toBeNull();
-  });
-});
-
-describe("openInKakaoExternalBrowser", () => {
-  const originalLocation = window.location;
-
-  afterEach(() => {
-    Object.defineProperty(window, "location", { configurable: true, value: originalLocation });
-  });
-
-  it("현재 주소를 인코딩해 openExternal 스킴으로 이동한다", () => {
-    const location = { href: "" };
-    Object.defineProperty(window, "location", { configurable: true, value: location });
-
-    openInKakaoExternalBrowser("https://botem.me/share/abc?a=1&b=2");
-
-    expect(location.href).toBe(
-      "kakaotalk://web/openExternal?url=https%3A%2F%2Fbotem.me%2Fshare%2Fabc%3Fa%3D1%26b%3D2",
-    );
   });
 });

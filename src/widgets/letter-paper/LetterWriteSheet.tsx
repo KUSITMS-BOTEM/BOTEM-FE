@@ -13,12 +13,9 @@ import ToastMessage from "@/components/ToastMessage";
 import type { Color } from "@/constants/color";
 import type { LetterPaperStyle } from "@/constants/letterPaperStyle";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
+import { openInKakaoExternalBrowser } from "@/lib/openInKakaoExternalBrowser";
 import { cn } from "@/utils/cn";
-import {
-  getMicBlockedInApp,
-  openInKakaoExternalBrowser,
-  type MicBlockedApp,
-} from "@/utils/getMicBlockedInApp";
+import { getMicBlockedInApp, type MicBlockedApp } from "@/utils/getMicBlockedInApp";
 import { withVocativeParticle } from "@/utils/withSubjectParticle";
 import ScaledLetterPaper from "@/widgets/letter-paper/ScaledLetterPaper";
 import LetterRecordSheet from "@/widgets/letter-paper/LetterRecordSheet";

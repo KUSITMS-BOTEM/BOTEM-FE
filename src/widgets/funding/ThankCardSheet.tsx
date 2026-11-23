@@ -31,23 +31,25 @@ export default function ThankCardSheet({
   onClose,
   onDepositUnconfirmed,
 }: ThankCardSheetProps) {
-  const [step, setStep] = useState<"write" | "sent">("write");
   const [color, setColor] = useState<Color>("orange");
   const [message, setMessage] = useState("");
+  // 요청 중에도 입력을 바꿀 수 있어, 완료 화면은 보낸 시점의 값을 보여준다
+  const [sentCard, setSentCard] = useState<{ color: Color; message: string } | null>(null);
   const [isDepositNoticeOpen, setIsDepositNoticeOpen] = useState(false);
   const { mutate, isPending } = useSendThankCardMutation();
-  const isSent = step === "sent";
+  const isSent = sentCard !== null;
 
   const handleSend = () => {
+    const card = { color, message: message.trim() };
     mutate(
       {
         fundingId,
         contributionId,
-        message: message.trim(),
-        paperColor: color.toUpperCase() as ThankCardPaperColor,
+        message: card.message,
+        paperColor: card.color.toUpperCase() as ThankCardPaperColor,
       },
       {
-        onSuccess: () => setStep("sent"),
+        onSuccess: () => setSentCard(card),
         onError: error => {
           if (error instanceof ApiError && error.code === DEPOSIT_UNCONFIRMED_CODE) {
             setIsDepositNoticeOpen(true);
@@ -64,8 +66,12 @@ export default function ThankCardSheet({
         title={isSent ? "" : "감사 카드"}
         ariaLabel="감사 카드"
         onClose={onClose}>
-        {isSent ? (
-          <ThankCardSentStep recipientName={recipientName} color={color} message={message.trim()} />
+        {sentCard ? (
+          <ThankCardSentStep
+            recipientName={recipientName}
+            color={sentCard.color}
+            message={sentCard.message}
+          />
         ) : (
           <ThankCardWriteStep
             recipientName={recipientName}

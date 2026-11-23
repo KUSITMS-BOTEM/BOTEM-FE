@@ -297,6 +297,23 @@ describe("FundingDetailView", () => {
     expect(vi.mocked(HTMLDialogElement.prototype.showModal).mock.contexts.at(-1)).toBe(sheet);
   });
 
+  it("서프라이즈 개설자가 보탤 때 최대 금액은 목표에서 확정·확인 대기분을 뺀 남은 금액이다", async () => {
+    const user = userEvent.setup();
+    render(
+      <FundingDetailView
+        ownerDetail={{ ...ownerDetail, confirmedPercentage: 40, pendingPercentage: 10 }}
+        fundingId="1"
+        variant="surprise"
+      />,
+    );
+
+    await user.click(await screen.findByRole("button", { name: /확인 대기 0건이 있어요/ }));
+    await user.click(screen.getByRole("button", { name: "보태기" }));
+    await user.type(await screen.findByRole("textbox", { name: "보탬 금액" }), "800000");
+
+    expect(screen.getByText("최대 750,000원까지 보탤 수 있어요")).toBeInTheDocument();
+  });
+
   it("서프라이즈 개설자와 펀딩 주인 화면에는 하단 CTA 버튼이 없다", () => {
     const { unmount } = render(
       <FundingDetailView ownerDetail={ownerDetail} fundingId="1" variant="surprise" />,

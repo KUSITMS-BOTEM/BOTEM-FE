@@ -17,6 +17,7 @@ import { useFriendsQuery } from "@/hooks/queries/friend/useFriendsQuery";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { useFriendsEntryStore } from "@/store/friendsEntryStore";
+import { ApiError, AUTH_EXPIRED } from "@/types/api";
 import { handleLogoutClick } from "@/utils/auth/handleLogoutClick";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
 import { getDisplayName } from "@/utils/user/getDisplayName";
@@ -70,21 +71,26 @@ export default function MyMenuSheet({ open, onClose, slideInOnOpen }: MyMenuShee
   const queries = [closedFundingsQuery, friendsQuery, payoutAccountsQuery];
   // 재조회 중에는 이전 error가 남아 있으므로 재시도가 끝난 error만 본다
   const isFailed = (query: (typeof queries)[number]) => query.isError && !query.isFetching;
-  const loadError = queries.find(isFailed)?.error;
+  const failedErrors = queries.filter(isFailed).map(query => query.error);
+  // 인증 만료는 어느 조회에서 났든 일반 오류보다 먼저 골라 랜딩 이동을 놓치지 않는다
+  const authError = failedErrors.find(
+    error => error instanceof ApiError && error.code === AUTH_EXPIRED,
+  );
+  const loadError = authError ?? failedErrors[0];
   // 실패해도 스켈레톤을 걷고 값이 없는 항목은 기본값(0명·0개·빈 계좌명)으로 보여 나머지 메뉴를 쓸 수 있게 한다
   const isReady = queries.every(query => query.isSuccess || isFailed(query));
   const errorShownRef = useRef(false);
 
-  // 메뉴를 한 번 열 때 한 번만 알린다. 확인 뒤 포커스 복귀 재조회가 또 실패해도 다시 띄우지 않는다
+  // 일반 오류는 메뉴를 한 번 열 때 한 번만 알린다. 확인 뒤 포커스 복귀 재조회가 또 실패해도 다시 띄우지 않는다
   useEffect(() => {
     if (!open) {
       errorShownRef.current = false;
       return;
     }
-    if (!loadError || errorShownRef.current) return;
+    if (!loadError || (!authError && errorShownRef.current)) return;
     errorShownRef.current = true;
     showGlobalErrorDialog(loadError);
-  }, [open, loadError]);
+  }, [open, loadError, authError]);
 
   return (
     <CloseSheet open={open} title="" onClose={onClose} slideInOnOpen={slideInOnOpen}>

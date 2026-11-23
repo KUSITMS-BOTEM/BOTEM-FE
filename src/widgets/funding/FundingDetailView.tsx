@@ -128,11 +128,19 @@ const toShareFundingView = (detail: FundingDetailResponse) => ({
   extraParticipantCount: Math.max(0, detail.participantCount - MAX_PROFILES),
 });
 
-const toHostFundingView = (ownerDetail: OwnerFundingDetailResponse) => ({
-  ...toOwnerFundingView(ownerDetail),
-  pendingPercentage: ownerDetail.pendingPercentage,
-  participantCount: ownerDetail.participantCount,
-});
+const toHostFundingView = (ownerDetail: OwnerFundingDetailResponse) => {
+  const view = toOwnerFundingView(ownerDetail);
+  return {
+    ...view,
+    pendingPercentage: ownerDetail.pendingPercentage,
+    participantCount: ownerDetail.participantCount,
+    // 개설자 응답엔 남은 금액이 없어 목표 금액에서 확정·확인 대기 달성률을 뺀 값으로 근사한다 (서버가 최종 검증)
+    remainingAmount: Math.max(
+      0,
+      Math.round((view.targetAmount * (100 - view.progress - ownerDetail.pendingPercentage)) / 100),
+    ),
+  };
+};
 
 const noop = () => {};
 
