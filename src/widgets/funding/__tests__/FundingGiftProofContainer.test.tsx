@@ -86,4 +86,13 @@ describe("FundingGiftProofContainer", () => {
     expect(replace).not.toHaveBeenCalled();
     expect(screen.getByLabelText("선물 인증 불러오는 중")).toBeInTheDocument();
   });
+
+  it("인증 전 캐시가 남은 채 다시 받기에 실패하면 상세로 보내지 않고 재시도 화면을 보여준다", () => {
+    setQuery({ data: FUNDING_DETAIL, isError: true });
+
+    renderContainer();
+
+    expect(replace).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
+  });
 });

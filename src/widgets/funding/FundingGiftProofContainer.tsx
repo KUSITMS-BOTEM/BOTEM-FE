@@ -23,8 +23,8 @@ export default function FundingGiftProofContainer({
   const giftVerification = data?.giftVerification;
   const sharePath = `/share/${shareKey}`;
   // 아직 선물 인증 전인 펀딩은 결과가 없으니 펀딩 상세로 보낸다.
-  // 인증 직후 개설자는 인증 전에 받아 둔 캐시가 남아 있을 수 있어, 다시 받는 중에는 판단하지 않는다
-  const isUnverified = data !== undefined && !giftVerification && !isFetching;
+  // 인증 직후 개설자는 인증 전에 받아 둔 캐시가 남아 있을 수 있어, 다시 받는 중이거나 다시 받기에 실패했으면 판단하지 않는다
+  const isUnverified = data !== undefined && !giftVerification && !isFetching && !isError;
 
   useEffect(() => {
     if (isUnverified) router.replace(sharePath);
