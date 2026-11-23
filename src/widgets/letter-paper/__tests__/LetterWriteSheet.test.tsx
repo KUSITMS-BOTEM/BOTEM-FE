@@ -491,6 +491,42 @@ describe("LetterWriteSheet", () => {
       expect(screen.getByText("탭으로 녹음 시작")).toBeInTheDocument();
     });
 
+    describe("마이크가 안 되는 인앱이면", () => {
+      const stubUserAgent = (ua: string) =>
+        vi.spyOn(navigator, "userAgent", "get").mockReturnValue(ua);
+      afterEach(() => vi.restoreAllMocks());
+
+      it("카카오톡이면 녹음 영역 대신 안내 Dialog를 띄우고, 텍스트로만 쓰기를 고르면 닫는다", async () => {
+        stubUserAgent("Mozilla/5.0 (iPhone) KAKAOTALK 10.0");
+        renderSheet();
+
+        await openRecordSheet();
+
+        expect(
+          screen.getByRole("dialog", { name: "카카오톡에서는 녹음을 쓸 수 없어요" }),
+        ).toBeVisible();
+        expect(screen.queryByText("탭으로 녹음 시작")).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole("button", { name: "텍스트로만 쓸게요" }));
+
+        expect(
+          screen.queryByRole("dialog", { name: "카카오톡에서는 녹음을 쓸 수 없어요" }),
+        ).not.toBeInTheDocument();
+      });
+
+      it("다른 인앱이면 '이 앱에서는' 안내만 띄운다", async () => {
+        stubUserAgent("Mozilla/5.0 (iPhone) NAVER(inapp; search; 1000; 12.0)");
+        renderSheet();
+
+        await openRecordSheet();
+
+        expect(
+          screen.getByRole("dialog", { name: "이 앱에서는 녹음을 쓸 수 없어요" }),
+        ).toBeVisible();
+        expect(screen.queryByText("탭으로 녹음 시작")).not.toBeInTheDocument();
+      });
+    });
+
     it("녹음을 완료하면 편지지에 음성 메시지가 나타나고 onNext에 녹음 파일이 담긴다", async () => {
       const onNext = vi.fn();
       renderSheet({ onNext });

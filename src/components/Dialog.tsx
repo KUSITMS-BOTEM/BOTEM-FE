@@ -91,7 +91,7 @@ export default function Dialog({ open, title, description, className, ...props }
         {description && (
           <p
             id={descriptionId}
-            className="text-semantic-text-secondary [font:var(--semantic-body-medium)]">
+            className="text-semantic-text-secondary whitespace-pre-line [font:var(--semantic-body-medium)]">
             {description}
           </p>
         )}

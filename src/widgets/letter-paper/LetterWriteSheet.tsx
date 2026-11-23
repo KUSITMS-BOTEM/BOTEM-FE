@@ -14,6 +14,11 @@ import type { Color } from "@/constants/color";
 import type { LetterPaperStyle } from "@/constants/letterPaperStyle";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { cn } from "@/utils/cn";
+import {
+  getMicBlockedInApp,
+  openInKakaoExternalBrowser,
+  type MicBlockedApp,
+} from "@/utils/getMicBlockedInApp";
 import { withVocativeParticle } from "@/utils/withSubjectParticle";
 import ScaledLetterPaper from "@/widgets/letter-paper/ScaledLetterPaper";
 import LetterRecordSheet from "@/widgets/letter-paper/LetterRecordSheet";
@@ -122,6 +127,8 @@ export default function LetterWriteSheet({
   const [toastShown, setToastShown] = useState(false);
   // 수정 모드에서 변경사항을 버리게 되는 동작(나가기·되돌리기)은 확인을 받고 진행한다
   const [confirm, setConfirm] = useState<null | "exit" | "reset">(null);
+  // 마이크 권한 팝업이 뜨지 않는 인앱에서는 녹음 대신 안내를 띄운다
+  const [micBlockedApp, setMicBlockedApp] = useState<MicBlockedApp | null>(null);
   const recorder = useVoiceRecorder();
   const toolAreaRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
@@ -272,6 +279,11 @@ export default function LetterWriteSheet({
 
   // 이전 녹음·자막·타이머가 남아 있어도 항상 처음 상태에서 시작한다
   const openRecord = () => {
+    const blockedApp = getMicBlockedInApp(navigator.userAgent);
+    if (blockedApp) {
+      setMicBlockedApp(blockedApp);
+      return;
+    }
     recorder.reset();
     setActiveTool("record");
   };
@@ -492,6 +504,29 @@ export default function LetterWriteSheet({
             )}
           </motion.div>
         </BottomCTA>
+        {/* 외부 브라우저로 여는 방법은 카카오톡 것만 알아, 다른 앱은 안내만 하고 닫는다 */}
+        {micBlockedApp === "kakaotalk" ? (
+          <Dialog
+            kind="confirm"
+            open
+            title="카카오톡에서는 녹음을 쓸 수 없어요"
+            description={"다른 브라우저에서 녹음할 수 있어요.\n지금까지 쓴 내용은 옮겨지지 않아요."}
+            confirmLabel="다른 브라우저로 열기"
+            cancelLabel="텍스트로만 쓸게요"
+            confirmColor="neutral"
+            direction="vertical"
+            onConfirm={() => openInKakaoExternalBrowser(window.location.href)}
+            onCancel={() => setMicBlockedApp(null)}
+          />
+        ) : (
+          <Dialog
+            kind="alert"
+            open={micBlockedApp === "other"}
+            title="이 앱에서는 녹음을 쓸 수 없어요"
+            description={"다른 브라우저에서 녹음할 수 있어요.\n지금까지 쓴 내용은 옮겨지지 않아요."}
+            onConfirm={() => setMicBlockedApp(null)}
+          />
+        )}
         {isEdit && (
           <Dialog
             kind="confirm"
