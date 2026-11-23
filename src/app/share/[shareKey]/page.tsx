@@ -1,14 +1,10 @@
-import { cache } from "react";
-
 import { cookies } from "next/headers";
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 
-import { fundingServerService } from "@/apis/funding/fundingServerService";
 import { fundingDetailQueryKey } from "@/hooks/queries/funding/useFundingDetailQuery";
-import { ApiError } from "@/types/api";
 import { parseShareMemberIntent, SHARE_MEMBER_PARAM } from "@/utils/funding/shareMemberIntent";
+import { getShareFunding } from "@/app/share/[shareKey]/getShareFunding";
 import FundingShareContainer from "@/widgets/funding/FundingShareContainer";
 
 type FundingSharePageProps = {
@@ -16,24 +12,10 @@ type FundingSharePageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-const FUNDING_NOT_FOUND = "FUNDING_002";
-
-// generateMetadata와 페이지가 같은 요청을 한 번만 하도록 묶는다. 없는·취소된 펀딩은 404로 보낸다
-const getFunding = cache(async (shareKey: string) => {
-  try {
-    const funding = await fundingServerService.getFundingDetail(shareKey);
-    if (!funding) notFound();
-    return funding;
-  } catch (error) {
-    if (error instanceof ApiError && error.code === FUNDING_NOT_FOUND) notFound();
-    throw error;
-  }
-});
-
 // 카톡 공유 미리보기용. 조회에 실패하면 기본 메타를 쓴다
 export async function generateMetadata({ params }: FundingSharePageProps): Promise<Metadata> {
   try {
-    const funding = await getFunding((await params).shareKey);
+    const funding = await getShareFunding((await params).shareKey);
     // 받는 사람이 카톡 미리보기로 상품·사연을 미리 보지 못하게 한다
     if (funding.type === "SURPRISE") {
       return {
@@ -61,7 +43,7 @@ export default async function FundingSharePage({ params, searchParams }: Funding
   const memberIntent = isLoggedIn
     ? parseShareMemberIntent((await searchParams)[SHARE_MEMBER_PARAM])
     : undefined;
-  const funding = await getFunding(shareKey);
+  const funding = await getShareFunding(shareKey);
 
   const isSurprise = funding.type === "SURPRISE";
   const queryClient = new QueryClient();
