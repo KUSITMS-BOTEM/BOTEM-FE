@@ -19,7 +19,7 @@ export const giftVerificationHandlers = [
       await delay(800);
       const giftVerificationId = Number(params.giftVerificationId);
       const body = (await request.json()) as CompleteGiftVerificationRequest;
-      const target = completeMockGiftVerification(giftVerificationId);
+      const target = completeMockGiftVerification(giftVerificationId, body.thankYouMessage);
 
       return HttpResponse.json({
         success: true,

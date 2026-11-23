@@ -48,10 +48,17 @@ export default function FundingDetailLoader({
   const verifying = isLoggedIn && !isFetchedAfterMount;
   // 개설자가 공유 링크로 들어오면 기존 펀딩 화면으로 보낸다
   const isHostOnShare = data?.ownerPreview === true;
+  // 선물 인증까지 끝난 펀딩은 공유 링크로 들어온 친구에게 상세 대신 인증 결과를 보여준다 (서프라이즈는 제외)
+  const hasGiftProof =
+    !isHostOnShare && surprise === undefined && !verifying && !!data?.giftVerification;
 
   useEffect(() => {
     if (isHostOnShare && data) router.replace(`/funding/${data.fundingId}`);
   }, [isHostOnShare, router, data]);
+
+  useEffect(() => {
+    if (hasGiftProof) router.replace(`/share/${encodeURIComponent(shareKey)}/gift`);
+  }, [hasGiftProof, router, shareKey]);
 
   if (needsLogin)
     return (
@@ -70,7 +77,7 @@ export default function FundingDetailLoader({
     );
   if (isError)
     return <ErrorView onRetry={() => void refetch()} onClose={() => router.replace("/")} />;
-  if (!data || verifying || isHostOnShare) return <FundingDetailViewSkeleton />;
+  if (!data || verifying || isHostOnShare || hasGiftProof) return <FundingDetailViewSkeleton />;
 
   return (
     <FundingDetailView

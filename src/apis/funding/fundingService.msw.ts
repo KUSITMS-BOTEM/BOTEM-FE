@@ -3,6 +3,7 @@ import { delay, http, HttpResponse } from "msw";
 
 import { MOCK_FUNDING_CARDS } from "@/apis/home/homeService.msw";
 import { getMockContributionProgress, getMockContributionRecords } from "@/mocks/mockContributions";
+import { getMockCompletedGiftVerification } from "@/mocks/mockGiftVerifications";
 import { fromMockShareKey, toMockShareKey } from "@/mocks/mockShareKey";
 import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
 import type { ClosedFundingListResponse } from "@/types/funding/closedFunding";
@@ -535,7 +536,14 @@ export const fundingHandlers = [
         : {};
     return HttpResponse.json({
       success: true,
-      data: { ...MOCK_FUNDING_DETAIL, ...surprise, fundingId, shareKey, ownerPreview },
+      data: {
+        ...MOCK_FUNDING_DETAIL,
+        ...surprise,
+        fundingId,
+        shareKey,
+        ownerPreview,
+        giftVerification: getMockCompletedGiftVerification(fundingId),
+      },
       error: null,
     });
   }),

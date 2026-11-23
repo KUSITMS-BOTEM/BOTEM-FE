@@ -51,6 +51,12 @@ const render = (ui: ReactElement) => {
   return rtlRender(ui, { wrapper });
 };
 
+const GIFT_VERIFICATION = {
+  imageUrl: "https://image.botem.me/gift.jpg",
+  thankYouMessage: null,
+  completedAt: "2026-11-20T10:00:00",
+};
+
 const setQuery = (state: Record<string, unknown>) => {
   queryState.current = { isError: false, isFetchedAfterMount: true, refetch: vi.fn(), ...state };
 };
@@ -89,8 +95,25 @@ describe("FundingDetailLoader", () => {
     expect(screen.getByLabelText("펀딩 불러오는 중")).toBeInTheDocument();
   });
 
+  it("선물 인증까지 끝난 펀딩을 친구가 열면 인증 결과 화면으로 보낸다", () => {
+    setQuery({ data: { ...FUNDING_DETAIL, giftVerification: GIFT_VERIFICATION } });
+    render(<FundingDetailLoader shareKey="key-1" />);
+
+    expect(replace).toHaveBeenCalledWith("/share/key-1/gift");
+    expect(screen.getByLabelText("펀딩 불러오는 중")).toBeInTheDocument();
+  });
+
   describe("서프라이즈", () => {
     const surprise = { revealAt: "2026-10-13T00:00:00" };
+
+    it("선물 인증이 끝났어도 인증 결과 화면으로 보내지 않는다", () => {
+      setQuery({
+        data: { ...FUNDING_DETAIL, type: "SURPRISE", giftVerification: GIFT_VERIFICATION },
+      });
+      render(<FundingDetailLoader shareKey="key-1" isLoggedIn surprise={surprise} />);
+
+      expect(replace).not.toHaveBeenCalled();
+    });
 
     it("비로그인이면 잠금 화면에서 '로그인하고 보태기'로 카카오 로그인에 보낸다", () => {
       setQuery({ data: undefined });

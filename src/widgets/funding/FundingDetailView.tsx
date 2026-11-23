@@ -33,7 +33,6 @@ import { useMyBotem } from "@/widgets/funding/useMyBotem";
 import MyBotemSheet from "@/widgets/funding/MyBotemSheet";
 import DepositConfirmSheet from "@/widgets/funding/DepositConfirmSheet";
 import FundingContributeSheet from "@/widgets/funding/FundingContributeSheet";
-import FundingGiftProofView from "@/widgets/funding/FundingGiftProofView";
 import FundingMessage from "@/widgets/funding/FundingMessage";
 import FundingMoreFlow from "@/widgets/funding/FundingMoreFlow";
 import FundingPasswordSheet from "@/widgets/funding/FundingPasswordSheet";
@@ -117,7 +116,6 @@ const toShareFundingView = (detail: FundingDetailResponse) => ({
   pendingPercentage: detail.pendingPercentage,
   targetAmount: detail.targetAmount,
   participantCount: detail.participantCount,
-  hasGiftProof: detail.giftVerification !== null,
   profiles: detail.participants.slice(0, MAX_PROFILES).map((participant, index) => ({
     color: PROFILE_COLORS[index % PROFILE_COLORS.length],
     imageUrl: participant.profileImageUrl ?? undefined,
@@ -129,7 +127,6 @@ const toHostFundingView = (ownerDetail: OwnerFundingDetailResponse) => ({
   ...toOwnerFundingView(ownerDetail),
   pendingPercentage: ownerDetail.pendingPercentage,
   participantCount: ownerDetail.participantCount,
-  hasGiftProof: false,
 });
 
 const noop = () => {};
@@ -242,16 +239,6 @@ export default function FundingDetailView({
   const isContributeMode = !hasConfirmedMyBotem && (isContributeReady || memberHasNoBotem);
   const showBottomCta =
     isGuest && !isCheckingMember && (!isContributeMode || funding.canParticipate);
-
-  // 공유 링크로 들어온 친구에게 마감 후 선물 인증을 보여주는 화면이라 개설자 화면은 해당하지 않는다
-  if (!confirmsDeposits && isClosed && funding.hasGiftProof) {
-    return (
-      <FundingGiftProofView
-        contributorCount={funding.participantCount}
-        productName={funding.productName}
-      />
-    );
-  }
 
   return (
     <PageExitMotion exit={pageExit}>
