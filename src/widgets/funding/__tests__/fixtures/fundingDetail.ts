@@ -24,6 +24,7 @@ export const FUNDING_DETAIL: FundingDetailResponse = {
   remainingDays: 41,
   confirmedPercentage: 60,
   pendingPercentage: 0,
+  remainingAmount: 49382716,
   participantCount: 3,
   participants: [
     { order: 1, name: "하린이", profileImageUrl: null, contributedDate: "2026-11-10" },

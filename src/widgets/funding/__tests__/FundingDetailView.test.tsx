@@ -516,6 +516,27 @@ describe("FundingDetailView", () => {
       expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
     });
 
+    it("서버가 준 남은 금액을 최대 보탬 금액으로 안내한다 (달성률로 역산하지 않는다)", async () => {
+      const user = userEvent.setup();
+      render(
+        <FundingDetailView
+          detail={{
+            ...DETAIL,
+            targetAmount: 150000,
+            confirmedPercentage: 3,
+            remainingAmount: 145000,
+          }}
+          fundingId="1"
+        />,
+      );
+
+      await enterGuestContributeMode(user);
+      await user.click(screen.getByRole("button", { name: "보태기" }));
+      await user.type(await screen.findByRole("textbox", { name: "보탬 금액" }), "145500");
+
+      expect(screen.getByText("최대 145,000원까지 보탤 수 있어요")).toBeInTheDocument();
+    });
+
     it("금액 보태기가 닫히면(목표 달성·조기 마감) '메시지 보태기'만 보인다", async () => {
       const user = userEvent.setup();
       render(

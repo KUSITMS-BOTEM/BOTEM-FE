@@ -81,6 +81,8 @@ const MOCK_FUNDING = {
   // 보태기 버튼은 참여자 화면(guest)에만 있고, 그쪽은 공유용 상세 응답 값이 덮어쓴다
   canContributeAmount: true,
   canParticipate: true,
+  // 개설자는 자기 펀딩에 금액을 보태지 않아 개설자 응답에는 없다
+  remainingAmount: 0,
   extended: false,
   actions: { canCloseEarly: true, canReissueShareCard: true },
   pendingContributionCount: 3,
@@ -117,6 +119,7 @@ const toShareFundingView = (detail: FundingDetailResponse) => ({
   deadline: detail.deadline.slice(0, 10),
   progress: detail.confirmedPercentage,
   pendingPercentage: detail.pendingPercentage,
+  remainingAmount: detail.remainingAmount,
   targetAmount: detail.targetAmount,
   participantCount: detail.participantCount,
   hasGiftProof: detail.giftVerification !== null,
@@ -233,11 +236,6 @@ export default function FundingDetailView({
     completeTransfer,
     handleExitConfirm,
   } = useContributionFlow({ shareKey, isMember });
-  // 서버가 남은 금액을 주지 않아 목표 금액에서 확정·확인 대기 달성률을 뺀 값으로 근사한다 (서버가 최종 검증)
-  const remainingAmount = Math.max(
-    0,
-    Math.round((funding.targetAmount * (100 - funding.progress - funding.pendingPercentage)) / 100),
-  );
   // 금액 달성(마감)·기간 마감·서버가 알려준 조기 마감 모두 닫힌 펀딩이다
   const closedLabel = getClosedLabel({ percent: funding.progress, deadline: funding.deadline });
   const isClosed = funding.closed || closedLabel !== null;
@@ -566,7 +564,7 @@ export default function FundingDetailView({
           key={`contribute-${flowKey}`}
           open={isContributeOpen}
           hostName={funding.hostName}
-          maxAmount={remainingAmount}
+          maxAmount={funding.remainingAmount}
           onClose={() => setIsContributeOpen(false)}
           onExit={requestExit}
           onNext={amount => {
