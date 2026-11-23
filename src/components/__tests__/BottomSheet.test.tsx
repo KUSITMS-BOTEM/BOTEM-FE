@@ -184,6 +184,22 @@ describe("BottomSheet", () => {
     expect(screen.queryByRole("button", { name: "확인" })).not.toBeInTheDocument();
   });
 
+  it("기본값이면 버튼 위에 흰 그라데이션이 깔리고, showButtonFade={false}면 깔리지 않는다", () => {
+    const { container, rerender } = render(
+      <BottomSheet {...baseProps} open height="auto">
+        본문 내용
+      </BottomSheet>,
+    );
+    expect(container.querySelector(".bg-gradient-to-b.h-9")).toBeInTheDocument();
+
+    rerender(
+      <BottomSheet {...baseProps} open height="auto" showButtonFade={false}>
+        본문 내용
+      </BottomSheet>,
+    );
+    expect(container.querySelector(".bg-gradient-to-b.h-9")).not.toBeInTheDocument();
+  });
+
   it("닫기 아이콘 클릭 시 onClose가 바로 호출된다", async () => {
     const handleClose = vi.fn();
     const user = userEvent.setup();

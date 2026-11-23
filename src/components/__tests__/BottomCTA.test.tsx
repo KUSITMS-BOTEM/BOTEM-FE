@@ -91,4 +91,15 @@ describe("BottomCTA", () => {
 
     expect(container.firstElementChild).toHaveClass("custom-class", "fixed");
   });
+
+  it("tooltip을 넘기면 버튼과 함께 렌더한다", () => {
+    render(
+      <BottomCTA tooltip={<p>나도 받고 싶은게 있다면?</p>}>
+        <button type="button">펀딩 열기</button>
+      </BottomCTA>,
+    );
+
+    expect(screen.getByText("나도 받고 싶은게 있다면?")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "펀딩 열기" })).toBeInTheDocument();
+  });
 });
