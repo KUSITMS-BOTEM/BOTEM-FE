@@ -66,7 +66,9 @@ export default async function FundingSharePage({ params, searchParams }: Funding
   const isSurprise = funding.type === "SURPRISE";
   const queryClient = new QueryClient();
   // 서프라이즈는 상품·사연이 HTML에 실리지 않게 hydrate하지 않는다. 공개 시각만 따로 넘긴다
-  if (!isSurprise) queryClient.setQueryData(fundingDetailQueryKey(shareKey), funding);
+  // 회원은 hydrate하지 않는다. 캐시에 같은 쿼리가 남은 채(보태기 complete → X) 덮어쓰면 dataUpdateCount가 되감겨 isFetchedAfterMount가 영영 false가 된다
+  if (!isSurprise && !isLoggedIn)
+    queryClient.setQueryData(fundingDetailQueryKey(shareKey), funding);
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
