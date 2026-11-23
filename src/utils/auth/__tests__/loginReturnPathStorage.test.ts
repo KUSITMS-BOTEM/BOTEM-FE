@@ -1,6 +1,7 @@
 import {
   clearLoginReturnPath,
   consumeLoginReturnPath,
+  getLoginReturnPath,
   setLoginReturnPath,
 } from "../loginReturnPathStorage";
 
@@ -36,6 +37,13 @@ describe("loginReturnPathStorage", () => {
     sessionStorage.setItem("loginReturnPath", "//evil.com");
 
     expect(consumeLoginReturnPath()).toBeNull();
+  });
+
+  it("get은 경로를 지우지 않고 읽는다", () => {
+    setLoginReturnPath("/share/abc");
+
+    expect(getLoginReturnPath()).toBe("/share/abc");
+    expect(consumeLoginReturnPath()).toBe("/share/abc");
   });
 
   it("clear하면 저장된 경로가 사라진다", () => {

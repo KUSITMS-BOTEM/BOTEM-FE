@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { ApiError, AUTH_EXPIRED, REISSUE_UNAVAILABLE } from "@/types/api";
 import { clearLoggedInCookie } from "@/utils/auth/clearLoggedInCookie";
+import { setLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 
 // meta 키를 타입으로 등록해, skipGlobalError 같은 키 오타를 컴파일 타임에 잡는다
 declare module "@tanstack/react-query" {
@@ -42,6 +43,9 @@ function getErrorEntry(error: Error) {
 function redirectToLanding() {
   useAuthStore.getState().clearAccessToken();
   clearLoggedInCookie();
+  // 공유 링크에서 만료되면 랜딩에서 다시 로그인한 뒤 그 링크로 돌아오게 경로를 남긴다
+  const { pathname, search } = window.location;
+  if (pathname.startsWith("/share/")) setLoginReturnPath(pathname + search);
   window.location.replace("/");
 }
 
