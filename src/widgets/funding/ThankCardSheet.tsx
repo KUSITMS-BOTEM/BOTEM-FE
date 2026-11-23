@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 
+import Dialog from "@/components/Dialog";
 import OpenSheet from "@/components/OpenSheet";
 import type { Color } from "@/constants/color";
 import { useSendThankCardMutation } from "@/hooks/mutations/contribution/useSendThankCardMutation";
+import { ApiError } from "@/types/api";
 import type { ThankCardPaperColor } from "@/types/contribution/contribution";
 import ThankCardSentStep from "@/widgets/funding/ThankCardSentStep";
 import ThankCardWriteStep from "@/widgets/funding/ThankCardWriteStep";
@@ -15,23 +17,28 @@ type ThankCardSheetProps = {
   contributionId: number;
   recipientName: string;
   onClose: () => void;
+  // 입금이 확인되지 않은 보탬이라 카드를 보낼 수 없을 때, 안내 Dialog 확인 뒤 호출된다
+  onDepositUnconfirmed: () => void;
 };
 
-// 보내기는 미리보기(완료 화면)로 넘어가기만 하고, 실제 전송은 친구에게 공유하기에서 한다
+const DEPOSIT_UNCONFIRMED_CODE = "FUNDING_049";
+
 export default function ThankCardSheet({
   open,
   fundingId,
   contributionId,
   recipientName,
   onClose,
+  onDepositUnconfirmed,
 }: ThankCardSheetProps) {
   const [step, setStep] = useState<"write" | "sent">("write");
   const [color, setColor] = useState<Color>("orange");
   const [message, setMessage] = useState("");
+  const [isDepositNoticeOpen, setIsDepositNoticeOpen] = useState(false);
   const { mutate, isPending } = useSendThankCardMutation();
   const isSent = step === "sent";
 
-  const handleShare = () => {
+  const handleSend = () => {
     mutate(
       {
         fundingId,
@@ -39,35 +46,47 @@ export default function ThankCardSheet({
         message: message.trim(),
         paperColor: color.toUpperCase() as ThankCardPaperColor,
       },
-      // TODO: 공유 화면이 확정되면 응답의 shareUrl로 공유 화면에 연결한다
-      { onSuccess: onClose },
+      {
+        onSuccess: () => setStep("sent"),
+        onError: error => {
+          if (error instanceof ApiError && error.code === DEPOSIT_UNCONFIRMED_CODE) {
+            setIsDepositNoticeOpen(true);
+          }
+        },
+      },
     );
   };
 
   return (
-    <OpenSheet
-      open={open}
-      title={isSent ? "" : "감사 카드"}
-      ariaLabel="감사 카드"
-      onClose={onClose}>
-      {isSent ? (
-        <ThankCardSentStep
-          recipientName={recipientName}
-          color={color}
-          message={message.trim()}
-          isSharing={isPending}
-          onShare={handleShare}
-        />
-      ) : (
-        <ThankCardWriteStep
-          recipientName={recipientName}
-          color={color}
-          onColorChange={setColor}
-          message={message}
-          onMessageChange={setMessage}
-          onSend={() => setStep("sent")}
-        />
-      )}
-    </OpenSheet>
+    <>
+      <OpenSheet
+        open={open}
+        title={isSent ? "" : "감사 카드"}
+        ariaLabel="감사 카드"
+        onClose={onClose}>
+        {isSent ? (
+          <ThankCardSentStep recipientName={recipientName} color={color} message={message.trim()} />
+        ) : (
+          <ThankCardWriteStep
+            recipientName={recipientName}
+            color={color}
+            onColorChange={setColor}
+            message={message}
+            onMessageChange={setMessage}
+            isSending={isPending}
+            onSend={handleSend}
+          />
+        )}
+      </OpenSheet>
+      <Dialog
+        kind="alert"
+        open={isDepositNoticeOpen}
+        title="입금을 먼저 확인해주세요"
+        onConfirm={() => {
+          setIsDepositNoticeOpen(false);
+          onDepositUnconfirmed();
+        }}
+      />
+    </>
   );
 }

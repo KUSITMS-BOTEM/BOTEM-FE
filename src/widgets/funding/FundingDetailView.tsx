@@ -511,6 +511,10 @@ export default function FundingDetailView({
             contributionId={thankCardFriend.id}
             recipientName={thankCardFriend.name}
             onClose={() => setThankCardFriend(null)}
+            onDepositUnconfirmed={() => {
+              setThankCardFriend(null);
+              setIsPopupOpen(true);
+            }}
           />
         )}
         {/* 처리 뒤 관리 상세가 다시 조회돼 owner의 확인 대기 건수·알림 점이 함께 갱신된다 */}
