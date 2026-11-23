@@ -20,7 +20,8 @@ type PayoutAccountEditSheetProps = {
 };
 
 export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountEditSheetProps) {
-  const { data: payoutAccounts } = usePayoutAccountsQuery();
+  // 내 메뉴 안에 항상 마운트돼 있어, 열릴 때만 조회해야 홈 진입 때 요청이 나가지 않는다
+  const { data: payoutAccounts } = usePayoutAccountsQuery(open);
   const { mutate: updatePayoutAccount, isPending } = useUpdatePayoutAccountMutation();
   const [original, setOriginal] = useState<PayoutAccountResponse>();
   const [accountNumber, setAccountNumber] = useState("");

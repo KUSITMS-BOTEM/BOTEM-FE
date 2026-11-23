@@ -1,7 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { showGlobalErrorDialog } from "@/lib/queryClient";
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
+import { useClosedFundingsQuery } from "@/hooks/queries/funding/useClosedFundingsQuery";
 import { useFriendsQuery } from "@/hooks/queries/friend/useFriendsQuery";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
@@ -14,7 +16,9 @@ const push = vi.fn();
 const logout = vi.fn();
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, push }) }));
+vi.mock("@/lib/queryClient", () => ({ showGlobalErrorDialog: vi.fn() }));
 vi.mock("@/hooks/mutations/auth/useLogoutMutation");
+vi.mock("@/hooks/queries/funding/useClosedFundingsQuery");
 vi.mock("@/hooks/queries/friend/useFriendsQuery");
 vi.mock("@/hooks/queries/payout-account/usePayoutAccountsQuery");
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
@@ -55,31 +59,54 @@ const ACCOUNT: PayoutAccountResponse = {
   verificationStatus: "UNVERIFIED",
 };
 
-const mockQueries = (profile: MyProfile, accounts: PayoutAccountResponse[]) => {
+const SUCCESS = { isSuccess: true, isError: false, isFetching: false };
+const PENDING = { isSuccess: false, isError: false, isFetching: true };
+const FAILED = {
+  isSuccess: false,
+  isError: true,
+  isFetching: false,
+  error: new Error("서버 오류"),
+};
+
+const mockProfile = (profile: MyProfile) => {
   vi.mocked(useMyProfileQuery).mockReturnValue({ data: profile } as unknown as ReturnType<
     typeof useMyProfileQuery
   >);
-  vi.mocked(usePayoutAccountsQuery).mockReturnValue({ data: accounts } as unknown as ReturnType<
-    typeof usePayoutAccountsQuery
-  >);
 };
 
-const mockFriendsQuery = (state: { data?: { totalCount: number }; isPending: boolean }) => {
+const mockAccounts = (state: object) => {
+  vi.mocked(usePayoutAccountsQuery).mockReturnValue(
+    state as unknown as ReturnType<typeof usePayoutAccountsQuery>,
+  );
+};
+
+const mockFriends = (state: object) => {
   vi.mocked(useFriendsQuery).mockReturnValue(
     state as unknown as ReturnType<typeof useFriendsQuery>,
   );
 };
 
-const renderSheet = (open = true) =>
-  render(<MyMenuSheet open={open} onClose={vi.fn()} closedFundingCount={3} />);
+const mockClosedFundings = (state: object) => {
+  vi.mocked(useClosedFundingsQuery).mockReturnValue(
+    state as unknown as ReturnType<typeof useClosedFundingsQuery>,
+  );
+};
+
+const mockAllSuccess = (accounts: PayoutAccountResponse[] = [ACCOUNT]) => {
+  mockAccounts({ ...SUCCESS, data: accounts });
+  mockFriends({ ...SUCCESS, data: { totalCount: 8 } });
+  mockClosedFundings({ ...SUCCESS, data: { tabCounts: { all: 3 }, years: [] } });
+};
+
+const renderSheet = (open = true) => render(<MyMenuSheet open={open} onClose={vi.fn()} />);
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(useLogoutMutation).mockReturnValue({ mutate: logout } as unknown as ReturnType<
     typeof useLogoutMutation
   >);
-  mockQueries(PROFILE, [ACCOUNT]);
-  mockFriendsQuery({ data: { totalCount: 8 }, isPending: false });
+  mockProfile(PROFILE);
+  mockAllSuccess();
 });
 
 describe("MyMenuSheet", () => {
@@ -93,32 +120,84 @@ describe("MyMenuSheet", () => {
     expect(screen.getByRole("button", { name: /대표 계좌.*토스뱅크/ })).toBeInTheDocument();
   });
 
-  it("친구 목록을 불러오는 동안 친구 수 자리에 스켈레톤을 보여준다", () => {
-    mockFriendsQuery({ isPending: true });
-    renderSheet();
+  it("열려 있을 때만 세 목록을 조회한다", () => {
+    renderSheet(false);
 
-    expect(screen.getByRole("status", { name: "친구 수 불러오는 중" })).toBeInTheDocument();
-    expect(screen.queryByText(/명$/)).not.toBeInTheDocument();
+    expect(useClosedFundingsQuery).toHaveBeenCalledWith(false);
+    expect(useFriendsQuery).toHaveBeenCalledWith(false);
+    expect(usePayoutAccountsQuery).toHaveBeenCalledWith(false);
   });
 
-  it("친구 목록 조회에 실패하면 친구 수를 0명으로 보여주지 않는다", () => {
-    mockFriendsQuery({ isPending: false });
+  it.each([
+    ["마감된 펀딩", () => mockClosedFundings(PENDING)],
+    ["친구", () => mockFriends(PENDING)],
+    ["대표 계좌", () => mockAccounts(PENDING)],
+  ])("%s 목록을 불러오는 동안 스켈레톤을 보여주고 본문은 숨긴다", (_, makePending) => {
+    makePending();
     renderSheet();
 
-    expect(screen.getByText("친구")).toBeInTheDocument();
-    expect(screen.queryByText(/명$/)).not.toBeInTheDocument();
-    expect(screen.queryByRole("status", { name: "친구 수 불러오는 중" })).not.toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "메뉴 불러오는 중" })).toBeInTheDocument();
+    expect(screen.queryByText("내 프로필")).not.toBeInTheDocument();
+    expect(showGlobalErrorDialog).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["마감된 펀딩", () => mockClosedFundings(FAILED)],
+    ["친구", () => mockFriends(FAILED)],
+    ["대표 계좌", () => mockAccounts(FAILED)],
+  ])("%s 조회가 실패하면 스켈레톤을 유지하고 에러 다이얼로그를 띄운다", (_, makeFailed) => {
+    makeFailed();
+    renderSheet();
+
+    expect(screen.getByRole("status", { name: "메뉴 불러오는 중" })).toBeInTheDocument();
+    expect(screen.queryByText("내 프로필")).not.toBeInTheDocument();
+    expect(showGlobalErrorDialog).toHaveBeenCalledWith(FAILED.error);
+  });
+
+  it("재조회 중인 error는 재시도가 끝나기 전까지 다이얼로그를 띄우지 않는다", () => {
+    mockClosedFundings({ ...FAILED, isFetching: true });
+    renderSheet();
+
+    expect(showGlobalErrorDialog).not.toHaveBeenCalled();
+  });
+
+  it("여러 조회가 실패해도 다이얼로그는 한 번만 띄우고 리렌더에도 반복하지 않는다", () => {
+    mockClosedFundings(FAILED);
+    mockFriends(FAILED);
+    const { rerender } = renderSheet();
+    rerender(<MyMenuSheet open onClose={vi.fn()} />);
+
+    expect(showGlobalErrorDialog).toHaveBeenCalledTimes(1);
+  });
+
+  it("메뉴를 닫았다 다시 열었을 때 여전히 실패 상태면 다시 한 번 띄운다", () => {
+    mockClosedFundings(FAILED);
+    const { rerender } = renderSheet();
+    rerender(<MyMenuSheet open={false} onClose={vi.fn()} />);
+    rerender(<MyMenuSheet open onClose={vi.fn()} />);
+
+    expect(showGlobalErrorDialog).toHaveBeenCalledTimes(2);
+  });
+
+  it("스켈레톤이 보이는 동안에도 로그아웃할 수 있다", async () => {
+    mockClosedFundings(FAILED);
+    logout.mockImplementation((_, options) => options.onSuccess());
+    renderSheet();
+
+    await userEvent.click(screen.getByRole("button", { name: "로그아웃" }));
+
+    expect(replace).toHaveBeenCalledWith("/");
   });
 
   it("생일이 없으면 생일 문구를 보여주지 않는다", () => {
-    mockQueries({ ...PROFILE, birthday: null }, [ACCOUNT]);
+    mockProfile({ ...PROFILE, birthday: null });
     renderSheet();
 
     expect(screen.queryByText(/생일/)).not.toBeInTheDocument();
   });
 
   it("대표 계좌가 없으면 은행명을 비워둔다", () => {
-    mockQueries(PROFILE, [{ ...ACCOUNT, isDefault: false }]);
+    mockAllSuccess([{ ...ACCOUNT, isDefault: false }]);
     renderSheet();
 
     expect(screen.queryByText("토스뱅크")).not.toBeInTheDocument();

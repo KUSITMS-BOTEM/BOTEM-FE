@@ -44,6 +44,12 @@ describe("useFriendsQuery", () => {
     expect(queryClient.getQueryData(friendsQueryKey)).toEqual(result.current.data);
   });
 
+  it("enabled가 false면 서비스를 호출하지 않는다", () => {
+    renderHook(() => useFriendsQuery(false), { wrapper: createWrapper() });
+
+    expect(friendService.getFriends).not.toHaveBeenCalled();
+  });
+
   it("조회가 실패하면 isError가 되고 전역 에러 안내를 건너뛰도록 표시한다", async () => {
     vi.mocked(friendService.getFriends).mockRejectedValue(new Error("fail"));
     const { result } = renderHook(() => useFriendsQuery(), { wrapper: createWrapper() });
