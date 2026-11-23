@@ -78,7 +78,7 @@ const mockQueries = ({
     isSuccess,
   } as unknown as ReturnType<typeof useChangeFundingProductMutation>);
   vi.mocked(useChooseGiftMutation).mockReturnValue({
-    mutate: chooseGiftMutate,
+    mutateAsync: chooseGiftMutate,
     isPending: chooseGiftPending,
   } as unknown as ReturnType<typeof useChooseGiftMutation>);
 };
@@ -123,6 +123,7 @@ describe("FundingGiftChangeWishContainer", () => {
     mockQueries({ isSuccess: true });
     const tab = { opener: {}, location: { href: "" }, close: vi.fn() } as unknown as Window;
     const open = vi.spyOn(window, "open").mockImplementation(() => tab);
+    chooseGiftMutate.mockResolvedValue({ productUrl: mockWish.productUrl });
     render(<FundingGiftChangeWishContainer />);
 
     expect(screen.getByText("24시간 안에 구매 후 인증해 주세요")).toBeInTheDocument();
@@ -130,10 +131,6 @@ describe("FundingGiftChangeWishContainer", () => {
 
     expect(open).toHaveBeenCalledWith("", "_blank");
     expect(chooseGiftMutate).toHaveBeenCalledTimes(1);
-    const { onSuccess } = chooseGiftMutate.mock.lastCall![1] as {
-      onSuccess: (data: { productUrl: string }) => void;
-    };
-    onSuccess({ productUrl: mockWish.productUrl });
     expect(tab.location.href).toBe(mockWish.productUrl);
     open.mockRestore();
   });

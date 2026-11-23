@@ -55,13 +55,16 @@ export default function FundingGiftChangeWishContainer() {
     management,
   );
 
-  // 바꾼 상품을 선물로 정해야 선물 인증 대기로 바뀐다
-  const handleBuy = () => {
+  // 바꾼 상품을 선물로 정해야 선물 인증 대기로 바뀐다.
+  // mutate 호출별 콜백은 응답 전에 화면을 떠나면 실행되지 않아, 열어 둔 탭이 빈 채로 남지 않게 mutateAsync로 처리한다
+  const handleBuy = async () => {
     const tab = openPendingTab();
-    chooseGiftMutation.mutate(undefined, {
-      onSuccess: data => tab.navigate(data?.productUrl),
-      onError: tab.close,
-    });
+    try {
+      const data = await chooseGiftMutation.mutateAsync();
+      tab.navigate(data?.productUrl);
+    } catch {
+      tab.close();
+    }
   };
   const ctaPending = changeMutation.isPending || chooseGiftMutation.isPending;
 

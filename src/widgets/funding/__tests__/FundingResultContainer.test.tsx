@@ -75,7 +75,7 @@ const mockQueries = ({
     isPending: false,
   } as unknown as ReturnType<typeof useExtendFundingMutation>);
   vi.mocked(useChooseGiftMutation).mockReturnValue({
-    mutate: chooseGiftMutate,
+    mutateAsync: chooseGiftMutate,
     isPending: false,
   } as unknown as ReturnType<typeof useChooseGiftMutation>);
 };
@@ -280,15 +280,13 @@ describe("FundingResultContainer", () => {
   });
 
   describe("구매", () => {
-    type ChooseGiftOptions = {
-      onSuccess: (data: { productUrl: string }) => void;
-      onError: () => void;
-    };
     const makeTab = () =>
       ({ opener: {}, location: { href: "" }, close: vi.fn() }) as unknown as Window;
-    const lastOptions = () => chooseGiftMutate.mock.lastCall![1] as ChooseGiftOptions;
 
-    beforeEach(() => chooseGiftMutate.mockReset());
+    // mockReset은 mock 자신을 반환하는데, beforeEach가 함수를 반환하면 Vitest가 테스트 뒤 정리 함수로 호출한다
+    beforeEach(() => {
+      chooseGiftMutate.mockReset();
+    });
 
     it.each([
       ["목표 달성", 100, "쿠팡에서 선물 사러 가기"],
@@ -314,11 +312,11 @@ describe("FundingResultContainer", () => {
       });
       const tab = makeTab();
       const open = vi.spyOn(window, "open").mockImplementation(() => tab);
+      chooseGiftMutate.mockResolvedValue({ productUrl: "https://www.coupang.com/vp/products/1" });
       render(<FundingResultContainer fundingId="7" />);
 
       await userEvent.click(screen.getByRole("button", { name: "쿠팡에서 선물 사러 가기" }));
       expect(open).toHaveBeenCalledWith("", "_blank");
-      lastOptions().onSuccess({ productUrl: "https://www.coupang.com/vp/products/1" });
 
       expect(tab.opener).toBeNull();
       expect(tab.location.href).toBe("https://www.coupang.com/vp/products/1");
@@ -332,10 +330,10 @@ describe("FundingResultContainer", () => {
       });
       const tab = makeTab();
       const open = vi.spyOn(window, "open").mockImplementation(() => tab);
+      chooseGiftMutate.mockResolvedValue({ productUrl: "javascript:alert(1)" });
       render(<FundingResultContainer fundingId="7" />);
 
       await userEvent.click(screen.getByRole("button", { name: "쿠팡에서 선물 사러 가기" }));
-      lastOptions().onSuccess({ productUrl: "javascript:alert(1)" });
 
       expect(tab.close).toHaveBeenCalled();
       expect(tab.location.href).toBe("");
@@ -349,10 +347,10 @@ describe("FundingResultContainer", () => {
       });
       const tab = makeTab();
       const open = vi.spyOn(window, "open").mockImplementation(() => tab);
+      chooseGiftMutate.mockRejectedValue(new Error("선물 선택 실패"));
       render(<FundingResultContainer fundingId="7" />);
 
       await userEvent.click(screen.getByRole("button", { name: "차액으로 구매" }));
-      lastOptions().onError();
 
       expect(tab.close).toHaveBeenCalled();
       open.mockRestore();

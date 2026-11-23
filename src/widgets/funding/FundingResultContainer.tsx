@@ -72,13 +72,16 @@ export default function FundingResultContainer({ fundingId }: FundingResultConta
   }
 
   const result = toFundingResult(resultQuery.data, managementQuery.data);
-  // 쿠팡으로 가는 순간 선물을 정해야 선물 인증 대기로 바뀐다
-  const handleBuy = () => {
+  // 쿠팡으로 가는 순간 선물을 정해야 선물 인증 대기로 바뀐다.
+  // mutate 호출별 콜백은 응답 전에 화면을 떠나면 실행되지 않아, 열어 둔 탭이 빈 채로 남지 않게 mutateAsync로 처리한다
+  const handleBuy = async () => {
     const tab = openPendingTab();
-    chooseGiftMutation.mutate(undefined, {
-      onSuccess: data => tab.navigate(data?.productUrl),
-      onError: tab.close,
-    });
+    try {
+      const data = await chooseGiftMutation.mutateAsync();
+      tab.navigate(data?.productUrl);
+    } catch {
+      tab.close();
+    }
   };
   // 선물 확인을 떠나면 다른 선물 고르기에서 기억해 둔 기존 선물도 더는 필요 없다
   const handleClose = () => {
