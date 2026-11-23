@@ -59,6 +59,8 @@ type FundingDetailViewBaseProps = {
   isLoggedIn?: boolean;
   // 마감된 내 생일 펀딩의 '롤링페이퍼 보기'를 누를 수 있는지 (롤링페이퍼 공개 여부)
   rollingPaperOpened?: boolean;
+  // 공개 여부를 아직 모르는 동안은 안내 문구 대신 기본 버튼 문구를 보여준다
+  rollingPaperLoading?: boolean;
 };
 
 // 공유 화면(guest)은 공개 상세 detail, 개설자 화면(owner·surprise)은 관리 상세 ownerDetail로 그린다
@@ -141,6 +143,7 @@ export default function FundingDetailView({
   memberIntent,
   isLoggedIn = false,
   rollingPaperOpened = false,
+  rollingPaperLoading = false,
   ...source
 }: FundingDetailViewProps) {
   const { pageExit, exitPage } = usePageExit();
@@ -349,7 +352,9 @@ export default function FundingDetailView({
               variant="fill"
               disabled={!rollingPaperOpened}
               onClick={() => setIsRollingPaperOpen(true)}>
-              롤링페이퍼 보기
+              {rollingPaperOpened || rollingPaperLoading
+                ? "롤링페이퍼 보기"
+                : "홈에서 펑! 터뜨려 주세요"}
             </Button>
           </BottomCTA>
         )}

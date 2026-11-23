@@ -78,6 +78,25 @@ describe("useFundingResultQuery", () => {
   });
 });
 
+describe("useFundingResultQuery quiet", () => {
+  it("quiet이면 실패해도 재시도하지 않고 전역 에러 안내를 건너뛰도록 표시한다", async () => {
+    vi.mocked(fundingService.getResult).mockRejectedValue(new Error("FUNDING_005"));
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: 3, retryDelay: 0 } },
+    });
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children);
+
+    const { result } = renderHook(() => useFundingResultQuery(12, true, true), { wrapper });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(fundingService.getResult).toHaveBeenCalledTimes(1);
+    expect(queryClient.getQueryCache().find({ queryKey: fundingResultQueryKey(12) })?.meta).toEqual(
+      { skipGlobalError: true },
+    );
+  });
+});
+
 describe("fundingResultQueryKey", () => {
   it("펀딩 id별로 서로 다른 키를 만든다", () => {
     expect(fundingResultQueryKey(12)).toEqual(["fundings", 12, "result"]);

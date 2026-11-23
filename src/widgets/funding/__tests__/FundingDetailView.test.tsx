@@ -698,7 +698,12 @@ describe("FundingDetailView", () => {
 
     it("내 생일 펀딩이 마감되면 프로필 묶음을 숨기고 '롤링페이퍼 보기' 버튼을 보여준다", () => {
       const { container } = render(
-        <FundingDetailView fundingId="1" variant="owner" ownerDetail={closedOwnerDetail} />,
+        <FundingDetailView
+          fundingId="1"
+          variant="owner"
+          ownerDetail={closedOwnerDetail}
+          rollingPaperOpened
+        />,
       );
 
       expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeInTheDocument();
@@ -711,6 +716,7 @@ describe("FundingDetailView", () => {
           fundingId="1"
           variant="owner"
           ownerDetail={{ ...closedOwnerDetail, pendingContributionCount: 3 }}
+          rollingPaperOpened
         />,
       );
 
@@ -722,7 +728,7 @@ describe("FundingDetailView", () => {
       const { rerender } = render(
         <FundingDetailView fundingId="1" variant="owner" ownerDetail={closedOwnerDetail} />,
       );
-      expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "홈에서 펑! 터뜨려 주세요" })).toBeDisabled();
 
       rerender(
         <FundingDetailView
@@ -733,6 +739,20 @@ describe("FundingDetailView", () => {
         />,
       );
       expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeEnabled();
+    });
+
+    it("공개 여부를 확인하는 동안은 안내 문구 대신 '롤링페이퍼 보기'를 비활성으로 보여준다", () => {
+      render(
+        <FundingDetailView
+          fundingId="1"
+          variant="owner"
+          ownerDetail={closedOwnerDetail}
+          rollingPaperLoading
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeDisabled();
+      expect(screen.queryByText("홈에서 펑! 터뜨려 주세요")).not.toBeInTheDocument();
     });
 
     it("마감 전 내 생일 펀딩은 프로필 묶음을 그대로 두고 롤링페이퍼 버튼이 없다", () => {
