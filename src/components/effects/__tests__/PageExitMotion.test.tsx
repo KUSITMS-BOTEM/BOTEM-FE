@@ -50,6 +50,28 @@ describe("PageExitMotion", () => {
     expect(content?.style.transform).toMatch(/^(none)?$/);
   });
 
+  it("slideIn이면 오른쪽에서 시작해 원위치로 들어온다", async () => {
+    render(
+      <PageExitMotion exit={null} slideIn>
+        <p>내용</p>
+      </PageExitMotion>,
+    );
+    const content = screen.getByText("내용").parentElement;
+
+    expect(content?.style.transform).toContain("translateX(100%)");
+    await waitFor(() => expect(content?.style.transform).toMatch(/^(none)?$/));
+  });
+
+  it("slideIn이 없으면 처음부터 원위치라 transform이 없다", () => {
+    render(
+      <PageExitMotion exit={null}>
+        <p>내용</p>
+      </PageExitMotion>,
+    );
+
+    expect(screen.getByText("내용").parentElement?.style.transform).toMatch(/^(none)?$/);
+  });
+
   it("이동이 일어나지 않으면 원래 화면으로 돌아와 다시 누를 수 있다", async () => {
     // 뒤로 갈 기록이 없어 router.back()이 아무것도 하지 않는 상황
     const onComplete = vi.fn();

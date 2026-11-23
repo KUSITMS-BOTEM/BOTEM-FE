@@ -64,6 +64,7 @@ export default function FriendWishDetailContainer({
         onBack={() => router.back()}
         ctaLabel={activeFundingId ? "같이 보태기" : "친구 몰래 서프라이즈 열기"}
         onCtaClick={() =>
+          // TODO(API): 참여 화면은 /share/{shareKey}인데 응답엔 fundingId뿐이라 지금 경로는 404다. 서프라이즈 참여 작업에서 shareKey를 받아(BE 요청) 경로를 바꾼다
           activeFundingId ? router.push(`/share/${activeFundingId}`) : setFundingSheetOpen(true)
         }
       />

@@ -15,6 +15,7 @@ import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
 import { useFriendsQuery } from "@/hooks/queries/friend/useFriendsQuery";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
+import { useFriendsEntryStore } from "@/store/friendsEntryStore";
 import { handleLogoutClick } from "@/utils/auth/handleLogoutClick";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
 import { getDisplayName } from "@/utils/user/getDisplayName";
@@ -86,7 +87,10 @@ export default function MyMenuSheet({
             <List
               leading={<IconFriend />}
               title="친구"
-              onClick={() => router.push("/friends")}
+              onClick={() => {
+                useFriendsEntryStore.getState().setSlideIn(true);
+                router.push("/friends");
+              }}
               right={
                 isFriendsPending ? (
                   <div role="status" aria-label="친구 수 불러오는 중">
