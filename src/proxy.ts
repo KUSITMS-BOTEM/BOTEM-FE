@@ -22,6 +22,5 @@ export const config = {
     "/friends/:path*",
     "/funding/:path*",
     "/surprised/:path*",
-    "/share/profile/:userId",
   ],
 };
