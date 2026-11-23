@@ -8,8 +8,12 @@ describe("getBirthdayReveal", () => {
     });
   });
 
-  it("생일이 내일이면 마감일이 오늘이라 사용할 수 있다", () => {
-    expect(getBirthdayReveal("2026-11-19", "11-20", 1).canUse).toBe(true);
+  it("생일이 모레면 마감일이 내일이라 사용할 수 있다", () => {
+    expect(getBirthdayReveal("2026-11-19", "11-21", 2).canUse).toBe(true);
+  });
+
+  it("생일이 내일이면 마감일이 오늘이라 사용할 수 없다", () => {
+    expect(getBirthdayReveal("2026-11-19", "11-20", 1).canUse).toBe(false);
   });
 
   it("생일이 오늘이면 마감일을 만들 수 없어 사용할 수 없다", () => {
