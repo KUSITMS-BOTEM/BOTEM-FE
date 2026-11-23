@@ -315,6 +315,7 @@ const MOCK_FUNDING_DETAIL: FundingDetailResponse = {
   remainingDays: 41,
   confirmedPercentage: 40,
   pendingPercentage: 10,
+  remainingAmount: 180000,
   participantCount: 4,
   participants: [
     { order: 1, name: "하린이", profileImageUrl: null, contributedDate: "2026-11-10" },

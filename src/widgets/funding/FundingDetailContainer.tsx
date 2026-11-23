@@ -21,9 +21,16 @@ export default function FundingDetailContainer({
   const router = useRouter();
   const ownerQuery = useFundingManagementQuery(Number(fundingId));
   const variant = ownerQuery.data?.type === "SURPRISE" ? "surprise" : "owner";
-  const isClosed = ownerQuery.data?.managementState === "CLOSED";
+  const isClosed =
+    ownerQuery.data?.managementState === "CLOSED" ||
+    ownerQuery.data?.managementState === "TARGET_REACHED";
   // 생일 펀딩의 롤링페이퍼는 개설자가 결과(팡)를 연 뒤에 공개된다
-  const resultQuery = useFundingResultQuery(Number(fundingId), variant === "owner" && isClosed);
+  // 조기 마감처럼 아직 결과를 열 수 없는 409(FUNDING_005)는 정상이라 안내·재시도 없이 버튼 문구로만 알린다(그 외 에러는 전역 안내)
+  const resultQuery = useFundingResultQuery(
+    Number(fundingId),
+    variant === "owner" && isClosed,
+    true,
+  );
 
   // 공유 링크를 새 탭으로 열면 되돌아갈 히스토리가 없다. 이때만 프로필(없으면 홈)로 보내되, push하면 이 화면이 히스토리에 남아 프로필에서 뒤로 갈 때 다시 돌아오므로 replace한다
   const handleBack = () => {
@@ -38,6 +45,7 @@ export default function FundingDetailContainer({
         variant={variant}
         ownerDetail={ownerQuery.data}
         rollingPaperOpened={Boolean(resultQuery.data?.resultOpenedAt)}
+        rollingPaperLoading={resultQuery.isLoading}
         onBack={handleBack}
       />
     );

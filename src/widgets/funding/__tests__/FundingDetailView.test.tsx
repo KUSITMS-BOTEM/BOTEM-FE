@@ -297,6 +297,23 @@ describe("FundingDetailView", () => {
     expect(vi.mocked(HTMLDialogElement.prototype.showModal).mock.contexts.at(-1)).toBe(sheet);
   });
 
+  it("서프라이즈 개설자가 보탤 때 최대 금액은 목표에서 확정·확인 대기분을 뺀 남은 금액이다", async () => {
+    const user = userEvent.setup();
+    render(
+      <FundingDetailView
+        ownerDetail={{ ...ownerDetail, confirmedPercentage: 40, pendingPercentage: 10 }}
+        fundingId="1"
+        variant="surprise"
+      />,
+    );
+
+    await user.click(await screen.findByRole("button", { name: /확인 대기 0건이 있어요/ }));
+    await user.click(screen.getByRole("button", { name: "보태기" }));
+    await user.type(await screen.findByRole("textbox", { name: "보탬 금액" }), "800000");
+
+    expect(screen.getByText("최대 750,000원까지 보탤 수 있어요")).toBeInTheDocument();
+  });
+
   it("서프라이즈 개설자와 펀딩 주인 화면에는 하단 CTA 버튼이 없다", () => {
     const { unmount } = render(
       <FundingDetailView ownerDetail={ownerDetail} fundingId="1" variant="surprise" />,
@@ -516,6 +533,27 @@ describe("FundingDetailView", () => {
       expect(screen.queryByRole("dialog", { name: "내 보탬 확인" })).not.toBeInTheDocument();
     });
 
+    it("서버가 준 남은 금액을 최대 보탬 금액으로 안내한다 (달성률로 역산하지 않는다)", async () => {
+      const user = userEvent.setup();
+      render(
+        <FundingDetailView
+          detail={{
+            ...DETAIL,
+            targetAmount: 150000,
+            confirmedPercentage: 3,
+            remainingAmount: 145000,
+          }}
+          fundingId="1"
+        />,
+      );
+
+      await enterGuestContributeMode(user);
+      await user.click(screen.getByRole("button", { name: "보태기" }));
+      await user.type(await screen.findByRole("textbox", { name: "보탬 금액" }), "145500");
+
+      expect(screen.getByText("최대 145,000원까지 보탤 수 있어요")).toBeInTheDocument();
+    });
+
     it("금액 보태기가 닫히면(목표 달성·조기 마감) '메시지 보태기'만 보인다", async () => {
       const user = userEvent.setup();
       render(
@@ -698,7 +736,12 @@ describe("FundingDetailView", () => {
 
     it("내 생일 펀딩이 마감되면 프로필 묶음을 숨기고 '롤링페이퍼 보기' 버튼을 보여준다", () => {
       const { container } = render(
-        <FundingDetailView fundingId="1" variant="owner" ownerDetail={closedOwnerDetail} />,
+        <FundingDetailView
+          fundingId="1"
+          variant="owner"
+          ownerDetail={closedOwnerDetail}
+          rollingPaperOpened
+        />,
       );
 
       expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeInTheDocument();
@@ -711,6 +754,7 @@ describe("FundingDetailView", () => {
           fundingId="1"
           variant="owner"
           ownerDetail={{ ...closedOwnerDetail, pendingContributionCount: 3 }}
+          rollingPaperOpened
         />,
       );
 
@@ -722,7 +766,7 @@ describe("FundingDetailView", () => {
       const { rerender } = render(
         <FundingDetailView fundingId="1" variant="owner" ownerDetail={closedOwnerDetail} />,
       );
-      expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "홈에서 펑! 터뜨려 주세요" })).toBeDisabled();
 
       rerender(
         <FundingDetailView
@@ -733,6 +777,20 @@ describe("FundingDetailView", () => {
         />,
       );
       expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeEnabled();
+    });
+
+    it("공개 여부를 확인하는 동안은 안내 문구 대신 '롤링페이퍼 보기'를 비활성으로 보여준다", () => {
+      render(
+        <FundingDetailView
+          fundingId="1"
+          variant="owner"
+          ownerDetail={closedOwnerDetail}
+          rollingPaperLoading
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeDisabled();
+      expect(screen.queryByText("홈에서 펑! 터뜨려 주세요")).not.toBeInTheDocument();
     });
 
     it("마감 전 내 생일 펀딩은 프로필 묶음을 그대로 두고 롤링페이퍼 버튼이 없다", () => {

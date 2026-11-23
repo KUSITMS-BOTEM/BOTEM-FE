@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -9,19 +9,22 @@ import List from "@/components/List";
 import ListHeader from "@/components/ListHeader";
 import CloseSheet from "@/components/CloseSheet";
 import TextButton from "@/components/TextButton";
-import ShimmerBar from "@/components/skeleton/ShimmerBar";
 import { cn } from "@/utils/cn";
+import { showGlobalErrorDialog } from "@/lib/queryClient";
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
+import { useClosedFundingsQuery } from "@/hooks/queries/funding/useClosedFundingsQuery";
 import { useFriendsQuery } from "@/hooks/queries/friend/useFriendsQuery";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { useFriendsEntryStore } from "@/store/friendsEntryStore";
+import { ApiError, AUTH_EXPIRED } from "@/types/api";
 import { handleLogoutClick } from "@/utils/auth/handleLogoutClick";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
 import { getDisplayName } from "@/utils/user/getDisplayName";
 import ClosedFundingSheet from "@/widgets/funding/ClosedFundingSheet";
 import PayoutAccountEditSheet from "@/widgets/payout-account/PayoutAccountEditSheet";
 import MyMenuProfileRow from "@/widgets/user/MyMenuProfileRow";
+import MyMenuSkeleton from "@/widgets/user/skeleton/MyMenuSkeleton";
 import IconAccount from "@/assets/icons/multicolor/icon-account.svg?react";
 import IconFaqGuide from "@/assets/icons/multicolor/icon-faq-guide.svg?react";
 import IconFriend from "@/assets/icons/multicolor/icon-friend.svg?react";
@@ -48,81 +51,99 @@ function MenuTrailing({ label }: { label: string }) {
 type MyMenuSheetProps = {
   open: boolean;
   onClose: () => void;
-  closedFundingCount: number;
   slideInOnOpen?: boolean;
 };
 
-export default function MyMenuSheet({
-  open,
-  onClose,
-  closedFundingCount,
-  slideInOnOpen,
-}: MyMenuSheetProps) {
+export default function MyMenuSheet({ open, onClose, slideInOnOpen }: MyMenuSheetProps) {
   const router = useRouter();
   const { mutate: logout } = useLogoutMutation();
   const { data: profile } = useMyProfileQuery();
-  const { data: friends, isPending: isFriendsPending } = useFriendsQuery();
-  const { data: payoutAccounts } = usePayoutAccountsQuery();
+  const closedFundingsQuery = useClosedFundingsQuery(open);
+  const friendsQuery = useFriendsQuery(open);
+  const payoutAccountsQuery = usePayoutAccountsQuery(open);
+  const { data: closedFundings } = closedFundingsQuery;
+  const { data: friends } = friendsQuery;
+  const { data: payoutAccounts } = payoutAccountsQuery;
   const defaultAccount = payoutAccounts?.find(account => account.isDefault);
   const [closedFundingSheetOpen, setClosedFundingSheetOpen] = useState(false);
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
 
+  const queries = [closedFundingsQuery, friendsQuery, payoutAccountsQuery];
+  // 재조회 중에는 이전 error가 남아 있으므로 재시도가 끝난 error만 본다
+  const isFailed = (query: (typeof queries)[number]) => query.isError && !query.isFetching;
+  const failedErrors = queries.filter(isFailed).map(query => query.error);
+  // 인증 만료는 어느 조회에서 났든 일반 오류보다 먼저 골라 랜딩 이동을 놓치지 않는다
+  const authError = failedErrors.find(
+    error => error instanceof ApiError && error.code === AUTH_EXPIRED,
+  );
+  const loadError = authError ?? failedErrors[0];
+  // 실패해도 스켈레톤을 걷고 값이 없는 항목은 기본값(0명·0개·빈 계좌명)으로 보여 나머지 메뉴를 쓸 수 있게 한다
+  const isReady = queries.every(query => query.isSuccess || isFailed(query));
+  const errorShownRef = useRef(false);
+
+  // 일반 오류는 메뉴를 한 번 열 때 한 번만 알린다. 확인 뒤 포커스 복귀 재조회가 또 실패해도 다시 띄우지 않는다
+  useEffect(() => {
+    if (!open) {
+      errorShownRef.current = false;
+      return;
+    }
+    if (!loadError || (!authError && errorShownRef.current)) return;
+    errorShownRef.current = true;
+    showGlobalErrorDialog(loadError);
+  }, [open, loadError, authError]);
+
   return (
     <CloseSheet open={open} title="" onClose={onClose} slideInOnOpen={slideInOnOpen}>
       <div className="flex w-full flex-1 flex-col justify-between pb-4">
-        <div className="flex w-full flex-col gap-4">
-          <div className="flex w-full flex-col">
-            <ListHeader title="내 프로필" />
-            <MyMenuProfileRow
-              onClick={() => router.push("/my/profile")}
-              nickname={profile ? getDisplayName(profile) : ""}
-              birthdayText={
-                profile?.birthday ? `생일 ${formatBirthdayDisplay(profile.birthday)}` : undefined
-              }
-              profileImageUrl={profile?.profileImageUrl ?? undefined}
-            />
+        {!isReady ? (
+          <MyMenuSkeleton />
+        ) : (
+          <div className="flex w-full flex-col gap-4">
+            <div className="flex w-full flex-col">
+              <ListHeader title="내 프로필" />
+              <MyMenuProfileRow
+                onClick={() => router.push("/my/profile")}
+                nickname={profile ? getDisplayName(profile) : ""}
+                birthdayText={
+                  profile?.birthday ? `생일 ${formatBirthdayDisplay(profile.birthday)}` : undefined
+                }
+                profileImageUrl={profile?.profileImageUrl ?? undefined}
+              />
+            </div>
+            <div aria-hidden className="bg-semantic-border-weak -mx-5 h-px" />
+            <div className="flex w-full flex-col">
+              <List
+                leading={<IconFriend />}
+                title="친구"
+                onClick={() => {
+                  useFriendsEntryStore.getState().setSlideIn(true);
+                  router.push("/friends");
+                }}
+                right={
+                  <span
+                    className={cn("[font:var(--semantic-label-small)]", MENU_TEXT_BUTTON_CLASS)}>
+                    {`${friends?.totalCount ?? 0}명`}
+                  </span>
+                }
+              />
+              <List
+                leading={<IconFundingOpen />}
+                title="마감된 펀딩"
+                onClick={() => setClosedFundingSheetOpen(true)}
+                right={<MenuTrailing label={`${closedFundings?.tabCounts.all ?? 0}개`} />}
+              />
+              <List
+                leading={<IconAccount />}
+                title="대표 계좌"
+                onClick={() => setAccountSheetOpen(true)}
+                right={<MenuTrailing label={defaultAccount?.bankName ?? ""} />}
+              />
+              <List leading={<IconNotification />} title="알림 설정" />
+              <List leading={<IconFaqGuide />} title="FAQ · 금액 가이드" />
+              <List leading={<IconTerms />} title="이용약관" />
+            </div>
           </div>
-          <div aria-hidden className="bg-semantic-border-weak -mx-5 h-px" />
-          <div className="flex w-full flex-col">
-            <List
-              leading={<IconFriend />}
-              title="친구"
-              onClick={() => {
-                useFriendsEntryStore.getState().setSlideIn(true);
-                router.push("/friends");
-              }}
-              right={
-                isFriendsPending ? (
-                  <div role="status" aria-label="친구 수 불러오는 중">
-                    <ShimmerBar className="h-4.5 w-8" />
-                  </div>
-                ) : (
-                  friends && (
-                    <span
-                      className={cn("[font:var(--semantic-label-small)]", MENU_TEXT_BUTTON_CLASS)}>
-                      {`${friends.totalCount}명`}
-                    </span>
-                  )
-                )
-              }
-            />
-            <List
-              leading={<IconFundingOpen />}
-              title="마감된 펀딩"
-              onClick={() => setClosedFundingSheetOpen(true)}
-              right={<MenuTrailing label={`${closedFundingCount}개`} />}
-            />
-            <List
-              leading={<IconAccount />}
-              title="대표 계좌"
-              onClick={() => setAccountSheetOpen(true)}
-              right={<MenuTrailing label={defaultAccount?.bankName ?? ""} />}
-            />
-            <List leading={<IconNotification />} title="알림 설정" />
-            <List leading={<IconFaqGuide />} title="FAQ · 금액 가이드" />
-            <List leading={<IconTerms />} title="이용약관" />
-          </div>
-        </div>
+        )}
         <div className="flex px-2">
           <TextButton
             size="medium"

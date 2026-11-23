@@ -43,8 +43,8 @@ export function toOwnerFundingView(detail: OwnerFundingDetailResponse) {
     currentAmount: Math.ceil((detail.targetAmount * detail.confirmedPercentage) / 100),
     progress: Math.min(100, detail.confirmedPercentage),
     targetAmount: detail.targetAmount,
-    // 조기 마감은 금액·마감일로 다시 계산할 수 없어 서버 상태를 그대로 쓴다
-    closed: detail.managementState === "CLOSED",
+    // 조기 마감은 금액·마감일로 다시 계산할 수 없어 서버 상태를 그대로 쓴다. 목표 달성(100%)도 마감 전이지만 결과를 열 수 있어 닫힌 펀딩으로 본다
+    closed: detail.managementState === "CLOSED" || detail.managementState === "TARGET_REACHED",
     extended: detail.extended,
     actions: detail.actions,
     profiles,

@@ -126,13 +126,10 @@ export default function RollingPaperContainer({
               animate={{ opacity: opened ? 0 : 1 }}
               transition={EXIT_BACKGROUND_TRANSITION}
             />
-            {/* 정렬된 편지지는 배경 영역 안에서 잘린다. 퇴장 때도 유지해 카드가 배경 아래 경계에 가려지며 내려간다 */}
-            <motion.button
-              type="button"
-              aria-label="편지지 크게 보기"
-              disabled={opened}
-              onClick={handleOpen}
-              className="focus-visible:outline-semantic-fill-brand absolute inset-0 rounded-2xl focus-visible:outline-2"
+            {/* 정렬된 편지지는 배경 영역 안에서 잘린다. 퇴장 때도 유지해 카드가 배경 아래 경계에 가려지며 내려간다.
+                편지지 안에 슬롯 버튼이 있어 클릭을 받는 버튼은 카드의 조상이 아닌 형제로 둔다 */}
+            <motion.div
+              className="pointer-events-none absolute inset-0 rounded-2xl"
               initial={{ clipPath: CARD_CLIP_OPEN }}
               animate={{ clipPath: CARD_CLIP_CLOSED }}
               transition={CARD_CLIP_CLOSE_TRANSITION}>
@@ -147,7 +144,14 @@ export default function RollingPaperContainer({
                   />
                 ))}
               </div>
-            </motion.button>
+            </motion.div>
+            <button
+              type="button"
+              aria-label="편지지 크게 보기"
+              disabled={opened}
+              onClick={handleOpen}
+              className="focus-visible:outline-semantic-fill-brand absolute inset-0 rounded-2xl focus-visible:outline-2"
+            />
             <motion.p
               className="from-semantic-background-default/70 to-semantic-background-default/0 text-semantic-text-secondary absolute bottom-[12.5px] left-1/2 z-20 -translate-x-1/2 rounded-full bg-gradient-to-b px-2.5 py-1.5 text-center [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-x-small-weak)]"
               initial={{ opacity: 0 }}

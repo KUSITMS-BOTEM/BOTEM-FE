@@ -5,11 +5,12 @@ import { useAuthStore } from "@/store/authStore";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { ApiError } from "@/types/api";
 import { clearLoggedInCookie } from "@/utils/auth/clearLoggedInCookie";
+import { consumeLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 vi.mock("@/utils/auth/clearLoggedInCookie", () => ({ clearLoggedInCookie: vi.fn() }));
 
-const failQuery = (error: Error, meta?: { skipGlobalError: boolean }) =>
+const failQuery = (error: Error, meta?: { skipGlobalError?: boolean; quietCodes?: string[] }) =>
   queryClient
     .fetchQuery({
       queryKey: [Math.random()],
@@ -61,6 +62,14 @@ describe("queryClient 전역 onError", () => {
     expect(useErrorDialogStore.getState().message).toBeNull();
   });
 
+  it("quietCodes에 든 코드만 Dialog를 건너뛰고 다른 에러는 그대로 띄운다", async () => {
+    await failQuery(new ApiError("FUNDING_005"), { quietCodes: ["FUNDING_005"] });
+    expect(useErrorDialogStore.getState().message).toBeNull();
+
+    await failQuery(new ApiError("UNKNOWN_ERROR"), { quietCodes: ["FUNDING_005"] });
+    expect(useErrorDialogStore.getState().message).not.toBeNull();
+  });
+
   it("운영 신호 코드만 Sentry에 보고한다", async () => {
     vi.mocked(Sentry.captureException).mockClear();
 
@@ -102,6 +111,28 @@ describe("queryClient 인증 에러 처리", () => {
     expect(useAuthStore.getState().accessToken).toBeNull();
     expect(clearLoggedInCookie).toHaveBeenCalledTimes(1);
     expect(replace).toHaveBeenCalledWith("/");
+  });
+
+  it("공유 링크에서 AUTH_EXPIRED가 나면 Dialog 확인 시 그 경로를 로그인 복귀 경로로 남긴다", async () => {
+    sessionStorage.clear();
+    vi.stubGlobal("location", {
+      ...window.location,
+      pathname: "/share/abc",
+      search: "?member=guest",
+      replace,
+    });
+    await failQuery(new ApiError("AUTH_EXPIRED"));
+    useErrorDialogStore.getState().closeErrorDialog();
+
+    expect(consumeLoginReturnPath()).toBe("/share/abc?member=guest");
+  });
+
+  it("공유 링크가 아니면 복귀 경로를 남기지 않는다", async () => {
+    sessionStorage.clear();
+    await failQuery(new ApiError("AUTH_EXPIRED"));
+    useErrorDialogStore.getState().closeErrorDialog();
+
+    expect(consumeLoginReturnPath()).toBeNull();
   });
 
   it("AUTH_EXPIRED가 동시에 여러 건 나도 Dialog 확인 시 이동은 1회만 한다", async () => {

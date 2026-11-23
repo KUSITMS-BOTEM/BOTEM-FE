@@ -48,6 +48,12 @@ describe("usePayoutAccountsQuery", () => {
     expect(result.current.data).toEqual(mockAccounts);
   });
 
+  it("enabled가 false면 서비스를 호출하지 않는다", () => {
+    renderHook(() => usePayoutAccountsQuery(false), { wrapper: createWrapper() });
+
+    expect(payoutAccountService.getPayoutAccounts).not.toHaveBeenCalled();
+  });
+
   it("서비스가 실패하면 isError가 된다", async () => {
     vi.mocked(payoutAccountService.getPayoutAccounts).mockRejectedValue(new Error("조회 실패"));
 

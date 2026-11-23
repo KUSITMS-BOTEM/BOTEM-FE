@@ -7,6 +7,7 @@ import { cn } from "@/utils/cn";
 import MswProvider from "@/lib/MswProvider";
 import QueryProvider from "@/lib/QueryProvider";
 import GlobalErrorDialog from "@/lib/GlobalErrorDialog";
+import InAppTopInset from "@/lib/InAppTopInset";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 
 const geistSans = Geist({
@@ -44,8 +45,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning>
       <body
-        className="flex min-h-full flex-col pt-[env(safe-area-inset-top)]"
+        className="flex min-h-full flex-col pt-[calc(env(safe-area-inset-top)+var(--app-top-offset,0px))]"
         suppressHydrationWarning>
+        <InAppTopInset />
         <div className={cn("mx-auto flex w-full flex-1 flex-col", APP_MAX_WIDTH_CLASS)}>
           <MswProvider>
             <QueryProvider>

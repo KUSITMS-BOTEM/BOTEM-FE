@@ -141,7 +141,7 @@ describe("FundingInfoStep", () => {
     expect(screen.getByText(/^2027\.12\.25 \(.\)$/)).toBeInTheDocument();
   });
 
-  it("마감일 휠은 오늘 이전 날짜를 보여주지 않고 오늘이 선택된 상태로 열린다", async () => {
+  it("마감일 휠은 내일 이전 날짜를 보여주지 않고 내일이 선택된 상태로 열린다", async () => {
     renderStep();
 
     await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
@@ -149,8 +149,8 @@ describe("FundingInfoStep", () => {
     await userEvent.click(screen.getByRole("button", { name: "마감일 선택해주세요" }));
 
     expect(screen.queryByRole("button", { name: "10월" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "12일" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "13일" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("button", { name: "13일" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "14일" })).toHaveAttribute("aria-pressed", "true");
   });
 
   describe("마감일 이후 사연 단계", () => {

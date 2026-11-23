@@ -8,6 +8,7 @@ import Logo from "@/components/Logo";
 import Title from "@/components/Title";
 import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
 import { handleKakaoLoginClick } from "@/utils/auth/handleKakaoLoginClick";
+import { getLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 
 const HeroMotion = dynamic(() => import("@/components/effects/hero-motion/HeroMotion"), {
   ssr: false,
@@ -36,7 +37,7 @@ export default function Home() {
         <BottomCTA
           className="static"
           type="kakao"
-          onClick={() => handleKakaoLoginClick(mutate)}
+          onClick={() => handleKakaoLoginClick(mutate, getLoginReturnPath() ?? undefined)}
           upper={
             <p className="text-semantic-text-tertiary text-center whitespace-pre-line [font:var(--semantic-label-x-small-weak)]">
               {"친구 펀딩에 보태러 왔나요?\n받은 링크로 들어가면 로그인없이 보탤 수 있어요"}

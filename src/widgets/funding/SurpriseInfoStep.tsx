@@ -80,6 +80,7 @@ export default function SurpriseInfoStep({
   const inputRef = useRef<HTMLInputElement>(null);
   const basePriceText = wish.price.toLocaleString("ko-KR");
   const today = getTodayDate();
+  const minDeadline = addDays(today, 1);
   const revealRange = deadline ? getRevealDateRange(deadline) : undefined;
   const isInRevealRange = (date: string, range = revealRange) =>
     range !== undefined && date >= range.minDate && date <= range.maxDate;
@@ -94,7 +95,7 @@ export default function SurpriseInfoStep({
   };
 
   const handleDeadlineChange = (date: string) => {
-    const next = date >= today ? date : "";
+    const next = date >= minDeadline ? date : "";
     setDeadline(next);
     // 달력·휠 시트는 blur 없이 닫히므로 날짜를 확정하는 즉시 공개일을 연다
     if (next) setShowReveal(true);
@@ -112,7 +113,7 @@ export default function SurpriseInfoStep({
   const canSubmit =
     Number(targetAmount) > 0 &&
     deadline !== "" &&
-    deadline >= today &&
+    deadline >= minDeadline &&
     revealDate !== "" &&
     isChanged;
   const showCta = revealDate !== "";
@@ -192,7 +193,7 @@ export default function SurpriseInfoStep({
             label="마감일"
             value={formatDeadline(deadline)}
             dateValue={deadline}
-            minDate={today}
+            minDate={minDeadline}
             onDeadlineChange={handleDeadlineChange}
           />
         </motion.div>
@@ -246,7 +247,8 @@ export default function SurpriseInfoStep({
               size="xlarge"
               disabled={!canSubmit}
               onClick={() => {
-                if (deadline >= getTodayDate()) onNext({ targetAmount, deadline, revealDate });
+                if (deadline >= addDays(getTodayDate(), 1))
+                  onNext({ targetAmount, deadline, revealDate });
               }}
               className="flex-1">
               {submitLabel}

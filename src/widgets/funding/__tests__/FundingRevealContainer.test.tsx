@@ -39,15 +39,29 @@ vi.mock("@/widgets/funding/FundingExtendFlow", () => ({
     ) : null,
 }));
 vi.mock("@/widgets/rolling-paper/RollingPaperContainer", () => ({
-  default: ({ open, fundingId }: { open: boolean; fundingId: number }) =>
-    open ? <div data-testid="rolling-paper" data-funding-id={fundingId} /> : null,
+  default: ({
+    open,
+    fundingId,
+    onClose,
+  }: {
+    open: boolean;
+    fundingId: number;
+    onClose: () => void;
+  }) =>
+    open ? (
+      <div data-testid="rolling-paper" data-funding-id={fundingId}>
+        <button onClick={onClose}>시트 닫기</button>
+      </div>
+    ) : null,
 }));
 
 const replace = vi.fn();
 const push = vi.fn();
+let search = "";
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace, push }),
   useParams: () => ({ fundingId: "12" }),
+  useSearchParams: () => new URLSearchParams(search),
 }));
 
 const refetch = vi.fn();
@@ -112,6 +126,8 @@ const resolveOpenWith = (opened: FundingResultResponse) => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  search = "";
+  window.history.replaceState(null, "", "/");
   mockMutation();
 });
 
@@ -242,6 +258,31 @@ describe("FundingRevealContainer", () => {
 
     expect(mutate).not.toHaveBeenCalled();
     expect(screen.getByTestId("rolling-paper")).toBeInTheDocument();
+  });
+
+  it("시트를 열면 URL에 열림 표시를 남겨, 상세에서 뒤로 와도 시트가 열린 채로 복원된다", async () => {
+    const result = makeResult(5, 59, 215000, { resultOpenedAt: "2026-11-15T00:00:00" });
+    mockQuery({ data: result });
+    const { unmount } = render(<FundingRevealContainer />);
+
+    await userEvent.click(screen.getByRole("button", { name: "메시지 열어보기" }));
+    expect(window.location.search).toBe("?messages=open");
+
+    // 상세에서 뒤로 가기: 화면이 새로 마운트되고 URL의 열림 표시를 읽는다
+    unmount();
+    search = window.location.search;
+    render(<FundingRevealContainer />);
+    expect(screen.getByTestId("rolling-paper")).toBeInTheDocument();
+  });
+
+  it("시트의 닫기를 누르면 첫 화면이 아니라 홈으로 replace 한다", async () => {
+    search = "messages=open";
+    mockQuery({ data: makeResult(5, 59, 215000) });
+    render(<FundingRevealContainer />);
+
+    await userEvent.click(screen.getByRole("button", { name: "시트 닫기" }));
+
+    expect(replace).toHaveBeenCalledWith("/home");
   });
 
   it("팡 열기 요청 중에는 버튼을 막아 다시 누를 수 없다", async () => {

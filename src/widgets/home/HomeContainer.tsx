@@ -5,7 +5,6 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useHomeWishesQuery } from "@/hooks/queries/wish/useHomeWishesQuery";
-import { useClosedFundingsQuery } from "@/hooks/queries/funding/useClosedFundingsQuery";
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useGiftVerificationBannerVariant } from "@/hooks/useGiftVerificationBannerSession";
 import type { FundingWish } from "@/types/funding/funding";
@@ -39,7 +38,6 @@ type HomeContainerProps = {
 export default function HomeContainer({ autoOpenFunding = false }: HomeContainerProps) {
   useHomeWishesQuery();
   const { data: homeFundings } = useHomeFundingsQuery();
-  const { data: closedFundings } = useClosedFundingsQuery();
   const router = useRouter();
   const searchParams = useSearchParams();
   const segment: SegmentValue = searchParams.get("tab") === "wish" ? "wish" : "funding";
@@ -125,7 +123,7 @@ export default function HomeContainer({ autoOpenFunding = false }: HomeContainer
         onClose={() => setFundingSheetOpen(false)}
       />
       <Suspense fallback={null}>
-        <HomeMyMenuSheet closedFundingCount={closedFundings?.tabCounts.all ?? 0} />
+        <HomeMyMenuSheet />
       </Suspense>
     </div>
   );

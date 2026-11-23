@@ -58,6 +58,8 @@ type FundingDetailViewBaseProps = {
   isLoggedIn?: boolean;
   // 마감된 내 생일 펀딩의 '롤링페이퍼 보기'를 누를 수 있는지 (롤링페이퍼 공개 여부)
   rollingPaperOpened?: boolean;
+  // 공개 여부를 아직 모르는 동안은 안내 문구 대신 기본 버튼 문구를 보여준다
+  rollingPaperLoading?: boolean;
 };
 
 // 공유 화면(guest)은 공개 상세 detail, 개설자 화면(owner·surprise)은 관리 상세 ownerDetail로 그린다
@@ -78,6 +80,8 @@ const MOCK_FUNDING = {
   // 보태기 버튼은 참여자 화면(guest)에만 있고, 그쪽은 공유용 상세 응답 값이 덮어쓴다
   canContributeAmount: true,
   canParticipate: true,
+  // 개설자는 자기 펀딩에 금액을 보태지 않아 개설자 응답에는 없다
+  remainingAmount: 0,
   extended: false,
   actions: { canCloseEarly: true, canReissueShareCard: true },
   pendingContributionCount: 3,
@@ -114,6 +118,7 @@ const toShareFundingView = (detail: FundingDetailResponse) => ({
   deadline: detail.deadline.slice(0, 10),
   progress: detail.confirmedPercentage,
   pendingPercentage: detail.pendingPercentage,
+  remainingAmount: detail.remainingAmount,
   targetAmount: detail.targetAmount,
   participantCount: detail.participantCount,
   profiles: detail.participants.slice(0, MAX_PROFILES).map((participant, index) => ({
@@ -123,11 +128,19 @@ const toShareFundingView = (detail: FundingDetailResponse) => ({
   extraParticipantCount: Math.max(0, detail.participantCount - MAX_PROFILES),
 });
 
-const toHostFundingView = (ownerDetail: OwnerFundingDetailResponse) => ({
-  ...toOwnerFundingView(ownerDetail),
-  pendingPercentage: ownerDetail.pendingPercentage,
-  participantCount: ownerDetail.participantCount,
-});
+const toHostFundingView = (ownerDetail: OwnerFundingDetailResponse) => {
+  const view = toOwnerFundingView(ownerDetail);
+  return {
+    ...view,
+    pendingPercentage: ownerDetail.pendingPercentage,
+    participantCount: ownerDetail.participantCount,
+    // 개설자 응답엔 남은 금액이 없어 목표 금액에서 확정·확인 대기 달성률을 뺀 값으로 근사한다 (서버가 최종 검증)
+    remainingAmount: Math.max(
+      0,
+      Math.round((view.targetAmount * (100 - view.progress - ownerDetail.pendingPercentage)) / 100),
+    ),
+  };
+};
 
 const noop = () => {};
 
@@ -138,6 +151,7 @@ export default function FundingDetailView({
   memberIntent,
   isLoggedIn = false,
   rollingPaperOpened = false,
+  rollingPaperLoading = false,
   ...source
 }: FundingDetailViewProps) {
   const { pageExit, exitPage } = usePageExit();
@@ -227,11 +241,6 @@ export default function FundingDetailView({
     completeTransfer,
     handleExitConfirm,
   } = useContributionFlow({ shareKey, isMember });
-  // 서버가 남은 금액을 주지 않아 목표 금액에서 확정·확인 대기 달성률을 뺀 값으로 근사한다 (서버가 최종 검증)
-  const remainingAmount = Math.max(
-    0,
-    Math.round((funding.targetAmount * (100 - funding.progress - funding.pendingPercentage)) / 100),
-  );
   // 금액 달성(마감)·기간 마감·서버가 알려준 조기 마감 모두 닫힌 펀딩이다
   const closedLabel = getClosedLabel({ percent: funding.progress, deadline: funding.deadline });
   const isClosed = funding.closed || closedLabel !== null;
@@ -336,7 +345,9 @@ export default function FundingDetailView({
               variant="fill"
               disabled={!rollingPaperOpened}
               onClick={() => setIsRollingPaperOpen(true)}>
-              롤링페이퍼 보기
+              {rollingPaperOpened || rollingPaperLoading
+                ? "롤링페이퍼 보기"
+                : "홈에서 펑! 터뜨려 주세요"}
             </Button>
           </BottomCTA>
         )}
@@ -498,6 +509,10 @@ export default function FundingDetailView({
             contributionId={thankCardFriend.id}
             recipientName={thankCardFriend.name}
             onClose={() => setThankCardFriend(null)}
+            onDepositUnconfirmed={() => {
+              setThankCardFriend(null);
+              setIsPopupOpen(true);
+            }}
           />
         )}
         {/* 처리 뒤 관리 상세가 다시 조회돼 owner의 확인 대기 건수·알림 점이 함께 갱신된다 */}
@@ -544,7 +559,7 @@ export default function FundingDetailView({
           key={`contribute-${flowKey}`}
           open={isContributeOpen}
           hostName={funding.hostName}
-          maxAmount={remainingAmount}
+          maxAmount={funding.remainingAmount}
           onClose={() => setIsContributeOpen(false)}
           onExit={requestExit}
           onNext={amount => {

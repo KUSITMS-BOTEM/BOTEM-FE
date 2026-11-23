@@ -1,11 +1,14 @@
 import { createElement, type ReactElement, type ReactNode } from "react";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render as rtlRender, screen } from "@testing-library/react";
+import { render as rtlRender, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import FundingShareContainer from "@/widgets/funding/FundingShareContainer";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }) }));
+const push = vi.hoisted(() => vi.fn());
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn(), push }) }));
 vi.mock("@/hooks/mutations/auth/useKakaoLoginUriMutation", () => ({
   useKakaoLoginUriMutation: () => ({ mutate: vi.fn() }),
 }));
@@ -80,5 +83,19 @@ describe("FundingShareContainer", () => {
 
     expect(screen.getByRole("button", { name: "보태기" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "내 보탬 확인" })).not.toBeInTheDocument();
+  });
+
+  it("로그인 회원은 뒤로가기를 누르면 /home으로 이동한다", async () => {
+    render(<FundingShareContainer shareKey="1" isLoggedIn />);
+
+    await userEvent.click(screen.getByRole("button", { name: "뒤로가기" }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/home"));
+  });
+
+  it("비회원에게는 뒤로가기가 보이지 않는다", () => {
+    render(<FundingShareContainer shareKey="1" />);
+
+    expect(screen.queryByRole("button", { name: "뒤로가기" })).not.toBeInTheDocument();
   });
 });

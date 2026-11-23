@@ -5,6 +5,7 @@ import type { FriendFundingResponse, FriendProfileResponse } from "@/types/frien
 import FriendProfileContainer from "@/widgets/friend/FriendProfileContainer";
 
 const back = vi.fn();
+const replace = vi.fn();
 const refetch = vi.fn();
 const useFriendProfileQuery = vi.fn();
 
@@ -12,7 +13,7 @@ vi.mock("@/hooks/mutations/funding/useCreateSurpriseFundingMutation", () => ({
   useCreateSurpriseFundingMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ back }),
+  useRouter: () => ({ back, replace }),
 }));
 vi.mock("@/hooks/queries/friend/useFriendProfileQuery", () => ({
   useFriendProfileQuery: (friendId: string) => useFriendProfileQuery(friendId),
@@ -57,6 +58,7 @@ const mockQuery = (state: { data?: FriendProfileResponse | null; isPending?: boo
 describe("FriendProfileContainer", () => {
   beforeEach(() => {
     back.mockClear();
+    replace.mockClear();
     refetch.mockClear();
   });
 
@@ -129,12 +131,25 @@ describe("FriendProfileContainer", () => {
     expect(screen.getByText("목표 금액은 얼마인가요?")).toBeInTheDocument();
   });
 
-  it("뒤로가기 버튼을 누르면 router.back을 호출한다", async () => {
+  it("돌아갈 히스토리가 있으면 뒤로가기 버튼이 router.back을 호출한다", async () => {
+    vi.spyOn(window.history, "length", "get").mockReturnValue(2);
     mockQuery({ data: profile() });
     render(<FriendProfileContainer friendId="5" />);
 
     await userEvent.setup().click(screen.getByRole("button", { name: "뒤로가기" }));
 
     await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("공유 링크로 바로 진입해 히스토리가 없으면 뒤로가기 버튼이 /home으로 이동한다", async () => {
+    vi.spyOn(window.history, "length", "get").mockReturnValue(1);
+    mockQuery({ data: profile() });
+    render(<FriendProfileContainer friendId="5" />);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "뒤로가기" }));
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/home"));
+    expect(back).not.toHaveBeenCalled();
   });
 });

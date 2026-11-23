@@ -13,9 +13,15 @@ export const clearLoginReturnPath = () => {
   sessionStorage.removeItem(LOGIN_RETURN_PATH_KEY);
 };
 
+// 지우지 않고 읽기만 한다 — 랜딩 로그인 버튼이 만료 직전에 저장된 경로를 이어받을 때 쓴다
+export const getLoginReturnPath = (): string | null => {
+  const path = sessionStorage.getItem(LOGIN_RETURN_PATH_KEY);
+  return path && isInternalPath(path) ? path : null;
+};
+
 // 한 번 복귀하면 이후 로그인에 남지 않도록 조회 즉시 제거한다
 export const consumeLoginReturnPath = (): string | null => {
-  const path = sessionStorage.getItem(LOGIN_RETURN_PATH_KEY);
+  const path = getLoginReturnPath();
   clearLoginReturnPath();
-  return path && isInternalPath(path) ? path : null;
+  return path;
 };

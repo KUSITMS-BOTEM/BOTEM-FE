@@ -8,6 +8,6 @@ export const getBirthdayReveal = (
 ) => {
   if (!birthday || birthdayDday == null) return { revealDate: undefined, canUse: false };
   const revealDate = addDays(today, birthdayDday);
-  // 생일 전날이 오늘보다 앞이면(생일이 오늘이면) 마감일을 만들 수 없다
-  return { revealDate, canUse: addDays(revealDate, -1) >= today };
+  // 마감일은 내일부터 가능해서 생일 전날이 내일보다 앞이면(생일이 오늘·내일이면) 마감일을 만들 수 없다
+  return { revealDate, canUse: addDays(revealDate, -1) >= addDays(today, 1) };
 };
