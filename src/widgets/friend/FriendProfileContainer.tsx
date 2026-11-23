@@ -48,7 +48,11 @@ export default function FriendProfileContainer({ friendId }: FriendProfileContai
           leftItem={{
             icon: <IconLeft />,
             ariaLabel: "뒤로가기",
-            onClick: () => exitPage("slide", () => router.back()),
+            // 공유 링크로 바로 진입하면 돌아갈 히스토리가 없어 back()이 아무 동작도 하지 않는다
+            onClick: () =>
+              exitPage("slide", () =>
+                window.history.length > 1 ? router.back() : router.replace("/home"),
+              ),
           }}
         />
         <main className="flex w-full flex-col gap-4 px-5">
