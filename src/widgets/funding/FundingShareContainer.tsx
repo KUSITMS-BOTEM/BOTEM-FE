@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import type { ShareMemberIntent } from "@/utils/funding/shareMemberIntent";
 import FundingDetailLoader from "@/widgets/funding/FundingDetailLoader";
 
@@ -16,9 +18,12 @@ export default function FundingShareContainer({
   isLoggedIn,
   surprise,
 }: FundingShareContainerProps) {
+  const router = useRouter();
+
   return (
     <FundingDetailLoader
       shareKey={shareKey}
+      onBack={isLoggedIn ? () => router.push("/home") : undefined}
       memberIntent={memberIntent}
       isLoggedIn={isLoggedIn}
       surprise={surprise}
