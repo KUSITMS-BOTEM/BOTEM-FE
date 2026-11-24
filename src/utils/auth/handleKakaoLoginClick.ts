@@ -24,7 +24,7 @@ export const handleKakaoLoginClick = (mutate: LoginUriMutate, returnPath?: strin
       if (url.host !== KAKAO_AUTH_HOST && !isMockCallback) return;
 
       // 카카오가 콜백에 그대로 되돌려주는 state를 심어, 공격자가 자기 code를 피해자에게 심는 login CSRF를 막는다.
-      const state = createKakaoOauthState(returnPath);
+      const state = createKakaoOauthState(crypto.randomUUID(), returnPath);
       url.searchParams.set("state", state);
       setKakaoOauthState(state);
 
