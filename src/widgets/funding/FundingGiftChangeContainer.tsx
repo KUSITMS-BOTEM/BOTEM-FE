@@ -5,27 +5,31 @@ import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import Header from "@/components/Header";
-import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
-import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
-import { useGiftChangeStore } from "@/store/giftChangeStore";
+import { giftChangeBasePath, useGiftChangeStore } from "@/store/giftChangeStore";
 import { findFundingWish, getChangeableWishes } from "@/utils/funding/giftChangeCandidates";
 import FundingGiftChangeView, {
   type GiftChangeProduct,
 } from "@/widgets/funding/FundingGiftChangeView";
 import FundingLoadState from "@/widgets/funding/FundingLoadState";
+import { useGiftChangeSource } from "@/widgets/funding/useGiftChangeSource";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 
-export default function FundingGiftChangeContainer() {
+type FundingGiftChangeContainerProps = {
+  // 서프라이즈 받는 사람이 고르는 중이면 true
+  surprise?: boolean;
+};
+
+export default function FundingGiftChangeContainer({
+  surprise = false,
+}: FundingGiftChangeContainerProps) {
   const router = useRouter();
   const fundingId = Number(useParams<{ fundingId: string }>().fundingId);
-  const resultQuery = useFundingResultQuery(fundingId);
-  const managementQuery = useFundingManagementQuery(fundingId);
+  const sourceQuery = useGiftChangeSource(fundingId, surprise);
   const wishesQuery = useWishesQuery();
   const storedFundingId = useGiftChangeStore(state => state.fundingId);
   const storedOriginalGift = useGiftChangeStore(state => state.originalGift);
-  const result = resultQuery.data;
-  const management = managementQuery.data;
+  const source = sourceQuery.data;
   const wishes = wishesQuery.data?.content;
 
   // 추천 상품에서 위시를 담지 않고 돌아왔다면 이후 평소 위시 담기가 변경 화면으로 새지 않게 끈다
@@ -35,8 +39,8 @@ export default function FundingGiftChangeContainer() {
 
   // 처음 들어올 때 아직 바꾸지 않았다면 지금 선물이 되돌아갈 기존 선물이다
   useEffect(() => {
-    if (!management || !wishes || storedFundingId === fundingId) return;
-    const fundingWish = management.productChanged ? undefined : findFundingWish(wishes, fundingId);
+    if (!source || !wishes || storedFundingId === fundingId) return;
+    const fundingWish = source.productChanged ? undefined : findFundingWish(wishes, fundingId);
     useGiftChangeStore.getState().start(
       fundingId,
       fundingWish
@@ -47,10 +51,11 @@ export default function FundingGiftChangeContainer() {
             productImageUrl: fundingWish.productImageUrl,
           }
         : null,
+      surprise,
     );
-  }, [management, wishes, storedFundingId, fundingId]);
+  }, [source, wishes, storedFundingId, fundingId, surprise]);
 
-  if (!result || !management || !wishes) {
+  if (!source || !wishes) {
     return (
       <div className="flex min-h-dvh flex-col">
         <Header
@@ -58,12 +63,11 @@ export default function FundingGiftChangeContainer() {
           leftItem={{ icon: <IconLeft />, ariaLabel: "뒤로 가기", onClick: () => router.back() }}
         />
         <FundingLoadState
-          isLoading={resultQuery.isLoading || managementQuery.isLoading || wishesQuery.isLoading}
+          isLoading={sourceQuery.isLoading || wishesQuery.isLoading}
           loadingLabel="고를 수 있는 선물을 불러오는 중이에요"
           errorMessage="선물 정보를 불러오지 못했어요"
           onRetry={() => {
-            if (!result) resultQuery.refetch();
-            if (!management) managementQuery.refetch();
+            if (!source) sourceQuery.refetch();
             if (!wishes) wishesQuery.refetch();
           }}
         />
@@ -77,21 +81,21 @@ export default function FundingGiftChangeContainer() {
     ? { ...originalGift, id: originalGift.wishId }
     : {
         id: currentWish?.id ?? 0,
-        productName: management.product.name,
-        price: management.product.price,
-        productImageUrl: management.product.imageUrl,
+        productName: source.product.name,
+        price: source.product.price,
+        productImageUrl: source.product.imageUrl,
       };
   const excludeWishIds = [currentWish?.id, originalGift?.wishId].filter(
     (id): id is number => id !== undefined,
   );
-  const changeableWishes = getChangeableWishes(wishes, result.confirmedAmount, excludeWishIds);
+  const changeableWishes = getChangeableWishes(wishes, source.confirmedAmount, excludeWishIds);
 
   const goToWishDetail = (wishId: number) =>
-    router.push(`/funding/${fundingId}/change-gift/wish/${wishId}`);
+    router.push(`${giftChangeBasePath(fundingId, surprise)}/change-gift/wish/${wishId}`);
 
   return (
     <FundingGiftChangeView
-      collectedAmount={result.confirmedAmount}
+      collectedAmount={source.confirmedAmount}
       currentGift={giftShownAsOriginal}
       wishes={changeableWishes}
       onBack={() => router.back()}

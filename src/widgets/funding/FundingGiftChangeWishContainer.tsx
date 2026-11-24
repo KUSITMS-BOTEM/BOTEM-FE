@@ -10,29 +10,33 @@ import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSk
 import TextButton from "@/components/TextButton";
 import { useChangeFundingProductMutation } from "@/hooks/mutations/funding/useChangeFundingProductMutation";
 import { useChooseGiftMutation } from "@/hooks/mutations/funding/useChooseGiftMutation";
-import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
-import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
-import { type OriginalGift, useGiftChangeStore } from "@/store/giftChangeStore";
-import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
+import { giftChangeBasePath, type OriginalGift, useGiftChangeStore } from "@/store/giftChangeStore";
 import { openPendingTab } from "@/utils/openPendingTab";
 import type { GiftChangeProduct } from "@/widgets/funding/FundingGiftChangeView";
 import FundingOriginalGiftSheet from "@/widgets/funding/FundingOriginalGiftSheet";
+import { type GiftChangeSource, useGiftChangeSource } from "@/widgets/funding/useGiftChangeSource";
 
-export default function FundingGiftChangeWishContainer() {
+type FundingGiftChangeWishContainerProps = {
+  // 서프라이즈 받는 사람이 고르는 중이면 true
+  surprise?: boolean;
+};
+
+export default function FundingGiftChangeWishContainer({
+  surprise = false,
+}: FundingGiftChangeWishContainerProps) {
   const router = useRouter();
   const params = useParams<{ fundingId: string; wishId: string }>();
   const fundingId = Number(params.fundingId);
   const [originalSheetOpen, setOriginalSheetOpen] = useState(false);
   const { data: wish, isLoading, refetch } = useWishQuery(params.wishId);
-  const { data: result } = useFundingResultQuery(fundingId);
-  const { data: management } = useFundingManagementQuery(fundingId);
+  const { data: source } = useGiftChangeSource(fundingId, surprise);
   const changeMutation = useChangeFundingProductMutation(fundingId);
   const chooseGiftMutation = useChooseGiftMutation(fundingId);
   const storedFundingId = useGiftChangeStore(state => state.fundingId);
   const storedOriginalGift = useGiftChangeStore(state => state.originalGift);
   // 위시 변경에서 뒤로 가면 다른 선물 고르기가 아니라 선물 확인으로 돌아간다
-  const backToResult = () => router.replace(`/funding/${fundingId}/result`);
+  const backToResult = () => router.replace(`${giftChangeBasePath(fundingId, surprise)}/result`);
 
   if (isLoading) return <ProductDetailViewSkeleton />;
   if (!wish) {
@@ -52,7 +56,7 @@ export default function FundingGiftChangeWishContainer() {
     changeMutation.isSuccess || (wish.status === "FUNDING" && wish.fundingId === fundingId);
   const originalGift = resolveOriginalGift(
     storedFundingId === fundingId ? storedOriginalGift : null,
-    management,
+    source,
   );
 
   // 바꾼 상품을 선물로 정해야 선물 인증 대기로 바뀐다.
@@ -90,7 +94,7 @@ export default function FundingGiftChangeWishContainer() {
         }
         ctaLower={
           originalGift &&
-          result && (
+          source && (
             <TextButton
               size="medium"
               label="기존 선물 보기"
@@ -100,10 +104,10 @@ export default function FundingGiftChangeWishContainer() {
           )
         }
       />
-      {originalGift && result && (
+      {originalGift && source && (
         <FundingOriginalGiftSheet
           open={originalSheetOpen}
-          collectedAmount={result.confirmedAmount}
+          collectedAmount={source.confirmedAmount}
           originalGift={originalGift}
           onClose={() => setOriginalSheetOpen(false)}
         />
@@ -115,13 +119,13 @@ export default function FundingGiftChangeWishContainer() {
 // 다른 선물 고르기에서 기록해 둔 기존 선물이 없으면(새로고침 후 바로 진입 등), 아직 바꾸지 않은 펀딩의 지금 상품이 곧 기존 선물이다
 function resolveOriginalGift(
   storedOriginalGift: OriginalGift | null,
-  management: OwnerFundingDetailResponse | null | undefined,
+  source: GiftChangeSource | undefined,
 ): Omit<GiftChangeProduct, "id"> | null {
   if (storedOriginalGift) return storedOriginalGift;
-  if (!management || management.productChanged) return null;
+  if (!source || source.productChanged) return null;
   return {
-    productName: management.product.name,
-    price: management.product.price,
-    productImageUrl: management.product.imageUrl,
+    productName: source.product.name,
+    price: source.product.price,
+    productImageUrl: source.product.imageUrl,
   };
 }

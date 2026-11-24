@@ -6,6 +6,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { fundingService } from "@/apis/funding/fundingService";
 import { useChooseGiftMutation } from "@/hooks/mutations/funding/useChooseGiftMutation";
 import { fundingManagementQueryKey } from "@/hooks/queries/funding/useFundingManagementQuery";
+import { surpriseRevealQueryKey } from "@/hooks/queries/funding/useSurpriseRevealQuery";
 import { homeQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
 
 vi.mock("@/apis/funding/fundingService", () => ({
@@ -43,7 +44,7 @@ describe("useChooseGiftMutation", () => {
     expect(result.current.data).toEqual(response);
   });
 
-  it("성공하면 연장 가능 여부가 바뀐 관리 상세와 인증 배너로 옮겨 간 홈을 무효화한다", async () => {
+  it("성공하면 연장 가능 여부가 바뀐 관리 상세·서프라이즈 공개 상세와 인증 배너로 옮겨 간 홈을 무효화한다", async () => {
     vi.mocked(fundingService.chooseGift).mockResolvedValue(response);
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
     const { result } = renderHook(() => useChooseGiftMutation(7), { wrapper: createWrapper() });
@@ -53,5 +54,6 @@ describe("useChooseGiftMutation", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidate).toHaveBeenCalledWith({ queryKey: fundingManagementQueryKey(7) });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: homeQueryKey });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: surpriseRevealQueryKey(7) });
   });
 });

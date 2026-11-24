@@ -5,10 +5,12 @@ import { useChangeFundingProductMutation } from "@/hooks/mutations/funding/useCh
 import { useChooseGiftMutation } from "@/hooks/mutations/funding/useChooseGiftMutation";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
+import { useSurpriseRevealQuery } from "@/hooks/queries/funding/useSurpriseRevealQuery";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import { useGiftChangeStore } from "@/store/giftChangeStore";
 import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import type { FundingResultResponse } from "@/types/funding/fundingResult";
+import type { SurpriseRevealResponse } from "@/types/funding/surprise";
 import type { WishResponse } from "@/types/wish/wish";
 import FundingGiftChangeWishContainer from "@/widgets/funding/FundingGiftChangeWishContainer";
 
@@ -18,6 +20,9 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({ fundingId: "7", wishId: "1" }),
 }));
 vi.mock("@/hooks/queries/wish/useWishQuery", () => ({ useWishQuery: vi.fn() }));
+vi.mock("@/hooks/queries/funding/useSurpriseRevealQuery", () => ({
+  useSurpriseRevealQuery: vi.fn(),
+}));
 vi.mock("@/hooks/queries/funding/useFundingResultQuery", () => ({
   useFundingResultQuery: vi.fn(),
 }));
@@ -54,6 +59,14 @@ const mockManagement = {
 const changeMutate = vi.fn();
 const chooseGiftMutate = vi.fn();
 
+const mockSurprise = {
+  confirmedAmount: 420000,
+  productName: "에어팟 프로 2",
+  productPrice: 459000,
+  productImageUrl: "https://example.com/9.png",
+  productChanged: false,
+} as SurpriseRevealResponse;
+
 const mockQueries = ({
   wish = mockWish as WishResponse | null,
   isLoading = false,
@@ -72,6 +85,11 @@ const mockQueries = ({
   vi.mocked(useFundingManagementQuery).mockReturnValue({
     data: mockManagement,
   } as unknown as ReturnType<typeof useFundingManagementQuery>);
+  vi.mocked(useSurpriseRevealQuery).mockReturnValue({
+    data: mockSurprise,
+    isLoading: false,
+    refetch: vi.fn(),
+  } as unknown as ReturnType<typeof useSurpriseRevealQuery>);
   vi.mocked(useChangeFundingProductMutation).mockReturnValue({
     mutate: changeMutate,
     isPending,
@@ -181,5 +199,26 @@ describe("FundingGiftChangeWishContainer", () => {
     await userEvent.click(screen.getByRole("button", { name: "뒤로 가기" }));
 
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/funding/7/result"));
+  });
+
+  describe("서프라이즈 받는 사람", () => {
+    it("뒤로 가기를 누르면 서프라이즈 결과 화면으로 돌아간다", async () => {
+      mockQueries();
+      render(<FundingGiftChangeWishContainer surprise />);
+
+      await userEvent.click(screen.getByRole("button", { name: "뒤로 가기" }));
+
+      await waitFor(() => expect(replace).toHaveBeenCalledWith("/surprised/7/result"));
+    });
+
+    it("'기존 선물 보기'는 공개 상세의 모인 금액과 지금 상품을 보여준다", async () => {
+      mockQueries();
+      render(<FundingGiftChangeWishContainer surprise />);
+
+      await userEvent.click(screen.getByRole("button", { name: "기존 선물 보기" }));
+
+      expect(await screen.findByText("에어팟 프로 2")).toBeInTheDocument();
+      expect(useFundingManagementQuery).toHaveBeenCalledWith(7, { enabled: false });
+    });
   });
 });

@@ -10,10 +10,12 @@ export type OriginalGift = {
 
 type GiftChangeState = {
   fundingId: number | null;
+  // 서프라이즈 받는 사람이 바꾸는 중이면 /surprised 경로로 돌아가야 한다
+  surprise: boolean;
   originalGift: OriginalGift | null;
   // "상품 보기"로 추천 상품에 다녀오는 중일 때만 true — 이때 담은 위시는 위시 상세 대신 위시 변경 화면으로 보낸다
   browsingProducts: boolean;
-  start: (fundingId: number, originalGift: OriginalGift | null) => void;
+  start: (fundingId: number, originalGift: OriginalGift | null, surprise?: boolean) => void;
   setBrowsingProducts: (browsingProducts: boolean) => void;
   clear: () => void;
 };
@@ -24,12 +26,18 @@ export const useGiftChangeStore = create<GiftChangeState>()(
   persist(
     set => ({
       fundingId: null,
+      surprise: false,
       originalGift: null,
       browsingProducts: false,
-      start: (fundingId, originalGift) => set({ fundingId, originalGift }),
+      start: (fundingId, originalGift, surprise = false) =>
+        set({ fundingId, originalGift, surprise }),
       setBrowsingProducts: browsingProducts => set({ browsingProducts }),
-      clear: () => set({ fundingId: null, originalGift: null, browsingProducts: false }),
+      clear: () =>
+        set({ fundingId: null, surprise: false, originalGift: null, browsingProducts: false }),
     }),
     { name: "botem-gift-change", storage: createJSONStorage(() => sessionStorage) },
   ),
 );
+
+export const giftChangeBasePath = (fundingId: number, surprise: boolean) =>
+  surprise ? `/surprised/${fundingId}` : `/funding/${fundingId}`;
