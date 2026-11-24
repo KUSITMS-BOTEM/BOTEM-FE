@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { delay, http, HttpResponse } from "msw";
 
-import { MOCK_FUNDING_CARDS } from "@/apis/home/homeService.msw";
+import { MOCK_FUNDING_CARDS, MOCK_SURPRISE_REVEAL_ID } from "@/apis/home/homeService.msw";
 import { getMockContributionProgress, getMockContributionRecords } from "@/mocks/mockContributions";
 import { getMockCompletedGiftVerification } from "@/mocks/mockGiftVerifications";
 import { fromMockShareKey, toMockShareKey } from "@/mocks/mockShareKey";
@@ -18,6 +18,11 @@ import type {
 } from "@/types/funding/ownerFundingDetail";
 import type { FundingDetailResponse } from "@/types/funding/fundingDetail";
 import type { RollingPaperMessage } from "@/types/funding/rollingPaper";
+import type {
+  SurpriseGiftPreparationResponse,
+  SurpriseRevealResponse,
+  SurpriseThankCardFriend,
+} from "@/types/funding/surprise";
 import type { FundingType } from "@/types/home/home";
 
 const toContributions = (names: string[]): FundingResultContributionResponse[] =>
@@ -333,6 +338,116 @@ const MOCK_FUNDING_DETAIL: FundingDetailResponse = {
 const MOCK_SURPRISE_RECIPIENT_ID = 98;
 const MOCK_SURPRISE_PARTICIPANT_ID = 97;
 
+// 열기·선물 준비 완료 시각. 새로고침 전까지 유지해 다시 들어왔을 때의 화면을 확인할 수 있다
+const mockOpenedSurprises = new Map<number, string>();
+const mockPreparedSurprises = new Map<number, string>();
+// 선물 선택 저장을 마친 펀딩. 공개 상세의 giftChosen에 반영한다
+const mockChosenGifts = new Set<number>();
+
+// 받는 사람이 다른 위시로 바꿨으면 상품 변경 목업(mockFundingOverrides)의 상품을 보여준다
+const getMockSurpriseReveal = (fundingId: number): SurpriseRevealResponse => {
+  const changedProduct = mockFundingOverrides[fundingId]?.product;
+  return {
+    fundingId,
+    recipientName: "서준",
+    organizerName: "하린",
+    productName: changedProduct?.name ?? "에어팟 프로 2",
+    productImageUrl:
+      changedProduct?.imageUrl ?? faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
+    productUrl: changedProduct?.url ?? "https://www.coupang.com/vp/products/1",
+    productPrice: changedProduct?.price ?? 459000,
+    productChanged: changedProduct !== undefined,
+    confirmedAmount: 420000,
+    targetAmount: 459000,
+    confirmedPercentage: 91,
+    deadline: "2025-10-10T23:59:59",
+    participantCount: MOCK_SURPRISE_THANK_CARD_FRIENDS.length,
+    messageCount: MOCK_ROLLING_PAPER_MESSAGES.length,
+    revealAt: "2025-10-11T00:00:00",
+    // 홈 공개 카드(96)는 열기 전 상태로 시작한다
+    openedAt:
+      fundingId === MOCK_SURPRISE_REVEAL_ID
+        ? (mockOpenedSurprises.get(fundingId) ?? null)
+        : "2025-10-11T09:00:00",
+    giftChosen: mockChosenGifts.has(fundingId),
+    messages: MOCK_ROLLING_PAPER_MESSAGES,
+  };
+};
+
+const MOCK_SURPRISE_THANK_CARD_FRIENDS: SurpriseThankCardFriend[] = [
+  { name: "하린", organizer: true, messageTypes: ["TEXT", "PHOTO"] },
+  { name: "서준", organizer: false, messageTypes: ["TEXT"] },
+  { name: "민지", organizer: false, messageTypes: ["TEXT", "VOICE"] },
+  { name: "도윤", organizer: false, messageTypes: [] },
+  { name: "예린", organizer: false, messageTypes: ["STICKER"] },
+].map((friend, index) => ({
+  ...friend,
+  messageTypes: friend.messageTypes as SurpriseThankCardFriend["messageTypes"],
+  contributionId: 9600 + index,
+  // 비로그인 참여자의 기본 이미지도 확인할 수 있게 마지막 친구는 null로 둔다
+  profileImageUrl:
+    index === 4 ? null : faker.image.urlPicsumPhotos({ width: 72, height: 72, blur: 0 }),
+  contributedDate: "2026-11-10",
+  thankCardSent: false,
+}));
+
+// 홈 카드 목업(20~23 등 서프라이즈)을 원본으로 삼아 홈과 선물 준비 화면의 달성률이 어긋나지 않게 한다
+const getMockSurpriseGiftPreparation = (
+  fundingId: number,
+): SurpriseGiftPreparationResponse | null => {
+  const card = MOCK_FUNDING_CARDS.find(
+    item => item.fundingId === fundingId && item.fundingType === "SURPRISE",
+  );
+  if (!card) return null;
+  const targetReached = card.confirmedPercentage >= 100;
+  const confirmedAmount = Math.floor((card.targetAmount * card.confirmedPercentage) / 100);
+  const preparedAt =
+    card.surpriseStage === "GIFT_PREPARED"
+      ? "2026-11-20T10:00:00"
+      : (mockPreparedSurprises.get(fundingId) ?? null);
+  return {
+    fundingId,
+    shareKey: toMockShareKey(fundingId),
+    recipientName: card.recipientName ?? "지유",
+    recipientWithdrawn: false,
+    recipientPayoutAccount: targetReached
+      ? null
+      : {
+          bank: "TOSS_BANK",
+          bankName: "토스뱅크",
+          accountNumber: "1000-1234-5678",
+          accountHolder: "김지유",
+        },
+    productName: card.productName,
+    productImageUrl: card.productImageUrl,
+    productUrl: "https://link.coupang.com/a/example",
+    productSellerName: "BOTEM 브랜드샵",
+    targetAmount: card.targetAmount,
+    confirmedAmount,
+    achievementPercentage: card.confirmedPercentage,
+    targetReached,
+    participantCount: card.participantCount,
+    messageCount: card.participantCount,
+    pendingContributionCount: 0,
+    pendingCleanupRequired: false,
+    fundingStartedAt: "2026-11-01T10:00:00",
+    deadline: "2026-11-20T23:59:59",
+    earlyClosedAt: null,
+    revealAt: "2026-11-25T00:00:00",
+    giftPreparedAt: preparedAt,
+  };
+};
+
+const mockSurpriseGiftPreparationNotFound = () =>
+  HttpResponse.json(
+    {
+      success: false,
+      data: null,
+      error: { code: "FUNDING_002", message: "펀딩을 찾을 수 없습니다." },
+    },
+    { status: 404 },
+  );
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const toMockDeadline = (remainingDays: number | null) =>
@@ -563,22 +678,44 @@ export const fundingHandlers = [
     }
     return HttpResponse.json({
       success: true,
-      data: {
-        fundingId,
-        recipientName: "서준",
-        organizerName: "하린",
-        productName: "에어팟 프로 2",
-        productImageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),
-        confirmedAmount: 420000,
-        targetAmount: 459000,
-        confirmedPercentage: 91,
-        deadline: "2025-10-10T23:59:59",
-        participantCount: 6,
-        messageCount: 6,
-        revealAt: "2025-10-11T00:00:00",
-        openedAt: "2025-10-11T09:00:00",
-        messages: [],
-      },
+      data: getMockSurpriseReveal(fundingId),
+      error: null,
+    });
+  }),
+  http.post("*/api/fundings/:fundingId/surprise/open", async ({ params }) => {
+    await delay(500);
+    const fundingId = Number(params.fundingId);
+    if (!mockOpenedSurprises.has(fundingId))
+      mockOpenedSurprises.set(fundingId, new Date().toISOString());
+    return HttpResponse.json({
+      success: true,
+      data: getMockSurpriseReveal(fundingId),
+      error: null,
+    });
+  }),
+  http.get("*/api/fundings/:fundingId/surprise/thank-card-friends", async ({ params }) => {
+    await delay(400);
+    return HttpResponse.json({
+      success: true,
+      data: { fundingId: Number(params.fundingId), friends: MOCK_SURPRISE_THANK_CARD_FRIENDS },
+      error: null,
+    });
+  }),
+  http.get("*/api/fundings/:fundingId/surprise/gift-preparation", async ({ params }) => {
+    await delay(400);
+    const preparation = getMockSurpriseGiftPreparation(Number(params.fundingId));
+    if (!preparation) return mockSurpriseGiftPreparationNotFound();
+    return HttpResponse.json({ success: true, data: preparation, error: null });
+  }),
+  http.post("*/api/fundings/:fundingId/surprise/gift-preparation/complete", async ({ params }) => {
+    await delay(500);
+    const fundingId = Number(params.fundingId);
+    const preparation = getMockSurpriseGiftPreparation(fundingId);
+    if (!preparation) return mockSurpriseGiftPreparationNotFound();
+    if (!preparation.giftPreparedAt) mockPreparedSurprises.set(fundingId, new Date().toISOString());
+    return HttpResponse.json({
+      success: true,
+      data: getMockSurpriseGiftPreparation(fundingId),
       error: null,
     });
   }),
@@ -641,25 +778,24 @@ export const fundingHandlers = [
   http.post("*/api/fundings/:fundingId/gift-choice", async ({ params }) => {
     await delay(800);
     const fundingId = Number(params.fundingId);
-    const detail = getMockManagement(fundingId);
-    if (!detail) {
-      return HttpResponse.json(
-        {
-          success: false,
-          data: null,
-          error: { code: "FUNDING_002", message: "펀딩을 찾을 수 없습니다.", detail: null },
-        },
-        { status: 404 },
-      );
-    }
+    // 서프라이즈는 개설자 관리 상세가 없어 받는 사람 공개 상세의 상품으로 응답한다
+    const reveal = getMockSurpriseReveal(fundingId);
+    const management = getMockManagement(fundingId);
+    const product = management?.product ?? {
+      name: reveal.productName,
+      imageUrl: reveal.productImageUrl,
+      url: reveal.productUrl,
+    };
+    mockChosenGifts.add(fundingId);
     return HttpResponse.json({
       success: true,
       data: {
         fundingId,
-        giftVerificationId: fundingId,
-        productName: detail.product.name,
-        productImageUrl: detail.product.imageUrl,
-        productUrl: detail.product.url,
+        // 서프라이즈는 선물 인증 대기로 가지 않아 인증 ID가 없다
+        giftVerificationId: !management || management.type === "SURPRISE" ? null : fundingId,
+        productName: product.name,
+        productImageUrl: product.imageUrl,
+        productUrl: product.url,
       },
       error: null,
     });

@@ -14,13 +14,16 @@ type MockHomeScenario =
   | "CLOSED_OPEN"
   | "CLOSED_EMPTY"
   | "EARLY_COMPLETE"
+  | "SURPRISE"
   | "WISH_ONLY"
   | "EMPTY";
 
-// 홈 분기(마감·진행 중 / 진행 중만 / 1개 / 마감+확인 대기 / 마감+확인 대기 없음 / 마감+참여자 0명 / 마감 전 100% 달성 / 위시만 / 빈 홈)를 눈으로 확인할 때 이 값만 바꾼다
+// 홈 분기(마감·진행 중 / 진행 중만 / 1개 / 마감+확인 대기 / 마감+확인 대기 없음 / 마감+참여자 0명 / 마감 전 100% 달성 / 서프라이즈 / 위시만 / 빈 홈)를 눈으로 확인할 때 이 값만 바꾼다
 const MOCK_HOME_SCENARIO = "IN_PROGRESS" as MockHomeScenario;
 
 const [product1, product2, product3, product4] = MOCK_RECOMMENDED_PRODUCTS;
+
+export const MOCK_SURPRISE_REVEAL_ID = 96;
 
 // 프로필 이미지가 있는 회원과 없는 회원·비회원(null)이 섞이도록 둔다
 const MOCK_PARTICIPANT_PREVIEWS = [
@@ -91,6 +94,8 @@ export const MOCK_FUNDING_CARDS = [
     confirmedPercentage: 35,
     pendingPercentage: 15,
     pendingContributionCount: 2,
+    recipientName: "지유",
+    surpriseStage: "IN_PROGRESS",
   },
   {
     fundingId: 16,
@@ -148,6 +153,71 @@ export const MOCK_FUNDING_CARDS = [
     pendingPercentage: 0,
     pendingContributionCount: 0,
   },
+  // 20~23은 서프라이즈 주최자 흐름 확인용 (20: 마감·달성, 21: 마감·미달, 22: 선물 준비 완료, 23: 마감 전 달성)
+  {
+    fundingId: 20,
+    cardType: "CLOSED_UNOPENED",
+    fundingType: "SURPRISE",
+    productName: product1.name,
+    productImageUrl: product1.imageUrl,
+    targetAmount: product1.price,
+    participantCount: 7,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS,
+    remainingDays: null,
+    confirmedPercentage: 100,
+    pendingPercentage: 0,
+    pendingContributionCount: 0,
+    recipientName: "지유",
+    surpriseStage: "GIFT_PREPARING",
+  },
+  {
+    fundingId: 21,
+    cardType: "CLOSED_UNOPENED",
+    fundingType: "SURPRISE",
+    productName: product2.name,
+    productImageUrl: product2.imageUrl,
+    targetAmount: product2.price,
+    participantCount: 7,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS,
+    remainingDays: null,
+    confirmedPercentage: 60,
+    pendingPercentage: 0,
+    pendingContributionCount: 0,
+    recipientName: "지유",
+    surpriseStage: "GIFT_PREPARING",
+  },
+  {
+    fundingId: 22,
+    cardType: "CLOSED_UNOPENED",
+    fundingType: "SURPRISE",
+    productName: product3.name,
+    productImageUrl: product3.imageUrl,
+    targetAmount: product3.price,
+    participantCount: 7,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS,
+    remainingDays: null,
+    confirmedPercentage: 100,
+    pendingPercentage: 0,
+    pendingContributionCount: 0,
+    recipientName: "지유",
+    surpriseStage: "GIFT_PREPARED",
+  },
+  {
+    fundingId: 23,
+    cardType: "IN_PROGRESS",
+    fundingType: "SURPRISE",
+    productName: product4.name,
+    productImageUrl: product4.imageUrl,
+    targetAmount: product4.price,
+    participantCount: 4,
+    participantPreviews: MOCK_PARTICIPANT_PREVIEWS,
+    remainingDays: 4,
+    confirmedPercentage: 100,
+    pendingPercentage: 0,
+    pendingContributionCount: 0,
+    recipientName: "지유",
+    surpriseStage: "IN_PROGRESS",
+  },
 ];
 
 const MOCK_HOME_WISHES = MOCK_RECOMMENDED_PRODUCTS.slice(0, 3).map(product => ({
@@ -161,6 +231,8 @@ const MOCK_HOME_WISHES = MOCK_RECOMMENDED_PRODUCTS.slice(0, 3).map(product => ({
 export const createHomeHandlers = (scenario: MockHomeScenario) => [
   http.get("*/api/home/fundings", async () => {
     await delay(800);
+    // 마감·조기 완료 시나리오는 생일 펀딩 분기 확인용이라 서프라이즈 카드는 SURPRISE 시나리오에서만 본다
+    const birthdayCards = MOCK_FUNDING_CARDS.filter(card => card.fundingType === "BIRTHDAY");
     const scenarioCards = {
       FUNDING: MOCK_FUNDING_CARDS,
       IN_PROGRESS: MOCK_FUNDING_CARDS.filter(card => card.cardType === "IN_PROGRESS"),
@@ -168,24 +240,25 @@ export const createHomeHandlers = (scenario: MockHomeScenario) => [
         0,
         1,
       ),
-      CLOSED_PENDING: MOCK_FUNDING_CARDS.filter(
+      CLOSED_PENDING: birthdayCards.filter(
         card => card.cardType === "CLOSED_UNOPENED" && card.pendingContributionCount > 0,
       ),
-      CLOSED_OPEN: MOCK_FUNDING_CARDS.filter(
+      CLOSED_OPEN: birthdayCards.filter(
         card =>
           card.cardType === "CLOSED_UNOPENED" &&
           card.pendingContributionCount === 0 &&
           card.confirmedPercentage > 0,
       ),
-      CLOSED_EMPTY: MOCK_FUNDING_CARDS.filter(
+      CLOSED_EMPTY: birthdayCards.filter(
         card => card.cardType === "CLOSED_UNOPENED" && card.confirmedPercentage === 0,
       ),
-      EARLY_COMPLETE: MOCK_FUNDING_CARDS.filter(
+      EARLY_COMPLETE: birthdayCards.filter(
         card =>
           card.cardType === "IN_PROGRESS" &&
           card.confirmedPercentage >= 100 &&
           card.pendingContributionCount === 0,
       ),
+      SURPRISE: MOCK_FUNDING_CARDS.filter(card => card.fundingType === "SURPRISE"),
       WISH_ONLY: [],
       EMPTY: [],
     }[scenario];
@@ -203,6 +276,8 @@ export const createHomeHandlers = (scenario: MockHomeScenario) => [
           card.fundingType === "BIRTHDAY" &&
           confirmedPercentage >= 100 &&
           progress.pendingContributionCount === 0,
+        recipientName: card.recipientName ?? null,
+        surpriseStage: card.surpriseStage ?? null,
       };
     });
     const activeFundingCount = fundingCards.filter(card => card.cardType === "IN_PROGRESS").length;
@@ -237,6 +312,24 @@ export const createHomeHandlers = (scenario: MockHomeScenario) => [
       },
       error: null,
     });
+  }),
+  // 받는 사람 흐름 확인용 공개 카드. 96은 아직 열지 않은 서프라이즈다
+  http.get("*/api/home/surprise-reveals", async () => {
+    await delay(500);
+    const cards =
+      scenario === "WISH_ONLY" || scenario === "EMPTY"
+        ? []
+        : [
+            {
+              fundingId: MOCK_SURPRISE_REVEAL_ID,
+              productImageUrl: product1.imageUrl,
+              productName: product1.name,
+              organizerName: "하린",
+              participantCount: 5,
+              revealAt: "2026-11-20T00:00:00",
+            },
+          ];
+    return HttpResponse.json({ success: true, data: { cards }, error: null });
   }),
   http.get("*/api/home/gift-verifications/banner", async () => {
     await delay(300);

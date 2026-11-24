@@ -2,7 +2,7 @@ import type { FundingDetailGiftVerification } from "@/types/funding/fundingDetai
 import type { GiftVerificationTargetResponse } from "@/types/home/home";
 import { MOCK_RECOMMENDED_PRODUCTS } from "@/mocks/mockRecommendedProducts";
 
-const [product1, product2] = MOCK_RECOMMENDED_PRODUCTS;
+const [product1] = MOCK_RECOMMENDED_PRODUCTS;
 
 const MOCK_TARGETS: GiftVerificationTargetResponse[] = [
   {
@@ -12,15 +12,6 @@ const MOCK_TARGETS: GiftVerificationTargetResponse[] = [
     productImageUrl: product1.imageUrl,
     fundingDeadline: "2026-10-13T23:59:59",
     participantCount: 6,
-    replacementProductName: null,
-  },
-  {
-    giftVerificationId: 102,
-    fundingId: 13,
-    productName: product2.name,
-    productImageUrl: product2.imageUrl,
-    fundingDeadline: "2026-09-30T23:59:59",
-    participantCount: 9,
     replacementProductName: null,
   },
 ];
