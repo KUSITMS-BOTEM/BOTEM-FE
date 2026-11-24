@@ -26,17 +26,19 @@ export function useShareLink() {
     }
   };
 
+  // 기기 공유창으로 실제 보냈을 때만 true다. 창을 닫았거나 링크 복사로 넘어간 경우는 false
   const share = async ({ title, url }: { title: string; url: string }) => {
     if (navigator.share) {
       try {
         await navigator.share({ title, url });
-        return;
+        return true;
       } catch (error) {
         // 사용자가 공유창을 닫은 경우다. 그 외 실패는 링크 복사로 넘어간다
-        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (error instanceof DOMException && error.name === "AbortError") return false;
       }
     }
     await copyLink(url);
+    return false;
   };
 
   return { toast, share, copyLink };

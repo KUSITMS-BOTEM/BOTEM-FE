@@ -15,24 +15,28 @@ type GiftVerifyShareSheetProps = {
   fundingId: number;
   // 공유 키를 받아 왔으면 넘긴다. 닫은 뒤 이동할 인증 결과 화면 주소를 만든다
   onClose: (shareKey?: string) => void;
+  // 기기 공유창으로 링크를 보냈을 때 호출한다
+  onShared: () => void;
 };
 
 export default function GiftVerifyShareSheet({
   open,
   fundingId,
   onClose,
+  onShared,
 }: GiftVerifyShareSheetProps) {
   const query = useFundingManagementQuery(fundingId, { enabled: open });
   const { toast, share } = useShareLink();
   const friends = query.data ? toOwnerFundingView(query.data).friends : undefined;
   const shareKey = query.data?.shareKey;
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (!shareKey) return;
-    share({
+    const shared = await share({
       title: "선물 도착 인증이 왔어요",
       url: `${window.location.origin}/share/${shareKey}/gift`,
     });
+    if (shared) onShared();
   };
 
   return (
