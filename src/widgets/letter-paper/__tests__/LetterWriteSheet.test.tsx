@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionGlobalConfig } from "framer-motion";
 
@@ -66,6 +66,25 @@ describe("LetterWriteSheet", () => {
       MotionGlobalConfig.skipAnimations = true;
     }
   }, 10000);
+
+  it("모션 완료 신호가 오지 않아도 일정 시간이 지나면 편지지가 나타난다", () => {
+    MotionGlobalConfig.skipAnimations = false;
+    // 가짜 타이머에서는 framer-motion 프레임 루프가 멈춰 모션이 끝나지 않는다
+    vi.useFakeTimers();
+    try {
+      render(sheet());
+      expect(screen.queryByRole("textbox", { name: "편지 내용" })).not.toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+
+      expect(letterInput()).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+      MotionGlobalConfig.skipAnimations = true;
+    }
+  });
 
   it("헤더에 받는 사람 이름이 들어간 '에게 보태기' 제목을 보여준다", async () => {
     await renderSheet();

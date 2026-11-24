@@ -50,6 +50,8 @@ const TITLE_INTRO_TRANSITION = {
     1,
   ],
 };
+// 모션이 중단돼 완료 콜백이 오지 않아도 편지지가 나타나도록, 인트로 길이에 여유를 둔 안전 타이머
+const TITLE_INTRO_FALLBACK_MS = (TITLE_INTRO_TRANSITION.delay + TITLE_INTRO_SECONDS + 0.5) * 1000;
 
 // 하단 고정 CTA(버튼 56 + 아래 패딩 20 + 그라데이션 일부)에 팔레트가 가려지지 않게 비운다
 const CTA_CLEARANCE_CLASS = "pb-[calc(6rem+env(safe-area-inset-bottom))]";
@@ -160,6 +162,15 @@ export default function LetterWriteSheet({
   const [afterTitle, setAfterTitle] = useState(false);
   const showNameInput = !hideName && nameOpen;
   const contentTransition = afterTitle ? CONTENT_AFTER_TITLE_TRANSITION : CONTENT_TRANSITION;
+
+  useEffect(() => {
+    if (!showTitle || !open) return;
+    const timer = setTimeout(() => {
+      setShowTitle(false);
+      setAfterTitle(true);
+    }, TITLE_INTRO_FALLBACK_MS);
+    return () => clearTimeout(timer);
+  }, [showTitle, open]);
 
   // 사진 검증 콜백은 선택 시점의 클로저를 쥐고 있어 open prop 대신 ref로 최신 값을 읽는다
   const openRef = useRef(open);
