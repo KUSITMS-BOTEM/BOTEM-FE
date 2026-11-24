@@ -70,11 +70,11 @@ export default function PaletteArea({
       {showAddButton && tooltip && (
         <div
           role="tooltip"
-          className="bg-semantic-border-inverted text-semantic-text-primary absolute right-7 bottom-full rounded-lg px-3 py-2 whitespace-nowrap [font:var(--semantic-label-x-small-weak)]">
+          className="bg-semantic-fill-neutral text-semantic-text-on-fill absolute right-7 bottom-full rounded-lg px-3 py-2 whitespace-nowrap [font:var(--semantic-label-x-small)]">
           나만의 편지를 만들어 볼까요?
           <TooltipTail
             aria-hidden
-            className="text-semantic-border-inverted absolute top-[29px] right-[11px] rotate-90"
+            className="text-semantic-fill-neutral absolute top-[29px] right-[11px] rotate-90"
           />
         </div>
       )}
