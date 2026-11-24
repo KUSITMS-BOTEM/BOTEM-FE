@@ -63,6 +63,12 @@ describe("SurpriseResultView", () => {
     expect(screen.queryByRole("button", { name: "차액으로 구매" })).not.toBeInTheDocument();
   });
 
+  it("달성률이 100% 이상이어도 선물 인증 안내는 보이지 않는다", () => {
+    renderView({ confirmedPercentage: 110 });
+
+    expect(screen.queryByText("24시간 안에 구매 후 인증해 주세요")).not.toBeInTheDocument();
+  });
+
   it("달성률이 100% 이상이면 준비한 사람과 상품 가격·상품명을 보여준다", () => {
     renderView();
 

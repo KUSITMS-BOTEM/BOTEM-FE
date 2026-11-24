@@ -90,12 +90,7 @@ export default function SurpriseResultView({
         </div>
       </main>
       {goalAchieved ? (
-        <BottomCTA
-          upper={
-            <p className="text-semantic-text-tertiary text-center [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-x-small-weak)]">
-              24시간 안에 구매 후 인증해 주세요
-            </p>
-          }>
+        <BottomCTA>
           <Button color="brand" size="xlarge" states={buyState} onClick={onBuy}>
             쿠팡에서 선물 사러 가기
           </Button>

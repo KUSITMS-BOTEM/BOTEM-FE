@@ -153,6 +153,14 @@ describe("FundingGiftChangeWishContainer", () => {
     open.mockRestore();
   });
 
+  it("서프라이즈는 바꾼 뒤에도 선물 인증 안내를 보이지 않는다", () => {
+    mockQueries({ isSuccess: true });
+    render(<FundingGiftChangeWishContainer surprise />);
+
+    expect(screen.getByRole("button", { name: "쿠팡에서 선물 사러 가기" })).toBeInTheDocument();
+    expect(screen.queryByText("24시간 안에 구매 후 인증해 주세요")).not.toBeInTheDocument();
+  });
+
   it("선물 선택을 저장하는 중에는 쿠팡 구매 버튼을 다시 누를 수 없다", () => {
     mockQueries({ isSuccess: true, chooseGiftPending: true });
     render(<FundingGiftChangeWishContainer />);

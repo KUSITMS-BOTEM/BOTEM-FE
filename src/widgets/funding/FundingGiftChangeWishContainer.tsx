@@ -86,7 +86,9 @@ export default function FundingGiftChangeWishContainer({
         ctaDisabled={ctaPending}
         onCtaClick={isChanged ? handleBuy : () => changeMutation.mutate(wish.id)}
         ctaUpper={
-          isChanged && (
+          // 서프라이즈는 선물 인증을 하지 않는다 (decisions/surprise_gift_flow_without_verification.md)
+          isChanged &&
+          !surprise && (
             <p className="text-semantic-text-tertiary text-center [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-x-small-weak)]">
               24시간 안에 구매 후 인증해 주세요
             </p>
