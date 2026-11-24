@@ -41,6 +41,17 @@ describe("useOpenSurpriseMutation", () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: homeQueryKey });
   });
 
+  it("공개 상세 캐시에 쓰기 전에 진행 중인 공개 상세 조회를 취소한다", async () => {
+    vi.mocked(fundingService.openSurprise).mockResolvedValue(opened);
+    const cancel = vi.spyOn(queryClient, "cancelQueries");
+    const { result } = renderHook(() => useOpenSurpriseMutation(), { wrapper: createWrapper() });
+
+    result.current.mutate(96);
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(cancel).toHaveBeenCalledWith({ queryKey: surpriseRevealQueryKey(96) });
+  });
+
   it("실패하면 isError가 되고 홈 캐시를 무효화하지 않는다", async () => {
     vi.mocked(fundingService.openSurprise).mockRejectedValue(new Error("실패"));
     const invalidate = vi.spyOn(queryClient, "invalidateQueries");
