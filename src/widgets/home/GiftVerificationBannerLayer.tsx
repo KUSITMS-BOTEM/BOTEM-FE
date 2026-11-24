@@ -15,7 +15,8 @@ import GiftVerificationPinnedBanner from "@/widgets/home/GiftVerificationPinnedB
 
 type GiftVerificationBannerLayerProps = {
   variant: GiftVerificationBannerVariant;
-  children: (cardBanner: ReactNode) => ReactNode;
+  // giftBannerActive: 선물 인증 배너가 아직 떠 있는지. 열거나 닫으면 false가 돼 다른 배너(서프라이즈)가 이어서 뜬다
+  children: (cardBanner: ReactNode, giftBannerActive: boolean) => ReactNode;
 };
 
 export default function GiftVerificationBannerLayer({
@@ -29,16 +30,27 @@ export default function GiftVerificationBannerLayer({
     hasPending: pendingCount > 0,
   });
   const [sheetOpen, setSheetOpen] = useState(false);
+  // 인증하러 가기로 시트를 열었으면 이번 방문에선 배너를 내리고 다음 배너에 자리를 넘긴다
+  const [verifyOpened, setVerifyOpened] = useState(false);
+  const active = visible && !verifyOpened;
 
-  const bannerProps = { count: pendingCount, onVerify: () => setSheetOpen(true), onClose: dismiss };
+  const bannerProps = {
+    count: pendingCount,
+    onVerify: () => {
+      setSheetOpen(true);
+      setVerifyOpened(true);
+    },
+    onClose: dismiss,
+  };
 
   return (
     <div className="relative w-full">
-      {visible && variant === "pinned" && <GiftVerificationPinnedBanner {...bannerProps} />}
+      {active && variant === "pinned" && <GiftVerificationPinnedBanner {...bannerProps} />}
       {children(
-        visible && variant === "card" ? (
+        active && variant === "card" ? (
           <GiftVerificationCardBanner {...bannerProps} onShown={markCardShown} />
         ) : null,
+        active,
       )}
       <GiftVerificationBottomSheet
         open={sheetOpen}

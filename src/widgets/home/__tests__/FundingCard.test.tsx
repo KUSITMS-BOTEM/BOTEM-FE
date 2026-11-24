@@ -295,3 +295,49 @@ describe("FundingCard 효과 타입 탭 동작", () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("FundingCard statusLabel", () => {
+  it("확인 대기가 없으면 statusLabel을 배지로 표시한다", () => {
+    render(<FundingCard {...baseProps} statusLabel="지유가 아직 못받았어요" />);
+
+    expect(screen.getByText("지유가 아직 못받았어요")).toBeInTheDocument();
+  });
+
+  it("확인 대기가 있으면 statusLabel 대신 '확인 대기 N' 배지만 표시한다", () => {
+    render(<FundingCard {...baseProps} pendingCount={2} statusLabel="지유가 아직 못받았어요" />);
+
+    expect(screen.getByText("확인 대기 2")).toBeInTheDocument();
+    expect(screen.queryByText("지유가 아직 못받았어요")).not.toBeInTheDocument();
+  });
+
+  it("open 타입이면 statusLabel을 표시하지 않는다", () => {
+    render(<FundingCard {...baseProps} type="open" statusLabel="지유가 아직 못받았어요" />);
+
+    expect(screen.queryByText("지유가 아직 못받았어요")).not.toBeInTheDocument();
+  });
+
+  it("statusLabel이 없으면 상태 배지가 없다", () => {
+    render(<FundingCard {...baseProps} />);
+
+    expect(screen.queryByText(/아직 못받았어요/)).not.toBeInTheDocument();
+  });
+});
+
+describe("FundingCard fxLabelText", () => {
+  it("칩이 있는 타입이면 기본 문구 대신 fxLabelText를 보여준다", () => {
+    render(
+      <FundingCard {...baseProps} type="complete" fxLabelText="다 모였어요. 선물을 준비할까요?" />,
+    );
+
+    expect(screen.getByText("다 모였어요. 선물을 준비할까요?")).toBeInTheDocument();
+    expect(screen.queryByText("다 모였어요. 팡! 열어볼까요?")).not.toBeInTheDocument();
+  });
+
+  it("칩이 없는 default 타입이면 fxLabelText가 있어도 칩을 만들지 않는다", () => {
+    render(
+      <FundingCard {...baseProps} type="default" fxLabelText="마감됐어요. 선물을 준비할까요?" />,
+    );
+
+    expect(screen.queryByText("마감됐어요. 선물을 준비할까요?")).not.toBeInTheDocument();
+  });
+});

@@ -7,8 +7,13 @@ import { fundingService } from "@/apis/funding/fundingService";
 
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useHomeNoFundingQuery } from "@/hooks/queries/home/useHomeNoFundingQuery";
+import { useHomeSurpriseRevealsQuery } from "@/hooks/queries/home/useHomeSurpriseRevealsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
-import type { HomeFundingCardResponse, HomeNoFundingResponse } from "@/types/home/home";
+import type {
+  HomeFundingCardResponse,
+  HomeNoFundingResponse,
+  SurpriseRevealCardResponse,
+} from "@/types/home/home";
 import HomeFundingTab from "@/widgets/home/HomeFundingTab";
 
 vi.mock("framer-motion", async importOriginal => ({
@@ -17,6 +22,11 @@ vi.mock("framer-motion", async importOriginal => ({
 }));
 vi.mock("@/hooks/queries/home/useHomeFundingsQuery");
 vi.mock("@/hooks/queries/home/useHomeNoFundingQuery");
+vi.mock("@/hooks/queries/home/useHomeSurpriseRevealsQuery");
+vi.mock("@/widgets/home/SurpriseSendNowDialog", () => ({
+  default: ({ fundingId }: { fundingId: number | null }) =>
+    fundingId !== null ? <div role="alertdialog">지금 보낼까요 {fundingId}</div> : null,
+}));
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
 vi.mock("@/apis/funding/fundingService", () => ({
   fundingService: { getResult: vi.fn() },
@@ -31,15 +41,17 @@ vi.mock("@/widgets/funding/DepositConfirmSheet", () => ({
     open,
     fundingId,
     onReveal,
+    revealLabel = "팡! 열어보기",
   }: {
     open: boolean;
     fundingId: number | null;
     onReveal?: () => void;
+    revealLabel?: string;
   }) =>
     open ? (
       <div role="dialog">
         입금 확인 {fundingId}
-        {onReveal && <button onClick={onReveal}>팡! 열어보기</button>}
+        {onReveal && <button onClick={onReveal}>{revealLabel}</button>}
       </div>
     ) : null,
 }));
@@ -59,6 +71,8 @@ const fundingCard: HomeFundingCardResponse = {
   pendingPercentage: 0,
   pendingContributionCount: 0,
   earlyOpenable: false,
+  recipientName: null,
+  surpriseStage: null,
 };
 
 const makeNoFunding = (state: HomeNoFundingResponse["state"]): HomeNoFundingResponse => {
@@ -100,14 +114,39 @@ const mockQueries = (fundings: QueryState, noFunding: QueryState = {}) => {
   } as unknown as ReturnType<typeof useHomeNoFundingQuery>);
 };
 
+const mockSurpriseReveals = (cards: SurpriseRevealCardResponse[] | undefined) =>
+  vi.mocked(useHomeSurpriseRevealsQuery).mockReturnValue({
+    data: cards && { cards },
+  } as unknown as ReturnType<typeof useHomeSurpriseRevealsQuery>);
+
+const revealCard: SurpriseRevealCardResponse = {
+  fundingId: 77,
+  productImageUrl: "/gift.png",
+  productName: "무선 이어폰",
+  organizerName: "민준",
+  participantCount: 4,
+  revealAt: "2026-10-13T00:00:00",
+};
+
+const surpriseCard: HomeFundingCardResponse = {
+  ...fundingCard,
+  fundingId: 42,
+  fundingType: "SURPRISE",
+  recipientName: "하린",
+  surpriseStage: null,
+};
+
 const fundingList = (cards: HomeFundingCardResponse[]) => ({
   fundingCards: cards,
   activeFundingCount: cards.length,
   canOpenFunding: true,
 });
 
-const renderTab = (onAddWish: () => void = vi.fn()) =>
-  render(<HomeFundingTab onAddWish={onAddWish} />, {
+const renderTab = (
+  onAddWish: () => void = vi.fn(),
+  props: Partial<React.ComponentProps<typeof HomeFundingTab>> = {},
+) =>
+  render(<HomeFundingTab onAddWish={onAddWish} {...props} />, {
     wrapper: ({ children }) => (
       <QueryClientProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -119,6 +158,7 @@ const renderTab = (onAddWish: () => void = vi.fn()) =>
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(useReducedMotion).mockReturnValue(true);
+  mockSurpriseReveals([]);
   vi.mocked(useMyProfileQuery).mockReturnValue({
     data: { nickname: "지유" },
   } as unknown as ReturnType<typeof useMyProfileQuery>);
@@ -427,5 +467,150 @@ describe("HomeFundingTab", () => {
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/42/reveal"));
     expect(push).not.toHaveBeenCalledWith("/funding/42");
+  });
+
+  describe("서프라이즈", () => {
+    it("마감된 서프라이즈 카드를 누르면 선물 준비 화면으로 이동한다", async () => {
+      mockQueries({
+        data: fundingList([{ ...surpriseCard, cardType: "CLOSED_UNOPENED" }]),
+      });
+
+      renderTab();
+      await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
+
+      expect(push).toHaveBeenCalledWith("/funding/42/surprise-gift");
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("진행 중이고 100% 모인 서프라이즈 카드를 누르면 이동 없이 지금 보낼지 묻는 다이얼로그를 연다", async () => {
+      mockQueries({
+        data: fundingList([{ ...surpriseCard, cardType: "IN_PROGRESS", confirmedPercentage: 100 }]),
+      });
+
+      renderTab();
+      await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
+
+      expect(screen.getByRole("alertdialog")).toHaveTextContent("지금 보낼까요 42");
+      expect(push).not.toHaveBeenCalled();
+    });
+
+    it("진행 중이지만 100% 미만인 서프라이즈 카드는 펀딩 상세로 이동한다", async () => {
+      mockQueries({
+        data: fundingList([{ ...surpriseCard, cardType: "IN_PROGRESS", confirmedPercentage: 60 }]),
+      });
+
+      renderTab();
+      await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
+
+      expect(push).toHaveBeenCalledWith("/funding/42");
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    });
+
+    it("서프라이즈의 입금 확인 시트에서 선물 준비하기를 누르면 결과 조회 없이 선물 준비 화면으로 이동한다", async () => {
+      mockQueries({
+        data: fundingList([
+          { ...surpriseCard, cardType: "CLOSED_UNOPENED", pendingContributionCount: 2 },
+        ]),
+      });
+
+      renderTab();
+      await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
+      await userEvent.click(screen.getByRole("button", { name: "선물 준비하기" }));
+
+      expect(push).toHaveBeenCalledWith("/funding/42/surprise-gift");
+      expect(fundingService.getResult).not.toHaveBeenCalled();
+    });
+
+    it("생일 펀딩의 입금 확인 시트 열어보기는 기존처럼 공개 화면으로 이동한다", async () => {
+      vi.mocked(fundingService.getResult).mockResolvedValue(null);
+      mockQueries({
+        data: fundingList([
+          {
+            ...fundingCard,
+            fundingId: 43,
+            cardType: "CLOSED_UNOPENED",
+            pendingContributionCount: 1,
+          },
+        ]),
+      });
+
+      renderTab();
+      await userEvent.click(screen.getByRole("button", { name: "지유님의 펀딩" }));
+      await userEvent.click(screen.getByRole("button", { name: "팡! 열어보기" }));
+
+      await waitFor(() => expect(push).toHaveBeenCalledWith("/funding/43/reveal"));
+      expect(push).not.toHaveBeenCalledWith("/funding/43/surprise-gift");
+    });
+  });
+
+  describe("서프라이즈 공개 배너", () => {
+    it("공개된 서프라이즈가 있으면 배너를 보여주고 열어보기를 누르면 받는 사람 공개 화면으로 이동한다", async () => {
+      mockSurpriseReveals([revealCard]);
+      mockQueries({ data: fundingList([fundingCard]) });
+
+      renderTab();
+      const banner = screen.getByRole("region", { name: "서프라이즈 선물 안내" });
+      expect(banner).toHaveTextContent("친구들이 몰래 준비한 선물이 있어요");
+      expect(banner).toHaveTextContent("민준외 3명이 함께 준비했어요");
+      await userEvent.click(screen.getByRole("button", { name: "열어보기" }));
+
+      expect(push).toHaveBeenCalledWith("/surprised/77/reveal");
+    });
+
+    it("공개 카드는 펀딩 카드 캐러셀에 넣지 않는다", () => {
+      mockSurpriseReveals([revealCard]);
+      mockQueries({ data: fundingList([fundingCard]) });
+
+      renderTab();
+
+      expect(screen.queryByText(/준비한 서프라이즈/)).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "지유님의 펀딩" })).toBeInTheDocument();
+    });
+
+    it("X를 누르면 이번 방문에서는 배너를 숨긴다", async () => {
+      mockSurpriseReveals([revealCard]);
+      mockQueries({ data: fundingList([fundingCard]) });
+      renderTab();
+
+      await userEvent.click(screen.getByRole("button", { name: "서프라이즈 선물 안내 닫기" }));
+
+      expect(
+        screen.queryByRole("region", { name: "서프라이즈 선물 안내" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("선물 인증 배너가 떠 있는 동안에는 서프라이즈 배너를 보여주지 않는다", () => {
+      mockSurpriseReveals([revealCard]);
+      mockQueries({ data: fundingList([fundingCard]) });
+
+      renderTab(vi.fn(), { banner: <div>선물 인증 배너</div>, showSurpriseBanner: false });
+
+      expect(screen.getByText("선물 인증 배너")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("region", { name: "서프라이즈 선물 안내" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("상단 고정형 선물 인증 배너가 떠 있어 showSurpriseBanner가 false면 카드 배너도 없다", () => {
+      mockSurpriseReveals([revealCard]);
+      mockQueries({ data: fundingList([fundingCard]) });
+
+      renderTab(vi.fn(), { showSurpriseBanner: false });
+
+      expect(
+        screen.queryByRole("region", { name: "서프라이즈 선물 안내" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("공개 카드 조회 결과가 없으면 배너를 보여주지 않는다", () => {
+      mockSurpriseReveals(undefined);
+      mockQueries({ data: fundingList([fundingCard]) });
+
+      renderTab();
+
+      expect(
+        screen.queryByRole("region", { name: "서프라이즈 선물 안내" }),
+      ).not.toBeInTheDocument();
+    });
   });
 });
