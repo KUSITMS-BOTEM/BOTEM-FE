@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 
 import LetterWriteBody from "@/widgets/letter-paper/LetterWriteBody";
 
 const letterInput = () => screen.getByRole("textbox", { name: "편지 내용" });
-const nameInput = () => screen.queryByRole("textbox", { name: "친구에게 보여질 이름" });
 
 describe("LetterWriteBody", () => {
   it("편지가 비어 있으면 안내문이 보이고 내용이 있으면 사라진다", () => {
@@ -30,43 +28,6 @@ describe("LetterWriteBody", () => {
     fireEvent.input(letterInput());
 
     expect(onTextChange).toHaveBeenCalledWith("a");
-  });
-
-  it("이름은 8글자까지만 입력할 수 있다", () => {
-    render(
-      <LetterWriteBody
-        text=""
-        onTextChange={vi.fn()}
-        placeholder="p"
-        name=""
-        onNameChange={vi.fn()}
-      />,
-    );
-
-    expect(nameInput()).toHaveAttribute("maxlength", "8");
-  });
-
-  it("onNameChange가 없으면 이름 입력란이 없다", () => {
-    render(<LetterWriteBody text="" onTextChange={vi.fn()} placeholder="p" />);
-
-    expect(nameInput()).not.toBeInTheDocument();
-  });
-
-  it("onNameChange가 있으면 이름 입력란이 있고 입력하면 호출된다", async () => {
-    const onNameChange = vi.fn();
-    render(
-      <LetterWriteBody
-        text=""
-        onTextChange={vi.fn()}
-        placeholder="p"
-        name=""
-        onNameChange={onNameChange}
-      />,
-    );
-
-    await userEvent.type(nameInput()!, "민");
-
-    expect(onNameChange).toHaveBeenCalledWith("민");
   });
 
   describe("편지지를 넘치는 입력", () => {
