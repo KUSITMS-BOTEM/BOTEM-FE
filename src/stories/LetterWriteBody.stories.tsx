@@ -13,7 +13,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "편지지 작성 화면에서 `LetterPaper`의 textSlot으로 들어가는 입력 영역. 편지가 비어 있으면 흐린 안내문이 보이고 입력을 시작하면 사라진다. `onNameChange`를 넘기면(비로그인) 위에 친구에게 보여질 이름 입력란이 생긴다. 110자를 넘으면 글자 크기가 작아진다.",
+          "편지지 작성 화면에서 `LetterPaper`의 textSlot으로 들어가는 입력 영역. 편지가 비어 있으면 흐린 안내문이 보이고 입력을 시작하면 사라진다. 110자를 넘으면 글자 크기가 작아진다.",
       },
     },
   },
@@ -25,23 +25,15 @@ type Story = StoryObj<typeof meta>;
 
 const noop = () => {};
 
-function Demo({ guest }: { guest: boolean }) {
+function Demo() {
   const [text, setText] = useState("");
-  const [name, setName] = useState("");
 
   return (
     <LetterPaper
       text={text}
-      senderName={name}
-      textTopInset={guest}
+      senderName="민지"
       textSlot={
-        <LetterWriteBody
-          text={text}
-          onTextChange={setText}
-          placeholder="지유야 생일 축하해!"
-          name={name}
-          onNameChange={guest ? setName : undefined}
-        />
+        <LetterWriteBody text={text} onTextChange={setText} placeholder="지유야 생일 축하해!" />
       }
     />
   );
@@ -49,6 +41,4 @@ function Demo({ guest }: { guest: boolean }) {
 
 const args = { text: "", onTextChange: noop, placeholder: "지유야 생일 축하해!" };
 
-export const LoggedIn: Story = { args, render: () => <Demo guest={false} /> };
-
-export const Guest: Story = { args, render: () => <Demo guest /> };
+export const Default: Story = { args, render: () => <Demo /> };
