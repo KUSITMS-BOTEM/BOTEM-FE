@@ -405,18 +405,18 @@ describe("SurpriseGiftContainer 송금", () => {
     expect(screen.queryByRole("dialog", { name: "선물 준비 완료" })).not.toBeInTheDocument();
   });
 
-  it("이미 선물 준비를 마쳤으면 다시 요청하지 않고 선물 준비 완료 시트를 연다", async () => {
+  it("이미 선물 준비를 마쳤으면 송금 안내 없이 바로 선물 준비 완료 시트를 연다", async () => {
     renderContainer({
       targetReached: false,
       recipientPayoutAccount: account,
       giftPreparedAt: "2026-10-12T10:00:00",
     });
+
     await userEvent.click(screen.getByRole("button", { name: "지유에게 송금하기" }));
 
-    await userEvent.click(await screen.findByRole("button", { name: "송금 완료" }));
-
-    expect(mutateAsync).not.toHaveBeenCalled();
     expect(await screen.findByRole("dialog", { name: "선물 준비 완료" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "송금 안내" })).not.toBeInTheDocument();
+    expect(mutateAsync).not.toHaveBeenCalled();
   });
 
   it("확인 대기가 남아 있으면 송금 안내 시트 대신 입금 확인 시트를 연다", async () => {

@@ -97,6 +97,11 @@ export default function SurpriseGiftContainer({ fundingId }: SurpriseGiftContain
       setDepositOpen(true);
       return;
     }
+    // 이미 송금하고 준비를 마쳤다. 송금 안내를 다시 열면 중복 송금으로 이어질 수 있어 완료 시트로 바로 간다
+    if (preparation.giftPreparedAt) {
+      setReadyOpen(true);
+      return;
+    }
     if (!preparation.recipientPayoutAccount) {
       showToast(
         preparation.recipientWithdrawn
