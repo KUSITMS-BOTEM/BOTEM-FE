@@ -44,7 +44,7 @@ export default function LetterToolSheet({
 
   return (
     <div className="w-full pt-1">
-      <div className="bg-semantic-fill-default/70 flex h-[168px] flex-col gap-2 overflow-clip rounded-2xl px-4 pt-3 pb-4 shadow-[0_4px_16px_var(--color-semantic-shadow-weak)]">
+      <div className="bg-semantic-fill-default rounded-xxx-large flex h-[168px] flex-col gap-2 overflow-clip px-4 pt-3 pb-4 shadow-[0_4px_16px_var(--color-semantic-shadow-default)]">
         <div className="flex items-start gap-2">
           <p className="text-semantic-text-strong min-w-0 flex-1 [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-medium)]">
             어떤 툴을 추가할까요?
