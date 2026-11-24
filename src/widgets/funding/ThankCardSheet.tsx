@@ -17,7 +17,7 @@ type ThankCardSheetProps = {
   onClose: () => void;
 };
 
-// 보내기는 미리보기(완료 화면)로 넘어가기만 하고, 실제 전송은 친구에게 공유하기에서 한다
+// 보내기에서 감사 카드를 전송하고, 성공하면 완료 화면에서 카드 이미지를 공유한다
 export default function ThankCardSheet({
   open,
   fundingId,
@@ -31,7 +31,12 @@ export default function ThankCardSheet({
   const { mutate, isPending } = useSendThankCardMutation();
   const isSent = step === "sent";
 
-  const handleShare = () => {
+  // isPending은 다음 렌더에야 반영돼 더블클릭을 못 막으므로 클릭 즉시 잠근다. 실패 때만 푼다
+  const [sending, setSending] = useState(false);
+
+  const handleSend = () => {
+    if (sending) return;
+    setSending(true);
     mutate(
       {
         fundingId,
@@ -39,8 +44,7 @@ export default function ThankCardSheet({
         message: message.trim(),
         paperColor: color.toUpperCase() as ThankCardPaperColor,
       },
-      // TODO: 공유 화면이 확정되면 응답의 shareUrl로 공유 화면에 연결한다
-      { onSuccess: onClose },
+      { onSuccess: () => setStep("sent"), onError: () => setSending(false) },
     );
   };
 
@@ -51,13 +55,7 @@ export default function ThankCardSheet({
       ariaLabel="감사 카드"
       onClose={onClose}>
       {isSent ? (
-        <ThankCardSentStep
-          recipientName={recipientName}
-          color={color}
-          message={message.trim()}
-          isSharing={isPending}
-          onShare={handleShare}
-        />
+        <ThankCardSentStep recipientName={recipientName} color={color} message={message.trim()} />
       ) : (
         <ThankCardWriteStep
           recipientName={recipientName}
@@ -65,7 +63,8 @@ export default function ThankCardSheet({
           onColorChange={setColor}
           message={message}
           onMessageChange={setMessage}
-          onSend={() => setStep("sent")}
+          isSending={sending || isPending}
+          onSend={handleSend}
         />
       )}
     </OpenSheet>

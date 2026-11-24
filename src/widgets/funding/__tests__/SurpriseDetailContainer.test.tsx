@@ -24,6 +24,9 @@ const surprise: SurpriseRevealResponse = {
   organizerName: "하린",
   productName: "에어팟 프로 2",
   productImageUrl: "",
+  productUrl: "https://www.coupang.com/vp/products/1",
+  productPrice: 459000,
+  productChanged: false,
   confirmedAmount: 420000,
   targetAmount: 459000,
   confirmedPercentage: 91,
@@ -32,6 +35,7 @@ const surprise: SurpriseRevealResponse = {
   messageCount: 6,
   revealAt: "2025-10-11T00:00:00",
   openedAt: "2025-10-11T09:00:00",
+  giftChosen: false,
   messages: [],
 };
 

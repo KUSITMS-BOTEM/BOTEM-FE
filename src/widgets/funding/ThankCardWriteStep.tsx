@@ -17,6 +17,7 @@ type ThankCardWriteStepProps = {
   onColorChange: (color: Color) => void;
   message: string;
   onMessageChange: (message: string) => void;
+  isSending: boolean;
   onSend: () => void;
 };
 
@@ -35,6 +36,7 @@ export default function ThankCardWriteStep({
   onColorChange,
   message,
   onMessageChange,
+  isSending,
   onSend,
 }: ThankCardWriteStepProps) {
   const counterId = useId();
@@ -85,7 +87,12 @@ export default function ThankCardWriteStep({
         </div>
       </div>
       <BottomCTA>
-        <Button color="brand" size="xlarge" disabled={message.trim() === ""} onClick={onSend}>
+        <Button
+          color="brand"
+          size="xlarge"
+          disabled={message.trim() === ""}
+          states={isSending ? "loading" : "default"}
+          onClick={onSend}>
           보내기
         </Button>
       </BottomCTA>

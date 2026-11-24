@@ -6,6 +6,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { contributionService } from "@/apis/contribution/contributionService";
 import { useSendThankCardMutation } from "@/hooks/mutations/contribution/useSendThankCardMutation";
 import { fundingManagementQueryKey } from "@/hooks/queries/funding/useFundingManagementQuery";
+import { surpriseThankCardFriendsQueryKey } from "@/hooks/queries/funding/useSurpriseThankCardFriendsQuery";
 
 vi.mock("@/apis/contribution/contributionService", () => ({
   contributionService: {
@@ -47,7 +48,7 @@ describe("useSendThankCardMutation", () => {
     });
   });
 
-  it("성공하면 해당 펀딩의 관리 상세 쿼리를 무효화한다", async () => {
+  it("성공하면 해당 펀딩의 관리 상세와 서프라이즈 고마운 친구 목록 쿼리를 무효화한다", async () => {
     vi.mocked(contributionService.sendThankCard).mockResolvedValue({} as never);
     const { wrapper, invalidateQueries } = setup();
     const { result } = renderHook(() => useSendThankCardMutation(), { wrapper });
@@ -56,14 +57,18 @@ describe("useSendThankCardMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: fundingManagementQueryKey(5) });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: surpriseThankCardFriendsQueryKey(5),
+    });
   });
 
-  it("관리 상세 재조회가 끝날 때까지 isPending을 유지한다", async () => {
+  it("재조회가 모두 끝날 때까지 isPending을 유지한다", async () => {
     vi.mocked(contributionService.sendThankCard).mockResolvedValue({} as never);
     const { wrapper, invalidateQueries } = setup();
-    let finishRefetch!: () => void;
+    const resolvers: (() => void)[] = [];
+    const finishRefetch = () => resolvers.forEach(resolve => resolve());
     invalidateQueries.mockImplementation(
-      () => new Promise<void>(resolve => (finishRefetch = resolve)),
+      () => new Promise<void>(resolve => resolvers.push(resolve)),
     );
     const { result } = renderHook(() => useSendThankCardMutation(), { wrapper });
 

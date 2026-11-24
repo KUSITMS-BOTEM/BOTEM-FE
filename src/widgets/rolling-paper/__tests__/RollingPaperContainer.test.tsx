@@ -197,4 +197,68 @@ describe("RollingPaperContainer", () => {
 
     expect(container.querySelector("dialog")).not.toHaveAttribute("open");
   });
+
+  it("ctaButtons가 있으면 기본 '선물 받으러 가기' 대신 그 버튼들을 보여준다", () => {
+    render(
+      <RollingPaperContainer
+        fundingId={1}
+        open
+        onClose={onClose}
+        ctaButtons={<button>감사카드 보내기</button>}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "감사카드 보내기" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "선물 받으러 가기" })).not.toBeInTheDocument();
+  });
+
+  it("ctaButtons가 있으면 showGiftCta가 false여도 보여준다", () => {
+    render(
+      <RollingPaperContainer
+        fundingId={1}
+        open
+        showGiftCta={false}
+        onClose={onClose}
+        ctaButtons={<button>감사카드 보내기</button>}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "감사카드 보내기" })).toBeInTheDocument();
+  });
+
+  it("ctaButtons만 있을 때 기본 버튼의 선물 확인 이동은 일어나지 않는다", async () => {
+    const user = userEvent.setup();
+    render(
+      <RollingPaperContainer
+        fundingId={1}
+        open
+        onClose={onClose}
+        ctaButtons={<button>감사카드 보내기</button>}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "감사카드 보내기" }));
+
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("ctaButtons도 편지지를 누르면 기본 CTA처럼 아래로 내려가며 사라지도록 표시된다", async () => {
+    const user = userEvent.setup();
+    render(
+      <RollingPaperContainer
+        fundingId={1}
+        open
+        onClose={onClose}
+        ctaButtons={<button>감사카드 보내기</button>}
+      />,
+    );
+    const cta = screen
+      .getByRole("button", { name: "감사카드 보내기" })
+      .closest(".pointer-events-none");
+    expect(cta).not.toHaveClass("opacity-0");
+
+    await user.click(screen.getByRole("button", { name: "편지지 크게 보기" }));
+
+    expect(cta).toHaveClass("opacity-0");
+  });
 });

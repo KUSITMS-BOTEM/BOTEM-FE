@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 import IconShare from "@/assets/icons/icon-share.svg?react";
 import BottomCTA from "@/components/BottomCTA";
@@ -35,6 +35,8 @@ type RollingPaperContainerProps = {
   onClose: () => void;
   // 마감된 펀딩 목록에서 다시 보는 경우처럼 선물 확인으로 이어질 필요가 없으면 끈다
   showGiftCta?: boolean;
+  // 기본 '선물 받으러 가기' 대신 보여줄 하단 버튼들 (서프라이즈: 감사카드 보내기 + 선물 받으러 가기)
+  ctaButtons?: ReactNode;
 };
 
 export default function RollingPaperContainer({
@@ -42,6 +44,7 @@ export default function RollingPaperContainer({
   open,
   onClose,
   showGiftCta = true,
+  ctaButtons,
 }: RollingPaperContainerProps) {
   const [opened, setOpened] = useState(false);
   const backgroundRef = useRef<HTMLDivElement>(null);
@@ -158,15 +161,21 @@ export default function RollingPaperContainer({
           </div>
         </div>
       )}
-      {showGiftCta && (
+      {ctaButtons ? (
         <BottomCTA className={cn(EXIT_CTA_CLASS, opened && EXIT_CTA_HIDDEN_CLASS)}>
-          <Button
-            color="brand"
-            size="xlarge"
-            onClick={() => router.push(`/funding/${fundingId}/result`)}>
-            선물 받으러 가기
-          </Button>
+          {ctaButtons}
         </BottomCTA>
+      ) : (
+        showGiftCta && (
+          <BottomCTA className={cn(EXIT_CTA_CLASS, opened && EXIT_CTA_HIDDEN_CLASS)}>
+            <Button
+              color="brand"
+              size="xlarge"
+              onClick={() => router.push(`/funding/${fundingId}/result`)}>
+              선물 받으러 가기
+            </Button>
+          </BottomCTA>
+        )
       )}
     </OpenSheet>
   );

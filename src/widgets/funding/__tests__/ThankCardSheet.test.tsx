@@ -9,6 +9,14 @@ vi.mock("@/hooks/mutations/contribution/useSendThankCardMutation", () => ({
   useSendThankCardMutation: vi.fn(),
 }));
 vi.mock("@/utils/saveNodeAsImage", () => ({ saveNodeAsImage: vi.fn() }));
+// 미리 만들기는 usePreparedImageSave 테스트가 맡는다. 여기선 어떤 노드·파일명으로 저장하는지만 본다
+vi.mock("@/hooks/usePreparedImageSave", async () => {
+  const { saveNodeAsImage } = await import("@/utils/saveNodeAsImage");
+  return {
+    usePreparedImageSave: (ref: { current: HTMLElement | null }, filename: string) => () =>
+      saveNodeAsImage(ref.current!, filename),
+  };
+});
 
 const mutate = vi.fn();
 let isPending = false;
@@ -145,31 +153,12 @@ describe("ThankCardSheet 작성 단계", () => {
   });
 });
 
-describe("ThankCardSheet 완료 단계", () => {
-  it("보내기를 누르면 API 호출 없이 완료 화면으로 넘어간다", async () => {
-    renderSheet();
-
-    await goToSentStep("고마워");
-
-    expect(screen.getByText(/하린이에게\s*감사 카드를 보냈어요/)).toBeInTheDocument();
-    expect(mutate).not.toHaveBeenCalled();
-  });
-
-  it("완료 카드에 앞뒤 공백을 제거한 메시지를 보여준다", async () => {
-    renderSheet();
-
-    await goToSentStep("  고마워  ");
-
-    expect(screen.getByText("고마워")).toBeInTheDocument();
-    expect(screen.getByText("고마워").textContent).toBe("고마워");
-  });
-
-  it("공유하기를 누르면 trim한 메시지와 대문자 편지지 색으로 mutate를 호출한다", async () => {
+describe("ThankCardSheet 보내기", () => {
+  it("보내기를 누르면 trim한 메시지와 대문자 편지지 색으로 mutate를 호출한다", async () => {
     renderSheet();
     await userEvent.click(screen.getByRole("button", { name: "핑크" }));
-    await goToSentStep(" 고마워 ");
 
-    await userEvent.click(shareButton());
+    await goToSentStep(" 고마워 ");
 
     expect(mutate).toHaveBeenCalledTimes(1);
     expect(mutate).toHaveBeenCalledWith(
@@ -180,9 +169,8 @@ describe("ThankCardSheet 완료 단계", () => {
 
   it("색을 바꾸지 않으면 기본 편지지 색 ORANGE로 mutate를 호출한다", async () => {
     renderSheet();
-    await goToSentStep("고마워");
 
-    await userEvent.click(shareButton());
+    await goToSentStep("고마워");
 
     expect(mutate).toHaveBeenCalledWith(
       expect.objectContaining({ paperColor: "ORANGE" }),
@@ -190,112 +178,109 @@ describe("ThankCardSheet 완료 단계", () => {
     );
   });
 
-  it("공유에 성공하면 onClose가 호출된다", async () => {
-    mutate.mockImplementation((_vars, options) => options.onSuccess());
-    const { onClose } = renderSheet();
+  it("응답 전에는 작성 단계에 머물고 보내기를 다시 눌러도 한 번만 요청한다", async () => {
+    renderSheet();
+
     await goToSentStep("고마워");
+    await userEvent.click(sendButton());
 
-    await userEvent.click(shareButton());
-
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(mutate).toHaveBeenCalledTimes(1);
+    expect(textarea()).toBeInTheDocument();
+    expect(sendButton()).toBeDisabled();
   });
 
-  it("공유에 실패하면 onClose가 호출되지 않고 요청이 끝난 뒤 버튼이 다시 활성화된다", async () => {
+  it("전송 중이면 보내기 버튼이 로딩 상태로 비활성화된다", async () => {
     const { onClose, rerender } = renderSheet();
-    await goToSentStep("고마워");
-    await userEvent.click(shareButton());
+    await userEvent.type(textarea(), "고마워");
 
     isPending = true;
     mockMutation();
     rerender(buildSheet({ onClose }));
-    expect(shareButton()).toBeDisabled();
 
-    isPending = false;
-    mockMutation();
-    rerender(buildSheet({ onClose }));
+    expect(sendButton()).toBeDisabled();
+    expect(sendButton()).toHaveAttribute("aria-busy", "true");
+  });
+
+  it("전송에 실패하면 작성 단계에 머물고 보내기 버튼이 다시 활성화된다", async () => {
+    mutate.mockImplementation((_vars, options) => options.onError());
+    const { onClose } = renderSheet();
+
+    await goToSentStep("고마워");
 
     expect(onClose).not.toHaveBeenCalled();
-    expect(shareButton()).toBeEnabled();
+    expect(textarea()).toHaveValue("고마워");
+    expect(sendButton()).toBeEnabled();
+  });
+});
+
+describe("ThankCardSheet 완료 단계", () => {
+  beforeEach(() => {
+    mutate.mockImplementation((_vars, options) => options.onSuccess());
   });
 
-  it("전송 중이면 공유 버튼이 로딩 상태로 비활성화된다", async () => {
-    const { onClose, rerender } = renderSheet();
+  it("전송에 성공하면 완료 화면으로 넘어간다", async () => {
+    renderSheet();
+
     await goToSentStep("고마워");
 
-    isPending = true;
-    mockMutation();
-    rerender(buildSheet({ onClose }));
-
-    expect(shareButton()).toBeDisabled();
-    expect(shareButton()).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByText(/하린이에게\s*감사 카드를 보냈어요/)).toBeInTheDocument();
   });
 
-  it("다운받기를 누르면 카드를 받는 사람 이름의 PNG로 저장한다", async () => {
+  it("완료 카드에 앞뒤 공백을 제거한 메시지를 보여준다", async () => {
+    renderSheet();
+
+    await goToSentStep("  고마워  ");
+
+    expect(screen.getByText("고마워").textContent).toBe("고마워");
+  });
+
+  it("다운받기 버튼이 없다", async () => {
+    renderSheet();
+
+    await goToSentStep("고마워");
+
+    expect(screen.queryByRole("button", { name: "다운받기" })).not.toBeInTheDocument();
+  });
+
+  it("친구에게 공유하기를 누르면 카드를 받는 사람 이름의 PNG로 공유하고 API를 다시 호출하지 않는다", async () => {
     renderSheet();
     await goToSentStep("고마워");
 
-    await userEvent.click(screen.getByRole("button", { name: "다운받기" }));
+    await userEvent.click(shareButton());
 
     expect(saveNodeAsImage).toHaveBeenCalledWith(expect.any(HTMLElement), "하린이-감사-카드.png");
-    const savedNode = vi.mocked(saveNodeAsImage).mock.calls[0][0];
-    expect(savedNode).toHaveTextContent("To. 하린이");
-    expect(savedNode).toHaveTextContent("고마워");
+    const sharedNode = vi.mocked(saveNodeAsImage).mock.calls[0][0];
+    expect(sharedNode).toHaveTextContent("To. 하린이");
+    expect(sharedNode).toHaveTextContent("고마워");
+    expect(mutate).toHaveBeenCalledTimes(1);
   });
 
-  it("이미지 저장에 실패하면 실패 토스트를 띄운다", async () => {
+  it("이미지 공유에 실패하면 실패 토스트를 띄우고 버튼이 다시 활성화된다", async () => {
     vi.mocked(saveNodeAsImage).mockRejectedValueOnce(new Error("fail"));
     renderSheet();
     await goToSentStep("고마워");
 
-    await userEvent.click(screen.getByRole("button", { name: "다운받기" }));
+    await userEvent.click(shareButton());
 
-    expect(await screen.findByText("이미지를 저장하지 못했어요")).toBeInTheDocument();
+    expect(await screen.findByText("이미지를 공유하지 못했어요")).toBeInTheDocument();
+    expect(shareButton()).toBeEnabled();
   });
 
-  it("이미지 저장이 끝나기 전에는 다운받기 버튼이 비활성화되고 다시 눌러도 한 번만 저장한다", async () => {
-    let finishSave!: () => void;
+  it("공유가 끝나기 전에는 버튼이 로딩 상태이고 다시 눌러도 한 번만 공유한다", async () => {
+    let finishShare!: () => void;
     vi.mocked(saveNodeAsImage).mockImplementationOnce(
-      () => new Promise<void>(resolve => (finishSave = resolve)),
+      () => new Promise<void>(resolve => (finishShare = resolve)),
     );
     renderSheet();
     await goToSentStep("고마워");
 
-    await userEvent.click(screen.getByRole("button", { name: "다운받기" }));
-    await userEvent.click(screen.getByRole("button", { name: "다운받기" }));
+    await userEvent.click(shareButton());
+    await userEvent.click(shareButton());
 
-    expect(screen.getByRole("button", { name: "다운받기" })).toBeDisabled();
+    expect(shareButton()).toHaveAttribute("aria-busy", "true");
     expect(saveNodeAsImage).toHaveBeenCalledTimes(1);
 
-    finishSave();
-    await waitFor(() => expect(screen.getByRole("button", { name: "다운받기" })).toBeEnabled());
-  });
-
-  it("이미지 저장이 끝나면 다운받기 버튼이 다시 활성화된다", async () => {
-    let finishSave!: () => void;
-    vi.mocked(saveNodeAsImage).mockImplementationOnce(
-      () => new Promise<void>(resolve => (finishSave = resolve)),
-    );
-    renderSheet();
-    await goToSentStep("고마워");
-    await userEvent.click(screen.getByRole("button", { name: "다운받기" }));
-
-    finishSave();
-
-    await waitFor(() => expect(screen.getByRole("button", { name: "다운받기" })).toBeEnabled());
-  });
-
-  it("이미지 저장에 실패해도 다운받기 버튼이 다시 활성화된다", async () => {
-    let failSave!: () => void;
-    vi.mocked(saveNodeAsImage).mockImplementationOnce(
-      () => new Promise<void>((_resolve, reject) => (failSave = () => reject(new Error("fail")))),
-    );
-    renderSheet();
-    await goToSentStep("고마워");
-    await userEvent.click(screen.getByRole("button", { name: "다운받기" }));
-    expect(screen.getByRole("button", { name: "다운받기" })).toBeDisabled();
-
-    failSave();
-
-    await waitFor(() => expect(screen.getByRole("button", { name: "다운받기" })).toBeEnabled());
+    finishShare();
+    await waitFor(() => expect(shareButton()).toBeEnabled());
   });
 });

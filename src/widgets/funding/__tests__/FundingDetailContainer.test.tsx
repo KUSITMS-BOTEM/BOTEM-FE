@@ -215,6 +215,51 @@ describe("FundingDetailContainer", () => {
     await waitFor(() => expect(button).toBeEnabled());
   });
 
+  it.each([
+    [
+      "선물 준비를 마치고 공개 시각이 지났으면 누를 수 있다",
+      "2026-11-20T10:00:00",
+      "2000-01-01T00:00:00",
+      true,
+    ],
+    ["공개 시각 전이면 누를 수 없다", "2026-11-20T10:00:00", "2099-01-01T00:00:00", false],
+    ["선물 준비 전이면 누를 수 없다", null, "2000-01-01T00:00:00", false],
+  ])(
+    "마감된 서프라이즈 개설자 화면의 '롤링페이퍼 보기'는 %s",
+    async (_, giftPreparedAt, revealAt, enabled) => {
+      server.use(
+        http.get("*/api/fundings/:fundingId/management", () =>
+          HttpResponse.json({
+            success: true,
+            data: {
+              ...ownerDetail,
+              type: "SURPRISE",
+              managementState: "CLOSED",
+              remainingDays: null,
+              pendingContributionCount: 0,
+              giftPreparedAt,
+              revealAt,
+            },
+            error: null,
+          }),
+        ),
+      );
+      render(<FundingDetailContainer fundingId="1" />);
+
+      const button = await screen.findByRole("button", { name: "롤링페이퍼 보기" });
+      if (enabled) expect(button).toBeEnabled();
+      else expect(button).toBeDisabled();
+    },
+  );
+
+  it("진행 중인 서프라이즈 개설자 화면에는 '롤링페이퍼 보기'가 없다", async () => {
+    useSurpriseResponse();
+    render(<FundingDetailContainer fundingId="1" />);
+
+    await screen.findByRole("heading", { name: /서프라이즈 펀딩/ });
+    expect(screen.queryByRole("button", { name: "롤링페이퍼 보기" })).not.toBeInTheDocument();
+  });
+
   it("되돌아갈 히스토리가 없으면 뒤로가기는 친구 프로필로 이동한다", async () => {
     useSurpriseResponse();
     render(<FundingDetailContainer fundingId="1" friendId="7" />);
