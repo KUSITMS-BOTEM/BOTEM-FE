@@ -22,9 +22,16 @@ export default function FundingDetailContainer({
   const router = useRouter();
   const ownerQuery = useFundingManagementQuery(Number(fundingId));
   const variant = ownerQuery.data?.type === "SURPRISE" ? "surprise" : "owner";
-  const isClosed = ownerQuery.data?.managementState === "CLOSED";
+  const isClosed =
+    ownerQuery.data?.managementState === "CLOSED" ||
+    ownerQuery.data?.managementState === "TARGET_REACHED";
   // 생일 펀딩의 롤링페이퍼는 개설자가 결과(팡)를 연 뒤에 공개된다
-  const resultQuery = useFundingResultQuery(Number(fundingId), variant === "owner" && isClosed);
+  // 조기 마감처럼 아직 결과를 열 수 없는 409(FUNDING_005)는 정상이라 안내·재시도 없이 버튼 문구로만 알린다(그 외 에러는 전역 안내)
+  const resultQuery = useFundingResultQuery(
+    Number(fundingId),
+    variant === "owner" && isClosed,
+    true,
+  );
   // 서프라이즈 롤링페이퍼는 선물 준비를 마치고 공개 시각이 지난 뒤에야 서버가 내려준다. 시각은 진입 시점 기준으로 한 번만 잰다
   const [enteredAt] = useState(Date.now);
   const surprise = ownerQuery.data;
@@ -49,6 +56,7 @@ export default function FundingDetailContainer({
             ? surpriseRollingPaperOpened
             : Boolean(resultQuery.data?.resultOpenedAt)
         }
+        rollingPaperLoading={resultQuery.isLoading}
         onBack={handleBack}
       />
     );

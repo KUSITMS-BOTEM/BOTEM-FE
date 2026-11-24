@@ -41,6 +41,10 @@ export default function SurpriseRevealContainer({ fundingId }: SurpriseRevealCon
   const openRequestedRef = useRef(false);
   const goHome = () => router.replace("/home");
   const goResult = () => router.push(`/surprised/${fundingId}/result`);
+  const backToFriends = () => {
+    setThankFriend(null);
+    setFriendsOpen(true);
+  };
   const { mutate: openSurprise } = openMutation;
   const loading = (
     <div role="status" className="flex min-h-dvh items-center justify-center">
@@ -129,10 +133,8 @@ export default function SurpriseRevealContainer({ fundingId }: SurpriseRevealCon
           fundingId={id}
           contributionId={thankFriend.contributionId}
           recipientName={thankFriend.name}
-          onClose={() => {
-            setThankFriend(null);
-            setFriendsOpen(true);
-          }}
+          onClose={backToFriends}
+          onDepositUnconfirmed={backToFriends}
         />
       )}
     </>

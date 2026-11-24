@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import Button from "@/components/Button";
@@ -17,6 +17,8 @@ import FundingRevealView from "@/widgets/funding/FundingRevealView";
 import RollingPaperContainer from "@/widgets/rolling-paper/RollingPaperContainer";
 import IconClose from "@/assets/icons/icon-close.svg?react";
 
+const MESSAGES_OPEN_QUERY = "messages=open";
+
 export default function FundingRevealContainer() {
   const router = useRouter();
   const { pageExit, exitPage } = usePageExit();
@@ -25,7 +27,9 @@ export default function FundingRevealContainer() {
   const { data: result, isLoading, refetch } = useFundingResultQuery(id);
   const { mutate: openResult, isPending: isOpening } = useOpenFundingResultMutation();
   const [opening, setOpening] = useState(false);
-  const [messagesOpen, setMessagesOpen] = useState(false);
+  const searchParams = useSearchParams();
+  // 시트에서 상세로 이동했다가 뒤로 오면 이 화면이 새로 마운트되므로, 시트가 열려 있었는지는 URL로 복원한다
+  const [messagesOpen, setMessagesOpen] = useState(searchParams.get("messages") === "open");
   const [extendOpen, setExtendOpen] = useState(false);
   const close = () => router.replace("/home");
 
@@ -35,6 +39,7 @@ export default function FundingRevealContainer() {
       router.push(`/funding/${fundingId}/result`);
       return;
     }
+    window.history.replaceState(null, "", `?${MESSAGES_OPEN_QUERY}`);
     setMessagesOpen(true);
   };
 
@@ -97,11 +102,7 @@ export default function FundingRevealContainer() {
           isOpening={opening || isOpening}
           onOpenMessages={handleOpenMessages}
         />
-        <RollingPaperContainer
-          fundingId={id}
-          open={messagesOpen}
-          onClose={() => setMessagesOpen(false)}
-        />
+        <RollingPaperContainer fundingId={id} open={messagesOpen} onClose={close} />
       </>
     );
   };

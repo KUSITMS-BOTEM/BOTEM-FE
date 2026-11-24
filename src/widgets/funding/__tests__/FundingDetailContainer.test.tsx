@@ -260,6 +260,29 @@ describe("FundingDetailContainer", () => {
     expect(screen.queryByRole("button", { name: "롤링페이퍼 보기" })).not.toBeInTheDocument();
   });
 
+  it("마감된 펀딩의 결과가 아직 열 수 없는 409(FUNDING_005)여도 화면은 그대로 두고 버튼에 안내 문구를 보여준다", async () => {
+    const closed = { ...ownerDetail, managementState: "CLOSED", remainingDays: null };
+    server.use(
+      http.get("*/api/fundings/:fundingId/management", () =>
+        HttpResponse.json({ success: true, data: closed, error: null }),
+      ),
+      http.get("*/api/fundings/:fundingId/result", () =>
+        HttpResponse.json(
+          {
+            success: false,
+            data: null,
+            error: { code: "FUNDING_005", message: "펀딩이 마감된 후 결과를 확인할 수 있습니다." },
+          },
+          { status: 409 },
+        ),
+      ),
+    );
+    render(<FundingDetailContainer fundingId="1" />);
+
+    const button = await screen.findByRole("button", { name: "홈에서 펑! 터뜨려 주세요" });
+    expect(button).toBeDisabled();
+  });
+
   it("되돌아갈 히스토리가 없으면 뒤로가기는 친구 프로필로 이동한다", async () => {
     useSurpriseResponse();
     render(<FundingDetailContainer fundingId="1" friendId="7" />);

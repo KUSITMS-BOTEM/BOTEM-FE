@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import DatePickerPopover from "@/components/DatePickerPopover";
@@ -101,6 +101,17 @@ describe("DatePickerPopover", () => {
 
     expect(screen.getByText("11월")).toBeInTheDocument();
     expect(screen.getByRole("gridcell", { selected: true })).toHaveTextContent("13");
+  });
+
+  it("birth는 연도가 없으므로 요일 행을 보여주지 않고 deadline은 보여준다", async () => {
+    const birth = setup({ variant: "birth" });
+    await birth.user.click(birth.trigger);
+    expect(screen.queryByText("월")).not.toBeInTheDocument();
+    cleanup();
+
+    const deadline = setup({});
+    await deadline.user.click(deadline.trigger);
+    expect(screen.getByText("월")).toBeInTheDocument();
   });
 
   it("minDate가 오늘보다 늦고 value가 없으면 minDate가 선택된 상태로 열린다", async () => {

@@ -44,7 +44,7 @@ describe("toFundingCardData", () => {
     expect(result.dDay).toBe(5);
   });
 
-  it("earlyComplete 카드의 진행률은 확정·대기를 합친 전체 달성률(최대 100)이다", () => {
+  it("진행률은 확정 달성률이며 최대 100이다", () => {
     expect(
       toFundingCardData(
         makeCard({ confirmedPercentage: 100, pendingPercentage: 0, earlyOpenable: true }),
@@ -180,13 +180,13 @@ describe("toFundingCardData", () => {
     ).toBe(0);
   });
 
-  it("진행률은 확인 대기 금액 비율을 쓴다", () => {
+  it("진행률은 확정 달성률만 쓰고 확인 대기 비율은 더하지 않는다", () => {
     const result = toFundingCardData(
       makeCard({ confirmedPercentage: 40, pendingPercentage: 30 }),
       "지유",
     );
 
-    expect(result.progress).toBe(30);
+    expect(result.progress).toBe(40);
   });
 
   describe("서프라이즈 펀딩", () => {

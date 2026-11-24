@@ -78,6 +78,10 @@ describe("toOwnerFundingView", () => {
     expect(toOwnerFundingView(detail({ managementState: "IN_PROGRESS" })).closed).toBe(false);
   });
 
+  it("목표를 달성(TARGET_REACHED)하면 마감 전이어도 닫힌 펀딩으로 옮긴다", () => {
+    expect(toOwnerFundingView(detail({ managementState: "TARGET_REACHED" })).closed).toBe(true);
+  });
+
   it("생일 펀딩은 제목이 없으면 개설자 이름으로 '{이름}의 펀딩'을 만들고, 사연·약속이 없으면 빈 문자열로 둔다", () => {
     expect(
       toOwnerFundingView(detail({ title: null, story: null, promise: null, type: "BIRTHDAY" })),

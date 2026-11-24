@@ -6,11 +6,13 @@ import { useAuthStore } from "@/store/authStore";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { ApiError, AUTH_EXPIRED, REISSUE_UNAVAILABLE } from "@/types/api";
 import { clearLoggedInCookie } from "@/utils/auth/clearLoggedInCookie";
+import { setLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 
 // meta 키를 타입으로 등록해, skipGlobalError 같은 키 오타를 컴파일 타임에 잡는다
 declare module "@tanstack/react-query" {
   interface Register {
-    queryMeta: { skipGlobalError?: boolean };
+    // quietCodes: 해당 에러 코드만 전역 안내를 건너뛴다(정상 흐름인 409 등). 나머지 에러는 그대로 안내한다
+    queryMeta: { skipGlobalError?: boolean; quietCodes?: string[] };
     mutationMeta: { skipGlobalError?: boolean };
   }
 }
@@ -42,6 +44,9 @@ function getErrorEntry(error: Error) {
 function redirectToLanding() {
   useAuthStore.getState().clearAccessToken();
   clearLoggedInCookie();
+  // 공유 링크에서 만료되면 랜딩에서 다시 로그인한 뒤 그 링크로 돌아오게 경로를 남긴다
+  const { pathname, search } = window.location;
+  if (pathname.startsWith("/share/")) setLoginReturnPath(pathname + search);
   window.location.replace("/");
 }
 
@@ -77,6 +82,7 @@ export const queryClient = new QueryClient({
     onError: (error, query) => {
       reportUnexpectedError(error);
       if (query.meta?.skipGlobalError) return;
+      if (error instanceof ApiError && query.meta?.quietCodes?.includes(error.code)) return;
       showGlobalErrorDialog(error);
     },
   }),

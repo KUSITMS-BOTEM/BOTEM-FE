@@ -12,6 +12,7 @@ import TextArea from "@/components/TextArea";
 import Title from "@/components/Title";
 import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
+import { addDays } from "@/utils/funding/addDays";
 import { formatDeadline, getTodayDate } from "@/utils/funding/formatDeadline";
 
 // 시트가 이미 떠 있는 상태에서 빈 화면 → Title → 입력 영역 순서로 나타난다 (AddWishBottomSheet 모션 기준)
@@ -90,7 +91,7 @@ export default function FundingInfoStep({
   const inputRef = useRef<HTMLInputElement>(null);
   const storyRef = useRef<HTMLTextAreaElement>(null);
   const basePriceText = wish.price.toLocaleString("ko-KR");
-  const today = getTodayDate();
+  const minDeadline = addDays(getTodayDate(), 1);
 
   // iOS는 키보드 닫힘 이벤트가 없어 목표 금액 input의 blur(완료 버튼·바깥 탭)를 키보드가 닫힌 시점으로 본다
   const revealDeadline = () => {
@@ -186,10 +187,10 @@ export default function FundingInfoStep({
             label="마감일"
             value={formatDeadline(deadline)}
             dateValue={deadline}
-            minDate={today}
+            minDate={minDeadline}
             // 날짜 선택 UI가 min을 막지만 한 번 더 거른다
             onDeadlineChange={date => {
-              const next = date >= today ? date : "";
+              const next = date >= minDeadline ? date : "";
               setDeadline(next);
               // 달력·휠 시트는 blur 없이 닫히므로 날짜를 확정하는 즉시 사연을 연다
               if (next) setShowStory(true);

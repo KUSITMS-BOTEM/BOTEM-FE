@@ -158,6 +158,8 @@ export default function DatePickerPopover({
                 ? {
                     startMonth: new Date(BIRTH_YEAR, 0),
                     endMonth: new Date(BIRTH_YEAR, 11),
+                    // 연도가 없는 값이라 BIRTH_YEAR 기준 요일은 실제와 달라 숨긴다
+                    hideWeekdays: true,
                     formatters: { formatCaption: (month: Date) => `${month.getMonth() + 1}월` },
                   }
                 : { startMonth: earliest, endMonth: latest })}

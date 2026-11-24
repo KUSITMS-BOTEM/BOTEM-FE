@@ -7,11 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getHomePath } from "@/utils/home/getHomePath";
 import MyMenuSheet from "@/widgets/user/MyMenuSheet";
 
-type HomeMyMenuSheetProps = {
-  closedFundingCount: number;
-};
-
-export default function HomeMyMenuSheet({ closedFundingCount }: HomeMyMenuSheetProps) {
+export default function HomeMyMenuSheet() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isOpen = searchParams.get("menu") === "open";
@@ -22,12 +18,5 @@ export default function HomeMyMenuSheet({ closedFundingCount }: HomeMyMenuSheetP
     router.replace(getHomePath(searchParams, { menu: null }), { scroll: false });
   };
 
-  return (
-    <MyMenuSheet
-      open={isOpen}
-      onClose={close}
-      closedFundingCount={closedFundingCount}
-      slideInOnOpen={!isRestored}
-    />
-  );
+  return <MyMenuSheet open={isOpen} onClose={close} slideInOnOpen={!isRestored} />;
 }

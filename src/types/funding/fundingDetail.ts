@@ -51,6 +51,8 @@ export type FundingDetailResponse = {
   remainingDays: number | null;
   confirmedPercentage: number;
   pendingPercentage: number;
+  // 지금 보탤 수 있는 최대 금액 (목표 금액 - 확정 금액, 확인 대기는 빼지 않음)
+  remainingAmount: number;
   participantCount: number;
   participants: FundingDetailParticipant[];
   displayStatus: FundingDisplayStatus;

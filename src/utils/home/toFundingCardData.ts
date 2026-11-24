@@ -74,11 +74,7 @@ export function toFundingCardData(
     title: `${nickname}님의 펀딩`,
     productName: card.productName,
     productImageUrl: card.productImageUrl,
-    // 조기 완료는 확인 대기가 없어 대기 비율이 0이므로 목표에 닿은 전체 달성률을 보여준다
-    progress:
-      type === "earlyComplete"
-        ? Math.min(100, card.confirmedPercentage + card.pendingPercentage)
-        : card.pendingPercentage,
+    progress: Math.min(100, card.confirmedPercentage),
     dDay: card.remainingDays,
     targetAmount: card.targetAmount,
     participants: card.participantPreviews.map(toParticipant),

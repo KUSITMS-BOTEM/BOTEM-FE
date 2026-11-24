@@ -73,7 +73,7 @@ export default function FundingContributeSheet({
           show={isOverMax}
           state={false}
           text={`최대 ${maxAmount.toLocaleString("ko-KR")}원까지 보탤 수 있어요`}
-          className="pointer-events-none absolute bottom-32 left-1/2 -translate-x-1/2"
+          className="pointer-events-none absolute bottom-32 left-1/2 -translate-x-1/2 whitespace-nowrap"
         />
       }>
       <div className="flex w-full flex-col gap-4">

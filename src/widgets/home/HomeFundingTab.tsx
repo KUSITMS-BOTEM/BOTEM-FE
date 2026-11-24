@@ -100,7 +100,8 @@ export default function HomeFundingTab({
 
   if (fundingCards && fundingCards.length > 0) {
     if (!profile) return null;
-    const cards = fundingCards.map(card => {
+    // 서버는 오래된 순으로 내려주므로 가장 최근 펀딩이 첫 카드가 되게 뒤집는다
+    const cards = [...fundingCards].reverse().map(card => {
       const data = toFundingCardData(card, getDisplayName(profile));
       const isClosedSurprise =
         card.fundingType === "SURPRISE" && card.cardType === "CLOSED_UNOPENED";
