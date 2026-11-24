@@ -48,7 +48,7 @@ export default function LetterRecordSheet({
 
   return (
     <div className="w-full px-4 pt-1">
-      <div className="bg-semantic-fill-default/70 flex h-[168px] flex-col gap-2 overflow-clip rounded-2xl px-4 pt-3 pb-4 shadow-[0_4px_16px_var(--color-semantic-shadow-weak)]">
+      <div className="bg-semantic-fill-default rounded-xxx-large flex h-[168px] flex-col gap-2 overflow-clip px-4 pt-3 pb-4 shadow-[0_4px_16px_var(--color-semantic-shadow-default)]">
         <div className="flex items-start gap-2">
           {isRecording && (
             <LiveCaption

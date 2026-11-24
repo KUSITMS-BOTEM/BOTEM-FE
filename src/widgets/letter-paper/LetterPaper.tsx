@@ -47,10 +47,10 @@ export type LetterPaperProps = {
   slotsInert?: boolean;
   // 있으면 text 대신 본문 영역에 이 내용을 넣는다(편지 작성 화면의 입력 영역). 줄 수·글씨 크기·슬롯 회피는 그대로 적용된다
   textSlot?: ReactNode;
-  // 본문 위에 입력란 등을 둘 48px를 비운다. 슬롯 회피 영역은 제자리에 둔다
-  textTopInset?: boolean;
   // 있으면 'Profile + From. 이름' 영역이 버튼이 된다(편지 작성 화면에서 이름 입력란을 다시 연다)
   onSenderClick?: () => void;
+  // 있으면 'Profile + From. 이름' 대신 이 내용을 우하단에 넣는다(편지 작성 화면의 이름 입력란)
+  senderSlot?: ReactNode;
   // 글자 수와 무관하게 작은 글씨로 고정한다(편지 작성 화면에서 글이 큰 글씨 영역을 넘칠 때)
   forceSmallText?: boolean;
   className?: string;
@@ -90,8 +90,8 @@ export default function LetterPaper({
   onPhotoChange,
   slotsInert = false,
   textSlot,
-  textTopInset = false,
   onSenderClick,
+  senderSlot,
   forceSmallText = false,
   className,
 }: LetterPaperProps) {
@@ -123,37 +123,35 @@ export default function LetterPaper({
         className={cn(
           "relative shrink-0 overflow-hidden [letter-spacing:var(--letter-spacing-default)] break-words whitespace-pre-wrap",
           TEXT_SIZE_CLASS[size],
-          textTopInset && "pt-12",
           LETTER_PAPER_TEXT_CLASS[style][color],
         )}>
         {/* 슬롯을 비껴가는 계단형 영역 (좌상단 기준 px, Figma 슬롯 bbox 기준) */}
-        <span
-          aria-hidden
-          className={cn("float-right h-[257px]", textTopInset && "-mt-12", LETTER_SLOT_SHAPE_CLASS)}
-        />
+        <span aria-hidden className={cn("float-right h-[257px]", LETTER_SLOT_SHAPE_CLASS)} />
         {textSlot ?? text}
       </BodyTag>
       <div className="relative flex items-center justify-between">
         {hasVoiceMessage && (
           <VoiceMessage color={color} audio={voiceAudio} audioUrl={voiceAudioUrl} />
         )}
-        <SenderTag
-          {...(onSenderClick
-            ? {
-                type: "button",
-                onClick: onSenderClick,
-                // 누르는 순간 입력란이 포커스를 잃어 먼저 사라지지 않게 한다
-                onMouseDown: (event: MouseEvent) => event.preventDefault(),
-              }
-            : {})}
-          className={cn(
-            "ml-auto flex items-center gap-1.5 [font:var(--semantic-subtext-medium-strong)]",
-            onSenderClick && "cursor-pointer",
-            LETTER_PAPER_FROM_TEXT_CLASS[style][color],
-          )}>
-          <Profile color={color} showIconButton={false} className="size-5" />
-          <span>From. {senderName}</span>
-        </SenderTag>
+        {senderSlot ?? (
+          <SenderTag
+            {...(onSenderClick
+              ? {
+                  type: "button",
+                  onClick: onSenderClick,
+                  // 누르는 순간 입력란이 포커스를 잃어 먼저 사라지지 않게 한다
+                  onMouseDown: (event: MouseEvent) => event.preventDefault(),
+                }
+              : {})}
+            className={cn(
+              "ml-auto flex items-center gap-1.5 [font:var(--semantic-subtext-medium-strong)]",
+              onSenderClick && "cursor-pointer",
+              LETTER_PAPER_FROM_TEXT_CLASS[style][color],
+            )}>
+            <Profile color={color} showIconButton={false} className="size-5" />
+            <span>From. {senderName}</span>
+          </SenderTag>
+        )}
       </div>
       <div inert={slotsInert} className="pointer-events-none absolute -inset-px">
         <AssetSlot

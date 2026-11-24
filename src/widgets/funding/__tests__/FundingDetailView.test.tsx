@@ -3,6 +3,7 @@ import { createElement, type ReactElement, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MotionGlobalConfig } from "framer-motion";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
@@ -263,6 +264,14 @@ const goToPasswordSheet = async (user: User) => {
 };
 
 describe("FundingDetailView", () => {
+  // 편지지 시트는 Title 인트로(약 2초) 뒤에 나타나므로 모션을 건너뛴다
+  beforeAll(() => {
+    MotionGlobalConfig.skipAnimations = true;
+  });
+  afterAll(() => {
+    MotionGlobalConfig.skipAnimations = false;
+  });
+
   afterEach(() => {
     useFundingContributionStore.getState().reset();
     useGuestBotemStore.getState().reset();

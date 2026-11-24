@@ -50,7 +50,7 @@ export default function LetterPaperSheet({
 }: LetterPaperSheetProps) {
   return (
     <div className="w-full pt-1">
-      <div className="bg-semantic-fill-default/70 flex flex-col gap-[17px] overflow-clip rounded-2xl px-5 pt-3 pb-3 shadow-[0_4px_16px_var(--color-semantic-shadow-weak)]">
+      <div className="bg-semantic-fill-default rounded-xxx-large flex flex-col gap-[17px] overflow-clip px-5 pt-3 pb-3 shadow-[0_4px_16px_var(--color-semantic-shadow-default)]">
         <div className="flex items-start gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <LetterGuide aria-hidden className="size-6 shrink-0" />
