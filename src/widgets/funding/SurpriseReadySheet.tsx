@@ -6,24 +6,22 @@ import { useEffect, useRef, useState } from "react";
 import Badge from "@/components/Badge";
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
-import IconButton from "@/components/IconButton";
 import OpenSheet from "@/components/OpenSheet";
 import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
-import { useShareLink } from "@/hooks/useShareLink";
+import { usePreparedImageSave } from "@/hooks/usePreparedImageSave";
 import { formatDeadlineShort } from "@/utils/funding/formatDeadline";
-import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
 import FundingBragCard from "@/widgets/funding/FundingBragCard";
-import IconDownload from "@/assets/icons/icon-download.svg?react";
 
 const SAVE_FAIL_TOAST_MS = 2000;
+// 카드 등장 모션(배지가 마지막으로 1.1초 뒤 나타남)이 끝난 모습을 저장하려고 그 뒤에 이미지를 만든다
+const CARD_SETTLED_MS = 1500;
 
 type SurpriseReadySheetProps = {
   open: boolean;
-  shareKey: string;
   recipientName: string;
-  /** 받는 사람에게 공개되는 시각. 예: "10월 13일 0시" */
-  revealDateLabel: string;
+  /** 받는 사람에게 공개되는 시각. 예: "10월 13일 0시". 없으면 시각 없이 안내한다 */
+  revealDateLabel?: string;
   /** 함께한 친구 수 */
   contributorCount: number;
   /** 달성률(%) */
@@ -34,15 +32,13 @@ type SurpriseReadySheetProps = {
   startDate: string;
   /** "YYYY-MM-DD" */
   endDate: string;
-  /** 좌측 상단 X. 호출하는 쪽에서 /home으로 보낸다 */
+  /** 우측 상단 X */
   onClose: () => void;
 };
 
-// 서프라이즈가 마감되면 개설자에게 보이는 "선물 준비 완료" 화면
-// TODO: 아직 스토리·테스트에서만 쓰인다. 마감 후 개설자 진입점(홈 카드 등)이 정해지면 연결한다
+// SUR-PG-008. 개설자가 선물 준비 화면에서 '선물 준비하기'를 마치면 뜨는 "선물 준비 완료" 카드. 공유하기는 카드를 이미지로 저장한다
 export default function SurpriseReadySheet({
   open,
-  shareKey,
   recipientName,
   revealDateLabel,
   contributorCount,
@@ -57,14 +53,17 @@ export default function SurpriseReadySheet({
   const cardRef = useRef<HTMLDivElement>(null);
   const [saveFailed, setSaveFailed] = useState(false);
   const failTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const { toast, share } = useShareLink();
+
+  const saveImage = usePreparedImageSave(cardRef, `${recipientName}-선물-준비-완료.png`, {
+    enabled: open,
+    delayMs: CARD_SETTLED_MS,
+  });
 
   useEffect(() => () => clearTimeout(failTimerRef.current), []);
 
   const handleSave = async () => {
-    if (!cardRef.current) return;
     try {
-      await saveNodeAsImage(cardRef.current, `${recipientName}-선물-준비-완료.png`);
+      await saveImage();
     } catch {
       setSaveFailed(true);
       clearTimeout(failTimerRef.current);
@@ -72,30 +71,11 @@ export default function SurpriseReadySheet({
     }
   };
 
-  const handleShare = () =>
-    share({
-      title: `${recipientName}님 서프라이즈 펀딩`,
-      url: `${window.location.origin}/share/${shareKey}`,
-    });
-
   return (
-    <OpenSheet
-      open={open}
-      title=""
-      ariaLabel="선물 준비 완료"
-      closeType="close-left"
-      onClose={onClose}
-      headerAction={
-        <IconButton
-          size="xlarge"
-          icon={<IconDownload />}
-          aria-label="이미지로 저장"
-          onClick={handleSave}
-        />
-      }>
+    <OpenSheet open={open} title="" ariaLabel="선물 준비 완료" onClose={onClose}>
       <Title
         title="선물 준비 완료!"
-        description={`${revealDateLabel}에 ${recipientName}에게 공개돼요\n함께한 친구 ${contributorCount}명에게 알렸어요`}
+        description={`${revealDateLabel ? `${revealDateLabel}에` : "곧"} ${recipientName}에게 공개돼요\n함께한 친구 ${contributorCount}명에게 알렸어요`}
       />
       <div className="flex w-full flex-1 items-center justify-center pb-[calc(7rem+env(safe-area-inset-bottom))]">
         {/* 저장되는 이미지는 이 틀 그대로라 흰 배경과 둥근 모서리를 여기서 정한다 */}
@@ -123,21 +103,11 @@ export default function SurpriseReadySheet({
         </div>
       </div>
       <BottomCTA>
-        <Button color="brand" size="xlarge" onClick={handleShare}>
+        <Button color="brand" size="xlarge" onClick={handleSave}>
           공유하기
         </Button>
       </BottomCTA>
-      <ToastMessage
-        show={saveFailed || toast !== null}
-        state={!saveFailed && toast === "success"}
-        text={
-          saveFailed
-            ? "이미지를 저장하지 못했어요"
-            : toast === "fail"
-              ? "링크를 복사하지 못했어요"
-              : "링크를 복사했어요"
-        }
-      />
+      <ToastMessage show={saveFailed} state={false} text="이미지를 저장하지 못했어요" />
     </OpenSheet>
   );
 }

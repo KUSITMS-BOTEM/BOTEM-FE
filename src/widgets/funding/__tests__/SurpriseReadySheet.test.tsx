@@ -1,10 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
+import { createImageFile, shareOrDownloadImage } from "@/utils/saveNodeAsImage";
 import SurpriseReadySheet from "@/widgets/funding/SurpriseReadySheet";
 
-vi.mock("@/utils/saveNodeAsImage", () => ({ saveNodeAsImage: vi.fn() }));
+vi.mock("@/utils/saveNodeAsImage", () => ({
+  createImageFile: vi.fn(),
+  shareOrDownloadImage: vi.fn(),
+}));
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element
@@ -25,7 +28,6 @@ beforeAll(() => {
 
 const baseProps = {
   open: true,
-  shareKey: "1",
   recipientName: "지유",
   revealDateLabel: "10월 13일 0시",
   contributorCount: 7,
@@ -38,7 +40,12 @@ const baseProps = {
 };
 
 describe("SurpriseReadySheet", () => {
-  beforeEach(() => vi.clearAllMocks());
+  const cardFile = new File(["png"], "지유-선물-준비-완료.png", { type: "image/png" });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(createImageFile).mockResolvedValue(cardFile);
+  });
 
   it("공개 시각과 함께한 친구 수를 안내한다", () => {
     render(<SurpriseReadySheet {...baseProps} />);
@@ -46,6 +53,12 @@ describe("SurpriseReadySheet", () => {
     expect(screen.getByText("선물 준비 완료!")).toBeVisible();
     expect(screen.getByText(/10월 13일 0시에 지유에게 공개돼요/)).toBeVisible();
     expect(screen.getByText(/함께한 친구 7명에게 알렸어요/)).toBeVisible();
+  });
+
+  it("공개 시각이 없으면 '곧'으로 안내한다", () => {
+    render(<SurpriseReadySheet {...baseProps} revealDateLabel={undefined} />);
+
+    expect(screen.getByText(/곧 지유에게 공개돼요/)).toBeVisible();
   });
 
   it("카드에 달성률·상품명·펀딩 기간을 보여준다", () => {
@@ -56,7 +69,7 @@ describe("SurpriseReadySheet", () => {
     expect(screen.getByText("10월 31일 ~ 11월 15일")).toBeVisible();
   });
 
-  it("좌측 상단 닫기를 누르면 onClose를 호출한다", async () => {
+  it("우측 상단 닫기를 누르면 onClose를 호출한다", async () => {
     const onClose = vi.fn();
     render(<SurpriseReadySheet {...baseProps} onClose={onClose} />);
 
@@ -65,22 +78,58 @@ describe("SurpriseReadySheet", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("이미지로 저장을 누르면 카드를 이미지로 저장한다", async () => {
+  it("미리 만든 이미지가 없을 때 공유하기를 누르면 카드를 이미지로 만들어 저장한다", async () => {
     render(<SurpriseReadySheet {...baseProps} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "이미지로 저장" }));
+    await userEvent.click(screen.getByRole("button", { name: "공유하기" }));
 
-    expect(saveNodeAsImage).toHaveBeenCalledWith(
+    expect(createImageFile).toHaveBeenCalledWith(
       expect.any(HTMLElement),
       "지유-선물-준비-완료.png",
     );
+    expect(shareOrDownloadImage).toHaveBeenCalledWith(cardFile);
+  });
+
+  it("시트가 열리고 카드 모션이 끝나면 이미지를 미리 만들어, 공유하기에서 다시 만들지 않고 바로 넘긴다", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      render(<SurpriseReadySheet {...baseProps} />);
+      expect(createImageFile).not.toHaveBeenCalled();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1500);
+      });
+      expect(createImageFile).toHaveBeenCalledTimes(1);
+
+      await userEvent.click(screen.getByRole("button", { name: "공유하기" }));
+
+      expect(createImageFile).toHaveBeenCalledTimes(1);
+      expect(shareOrDownloadImage).toHaveBeenCalledWith(cardFile);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("시트가 닫혀 있으면 이미지를 미리 만들지 않는다", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      render(<SurpriseReadySheet {...baseProps} open={false} />);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1500);
+      });
+
+      expect(createImageFile).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("이미지 저장에 실패하면 안내 토스트를 보여준다", async () => {
-    vi.mocked(saveNodeAsImage).mockRejectedValueOnce(new Error("fail"));
+    vi.mocked(createImageFile).mockRejectedValueOnce(new Error("fail"));
     render(<SurpriseReadySheet {...baseProps} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "이미지로 저장" }));
+    await userEvent.click(screen.getByRole("button", { name: "공유하기" }));
 
     expect(await screen.findByText("이미지를 저장하지 못했어요")).toBeInTheDocument();
   });

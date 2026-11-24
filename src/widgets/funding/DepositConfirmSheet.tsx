@@ -39,7 +39,8 @@ type DepositToast = {
 
 // preReveal: 마감 후 공개 전에 남은 입금을 확인하는 시트라, 모두 확인하면 공개 화면으로 보낼 수 있다
 type DepositConfirmSheetVariantProps =
-  { variant?: "default"; onReveal?: never } | { variant: "preReveal"; onReveal: () => void };
+  | { variant?: "default"; onReveal?: never; revealLabel?: never }
+  | { variant: "preReveal"; onReveal: () => void; revealLabel?: string };
 
 type DepositConfirmSheetProps = DepositConfirmSheetVariantProps & {
   open: boolean;
@@ -55,6 +56,7 @@ export default function DepositConfirmSheet({
   enterTransition,
   variant = "default",
   onReveal,
+  revealLabel = "팡! 열어보기",
 }: DepositConfirmSheetProps) {
   const isPreReveal = variant === "preReveal";
   const query = usePendingContributionsQuery({ fundingId, enabled: open });
@@ -245,7 +247,7 @@ export default function DepositConfirmSheet({
               </p>
               {onReveal && (
                 <Button color="neutral" variant="weak" size="medium" onClick={onReveal}>
-                  팡! 열어보기
+                  {revealLabel}
                 </Button>
               )}
             </div>

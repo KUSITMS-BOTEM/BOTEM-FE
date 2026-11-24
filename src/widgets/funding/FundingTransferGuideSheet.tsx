@@ -28,6 +28,9 @@ type FundingTransferGuideSheetProps = {
   onComplete: () => void | Promise<unknown>;
   // 송금 확인 요청 중이면 완료하기에 로딩을 보여준다
   isPending?: boolean;
+  // 보태기가 아닌 송금(서프라이즈 주최자 → 받는 사람)에서 문구를 바꿔 쓴다
+  sheetTitle?: string;
+  description?: string;
   className?: string;
 };
 
@@ -39,6 +42,8 @@ export default function FundingTransferGuideSheet({
   onClose,
   onComplete,
   isPending = false,
+  sheetTitle = "보태러 가기",
+  description = "송금 후 보탬으로 다시 돌아와서\n완료하기를 눌러야지 보태기가 완료돼요",
   className,
 }: FundingTransferGuideSheetProps) {
   const [transferred, setTransferred] = useState(false);
@@ -110,7 +115,7 @@ export default function FundingTransferGuideSheet({
   return (
     <OpenSheet
       open={open}
-      title="보태러 가기"
+      title={sheetTitle}
       onClose={onClose}
       closeType="back"
       className={className}
@@ -130,7 +135,7 @@ export default function FundingTransferGuideSheet({
             {`을\n보내주세요`}
           </h1>
           <p className="text-semantic-text-secondary whitespace-pre-line [font:var(--semantic-subtext-large)]">
-            {"송금 후 보탬으로 다시 돌아와서\n완료하기를 눌러야지 보태기가 완료돼요"}
+            {description}
           </p>
         </div>
         <div className="bg-semantic-fill-neutral-weak rounded-xx-large flex items-center gap-3 px-3 py-2">

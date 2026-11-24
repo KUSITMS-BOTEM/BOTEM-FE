@@ -134,7 +134,9 @@ type SheetProps = Parameters<typeof DepositConfirmSheet>[0];
 
 const renderSheet = (
   props: Partial<Pick<SheetProps, "onClose">> &
-    ({ variant?: "default" } | { variant: "preReveal"; onReveal: () => void }) = {},
+    (
+      { variant?: "default" } | { variant: "preReveal"; onReveal: () => void; revealLabel?: string }
+    ) = {},
 ) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -226,6 +228,19 @@ describe("DepositConfirmSheet 공개 전 입금 확인", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "팡! 열어보기" }));
     expect(onReveal).toHaveBeenCalledTimes(1);
+  });
+
+  it("revealLabel을 주면 모두 확인한 뒤 그 문구로 버튼을 보여준다", async () => {
+    const onReveal = vi.fn();
+    renderSheet({ variant: "preReveal", onReveal, revealLabel: "선물 준비하기" });
+    await screen.findByRole("heading", { name: "미확인 보탬 3건" });
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "전체 선택" }));
+    await userEvent.click(screen.getByRole("button", { name: "받았어요" }));
+
+    await userEvent.click(await screen.findByRole("button", { name: "선물 준비하기" }));
+    expect(onReveal).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "팡! 열어보기" })).not.toBeInTheDocument();
   });
 });
 
