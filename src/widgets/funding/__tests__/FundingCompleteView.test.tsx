@@ -11,6 +11,14 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/utils/saveNodeAsImage", () => ({ saveNodeAsImage: vi.fn() }));
+// 미리 만들기는 usePreparedImageSave 테스트가 맡는다. 여기선 어떤 노드·파일명으로 저장하는지만 본다
+vi.mock("@/hooks/usePreparedImageSave", async () => {
+  const { saveNodeAsImage } = await import("@/utils/saveNodeAsImage");
+  return {
+    usePreparedImageSave: (ref: { current: HTMLElement | null }, filename: string) => () =>
+      saveNodeAsImage(ref.current!, filename),
+  };
+});
 
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (

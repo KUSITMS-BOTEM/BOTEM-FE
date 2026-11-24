@@ -9,9 +9,9 @@ import OpenSheet from "@/components/OpenSheet";
 import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
+import { usePreparedImageSave } from "@/hooks/usePreparedImageSave";
 import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
-import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
 import FundingShareCard from "@/widgets/funding/FundingShareCard";
 import type { FundingInfoValues } from "@/widgets/funding/FundingInfoStep";
 import IconShare from "@/assets/icons/icon-share.svg?react";
@@ -51,15 +51,19 @@ export default function FundingOpenCompleteSheet({
   const cardTitle =
     props.variant === "surprise" ? `${props.recipientName}의\n생일 펀딩` : props.cardTitle;
   const cardRef = useRef<HTMLDivElement>(null);
+  const openerName = profile?.name ?? "내";
+  const saveImage = usePreparedImageSave(cardRef, `${cardTitle}-공유-카드.png`, {
+    enabled: open,
+    contentKey: openerName,
+  });
   const [saveFailed, setSaveFailed] = useState(false);
   const failTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => () => clearTimeout(failTimerRef.current), []);
 
   const handleSave = async () => {
-    if (!cardRef.current) return;
     try {
-      await saveNodeAsImage(cardRef.current, `${cardTitle}-공유-카드.png`);
+      await saveImage();
     } catch {
       setSaveFailed(true);
       clearTimeout(failTimerRef.current);
@@ -102,7 +106,7 @@ export default function FundingOpenCompleteSheet({
         <div ref={cardRef} className="shrink-0">
           <FundingShareCard
             size={isSurprise ? "medium" : "large"}
-            openerName={profile?.name ?? "내"}
+            openerName={openerName}
             title={cardTitle}
             productImageUrl={wish.productImageUrl}
             productName={wish.productName}

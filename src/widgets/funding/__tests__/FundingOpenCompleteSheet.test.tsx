@@ -15,6 +15,13 @@ const saveNodeAsImageMock = vi.fn();
 vi.mock("@/utils/saveNodeAsImage", () => ({
   saveNodeAsImage: (...args: unknown[]) => saveNodeAsImageMock(...args),
 }));
+// 미리 만들기는 usePreparedImageSave 테스트가 맡는다. 여기선 어떤 노드·파일명으로 저장하는지만 본다
+vi.mock("@/hooks/usePreparedImageSave", () => {
+  return {
+    usePreparedImageSave: (ref: { current: HTMLElement | null }, filename: string) => () =>
+      saveNodeAsImageMock(ref.current!, filename),
+  };
+});
 
 let profileName: string | null = null;
 vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
