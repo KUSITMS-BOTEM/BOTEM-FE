@@ -37,7 +37,7 @@ const mockBanner = (data: { visible: boolean; pendingCount: number }) => {
 
 const renderLayer = (
   variant: GiftVerificationBannerVariant = "card",
-  children: (cardBanner: ReactNode) => ReactNode = cardBanner => (
+  children: (cardBanner: ReactNode, giftBannerActive: boolean) => ReactNode = cardBanner => (
     <div data-testid="home">{cardBanner}</div>
   ),
 ) => {
@@ -123,5 +123,61 @@ describe("GiftVerificationBannerLayer", () => {
     await userEvent.click(await screen.findByRole("button", { name: "인증하러 가기" }));
 
     expect(await screen.findByText("선물 인증")).toBeInTheDocument();
+  });
+
+  describe("giftBannerActive (다음 배너에 자리 넘기기)", () => {
+    const renderWithActive = (variant: GiftVerificationBannerVariant = "card") =>
+      renderLayer(variant, (cardBanner, giftBannerActive) => (
+        <div>
+          {cardBanner}
+          <span data-testid="gift-active">{String(giftBannerActive)}</span>
+        </div>
+      ));
+
+    it("선물 인증 배너가 떠 있으면 true다", async () => {
+      mockBanner({ visible: true, pendingCount: 2 });
+
+      renderWithActive();
+
+      await screen.findByRole("button", { name: "인증하러 가기" });
+      expect(screen.getByTestId("gift-active")).toHaveTextContent("true");
+    });
+
+    it("인증할 선물이 없으면 false다", async () => {
+      mockBanner({ visible: false, pendingCount: 0 });
+
+      renderWithActive();
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+      expect(screen.getByTestId("gift-active")).toHaveTextContent("false");
+    });
+
+    it("인증하러 가기로 시트를 열면 배너를 내리고 false가 된다", async () => {
+      mockBanner({ visible: true, pendingCount: 2 });
+      renderWithActive();
+
+      await userEvent.click(await screen.findByRole("button", { name: "인증하러 가기" }));
+
+      expect(screen.queryByRole("region", { name: "선물 인증 안내" })).not.toBeInTheDocument();
+      expect(screen.getByTestId("gift-active")).toHaveTextContent("false");
+    });
+
+    it("닫으면 false가 된다", async () => {
+      mockBanner({ visible: true, pendingCount: 2 });
+      renderWithActive();
+
+      await userEvent.click(await screen.findByRole("button", { name: "선물 인증 안내 닫기" }));
+
+      expect(screen.getByTestId("gift-active")).toHaveTextContent("false");
+    });
+
+    it("고정형 배너가 떠 있어도 true다", async () => {
+      mockBanner({ visible: true, pendingCount: 2 });
+
+      renderWithActive("pinned");
+
+      await screen.findByRole("button", { name: "인증하기" });
+      expect(screen.getByTestId("gift-active")).toHaveTextContent("true");
+    });
   });
 });

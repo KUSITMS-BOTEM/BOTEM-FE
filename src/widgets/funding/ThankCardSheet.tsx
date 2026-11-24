@@ -23,6 +23,7 @@ type ThankCardSheetProps = {
 
 const DEPOSIT_UNCONFIRMED_CODE = "FUNDING_049";
 
+// 보내기에서 감사 카드를 전송하고, 성공하면 완료 화면에서 카드 이미지를 공유한다
 export default function ThankCardSheet({
   open,
   fundingId,
@@ -39,7 +40,12 @@ export default function ThankCardSheet({
   const { mutate, isPending } = useSendThankCardMutation();
   const isSent = sentCard !== null;
 
+  // isPending은 다음 렌더에야 반영돼 더블클릭을 못 막으므로 클릭 즉시 잠근다. 실패 때만 푼다
+  const [sending, setSending] = useState(false);
+
   const handleSend = () => {
+    if (sending) return;
+    setSending(true);
     const card = { color, message: message.trim() };
     mutate(
       {
@@ -51,6 +57,7 @@ export default function ThankCardSheet({
       {
         onSuccess: () => setSentCard(card),
         onError: error => {
+          setSending(false);
           if (error instanceof ApiError && error.code === DEPOSIT_UNCONFIRMED_CODE) {
             setIsDepositNoticeOpen(true);
           }
@@ -79,7 +86,7 @@ export default function ThankCardSheet({
             onColorChange={setColor}
             message={message}
             onMessageChange={setMessage}
-            isSending={isPending}
+            isSending={sending || isPending}
             onSend={handleSend}
           />
         )}

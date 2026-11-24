@@ -12,8 +12,8 @@ import PageExitMotion from "@/components/effects/PageExitMotion";
 import ToastMessage from "@/components/ToastMessage";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 import { usePageExit } from "@/hooks/usePageExit";
+import { usePreparedImageSave } from "@/hooks/usePreparedImageSave";
 import type { FundingCompleteData } from "@/utils/funding/toFundingCompleteData";
-import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
 import FundingBragCard from "@/widgets/funding/FundingBragCard";
 import FundingCompleteTitle from "@/widgets/funding/FundingCompleteTitle";
 import IconClose from "@/assets/icons/icon-close.svg?react";
@@ -29,6 +29,8 @@ const SHARE_SCENE_AT_MS = 1150;
 const CTA_AT_MS = 3410;
 
 const SAVE_FAIL_TOAST_MS = 2000;
+// 자랑 카드 등장 모션(배지가 마지막으로 1.1초 뒤 나타남)이 끝난 모습을 저장한다
+const CARD_SETTLED_MS = 1500;
 
 const EASE: Easing = [0.87, 0, 0.13, 1];
 
@@ -54,6 +56,10 @@ export default function FundingCompleteView({
   const failTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const scene = reduceMotion ? 2 : step;
   const isShareScene = scene >= 1;
+  const saveImage = usePreparedImageSave(cardRef, `${funding.hostName}에게-보탬.png`, {
+    enabled: isShareScene,
+    delayMs: CARD_SETTLED_MS,
+  });
 
   useEffect(() => {
     if (reduceMotion) return;
@@ -67,9 +73,8 @@ export default function FundingCompleteView({
   useEffect(() => () => clearTimeout(failTimerRef.current), []);
 
   const handleShare = async () => {
-    if (!cardRef.current) return;
     try {
-      await saveNodeAsImage(cardRef.current, `${funding.hostName}에게-보탬.png`);
+      await saveImage();
     } catch {
       setSaveFailed(true);
       clearTimeout(failTimerRef.current);

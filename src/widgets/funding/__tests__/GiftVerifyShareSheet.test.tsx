@@ -72,8 +72,9 @@ const mockQuery = (state: { data?: OwnerFundingDetailResponse; isError?: boolean
 };
 
 const onClose = vi.fn();
+const onShared = vi.fn();
 const renderSheet = (open = true) =>
-  render(<GiftVerifyShareSheet open={open} fundingId={12} onClose={onClose} />);
+  render(<GiftVerifyShareSheet open={open} fundingId={12} onClose={onClose} onShared={onShared} />);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -118,6 +119,26 @@ describe("GiftVerifyShareSheet", () => {
       title: "선물 도착 인증이 왔어요",
       url: `${window.location.origin}/share/abc123/gift`,
     });
+  });
+
+  it("기기 공유창으로 보내면 onShared를 호출한다", async () => {
+    share.mockResolvedValue(true);
+    mockQuery({ data: detail([participant({})]) });
+    renderSheet();
+
+    await userEvent.click(screen.getByRole("button", { name: "친구에게 공유하기" }));
+
+    expect(onShared).toHaveBeenCalledTimes(1);
+  });
+
+  it("공유창을 닫았거나 링크 복사로 넘어가면 onShared를 호출하지 않는다", async () => {
+    share.mockResolvedValue(false);
+    mockQuery({ data: detail([participant({})]) });
+    renderSheet();
+
+    await userEvent.click(screen.getByRole("button", { name: "친구에게 공유하기" }));
+
+    expect(onShared).not.toHaveBeenCalled();
   });
 
   it("불러오는 중에는 스켈레톤을 보여주고 공유 버튼을 막는다", () => {

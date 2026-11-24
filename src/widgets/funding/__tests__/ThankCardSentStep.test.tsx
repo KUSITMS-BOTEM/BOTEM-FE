@@ -5,9 +5,17 @@ import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
 import ThankCardSentStep from "@/widgets/funding/ThankCardSentStep";
 
 vi.mock("@/utils/saveNodeAsImage", () => ({ saveNodeAsImage: vi.fn() }));
+// 미리 만들기는 usePreparedImageSave 테스트가 맡는다. 여기선 어떤 노드·파일명으로 저장하는지만 본다
+vi.mock("@/hooks/usePreparedImageSave", async () => {
+  const { saveNodeAsImage } = await import("@/utils/saveNodeAsImage");
+  return {
+    usePreparedImageSave: (ref: { current: HTMLElement | null }, filename: string) => () =>
+      saveNodeAsImage(ref.current!, filename),
+  };
+});
 
-const renderStep = () =>
-  render(<ThankCardSentStep recipientName="하린이" color="orange" message="고마워" />);
+const renderStep = (props: Partial<React.ComponentProps<typeof ThankCardSentStep>> = {}) =>
+  render(<ThankCardSentStep recipientName="하린이" color="orange" message="고마워" {...props} />);
 
 const shareButton = () => screen.getByRole("button", { name: "친구에게 공유하기" });
 
@@ -23,6 +31,14 @@ describe("ThankCardSentStep", () => {
     expect(screen.getByText("To. 하린이")).toBeInTheDocument();
     expect(screen.getByText("고마워")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "다운받기" })).not.toBeInTheDocument();
+  });
+
+  it("메시지의 줄바꿈을 그대로 보여준다", () => {
+    renderStep({ message: "고마워\n사랑해" });
+
+    const message = screen.getByText(/고마워/);
+    expect(message.textContent).toBe("고마워\n사랑해");
+    expect(message).toHaveClass("whitespace-pre-wrap");
   });
 
   it("공유를 누르면 카드 노드를 받는 사람 이름의 PNG로 공유한다", async () => {

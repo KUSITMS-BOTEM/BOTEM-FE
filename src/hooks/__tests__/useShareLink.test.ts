@@ -11,10 +11,11 @@ const define = (key: "share" | "clipboard", value: unknown) =>
 
 const runShare = async () => {
   const hook = renderHook(() => useShareLink());
+  let shared: boolean | undefined;
   await act(async () => {
-    await hook.result.current.share(PAYLOAD);
+    shared = await hook.result.current.share(PAYLOAD);
   });
-  return hook;
+  return { ...hook, shared };
 };
 
 describe("useShareLink", () => {
@@ -30,37 +31,40 @@ describe("useShareLink", () => {
     }
   });
 
-  it("navigator.share가 성공하면 복사도 토스트도 없다", async () => {
+  it("navigator.share가 성공하면 true를 돌려주고 복사도 토스트도 없다", async () => {
     const writeText = vi.fn();
     const share = vi.fn().mockResolvedValue(undefined);
     define("share", share);
     define("clipboard", { writeText });
 
-    const { result } = await runShare();
+    const { result, shared } = await runShare();
 
+    expect(shared).toBe(true);
     expect(share).toHaveBeenCalledWith(PAYLOAD);
     expect(writeText).not.toHaveBeenCalled();
     expect(result.current.toast).toBeNull();
   });
 
-  it("사용자가 공유창을 닫으면(AbortError) 복사하지 않고 토스트도 없다", async () => {
+  it("사용자가 공유창을 닫으면(AbortError) false를 돌려주고 복사하지 않고 토스트도 없다", async () => {
     const writeText = vi.fn();
     define("share", vi.fn().mockRejectedValue(new DOMException("취소", "AbortError")));
     define("clipboard", { writeText });
 
-    const { result } = await runShare();
+    const { result, shared } = await runShare();
 
+    expect(shared).toBe(false);
     expect(writeText).not.toHaveBeenCalled();
     expect(result.current.toast).toBeNull();
   });
 
-  it("navigator.share가 없으면 링크를 복사하고 success 토스트를 띄운다", async () => {
+  it("navigator.share가 없으면 링크를 복사하고 success 토스트를 띄우며 false를 돌려준다", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     define("share", undefined);
     define("clipboard", { writeText });
 
-    const { result } = await runShare();
+    const { result, shared } = await runShare();
 
+    expect(shared).toBe(false);
     expect(writeText).toHaveBeenCalledWith(PAYLOAD.url);
     expect(result.current.toast).toBe("success");
   });

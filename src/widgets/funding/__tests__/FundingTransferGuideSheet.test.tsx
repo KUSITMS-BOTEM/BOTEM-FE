@@ -220,3 +220,39 @@ describe("FundingTransferGuideSheet", () => {
     });
   });
 });
+
+describe("FundingTransferGuideSheet 문구 덮어쓰기", () => {
+  const renderSheet = (props: { sheetTitle?: string; description?: string } = {}) =>
+    render(
+      <FundingTransferGuideSheet
+        open
+        hostName="지유"
+        amount={50000}
+        account={ACCOUNT}
+        onClose={vi.fn()}
+        onComplete={vi.fn()}
+        {...props}
+      />,
+    );
+
+  it("sheetTitle과 description을 주지 않으면 보태기용 기본 문구를 보여준다", () => {
+    renderSheet();
+
+    expect(screen.getByText("보태러 가기")).toBeInTheDocument();
+    expect(
+      screen.getByText(/송금 후 보탬으로 다시 돌아와서\s*완료하기를 눌러야지 보태기가 완료돼요/),
+    ).toBeInTheDocument();
+  });
+
+  it("sheetTitle과 description을 주면 기본 문구 대신 보여준다", () => {
+    renderSheet({
+      sheetTitle: "송금하기",
+      description: "송금한 뒤 돌아와서\n완료하기를 눌러주세요",
+    });
+
+    expect(screen.getByText("송금하기")).toBeInTheDocument();
+    expect(screen.getByText(/송금한 뒤 돌아와서\s*완료하기를 눌러주세요/)).toBeInTheDocument();
+    expect(screen.queryByText("보태러 가기")).not.toBeInTheDocument();
+    expect(screen.queryByText(/보태기가 완료돼요/)).not.toBeInTheDocument();
+  });
+});

@@ -1,10 +1,14 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 
+import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
 import LoadingAnimation from "@/components/LoadingAnimation";
+import Title from "@/components/Title";
 import PageExitMotion from "@/components/effects/PageExitMotion";
 import { useCompleteGiftVerificationMutation } from "@/hooks/mutations/gift-verification/useCompleteGiftVerificationMutation";
 import { useGiftVerificationTargetsQuery } from "@/hooks/queries/home/useGiftVerificationTargetsQuery";
@@ -15,6 +19,10 @@ import FundingGiftVerifyView, {
 import GiftVerifyShareSheet from "@/widgets/funding/GiftVerifyShareSheet";
 import IconClose from "@/assets/icons/icon-close.svg?react";
 
+const HeroMotion = dynamic(() => import("@/components/effects/hero-motion/HeroMotion"), {
+  ssr: false,
+});
+
 const HOME_PATH = "/home";
 
 export default function FundingGiftVerifyContainer() {
@@ -23,6 +31,7 @@ export default function FundingGiftVerifyContainer() {
   const { fundingId } = useParams<{ fundingId: string }>();
   const { data, isLoading, isError, refetch } = useGiftVerificationTargetsQuery();
   const { mutate, isPending, isSuccess } = useCompleteGiftVerificationMutation();
+  const [isShared, setIsShared] = useState(false);
   const target = data?.targets.find(item => item.fundingId === Number(fundingId));
   const goHome = () => router.replace(HOME_PATH);
 
@@ -37,6 +46,24 @@ export default function FundingGiftVerifyContainer() {
   };
 
   const renderContent = () => {
+    // 인증을 마친 뒤라 인증 대상 목록에서 빠져 있으므로 목록 상태보다 먼저 본다
+    if (isShared) {
+      return (
+        <>
+          <div className="flex flex-1 flex-col gap-2 px-5">
+            <Title type="a2z" title={"보태준 친구들에게\n선물 도착 인증을 보냈어요!"} />
+            <div className="flex flex-1 items-center justify-center pb-40">
+              <HeroMotion />
+            </div>
+          </div>
+          <BottomCTA>
+            <Button color="brand" size="xlarge" onClick={() => exitPage("fade", goHome)}>
+              완료하기
+            </Button>
+          </BottomCTA>
+        </>
+      );
+    }
     if (isLoading) {
       return (
         <div role="status" className="flex flex-1 items-center justify-center">
@@ -91,9 +118,10 @@ export default function FundingGiftVerifyContainer() {
         {renderContent()}
         {/* 인증은 이미 끝났으므로 시트를 닫으면 작성 화면으로 돌아가지 않고 친구들이 보게 될 인증 결과 화면으로 보낸다 */}
         <GiftVerifyShareSheet
-          open={isSuccess}
+          open={isSuccess && !isShared}
           fundingId={Number(fundingId)}
           onClose={shareKey => (shareKey ? router.replace(`/share/${shareKey}/gift`) : goHome())}
+          onShared={() => setIsShared(true)}
         />
       </main>
     </PageExitMotion>

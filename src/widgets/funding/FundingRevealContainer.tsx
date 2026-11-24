@@ -3,9 +3,7 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
-import RevealMotion from "@/components/effects/RevealMotion";
 import Header from "@/components/Header";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import PageExitMotion from "@/components/effects/PageExitMotion";
@@ -15,10 +13,10 @@ import { usePageExit } from "@/hooks/usePageExit";
 import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import FundingExtendFlow from "@/widgets/funding/FundingExtendFlow";
 import FundingRevealEmptyView from "@/widgets/funding/FundingRevealEmptyView";
+import FundingRevealView from "@/widgets/funding/FundingRevealView";
 import RollingPaperContainer from "@/widgets/rolling-paper/RollingPaperContainer";
 import IconClose from "@/assets/icons/icon-close.svg?react";
 
-const TARGET_PERCENTAGE = 100;
 const MESSAGES_OPEN_QUERY = "messages=open";
 
 export default function FundingRevealContainer() {
@@ -94,31 +92,16 @@ export default function FundingRevealContainer() {
       );
     }
 
-    const amount = `${result.confirmedAmount.toLocaleString("ko-KR")}원이 모였어요`;
-    const goalAchieved = result.achievementPercentage >= TARGET_PERCENTAGE;
     return (
       <>
-        <main className="flex flex-1 flex-col items-center gap-6 px-5 pt-6 pb-32">
-          <RevealMotion names={result.contributions.map(contribution => contribution.name)} />
-          <div className="flex flex-col items-center gap-2 text-center [letter-spacing:var(--letter-spacing-default)]">
-            <h1 className="text-semantic-text-strong [font-family:var(--font-family-a2-z)] text-[22px] [line-height:var(--line-height-default)] font-semibold whitespace-pre-line">
-              {`친구 ${result.participantCount}명이\n보탬을 보냈어요!`}
-            </h1>
-            <p className="text-semantic-text-tertiary [font:var(--semantic-subtext-large)]">
-              {goalAchieved ? `${amount} · 목표 달성` : amount}
-            </p>
-          </div>
-        </main>
-        <BottomCTA>
-          <Button
-            color="brand"
-            size="xlarge"
-            disabled={opening || isOpening}
-            states={isOpening ? "loading" : "default"}
-            onClick={handleOpenMessages}>
-            메시지 열어보기
-          </Button>
-        </BottomCTA>
+        <FundingRevealView
+          contributorNames={result.contributions.map(contribution => contribution.name)}
+          participantCount={result.participantCount}
+          confirmedAmount={result.confirmedAmount}
+          achievementPercentage={result.achievementPercentage}
+          isOpening={opening || isOpening}
+          onOpenMessages={handleOpenMessages}
+        />
         <RollingPaperContainer fundingId={id} open={messagesOpen} onClose={close} />
       </>
     );

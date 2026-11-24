@@ -63,6 +63,18 @@ describe("useAddWishMutation", () => {
     expect(useGiftChangeStore.getState().browsingProducts).toBe(false);
   });
 
+  it("서프라이즈 받는 사람이 '상품 보기'로 왔다면 서프라이즈 위시 변경 화면으로 보낸다", async () => {
+    useGiftChangeStore.getState().start(12, null, true);
+    useGiftChangeStore.getState().setBrowsingProducts(true);
+    vi.mocked(wishService.addWish).mockResolvedValue({ ...mockWish, id: 7 });
+    const { result } = renderHook(() => useAddWishMutation(), { wrapper: createWrapper() });
+
+    result.current.mutate({ recommendedProductId: 1 });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(replace).toHaveBeenCalledWith("/surprised/12/change-gift/wish/7");
+  });
+
   it("바꾸는 중인 펀딩이 있어도 '상품 보기'로 온 게 아니면 평소처럼 위시 상세로 보낸다", async () => {
     useGiftChangeStore.getState().start(12, null);
     vi.mocked(wishService.addWish).mockResolvedValue({ ...mockWish, id: 7 });

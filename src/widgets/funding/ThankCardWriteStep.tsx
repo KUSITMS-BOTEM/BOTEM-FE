@@ -90,8 +90,8 @@ export default function ThankCardWriteStep({
         <Button
           color="brand"
           size="xlarge"
-          states={isSending ? "loading" : "default"}
           disabled={message.trim() === ""}
+          states={isSending ? "loading" : "default"}
           onClick={onSend}>
           보내기
         </Button>

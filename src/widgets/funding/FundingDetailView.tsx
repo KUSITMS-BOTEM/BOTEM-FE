@@ -56,7 +56,7 @@ type FundingDetailViewBaseProps = {
   memberIntent?: ShareMemberIntent;
   // 서버가 쿠키로 확인한 로그인 여부. 새로고침해 복귀 쿼리가 사라져도 회원임을 유지한다
   isLoggedIn?: boolean;
-  // 마감된 내 생일 펀딩의 '롤링페이퍼 보기'를 누를 수 있는지 (롤링페이퍼 공개 여부)
+  // 마감된 내 펀딩(생일·서프라이즈)의 '롤링페이퍼 보기'를 누를 수 있는지 (롤링페이퍼 공개 여부)
   rollingPaperOpened?: boolean;
   // 공개 여부를 아직 모르는 동안은 안내 문구 대신 기본 버튼 문구를 보여준다
   rollingPaperLoading?: boolean;
@@ -166,7 +166,7 @@ export default function FundingDetailView({
   const isSurprise = variant === "surprise";
   const isOwner = variant === "owner";
   const isGuest = variant === "guest";
-  const showRollingPaperCta = isOwner && funding.closed;
+  const showRollingPaperCta = (isOwner || isSurprise) && funding.closed;
   // 하단 CTA 버튼을 누르면 회원/비회원 구분 Dialog를 띄운다. 값은 어느 버튼에서 왔는지
   // 어느 버튼에서 왔는지에 따라 '예'(로그인 후 복귀 경로)·'아니오'(비회원 플로우)가 갈린다
   const [memberCheckFrom, setMemberCheckFrom] = useState<ShareMemberIntent | null>(null);
@@ -345,7 +345,8 @@ export default function FundingDetailView({
               variant="fill"
               disabled={!rollingPaperOpened}
               onClick={() => setIsRollingPaperOpen(true)}>
-              {rollingPaperOpened || rollingPaperLoading
+              {/* 서프라이즈는 받는 사람이 여는 거라 개설자에게 펑 안내를 하지 않는다 */}
+              {isSurprise || rollingPaperOpened || rollingPaperLoading
                 ? "롤링페이퍼 보기"
                 : "홈에서 펑! 터뜨려 주세요"}
             </Button>

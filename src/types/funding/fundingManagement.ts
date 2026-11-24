@@ -35,7 +35,8 @@ export type ChangeFundingProductResponse = {
 
 export type GiftChoiceResponse = {
   fundingId: number;
-  giftVerificationId: number;
+  // 서프라이즈는 선물 인증을 하지 않아 null
+  giftVerificationId: number | null;
   productName: string;
   productImageUrl: string;
   productUrl: string;

@@ -3,10 +3,12 @@ import userEvent from "@testing-library/user-event";
 
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
+import { useSurpriseRevealQuery } from "@/hooks/queries/funding/useSurpriseRevealQuery";
 import { useWishesQuery } from "@/hooks/queries/wish/useWishesQuery";
 import { useGiftChangeStore } from "@/store/giftChangeStore";
 import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 import type { FundingResultResponse } from "@/types/funding/fundingResult";
+import type { SurpriseRevealResponse } from "@/types/funding/surprise";
 import type { WishResponse } from "@/types/wish/wish";
 import FundingGiftChangeContainer from "@/widgets/funding/FundingGiftChangeContainer";
 
@@ -23,6 +25,9 @@ vi.mock("@/hooks/queries/funding/useFundingManagementQuery", () => ({
   useFundingManagementQuery: vi.fn(),
 }));
 vi.mock("@/hooks/queries/wish/useWishesQuery", () => ({ useWishesQuery: vi.fn() }));
+vi.mock("@/hooks/queries/funding/useSurpriseRevealQuery", () => ({
+  useSurpriseRevealQuery: vi.fn(),
+}));
 
 const wish = (overrides: Partial<WishResponse>): WishResponse => ({
   id: 1,
@@ -61,6 +66,14 @@ const mockManagement = {
 
 const wishesRefetch = vi.fn();
 
+const mockSurprise = {
+  confirmedAmount: 420000,
+  productName: "에어팟 프로 2",
+  productPrice: 459000,
+  productImageUrl: "https://example.com/9.png",
+  productChanged: false,
+} as SurpriseRevealResponse;
+
 const mockQueries = ({
   wishes = mockWishes as WishResponse[] | null,
   management = mockManagement,
@@ -76,6 +89,11 @@ const mockQueries = ({
     isLoading,
     refetch: vi.fn(),
   } as unknown as ReturnType<typeof useFundingManagementQuery>);
+  vi.mocked(useSurpriseRevealQuery).mockReturnValue({
+    data: mockSurprise,
+    isLoading: false,
+    refetch: vi.fn(),
+  } as unknown as ReturnType<typeof useSurpriseRevealQuery>);
   vi.mocked(useWishesQuery).mockReturnValue({
     data: wishes && { content: wishes },
     isLoading,
@@ -204,5 +222,27 @@ describe("FundingGiftChangeContainer", () => {
     await userEvent.click(screen.getByRole("button", { name: "뒤로 가기" }));
 
     await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
+  });
+
+  describe("서프라이즈 받는 사람", () => {
+    it("공개 상세의 모인 금액과 지금 상품으로 보여준다", () => {
+      mockQueries({ wishes: [wish({ id: 1, productName: "에어팟 프로 3", price: 359000 })] });
+      render(<FundingGiftChangeContainer surprise />);
+
+      expect(screen.getByText(/모인 420,000원 안에서/)).toBeInTheDocument();
+      expect(screen.getByText("에어팟 프로 2")).toBeInTheDocument();
+      expect(useFundingResultQuery).toHaveBeenCalledWith(7, false);
+      expect(useFundingManagementQuery).toHaveBeenCalledWith(7, { enabled: false });
+    });
+
+    it("서프라이즈로 바꾸는 중임을 기록하고 위시 행을 누르면 서프라이즈 경로로 이동한다", async () => {
+      mockQueries();
+      render(<FundingGiftChangeContainer surprise />);
+
+      expect(useGiftChangeStore.getState()).toMatchObject({ fundingId: 7, surprise: true });
+      await userEvent.click(screen.getByText("에어팟 프로 3"));
+
+      expect(push).toHaveBeenCalledWith("/surprised/7/change-gift/wish/1");
+    });
   });
 });

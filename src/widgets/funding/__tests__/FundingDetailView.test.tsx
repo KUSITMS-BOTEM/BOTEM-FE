@@ -811,8 +811,8 @@ describe("FundingDetailView", () => {
       expect(screen.queryByRole("button", { name: "롤링페이퍼 보기" })).not.toBeInTheDocument();
     });
 
-    it("마감된 서프라이즈 개설자 화면은 프로필 묶음을 그대로 두고 롤링페이퍼 버튼이 없다", () => {
-      const { container } = render(
+    it("마감된 서프라이즈 개설자 화면도 '롤링페이퍼 보기'를 두고, 공개 전에는 누를 수 없다", () => {
+      render(
         <FundingDetailView
           fundingId="1"
           variant="surprise"
@@ -820,8 +820,7 @@ describe("FundingDetailView", () => {
         />,
       );
 
-      expect(container.querySelector("button.self-end")).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "롤링페이퍼 보기" })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "롤링페이퍼 보기" })).toBeDisabled();
     });
   });
 

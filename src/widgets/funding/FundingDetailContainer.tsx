@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
@@ -31,6 +32,12 @@ export default function FundingDetailContainer({
     variant === "owner" && isClosed,
     true,
   );
+  // 서프라이즈 롤링페이퍼는 선물 준비를 마치고 공개 시각이 지난 뒤에야 서버가 내려준다. 시각은 진입 시점 기준으로 한 번만 잰다
+  const [enteredAt] = useState(Date.now);
+  const surprise = ownerQuery.data;
+  const surpriseRollingPaperOpened = Boolean(
+    surprise?.giftPreparedAt && surprise.revealAt && Date.parse(surprise.revealAt) <= enteredAt,
+  );
 
   // 공유 링크를 새 탭으로 열면 되돌아갈 히스토리가 없다. 이때만 프로필(없으면 홈)로 보내되, push하면 이 화면이 히스토리에 남아 프로필에서 뒤로 갈 때 다시 돌아오므로 replace한다
   const handleBack = () => {
@@ -44,7 +51,11 @@ export default function FundingDetailContainer({
         fundingId={fundingId}
         variant={variant}
         ownerDetail={ownerQuery.data}
-        rollingPaperOpened={Boolean(resultQuery.data?.resultOpenedAt)}
+        rollingPaperOpened={
+          variant === "surprise"
+            ? surpriseRollingPaperOpened
+            : Boolean(resultQuery.data?.resultOpenedAt)
+        }
         rollingPaperLoading={resultQuery.isLoading}
         onBack={handleBack}
       />

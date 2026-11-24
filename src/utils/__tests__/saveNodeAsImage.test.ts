@@ -1,6 +1,6 @@
 import { toBlob } from "html-to-image";
 
-import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
+import { saveNodeAsImage, shareOrDownloadImage } from "@/utils/saveNodeAsImage";
 
 vi.mock("html-to-image", () => ({ toBlob: vi.fn() }));
 
@@ -92,5 +92,17 @@ describe("saveNodeAsImage", () => {
     vi.mocked(toBlob).mockResolvedValue(null);
 
     await expect(saveNodeAsImage(node, FILENAME)).rejects.toThrow();
+  });
+
+  it("미리 만든 파일을 넘기면 이미지를 다시 만들지 않고 바로 공유한다", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    setShare(share);
+    const file = new File(["png"], FILENAME, { type: "image/png" });
+    vi.mocked(toBlob).mockClear();
+
+    await shareOrDownloadImage(file);
+
+    expect(toBlob).not.toHaveBeenCalled();
+    expect(share).toHaveBeenCalledWith({ files: [file] });
   });
 });

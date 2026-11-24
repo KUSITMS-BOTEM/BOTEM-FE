@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { useCompleteGiftVerificationMutation } from "@/hooks/mutations/gift-verification/useCompleteGiftVerificationMutation";
 import { useGiftVerificationTargetsQuery } from "@/hooks/queries/home/useGiftVerificationTargetsQuery";
+import { useShareLink } from "@/hooks/useShareLink";
 import type { GiftVerificationTargetResponse } from "@/types/home/home";
 import FundingGiftVerifyContainer from "@/widgets/funding/FundingGiftVerifyContainer";
 
@@ -15,6 +16,8 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/hooks/queries/home/useGiftVerificationTargetsQuery");
 vi.mock("@/hooks/mutations/gift-verification/useCompleteGiftVerificationMutation");
 vi.mock("@/hooks/queries/funding/useFundingManagementQuery");
+vi.mock("@/hooks/useShareLink");
+vi.mock("@/components/effects/hero-motion/HeroMotion", () => ({ default: () => null }));
 vi.mock("next/image", () => ({
   default: ({ alt, ...props }: { alt: string } & Record<string, unknown>) => (
     // eslint-disable-next-line @next/next/no-img-element
@@ -32,6 +35,7 @@ beforeAll(() => {
 
 const refetch = vi.fn();
 const mutate = vi.fn();
+const share = vi.fn();
 
 const target: GiftVerificationTargetResponse = {
   giftVerificationId: 101,
@@ -60,6 +64,7 @@ const mockQuery = (state: {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(useShareLink).mockReturnValue({ toast: null, share, copyLink: vi.fn() });
   vi.mocked(useCompleteGiftVerificationMutation).mockReturnValue({
     mutate,
     isPending: false,
@@ -69,6 +74,33 @@ beforeEach(() => {
     isError: false,
   } as unknown as ReturnType<typeof useFundingManagementQuery>);
 });
+
+const managementData = {
+  shareKey: "abc123",
+  type: "BIRTHDAY",
+  title: null,
+  celebrantName: "세윤",
+  product: { name: "에어팟", imageUrl: "/airpods.png" },
+  deadline: "2026-10-13T23:59:59",
+  targetAmount: 300000,
+  confirmedPercentage: 100,
+  participants: [],
+  participantCount: 0,
+};
+
+const renderAfterVerified = () => {
+  mockQuery({ targets: [] });
+  vi.mocked(useCompleteGiftVerificationMutation).mockReturnValue({
+    mutate,
+    isPending: false,
+    isSuccess: true,
+  } as unknown as ReturnType<typeof useCompleteGiftVerificationMutation>);
+  vi.mocked(useFundingManagementQuery).mockReturnValue({
+    data: managementData,
+    isError: false,
+  } as unknown as ReturnType<typeof useFundingManagementQuery>);
+  render(<FundingGiftVerifyContainer />);
+};
 
 describe("FundingGiftVerifyContainer", () => {
   it("목록을 불러오는 중에는 로딩 상태를 보여준다", () => {
@@ -180,5 +212,57 @@ describe("FundingGiftVerifyContainer", () => {
     await userEvent.click(within(sheet).getByRole("button", { name: "닫기" }));
 
     expect(replace).toHaveBeenCalledWith("/share/abc123/gift");
+  });
+
+  describe("공유 완료", () => {
+    const shareFromSheet = async () => {
+      share.mockResolvedValue(true);
+      renderAfterVerified();
+      await userEvent.click(screen.getByRole("button", { name: "친구에게 공유하기" }));
+    };
+
+    it("기기 공유창으로 보내면 시트를 닫고 보냈다는 완료 화면을 보여준다", async () => {
+      await shareFromSheet();
+
+      expect(
+        await screen.findByText("보태준 친구들에게\n선물 도착 인증을 보냈어요!", {
+          normalizer: text => text,
+        }),
+      ).toBeInTheDocument();
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog", { name: "공유하기" })).not.toBeInTheDocument(),
+      );
+      expect(screen.queryByText("인증할 선물이 없어요")).not.toBeInTheDocument();
+    });
+
+    it("공유창을 닫았으면 완료 화면으로 넘어가지 않는다", async () => {
+      share.mockResolvedValue(false);
+      renderAfterVerified();
+
+      await userEvent.click(screen.getByRole("button", { name: "친구에게 공유하기" }));
+
+      expect(screen.getByRole("dialog", { name: "공유하기" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "완료하기" })).not.toBeInTheDocument();
+    });
+
+    it("완료 화면에서 '완료하기'를 누르면 /home으로 replace한다", async () => {
+      await shareFromSheet();
+
+      await userEvent.click(await screen.findByRole("button", { name: "완료하기" }));
+
+      await waitFor(() => expect(replace).toHaveBeenCalledWith("/home"));
+    });
+
+    it("완료 화면에서 닫기(X)를 누르면 /home으로 replace한다", async () => {
+      await shareFromSheet();
+      await screen.findByRole("button", { name: "완료하기" });
+
+      await userEvent.click(
+        within(screen.getByRole("banner")).getByRole("button", { name: "닫기" }),
+      );
+
+      await waitFor(() => expect(replace).toHaveBeenCalledWith("/home"));
+      expect(replace).not.toHaveBeenCalledWith("/share/abc123/gift");
+    });
   });
 });

@@ -102,11 +102,12 @@ export default function HomeContainer({ autoOpenFunding = false }: HomeContainer
       <main className="flex w-full flex-col px-5">
         {segment === "funding" ? (
           <GiftVerificationBannerLayer variant={giftVerificationBannerVariant}>
-            {banner => (
+            {(banner, giftBannerActive) => (
               <HomeFundingTab
                 onAddWish={goToRecommendedWish}
                 onOpenFunding={openWishFunding}
                 banner={banner}
+                showSurpriseBanner={!giftBannerActive}
               />
             )}
           </GiftVerificationBannerLayer>

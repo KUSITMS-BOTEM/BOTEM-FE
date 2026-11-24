@@ -7,8 +7,8 @@ import Button from "@/components/Button";
 import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
 import type { Color } from "@/constants/color";
+import { usePreparedImageSave } from "@/hooks/usePreparedImageSave";
 import { cn } from "@/utils/cn";
-import { saveNodeAsImage } from "@/utils/saveNodeAsImage";
 import ThankCard, { THANK_CARD_MESSAGE_CLASS } from "@/widgets/funding/ThankCard";
 
 type ThankCardSentStepProps = {
@@ -19,6 +19,7 @@ type ThankCardSentStepProps = {
 
 const SHARE_FAIL_TOAST_MS = 2000;
 
+// 공유하기는 모바일에서 OS 공유창(이미지 공유·사진 저장)을 띄우고, 공유창이 없으면 PNG로 내려받는다
 export default function ThankCardSentStep({
   recipientName,
   color,
@@ -28,14 +29,15 @@ export default function ThankCardSentStep({
   const [shareFailed, setShareFailed] = useState(false);
   const failTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [isSharing, setIsSharing] = useState(false);
+  const saveImage = usePreparedImageSave(cardRef, `${recipientName}-감사-카드.png`);
 
   useEffect(() => () => clearTimeout(failTimerRef.current), []);
 
   const handleShare = async () => {
-    if (!cardRef.current || isSharing) return;
+    if (isSharing) return;
     setIsSharing(true);
     try {
-      await saveNodeAsImage(cardRef.current, `${recipientName}-감사-카드.png`);
+      await saveImage();
     } catch {
       setShareFailed(true);
       clearTimeout(failTimerRef.current);

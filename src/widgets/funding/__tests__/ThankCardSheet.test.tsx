@@ -10,6 +10,14 @@ vi.mock("@/hooks/mutations/contribution/useSendThankCardMutation", () => ({
   useSendThankCardMutation: vi.fn(),
 }));
 vi.mock("@/utils/saveNodeAsImage", () => ({ saveNodeAsImage: vi.fn() }));
+// 미리 만들기는 usePreparedImageSave 테스트가 맡는다. 여기선 어떤 노드·파일명으로 저장하는지만 본다
+vi.mock("@/hooks/usePreparedImageSave", async () => {
+  const { saveNodeAsImage } = await import("@/utils/saveNodeAsImage");
+  return {
+    usePreparedImageSave: (ref: { current: HTMLElement | null }, filename: string) => () =>
+      saveNodeAsImage(ref.current!, filename),
+  };
+});
 
 const mutate = vi.fn();
 let isPending = false;
@@ -183,6 +191,26 @@ describe("ThankCardSheet 보내기", () => {
 
     expect(textarea()).toBeInTheDocument();
     expect(screen.queryByText(/감사 카드를 보냈어요/)).not.toBeInTheDocument();
+  });
+
+  it("응답 전에 보내기를 다시 눌러도 한 번만 요청한다", async () => {
+    renderSheet();
+
+    await goToSentStep("고마워");
+    await userEvent.click(sendButton());
+
+    expect(mutate).toHaveBeenCalledTimes(1);
+    expect(sendButton()).toBeDisabled();
+  });
+
+  it("전송에 실패하면 작성 단계에 머물고 보내기 버튼이 다시 활성화된다", async () => {
+    mutate.mockImplementation((_vars, options) => options.onError(new ApiError("FUNDING_023")));
+    renderSheet();
+
+    await goToSentStep("고마워");
+
+    expect(textarea()).toHaveValue("고마워");
+    expect(sendButton()).toBeEnabled();
   });
 
   it("전송 중이면 보내기 버튼이 로딩 상태로 비활성화된다", () => {

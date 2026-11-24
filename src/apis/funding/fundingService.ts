@@ -23,10 +23,9 @@ import type {
   RollingPaperAttachmentUploadUrlResponse,
 } from "@/types/funding/rollingPaperAttachment";
 import type {
-  SendSurpriseThankCardRequest,
   SurpriseGiftPreparationResponse,
   SurpriseRevealResponse,
-  SurpriseThankCardResponse,
+  SurpriseThankCardFriendsResponse,
 } from "@/types/funding/surprise";
 import type { OwnerFundingDetailResponse } from "@/types/funding/ownerFundingDetail";
 
@@ -61,7 +60,7 @@ export const fundingService = {
     clientApi.post<ExtendFundingResponse>(`/api/fundings/${fundingId}/extension`, body),
   changeFundingProduct: (fundingId: number, body: ChangeFundingProductRequest) =>
     clientApi.patch<ChangeFundingProductResponse>(`/api/fundings/${fundingId}/product`, body),
-  // Swagger 요약은 '생일 펀딩'이지만 서프라이즈를 뺀 모든 펀딩의 선물 확인(FUND-PG-011/012)에서 쓴다
+  // 일반 펀딩은 결과를 연 개설자, 서프라이즈는 공개 후 받는 사람이 호출한다 (FUND-PG-011/012)
   chooseGift: (fundingId: number) =>
     clientApi.post<GiftChoiceResponse>(`/api/fundings/${fundingId}/gift-choice`),
 
@@ -76,10 +75,9 @@ export const fundingService = {
     clientApi.get<SurpriseRevealResponse>(`/api/fundings/${fundingId}/surprise`),
   openSurprise: (fundingId: number) =>
     clientApi.post<SurpriseRevealResponse>(`/api/fundings/${fundingId}/surprise/open`),
-  sendSurpriseThankCard: (fundingId: number, body: SendSurpriseThankCardRequest) =>
-    clientApi.post<SurpriseThankCardResponse>(
-      `/api/fundings/${fundingId}/surprise/thank-card`,
-      body,
+  getSurpriseThankCardFriends: (fundingId: number) =>
+    clientApi.get<SurpriseThankCardFriendsResponse>(
+      `/api/fundings/${fundingId}/surprise/thank-card-friends`,
     ),
   getSurpriseGiftPreparation: (fundingId: number) =>
     clientApi.get<SurpriseGiftPreparationResponse>(

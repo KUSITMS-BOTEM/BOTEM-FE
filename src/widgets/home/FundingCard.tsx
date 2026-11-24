@@ -30,6 +30,10 @@ export type FundingCardProps = {
   participants?: ProfileBoxItem[];
   extraParticipantCount?: number;
   pendingCount?: number;
+  // 확인 대기 배지가 없을 때 같은 자리에 보이는 상태 안내 (예: 서프라이즈 "지유가 아직 못받았어요")
+  statusLabel?: string;
+  // 타입별 기본 칩 문구 대신 쓸 문구 (서프라이즈는 달성률·확인 대기에 따라 문구가 다르다)
+  fxLabelText?: string;
   isSurprise?: boolean;
   animate?: boolean;
   fxPaused?: boolean;
@@ -48,13 +52,15 @@ export default function FundingCard({
   participants = [],
   extraParticipantCount = 0,
   pendingCount = 0,
+  statusLabel,
+  fxLabelText,
   isSurprise = false,
   animate = true,
   fxPaused = false,
   onClick,
   className,
 }: FundingCardProps) {
-  const fxLabel = FX_LABEL[type]?.(pendingCount);
+  const fxLabel = FX_LABEL[type] && (fxLabelText ?? FX_LABEL[type](pendingCount));
   const titleId = useId();
   const fxLabelId = useId();
   const reduceMotion = useReducedMotion();
@@ -73,7 +79,8 @@ export default function FundingCard({
   const card = (
     <div className="relative flex w-full flex-col overflow-clip rounded-3xl">
       <div className="relative flex h-63.75 w-full flex-col items-start gap-2.5 px-4 pt-5">
-        <div className="absolute inset-[0_0_-12.68%_0]">
+        {/* 사진이 로드되기 전이나 투명한 부분으로 카드 뒤 칩 글로우(blur)가 비치지 않게 배경을 깐다 */}
+        <div className="bg-semantic-fill-default absolute inset-[0_0_-12.68%_0]">
           <Image
             src={productImageUrl}
             alt={productName}
@@ -100,6 +107,9 @@ export default function FundingCard({
             label={`확인 대기 ${pendingCount}`}
             className="absolute bottom-0 left-4"
           />
+        )}
+        {type !== "open" && pendingCount === 0 && statusLabel && (
+          <Badge color="danger" label={statusLabel} className="absolute bottom-0 left-4" />
         )}
       </div>
       <div className="from-semantic-fill-default to-semantic-fill-default/60 relative flex w-full flex-col gap-4 bg-linear-to-b px-4 pt-2.5 pb-5">

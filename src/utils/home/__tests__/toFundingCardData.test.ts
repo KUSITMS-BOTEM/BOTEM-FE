@@ -16,6 +16,8 @@ const makeCard = (overrides: Partial<HomeFundingCardResponse> = {}): HomeFunding
   pendingPercentage: 15,
   pendingContributionCount: 0,
   earlyOpenable: false,
+  recipientName: null,
+  surpriseStage: null,
   ...overrides,
 });
 
@@ -185,5 +187,191 @@ describe("toFundingCardData", () => {
     );
 
     expect(result.progress).toBe(40);
+  });
+
+  describe("서프라이즈 펀딩", () => {
+    const surprise = (overrides: Partial<HomeFundingCardResponse> = {}) =>
+      makeCard({ fundingType: "SURPRISE", recipientName: "지유", ...overrides });
+
+    it("진행 중 100%이고 확인 대기가 없으면 earlyOpenable이 false여도 earlyComplete다", () => {
+      const result = toFundingCardData(
+        surprise({ confirmedPercentage: 100, earlyOpenable: false }),
+        "민준",
+      );
+
+      expect(result.type).toBe("earlyComplete");
+    });
+
+    it("진행 중 100%이고 확인 대기가 없으면 지금 선물을 준비할지 묻는 칩 문구를 쓴다", () => {
+      const result = toFundingCardData(surprise({ confirmedPercentage: 100 }), "민준");
+
+      expect(result.fxLabelText).toBe("다 모였어요. 선물을 준비할까요?");
+    });
+
+    it("진행 중 100% 미만이면 earlyOpenable이 true여도 default다", () => {
+      const result = toFundingCardData(
+        surprise({ confirmedPercentage: 99, earlyOpenable: true }),
+        "민준",
+      );
+
+      expect(result.type).toBe("default");
+    });
+
+    it("진행 중 100%여도 확인 대기가 남아 있으면 default다", () => {
+      const result = toFundingCardData(
+        surprise({ confirmedPercentage: 100, pendingContributionCount: 1 }),
+        "민준",
+      );
+
+      expect(result.type).toBe("default");
+    });
+
+    it("마감 후 확인 대기가 있으면 notification이다", () => {
+      const result = toFundingCardData(
+        surprise({ cardType: "CLOSED_UNOPENED", pendingContributionCount: 2 }),
+        "민준",
+      );
+
+      expect(result.type).toBe("notification");
+    });
+
+    it("마감 후 선물 준비 전이고 확인 대기가 없으면 complete다", () => {
+      const result = toFundingCardData(
+        surprise({ cardType: "CLOSED_UNOPENED", surpriseStage: "GIFT_PREPARING" }),
+        "민준",
+      );
+
+      expect(result.type).toBe("complete");
+    });
+
+    it("선물 준비를 마친 카드는 확인 대기와 무관하게 칩 없는 default다", () => {
+      const result = toFundingCardData(
+        surprise({
+          cardType: "CLOSED_UNOPENED",
+          surpriseStage: "GIFT_PREPARED",
+          pendingContributionCount: 1,
+        }),
+        "민준",
+      );
+
+      expect(result.type).toBe("default");
+      expect(result.fxLabelText).toBeUndefined();
+    });
+
+    it.each([
+      [100, 0, "다 모였어요. 선물을 준비할까요?"],
+      [120, 2, "확인 대기 2건을 확인하면 열어볼 수 있어요"],
+      [99, 0, "마감됐어요. 선물을 준비할까요?"],
+      [60, 3, "마감됐어요. 확인 대기 3건부터 확인해요"],
+    ])(
+      "선물 준비 전 마감 카드는 달성률 %i%%·확인 대기 %i건이면 칩 문구가 '%s'다",
+      (confirmedPercentage, pendingContributionCount, label) => {
+        const result = toFundingCardData(
+          surprise({
+            cardType: "CLOSED_UNOPENED",
+            surpriseStage: "GIFT_PREPARING",
+            confirmedPercentage,
+            pendingContributionCount,
+          }),
+          "민준",
+        );
+
+        expect(result.fxLabelText).toBe(label);
+      },
+    );
+
+    it("목표 전이거나 확인 대기가 남은 진행 중 카드와 생일 펀딩은 칩 문구를 바꾸지 않는다", () => {
+      expect(toFundingCardData(surprise({ confirmedPercentage: 99 }), "민준").fxLabelText).toBe(
+        undefined,
+      );
+      expect(
+        toFundingCardData(
+          surprise({ confirmedPercentage: 100, pendingContributionCount: 1 }),
+          "민준",
+        ).fxLabelText,
+      ).toBeUndefined();
+      expect(
+        toFundingCardData(
+          makeCard({ cardType: "CLOSED_UNOPENED", confirmedPercentage: 100 }),
+          "민준",
+        ).fxLabelText,
+      ).toBeUndefined();
+    });
+
+    it("선물 준비를 마친 카드는 받침 없는 받는 사람 이름에 '가'를 붙여 아직 못받았다는 라벨을 만든다", () => {
+      const result = toFundingCardData(
+        surprise({
+          cardType: "CLOSED_UNOPENED",
+          surpriseStage: "GIFT_PREPARED",
+          recipientName: "지유",
+        }),
+        "민준",
+      );
+
+      expect(result.statusLabel).toBe("지유가 아직 못받았어요");
+    });
+
+    it("선물 준비를 마친 카드는 받침 있는 받는 사람 이름에 '이'를 붙여 라벨을 만든다", () => {
+      const result = toFundingCardData(
+        surprise({
+          cardType: "CLOSED_UNOPENED",
+          surpriseStage: "GIFT_PREPARED",
+          recipientName: "민준",
+        }),
+        "지유",
+      );
+
+      expect(result.statusLabel).toBe("민준이 아직 못받았어요");
+    });
+
+    it("선물 준비 전 마감 카드에는 아직 못받았다는 라벨이 없다", () => {
+      const result = toFundingCardData(
+        surprise({ cardType: "CLOSED_UNOPENED", surpriseStage: "GIFT_PREPARING" }),
+        "민준",
+      );
+
+      expect(result.statusLabel).toBeUndefined();
+    });
+
+    it("받는 사람 이름이 null이면 라벨이 없다", () => {
+      const result = toFundingCardData(
+        surprise({
+          cardType: "CLOSED_UNOPENED",
+          surpriseStage: "GIFT_PREPARED",
+          recipientName: null,
+        }),
+        "민준",
+      );
+
+      expect(result.statusLabel).toBeUndefined();
+    });
+
+    it("받는 사람 이름이 빈 문자열이면 라벨이 없다", () => {
+      const result = toFundingCardData(
+        surprise({
+          cardType: "CLOSED_UNOPENED",
+          surpriseStage: "GIFT_PREPARED",
+          recipientName: "",
+        }),
+        "민준",
+      );
+
+      expect(result.statusLabel).toBeUndefined();
+    });
+
+    it("진행 중 카드에는 라벨이 없다", () => {
+      expect(toFundingCardData(surprise({ cardType: "IN_PROGRESS" }), "민준").statusLabel).toBe(
+        undefined,
+      );
+    });
+
+    it("생일 펀딩은 마감돼도 받는 사람 이름이 있어도 라벨이 없다", () => {
+      const result = toFundingCardData(
+        makeCard({ fundingType: "BIRTHDAY", cardType: "CLOSED_UNOPENED", recipientName: "지유" }),
+        "민준",
+      );
+
+      expect(result.statusLabel).toBeUndefined();
+    });
   });
 });
