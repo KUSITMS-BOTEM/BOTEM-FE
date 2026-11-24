@@ -54,7 +54,15 @@ export default function FundingOpenCompleteSheet({
   const openerName = profile?.name ?? "내";
   const saveImage = usePreparedImageSave(cardRef, `${cardTitle}-공유-카드.png`, {
     enabled: open,
-    contentKey: openerName,
+    // 시트가 열린 채 재조회로 카드 값이 바뀌면 저장 이미지도 다시 만든다
+    contentKey: JSON.stringify([
+      openerName,
+      wish.productImageUrl,
+      wish.productName,
+      info.targetAmount,
+      info.deadline,
+      props.variant === "funding" ? props.progress : null,
+    ]),
   });
   const [saveFailed, setSaveFailed] = useState(false);
   const failTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);

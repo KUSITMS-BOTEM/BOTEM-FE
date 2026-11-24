@@ -15,11 +15,18 @@ const saveNodeAsImageMock = vi.fn();
 vi.mock("@/utils/saveNodeAsImage", () => ({
   saveNodeAsImage: (...args: unknown[]) => saveNodeAsImageMock(...args),
 }));
-// 미리 만들기는 usePreparedImageSave 테스트가 맡는다. 여기선 어떤 노드·파일명으로 저장하는지만 본다
+// 미리 만들기는 usePreparedImageSave 테스트가 맡는다. 여기선 어떤 노드·파일명·옵션으로 저장하는지만 본다
+const preparedOptionsMock = vi.fn();
 vi.mock("@/hooks/usePreparedImageSave", () => {
   return {
-    usePreparedImageSave: (ref: { current: HTMLElement | null }, filename: string) => () =>
-      saveNodeAsImageMock(ref.current!, filename),
+    usePreparedImageSave: (
+      ref: { current: HTMLElement | null },
+      filename: string,
+      options: { contentKey?: string },
+    ) => {
+      preparedOptionsMock(options);
+      return () => saveNodeAsImageMock(ref.current!, filename);
+    },
   };
 });
 
@@ -132,6 +139,29 @@ describe("FundingOpenCompleteSheet", () => {
 
       expect(screen.getByText(/^D-\d+$/)).toBeInTheDocument();
       expect(screen.getByText("80% 달성! 아주 조금 남았어요!")).toBeInTheDocument();
+    });
+
+    it("시트가 열린 채 달성률이 바뀌면 저장 이미지를 다시 만들도록 contentKey가 바뀐다", () => {
+      mockProfile("지유");
+      const { rerender } = renderFunding({ progress: 80 });
+      const before = preparedOptionsMock.mock.lastCall?.[0].contentKey;
+
+      rerender(
+        <QueryClientProvider client={new QueryClient()}>
+          <FundingOpenCompleteSheet
+            open
+            variant="funding"
+            cardTitle="지유의 생일 펀딩"
+            progress={90}
+            wish={wish}
+            info={info}
+            shareKey="1"
+            onClose={vi.fn()}
+          />
+        </QueryClientProvider>,
+      );
+
+      expect(preparedOptionsMock.mock.lastCall?.[0].contentKey).not.toBe(before);
     });
 
     it("progress가 없으면 달성률 문구를 숨긴다", () => {
