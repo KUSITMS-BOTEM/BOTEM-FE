@@ -202,6 +202,12 @@ describe("toFundingCardData", () => {
       expect(result.type).toBe("earlyComplete");
     });
 
+    it("진행 중 100%이고 확인 대기가 없으면 지금 선물을 준비할지 묻는 칩 문구를 쓴다", () => {
+      const result = toFundingCardData(surprise({ confirmedPercentage: 100 }), "민준");
+
+      expect(result.fxLabelText).toBe("다 모였어요. 선물을 준비할까요?");
+    });
+
     it("진행 중 100% 미만이면 earlyOpenable이 true여도 default다", () => {
       const result = toFundingCardData(
         surprise({ confirmedPercentage: 99, earlyOpenable: true }),
@@ -274,10 +280,16 @@ describe("toFundingCardData", () => {
       },
     );
 
-    it("진행 중 카드와 생일 펀딩은 칩 문구를 바꾸지 않는다", () => {
-      expect(toFundingCardData(surprise({ confirmedPercentage: 100 }), "민준").fxLabelText).toBe(
+    it("목표 전이거나 확인 대기가 남은 진행 중 카드와 생일 펀딩은 칩 문구를 바꾸지 않는다", () => {
+      expect(toFundingCardData(surprise({ confirmedPercentage: 99 }), "민준").fxLabelText).toBe(
         undefined,
       );
+      expect(
+        toFundingCardData(
+          surprise({ confirmedPercentage: 100, pendingContributionCount: 1 }),
+          "민준",
+        ).fxLabelText,
+      ).toBeUndefined();
       expect(
         toFundingCardData(
           makeCard({ cardType: "CLOSED_UNOPENED", confirmedPercentage: 100 }),

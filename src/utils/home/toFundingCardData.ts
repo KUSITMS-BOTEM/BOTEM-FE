@@ -29,12 +29,14 @@ function toSurpriseCardType(card: HomeFundingCardResponse): FundingCardType {
   return card.pendingContributionCount > 0 ? "notification" : "complete";
 }
 
-// 마감된 서프라이즈의 선물 준비 전 칩 문구. 목표를 못 채웠으면 '마감됐어요'로 시작한다
+// 서프라이즈 선물 준비 전 칩 문구. 마감 전에는 목표를 채우고 확인 대기가 없을 때만 칩이 뜨고, 마감 뒤 목표를 못 채웠으면 '마감됐어요'로 시작한다
 function toSurpriseFxLabel(card: HomeFundingCardResponse): string | undefined {
-  if (card.cardType !== "CLOSED_UNOPENED" || card.surpriseStage === "GIFT_PREPARED") {
-    return undefined;
-  }
+  if (card.surpriseStage === "GIFT_PREPARED") return undefined;
   const pending = card.pendingContributionCount;
+  if (card.cardType === "IN_PROGRESS") {
+    return isTargetReached(card) && pending === 0 ? "다 모였어요. 선물을 준비할까요?" : undefined;
+  }
+  if (card.cardType !== "CLOSED_UNOPENED") return undefined;
   if (isTargetReached(card)) {
     return pending > 0
       ? `확인 대기 ${pending}건을 확인하면 열어볼 수 있어요`
