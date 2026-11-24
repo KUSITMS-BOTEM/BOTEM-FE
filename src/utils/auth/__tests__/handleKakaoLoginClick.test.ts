@@ -68,6 +68,16 @@ describe("handleKakaoLoginClick", () => {
     expect(consumeKakaoOauthState()).toBe("0000-state");
   });
 
+  it("돌아올 경로를 넘기면 브라우저가 바뀌어도 되살리도록 state에 경로를 함께 싣는다", () => {
+    const mutate = respondWith({ loginUri: "https://kauth.kakao.com/oauth/authorize?client_id=a" });
+
+    handleKakaoLoginClick(mutate as never, "/share/profile/abc");
+
+    const state = new URL(location.href).searchParams.get("state");
+    expect(state).toBe("0000-state./share/profile/abc");
+    expect(consumeKakaoOauthState()).toBe(state);
+  });
+
   it("카카오가 아닌 host의 URI는 이동하지 않고 state도 저장하지 않는다", () => {
     const mutate = respondWith({ loginUri: "https://evil.com/oauth/authorize" });
 

@@ -4,8 +4,11 @@ import type { useKakaoLoginMutation } from "@/hooks/mutations/auth/useKakaoLogin
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { useAuthStore } from "@/store/authStore";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
-import { consumeKakaoOauthState } from "@/utils/auth/kakaoOauthState";
-import { consumeLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
+import {
+  consumeKakaoOauthState,
+  getReturnPathFromKakaoOauthState,
+} from "@/utils/auth/kakaoOauthState";
+import { consumeLoginReturnPath, setLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 import { setSignupFlow } from "@/utils/auth/signupFlowStorage";
 import { clearGiftVerificationBannerStorage } from "@/utils/home/giftVerificationBannerStorage";
 
@@ -29,6 +32,9 @@ export const handleKakaoCallback = (
   router: Router,
 ) => {
   if (!state || state !== consumeKakaoOauthState()) {
+    // 브라우저가 바뀌어 검증에 실패해도 다시 로그인하면 공유 화면으로 돌아가게 한다. code는 교환하지 않는다
+    const returnPath = state && getReturnPathFromKakaoOauthState(state);
+    if (returnPath) setLoginReturnPath(returnPath);
     redirectToLandingAfterFailure(router);
     return;
   }
