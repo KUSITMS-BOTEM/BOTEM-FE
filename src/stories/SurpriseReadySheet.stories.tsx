@@ -9,7 +9,6 @@ const meta = {
   parameters: { layout: "fullscreen" },
   args: {
     open: true,
-    shareKey: "share-key-1",
     recipientName: "지유",
     revealDateLabel: "10월 13일 0시",
     contributorCount: 7,
