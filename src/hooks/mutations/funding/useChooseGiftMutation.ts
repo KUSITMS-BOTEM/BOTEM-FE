@@ -14,7 +14,7 @@ export const useChooseGiftMutation = (fundingId: number) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: fundingManagementQueryKey(fundingId) });
       // 서프라이즈는 받는 사람이 고르며, 공개 상세의 giftChosen이 바뀐다
-      queryClient.invalidateQueries({ queryKey: surpriseRevealQueryKey(fundingId) });
+      queryClient.invalidateQueries({ queryKey: surpriseRevealQueryKey(fundingId), exact: true });
       queryClient.invalidateQueries({ queryKey: homeQueryKey });
     },
   });

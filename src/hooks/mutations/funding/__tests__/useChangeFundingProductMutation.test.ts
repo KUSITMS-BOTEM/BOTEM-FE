@@ -64,7 +64,7 @@ describe("useChangeFundingProductMutation", () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: fundingManagementQueryKey(7) });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: wishesQueryKey });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: homeQueryKey });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: surpriseRevealQueryKey(7) });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: surpriseRevealQueryKey(7), exact: true });
   });
 
   it("실패하면 캐시를 무효화하지 않는다", async () => {

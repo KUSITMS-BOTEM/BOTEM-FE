@@ -49,7 +49,7 @@ describe("useOpenSurpriseMutation", () => {
     result.current.mutate(96);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(cancel).toHaveBeenCalledWith({ queryKey: surpriseRevealQueryKey(96) });
+    expect(cancel).toHaveBeenCalledWith({ queryKey: surpriseRevealQueryKey(96), exact: true });
   });
 
   it("실패하면 isError가 되고 홈 캐시를 무효화하지 않는다", async () => {

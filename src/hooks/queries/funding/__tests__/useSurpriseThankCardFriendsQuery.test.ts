@@ -63,6 +63,21 @@ describe("useSurpriseThankCardFriendsQuery", () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
   });
 
+  it("실패해도 화면이 대신 처리하므로 전역 에러 안내를 건너뛰도록 표시한다", async () => {
+    vi.mocked(fundingService.getSurpriseThankCardFriends).mockRejectedValue(new Error("실패"));
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    const { result } = renderHook(() => useSurpriseThankCardFriendsQuery(96), {
+      wrapper: ({ children }: { children: ReactNode }) =>
+        createElement(QueryClientProvider, { client: queryClient }, children),
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(
+      queryClient.getQueryCache().find({ queryKey: surpriseThankCardFriendsQueryKey(96) })?.meta,
+    ).toEqual({ skipGlobalError: true });
+  });
+
   it("enabled가 false면 조회하지 않는다", () => {
     renderHook(() => useSurpriseThankCardFriendsQuery(96, false), { wrapper: createWrapper() });
 

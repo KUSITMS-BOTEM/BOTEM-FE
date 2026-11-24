@@ -11,4 +11,6 @@ export const useSurpriseThankCardFriendsQuery = (fundingId: number, enabled = tr
     queryKey: surpriseThankCardFriendsQueryKey(fundingId),
     queryFn: () => fundingService.getSurpriseThankCardFriends(fundingId),
     enabled,
+    // 공개 화면은 실패 시 메시지 남긴 친구 이름으로 대신하고, 목록 시트는 재시도 UI를 직접 보여준다
+    meta: { skipGlobalError: true },
   });

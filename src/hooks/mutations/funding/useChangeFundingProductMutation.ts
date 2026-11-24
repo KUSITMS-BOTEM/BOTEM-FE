@@ -17,7 +17,7 @@ export const useChangeFundingProductMutation = (fundingId: number) => {
       queryClient.invalidateQueries({ queryKey: fundingResultQueryKey(fundingId) });
       queryClient.invalidateQueries({ queryKey: fundingManagementQueryKey(fundingId) });
       // 서프라이즈는 받는 사람이 바꾸며, 공개 상세의 상품·productChanged가 바뀐다
-      queryClient.invalidateQueries({ queryKey: surpriseRevealQueryKey(fundingId) });
+      queryClient.invalidateQueries({ queryKey: surpriseRevealQueryKey(fundingId), exact: true });
       // 펀딩에 쓰는 위시가 바뀌면 위시의 status·fundingId도 바뀐다 — ["wishes"] 접두사로 목록·홈 위시·상세를 함께 무효화한다
       queryClient.invalidateQueries({ queryKey: wishesQueryKey });
       queryClient.invalidateQueries({ queryKey: homeQueryKey });

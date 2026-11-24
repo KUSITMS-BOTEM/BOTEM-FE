@@ -7,6 +7,7 @@ import { fundingService } from "@/apis/funding/fundingService";
 import { useChooseGiftMutation } from "@/hooks/mutations/funding/useChooseGiftMutation";
 import { fundingManagementQueryKey } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { surpriseRevealQueryKey } from "@/hooks/queries/funding/useSurpriseRevealQuery";
+import { surpriseThankCardFriendsQueryKey } from "@/hooks/queries/funding/useSurpriseThankCardFriendsQuery";
 import { homeQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
 
 vi.mock("@/apis/funding/fundingService", () => ({
@@ -54,6 +55,19 @@ describe("useChooseGiftMutation", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidate).toHaveBeenCalledWith({ queryKey: fundingManagementQueryKey(7) });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: homeQueryKey });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: surpriseRevealQueryKey(7) });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: surpriseRevealQueryKey(7), exact: true });
+  });
+
+  it("공개 상세 아래 키인 고마운 친구 목록은 무효화하지 않는다", async () => {
+    vi.mocked(fundingService.chooseGift).mockResolvedValue(response);
+    queryClient.setQueryData(surpriseThankCardFriendsQueryKey(7), { friends: [] });
+    const { result } = renderHook(() => useChooseGiftMutation(7), { wrapper: createWrapper() });
+
+    result.current.mutate();
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(queryClient.getQueryState(surpriseThankCardFriendsQueryKey(7))?.isInvalidated).toBe(
+      false,
+    );
   });
 });
