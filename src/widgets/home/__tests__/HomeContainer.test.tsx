@@ -1,7 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
+import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { markWishPromptPending } from "@/utils/wish/wishPromptStorage";
 import HomeContainer from "@/widgets/home/HomeContainer";
 
@@ -22,10 +24,21 @@ vi.mock("@/widgets/funding/FundingOpenSheet", () => ({
   default: ({ open }: { open: boolean }) => (open ? <div>펀딩 열기 시트</div> : null),
 }));
 vi.mock("@/widgets/home/HomeFundingTab", () => ({
-  default: ({ onAddWish }: { onAddWish: () => void }) => (
-    <button type="button" onClick={onAddWish}>
-      펀딩 탭 위시 추가
-    </button>
+  default: ({
+    onAddWish,
+    onOpenFunding,
+  }: {
+    onAddWish: () => void;
+    onOpenFunding: (wish: object) => void;
+  }) => (
+    <>
+      <button type="button" onClick={onAddWish}>
+        펀딩 탭 위시 추가
+      </button>
+      <button type="button" onClick={() => onOpenFunding({ wishId: 1 })}>
+        추천 위시 펀딩 열기
+      </button>
+    </>
   ),
 }));
 vi.mock("@/widgets/home/GiftVerificationBannerLayer", () => ({
@@ -41,6 +54,7 @@ describe("HomeContainer", () => {
     push.mockClear();
     replace.mockClear();
     closedFundingsQuery.mockClear();
+    useErrorDialogStore.getState().closeErrorDialog();
     searchParams = new URLSearchParams();
     vi.mocked(useHomeFundingsQuery).mockReturnValue({
       data: { fundingCards: [], activeFundingCount: 0, canOpenFunding: true },
@@ -121,13 +135,71 @@ describe("HomeContainer", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it("개설이 불가능하면 펀딩 추가 메뉴를 표시하지 않는다", async () => {
+  it("개설이 불가능할 때 '펀딩 추가'를 고르면 메뉴를 닫고 시트 대신 한도 안내 Dialog를 연다", async () => {
     vi.mocked(useHomeFundingsQuery).mockReturnValue({
-      data: { fundingCards: [], activeFundingCount: 3, canOpenFunding: false },
+      data: { fundingCards: [], activeFundingCount: 5, canOpenFunding: false },
     } as unknown as ReturnType<typeof useHomeFundingsQuery>);
     render(<HomeContainer />);
 
     await userEvent.click(screen.getByRole("button", { name: "추가 메뉴 열기" }));
+    await userEvent.click(screen.getByRole("button", { name: "펀딩 추가" }));
+
+    expect(useErrorDialogStore.getState().message).toBe(ERROR_MESSAGES.FUNDING_019.message);
+    expect(screen.queryByText("펀딩 열기 시트")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "펀딩 추가" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "추가 메뉴 열기" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+  });
+
+  it("개설이 불가능할 때 추천 위시의 '펀딩 열기'를 누르면 시트 대신 한도 안내 Dialog를 연다", async () => {
+    vi.mocked(useHomeFundingsQuery).mockReturnValue({
+      data: { fundingCards: [], activeFundingCount: 5, canOpenFunding: false },
+    } as unknown as ReturnType<typeof useHomeFundingsQuery>);
+    render(<HomeContainer />);
+
+    await userEvent.click(screen.getByRole("button", { name: "추천 위시 펀딩 열기" }));
+
+    expect(useErrorDialogStore.getState().message).toBe(ERROR_MESSAGES.FUNDING_019.message);
+    expect(screen.queryByText("펀딩 열기 시트")).not.toBeInTheDocument();
+  });
+
+  it("자동 열기로 들어오면 펀딩 열기 시트를 열고 open 쿼리를 지운다", () => {
+    render(<HomeContainer autoOpenFunding />);
+
+    expect(screen.getByText("펀딩 열기 시트")).toBeInTheDocument();
+    expect(useErrorDialogStore.getState().message).toBeNull();
+    expect(replace).toHaveBeenCalledWith("/home", { scroll: false });
+  });
+
+  it("자동 열기가 개설 한도에 막히면 한 번만 안내하고 open 쿼리를 지운다", () => {
+    const limited = () =>
+      ({
+        data: { fundingCards: [], activeFundingCount: 5, canOpenFunding: false },
+      }) as unknown as ReturnType<typeof useHomeFundingsQuery>;
+    vi.mocked(useHomeFundingsQuery).mockImplementation(limited);
+    const { rerender } = render(<HomeContainer autoOpenFunding />);
+
+    expect(useErrorDialogStore.getState().message).toBe(ERROR_MESSAGES.FUNDING_019.message);
+    expect(screen.queryByText("펀딩 열기 시트")).not.toBeInTheDocument();
+    expect(replace).toHaveBeenCalledWith("/home", { scroll: false });
+
+    // 재조회로 새 data가 와도 다시 안내하지 않는다
+    useErrorDialogStore.getState().closeErrorDialog();
+    rerender(<HomeContainer autoOpenFunding />);
+
+    expect(useErrorDialogStore.getState().message).toBeNull();
+  });
+
+  it("홈 펀딩을 조회하기 전에는 펀딩 추가 메뉴를 표시하지 않는다", async () => {
+    vi.mocked(useHomeFundingsQuery).mockReturnValue({
+      data: undefined,
+    } as unknown as ReturnType<typeof useHomeFundingsQuery>);
+    render(<HomeContainer />);
+
+    await userEvent.click(screen.getByRole("button", { name: "추가 메뉴 열기" }));
+
     expect(screen.queryByRole("button", { name: "펀딩 추가" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "위시 추가" })).toBeInTheDocument();
   });

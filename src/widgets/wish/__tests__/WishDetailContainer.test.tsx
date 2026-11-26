@@ -5,6 +5,7 @@ import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { useWishToastStore } from "@/store/wishToastStore";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
+import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import { ApiError } from "@/types/api";
 import type { WishResponse } from "@/types/wish/wish";
@@ -17,6 +18,7 @@ vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
   useMyProfileQuery: () => ({ data: { name: "민지" } }),
 }));
 vi.mock("@/hooks/queries/wish/useWishQuery", () => ({ useWishQuery: vi.fn() }));
+vi.mock("@/hooks/queries/home/useHomeFundingsQuery", () => ({ useHomeFundingsQuery: vi.fn() }));
 vi.mock("@/hooks/mutations/wish/useDeleteWishMutation", () => ({
   useDeleteWishMutation: vi.fn(),
 }));
@@ -64,9 +66,20 @@ const mockWishQuery = (value: Partial<ReturnType<typeof useWishQuery>>) => {
   } as ReturnType<typeof useWishQuery>);
 };
 
+const mockHomeFundings = (canOpenFunding?: boolean, isPending = false, isError = false) => {
+  vi.mocked(useHomeFundingsQuery).mockReturnValue({
+    data: canOpenFunding === undefined ? undefined : { canOpenFunding },
+    isPending,
+    isError,
+  } as unknown as ReturnType<typeof useHomeFundingsQuery>);
+};
+
+const LIMIT_MESSAGE = "펀딩은 최대 5개까지만 열 수 있어요";
+
 describe("WishDetailContainer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockHomeFundings(true);
     vi.mocked(useDeleteWishMutation).mockReturnValue({
       mutate: deleteWish,
       isPending: false,
@@ -230,6 +243,56 @@ describe("WishDetailContainer", () => {
     expect(
       screen.queryByText("펀딩 진행중인 위시 상품은 삭제할 수 없어요"),
     ).not.toBeInTheDocument();
+  });
+
+  it("펀딩 개설 한도에 걸리면 CTA를 비활성화하고 안내 문구를 보여준다", () => {
+    mockHomeFundings(false);
+    mockWishQuery({ data: mockWish });
+
+    render(<WishDetailContainer />);
+
+    expect(screen.getByRole("button", { name: "이 상품으로 펀딩 열기" })).toBeDisabled();
+    expect(screen.getByText(LIMIT_MESSAGE)).toBeInTheDocument();
+  });
+
+  it("개설 한도에 걸려도 펀딩 중인 위시는 펀딩 보러가기를 막지 않는다", () => {
+    mockHomeFundings(false);
+    mockWishQuery({ data: { ...mockWish, status: "FUNDING", fundingId: 5 } });
+
+    render(<WishDetailContainer />);
+
+    expect(screen.getByRole("button", { name: "해당 상품 펀딩 보러가기" })).toBeEnabled();
+    expect(screen.queryByText(LIMIT_MESSAGE)).not.toBeInTheDocument();
+  });
+
+  it("개설 가능 여부를 조회하는 동안에는 CTA를 비활성화하고 안내 문구는 보여주지 않는다", () => {
+    mockHomeFundings(undefined, true);
+    mockWishQuery({ data: mockWish });
+
+    render(<WishDetailContainer />);
+
+    expect(screen.getByRole("button", { name: "이 상품으로 펀딩 열기" })).toBeDisabled();
+    expect(screen.queryByText(LIMIT_MESSAGE)).not.toBeInTheDocument();
+  });
+
+  it("개설 가능 여부 조회에 실패하면 CTA를 막지 않는다", () => {
+    mockHomeFundings(undefined);
+    mockWishQuery({ data: mockWish });
+
+    render(<WishDetailContainer />);
+
+    expect(screen.getByRole("button", { name: "이 상품으로 펀딩 열기" })).toBeEnabled();
+    expect(screen.queryByText(LIMIT_MESSAGE)).not.toBeInTheDocument();
+  });
+
+  it("재조회에 실패하면 이전 한도 값으로 CTA를 막지 않는다", () => {
+    mockHomeFundings(false, false, true);
+    mockWishQuery({ data: mockWish });
+
+    render(<WishDetailContainer />);
+
+    expect(screen.getByRole("button", { name: "이 상품으로 펀딩 열기" })).toBeEnabled();
+    expect(screen.queryByText(LIMIT_MESSAGE)).not.toBeInTheDocument();
   });
 
   it("인증 에러(AUTH_*)면 랜딩('/')으로 replace한다", () => {

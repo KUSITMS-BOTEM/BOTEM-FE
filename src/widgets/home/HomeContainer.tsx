@@ -7,6 +7,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useHomeWishesQuery } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useGiftVerificationBannerVariant } from "@/hooks/useGiftVerificationBannerSession";
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { useErrorDialogStore } from "@/store/errorDialogStore";
 import type { FundingWish } from "@/types/funding/funding";
 import type { HomeWishCardResponse } from "@/types/home/home";
 import { getHomePath } from "@/utils/home/getHomePath";
@@ -45,20 +47,24 @@ export default function HomeContainer({ autoOpenFunding = false }: HomeContainer
   // 추천 위시 카드에서 열면 위시 선택을 건너뛰고 이 위시의 펀딩 정보부터 시작한다
   const [fundingWish, setFundingWish] = useState<FundingWish | null>(null);
   const giftVerificationBannerVariant = useGiftVerificationBannerVariant();
+  const openErrorDialog = useErrorDialogStore(state => state.openErrorDialog);
 
-  // 공유 화면의 "나도 만들기"(/home?open=funding)로 들어오면 한 번 열고 쿼리를 지운다
-  const [autoOpenHandled, setAutoOpenHandled] = useState(false);
-  const shouldAutoOpen = autoOpenFunding && !!homeFundings && !autoOpenHandled;
-  if (shouldAutoOpen) {
-    setAutoOpenHandled(true);
+  // 공유 화면의 "나도 만들기"(/home?open=funding)로 들어오면 한 번 열거나 한도를 안내하고 쿼리를 지운다
+  const [autoOpenResult, setAutoOpenResult] = useState<"opened" | "limited" | null>(null);
+  if (autoOpenFunding && homeFundings && !autoOpenResult) {
+    setAutoOpenResult(homeFundings.canOpenFunding ? "opened" : "limited");
     if (homeFundings.canOpenFunding) setFundingSheetOpen(true);
   }
+  // 외부 store는 렌더 중에 갱신할 수 없다. router 참조가 바뀌어도 다시 안내하지 않도록 아래 effect와 나눈다
   useEffect(() => {
-    if (!autoOpenHandled) return;
+    if (autoOpenResult === "limited") openErrorDialog(ERROR_MESSAGES.FUNDING_019.message);
+  }, [autoOpenResult, openErrorDialog]);
+  useEffect(() => {
+    if (!autoOpenResult) return;
     // searchParams를 의존성에 넣으면 replace로 쿼리가 바뀔 때마다 다시 실행되므로 현재 URL을 직접 읽는다
     const current = new URLSearchParams(window.location.search);
     router.replace(getHomePath(current, { open: null }), { scroll: false });
-  }, [autoOpenHandled, router]);
+  }, [autoOpenResult, router]);
 
   // 홈 page가 searchParams를 읽는 동적 라우트라 router.replace는 탭마다 서버를 다시 거친다. history API는 useSearchParams만 갱신한다
   const changeSegment = (value: SegmentValue) =>
@@ -70,7 +76,12 @@ export default function HomeContainer({ autoOpenFunding = false }: HomeContainer
 
   const goToRecommendedWish = () => router.push(RECOMMENDED_WISH_PATH);
   const openFundingSheet = (wish: FundingWish | null = null) => {
-    if (!homeFundings?.canOpenFunding) return;
+    if (!homeFundings) return;
+    // 작성을 마친 뒤 제출에서야 실패하지 않도록 진입 시점에 한도를 알린다
+    if (!homeFundings.canOpenFunding) {
+      openErrorDialog(ERROR_MESSAGES.FUNDING_019.message);
+      return;
+    }
     setFundingWish(wish);
     setFundingSheetOpen(true);
   };
@@ -86,9 +97,8 @@ export default function HomeContainer({ autoOpenFunding = false }: HomeContainer
     else openFundingSheet();
   };
 
-  const floatingMenuItems = homeFundings?.canOpenFunding
-    ? FLOATING_MENU_ITEMS
-    : FLOATING_MENU_ITEMS.slice(0, 1);
+  // 조회 전에는 개설 가능 여부를 알 수 없어 펀딩 추가를 감춘다
+  const floatingMenuItems = homeFundings ? FLOATING_MENU_ITEMS : FLOATING_MENU_ITEMS.slice(0, 1);
 
   return (
     <div className="bg-semantic-background-lower flex min-h-dvh w-full flex-col overflow-x-hidden pb-17">
