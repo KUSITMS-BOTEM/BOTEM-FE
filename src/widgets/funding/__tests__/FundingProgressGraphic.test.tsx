@@ -36,6 +36,19 @@ describe("FundingProgressGraphic", () => {
     expect(countSvg(container)).toBe(2);
   });
 
+  it.each([
+    [1, 210.7],
+    [19, 210.7],
+    [50, 98.7],
+    [99, -13.3],
+    [100, -81.3],
+  ])("달성률 %i%%면 물결 위치(top)가 %f px이다", (percent, top) => {
+    const { container } = render(<FundingProgressGraphic color="orange" percent={percent} />);
+    const wave = container.querySelector<HTMLElement>('[style*="top:"]');
+
+    expect(parseFloat(wave?.style.top ?? "")).toBeCloseTo(top);
+  });
+
   it("모션 감소 설정이어도 같은 레이어를 정지 상태로 그린다", () => {
     vi.mocked(useReducedMotion).mockReturnValueOnce(true);
 

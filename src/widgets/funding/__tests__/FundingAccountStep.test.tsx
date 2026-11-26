@@ -105,9 +105,12 @@ describe("FundingAccountStep", () => {
     expect(screen.getByLabelText("계좌번호")).toHaveValue("100159014821");
   });
 
-  it("채워진 계좌번호를 지우면 다시 채우지 않는다", async () => {
+  it("대표 계좌를 불러오기 전에 입력한 값을 지워도 대표 계좌로 다시 채우지 않는다", async () => {
+    mockAccounts(undefined);
+    const { rerender } = render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
+    await userEvent.type(screen.getByLabelText("계좌번호"), "123");
     mockAccounts([account({})]);
-    render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
+    rerender(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
 
     await userEvent.clear(screen.getByLabelText("계좌번호"));
 

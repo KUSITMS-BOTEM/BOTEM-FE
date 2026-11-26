@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
 import Chip from "@/components/Chip";
-import Combobox from "@/components/Combobox";
 import InfoBox from "@/components/InfoBox";
 import SelectBox from "@/components/SelectBox";
 import Title from "@/components/Title";
@@ -17,6 +16,7 @@ import { formatDeadline, getTodayDate } from "@/utils/funding/formatDeadline";
 import { getBirthdayReveal } from "@/utils/funding/getBirthdayReveal";
 import { getRevealDateRange } from "@/utils/funding/getRevealDateRange";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
+import TargetAmountField from "@/widgets/funding/TargetAmountField";
 
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
 const TITLE_TRANSITION = { delay: 0.15, duration: 0.45, ease: EASE_STANDARD };
@@ -29,7 +29,6 @@ const PUSH_DOWN_TRANSITION = { duration: 0.4, ease: EASE_STANDARD };
 // 하단 고정 CTA에 마지막 필드가 가려지지 않게 비운다
 const CTA_CLEARANCE_CLASS = "pb-[calc(6rem+env(safe-area-inset-bottom))]";
 const TEXT_ENTRY_SELECTOR = 'textarea, input:not([type="date"])';
-const BASE_PRICE_CHIP = { label: "기본 상품 가격", value: "base-price" };
 
 type Stage = "amount" | "deadline" | "reveal";
 
@@ -206,31 +205,18 @@ export default function SurpriseInfoStep({
         // 입력 영역이 다 나타난 뒤에 포커스해야 모션 중 키보드가 올라와 레이아웃이 흔들리지 않는다
         onAnimationComplete={() => focusIfCreating(inputRef.current)}
         className="flex w-full flex-col gap-2">
-        <Combobox
+        <TargetAmountField
           ref={inputRef}
-          label="목표 금액"
-          suffix="원"
-          inputMode="numeric"
-          enterKeyHint="done"
-          autoComplete="off"
-          chips={showDeadline ? undefined : [BASE_PRICE_CHIP]}
-          onChipSelect={() => {
+          price={wish.price}
+          value={targetAmount}
+          showPriceChip={!showDeadline}
+          onChange={setTargetAmount}
+          onPriceChipSelect={() => {
             setTargetAmount(String(wish.price));
             // 칩 클릭은 input blur를 일으키지 않으므로 마감일 단계를 직접 연다
             if (wish.price > 0) setShowDeadline(true);
           }}
-          value={targetAmount ? Number(targetAmount).toLocaleString("ko-KR") : ""}
-          onChange={event => {
-            const digits = event.target.value.replace(/\D/g, "");
-            // 상품 가격보다 큰 목표 금액은 받을 수 없어 가격으로 맞춘다
-            setTargetAmount(
-              wish.price > 0 && Number(digits) > wish.price ? String(wish.price) : digits,
-            );
-          }}
           onBlur={revealDeadline}
-          onKeyDown={event => {
-            if (event.key === "Enter") event.currentTarget.blur();
-          }}
         />
         {!showDeadline && <InfoBox text={`기본 상품 가격은 ${basePriceText}원이에요`} />}
       </motion.div>
