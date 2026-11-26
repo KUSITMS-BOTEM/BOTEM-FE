@@ -8,6 +8,7 @@ export const FUNDING_DETAIL: FundingDetailResponse = {
   celebrantName: "민재",
   celebrantProfileImageUrl: null,
   targetAmount: 123456789,
+  recommendedAmount: null,
   product: {
     name: "소니 WH-1000XM5",
     imageUrl: "/a.png",

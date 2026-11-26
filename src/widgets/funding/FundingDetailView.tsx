@@ -80,6 +80,8 @@ const MOCK_FUNDING = {
   // 보태기 버튼은 참여자 화면(guest)에만 있고, 그쪽은 공유용 상세 응답 값이 덮어쓴다
   canContributeAmount: true,
   canParticipate: true,
+  // 개설자 화면은 보태기 시트를 열지 않아 값이 없다
+  recommendedAmount: undefined as number | undefined,
   // 개설자는 자기 펀딩에 금액을 보태지 않아 개설자 응답에는 없다
   remainingAmount: 0,
   extended: false,
@@ -120,6 +122,7 @@ const toShareFundingView = (detail: FundingDetailResponse) => ({
   pendingPercentage: detail.pendingPercentage,
   remainingAmount: detail.remainingAmount,
   targetAmount: detail.targetAmount,
+  recommendedAmount: detail.recommendedAmount ?? undefined,
   participantCount: detail.participantCount,
   profiles: detail.participants.slice(0, MAX_PROFILES).map((participant, index) => ({
     color: PROFILE_COLORS[index % PROFILE_COLORS.length],
@@ -561,6 +564,7 @@ export default function FundingDetailView({
           open={isContributeOpen}
           hostName={funding.hostName}
           maxAmount={funding.remainingAmount}
+          recommendedAmount={funding.recommendedAmount}
           onClose={() => setIsContributeOpen(false)}
           onExit={requestExit}
           onNext={amount => {
