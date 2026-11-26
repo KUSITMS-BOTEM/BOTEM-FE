@@ -80,6 +80,9 @@ export default function Dialog({ open, title, description, className, ...props }
       className={cn(
         "bg-semantic-fill-default/70 m-auto w-80 flex-col rounded-3xl p-0 shadow-[0_4px_32px_var(--color-semantic-shadow-default)] backdrop-blur-[15px] outline-none open:flex",
         "backdrop:bg-semantic-background-dim",
+        // 닫힘 모션은 디자인 TBD. 동작 줄이기 설정에서는 확대 없이 페이드만 남긴다
+        "animate-[dialog-enter_calc(var(--duration-move)*1ms)_var(--ease-standard)_calc(var(--delay-stagger)*1ms)_backwards] motion-reduce:[--scale-dialog:1]",
+        "backdrop:animate-[dim-enter_calc(var(--duration-move)*1ms)_var(--ease-standard)_backwards]",
         className,
       )}>
       <div className="flex min-h-[102px] w-full flex-col gap-2 px-6 pt-6 pb-2 [letter-spacing:var(--letter-spacing-default)] break-words">

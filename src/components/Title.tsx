@@ -51,7 +51,7 @@ export default function Title({
         )}
       </div>
       {showButton && (
-        <Button color="neutral" variant="weak" size="small" onClick={onButtonClick}>
+        <Button color="neutral" variant="stroke" size="small" onClick={onButtonClick}>
           {buttonLabel}
         </Button>
       )}

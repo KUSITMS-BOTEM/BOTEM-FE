@@ -60,6 +60,22 @@ describe("FundingInfoStep", () => {
     expect(input).toHaveValue("123,456");
   });
 
+  it("상품 가격보다 큰 목표 금액을 입력하면 상품 가격으로 제한된다", () => {
+    renderStep();
+
+    fireEvent.change(screen.getByLabelText("목표 금액"), { target: { value: "999999" } });
+
+    expect(screen.getByLabelText("목표 금액")).toHaveValue("468,000");
+  });
+
+  it("상품 가격이 0원이면 목표 금액을 0으로 고정하지 않고 입력한 값을 그대로 둔다", () => {
+    render(<FundingInfoStep wish={{ ...wish, price: 0 }} onNext={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText("목표 금액"), { target: { value: "5000" } });
+
+    expect(screen.getByLabelText("목표 금액")).toHaveValue("5,000");
+  });
+
   it("직접 입력한 뒤 칩을 누르면 목표 금액이 위시 가격으로 바뀐다", async () => {
     renderStep();
 

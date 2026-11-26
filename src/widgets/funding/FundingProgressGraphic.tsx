@@ -50,11 +50,19 @@ const WAVE_TRANSITION = {
 const BOX = "absolute top-[37px] left-[25px] flex size-[358.42px] items-center justify-center";
 const SHAPE = "relative size-[287.114px] flex-none rotate-[-16.97deg]";
 
+// 물결 세로 이동량(px). 10% 단위 내림이고 50%가 Figma 원래 위치(0), 100%는 상자를 꽉 채운다
+function getWaveOffset(percent: number) {
+  if (percent >= 100) return -180;
+  return (5 - Math.max(1, Math.floor(percent / 10))) * 28;
+}
+
 type FundingProgressGraphicProps = {
   color: FundingCardColor;
+  /** 확정 달성률 (0~100) */
+  percent: number;
 };
 
-export default function FundingProgressGraphic({ color }: FundingProgressGraphicProps) {
+export default function FundingProgressGraphic({ color, percent }: FundingProgressGraphicProps) {
   const reduceMotion = useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
   const inView = useInView(rootRef);
@@ -103,7 +111,9 @@ export default function FundingProgressGraphic({ color }: FundingProgressGraphic
             BOX,
             "[mask-image:url(/funding-progress-card/wave-mask.svg)] [mask-mode:alpha] [mask-size:100%_100%] [mask-repeat:no-repeat] mix-blend-overlay",
           )}>
-          <div className="absolute top-[98.7px] left-[-68.89px] flex h-[291.912px] w-[462.203px] items-center justify-center">
+          <div
+            style={{ top: 98.7 + getWaveOffset(percent) }}
+            className="absolute left-[-68.89px] flex h-[291.912px] w-[462.203px] items-center justify-center">
             <div className="flex-none transform-[matrix(0.9913093317327207,-0.13155187134275648,0.13502782421393877,0.9908418132611143,0,0)]">
               <motion.div {...wave} className="relative h-[236.992px] w-[433.974px]">
                 <Wave className="absolute inset-0 block size-full max-w-none" />

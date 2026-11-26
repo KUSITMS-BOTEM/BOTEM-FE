@@ -13,33 +13,46 @@ const countSvg = (container: HTMLElement) => container.querySelectorAll("svg").l
 
 describe("FundingProgressGraphic", () => {
   it("장식 요소라 스크린리더에서 숨긴다", () => {
-    const { container } = render(<FundingProgressGraphic color="orange" />);
+    const { container } = render(<FundingProgressGraphic color="orange" percent={50} />);
 
     expect(container.firstElementChild).toHaveAttribute("aria-hidden", "true");
   });
 
   it("orange는 그림자·유리 외곽선·물결 3개 레이어를 그린다", () => {
-    const { container } = render(<FundingProgressGraphic color="orange" />);
+    const { container } = render(<FundingProgressGraphic color="orange" percent={50} />);
 
     expect(countSvg(container)).toBe(3);
   });
 
   it("lime만 유리 채우기가 하나 더 있다", () => {
-    const { container } = render(<FundingProgressGraphic color="lime" />);
+    const { container } = render(<FundingProgressGraphic color="lime" percent={50} />);
 
     expect(countSvg(container)).toBe(4);
   });
 
   it("disabled는 물결 없이 그림자·유리 외곽선만 그린다", () => {
-    const { container } = render(<FundingProgressGraphic color="disabled" />);
+    const { container } = render(<FundingProgressGraphic color="disabled" percent={50} />);
 
     expect(countSvg(container)).toBe(2);
+  });
+
+  it.each([
+    [1, 210.7],
+    [19, 210.7],
+    [50, 98.7],
+    [99, -13.3],
+    [100, -81.3],
+  ])("달성률 %i%%면 물결 위치(top)가 %f px이다", (percent, top) => {
+    const { container } = render(<FundingProgressGraphic color="orange" percent={percent} />);
+    const wave = container.querySelector<HTMLElement>('[style*="top:"]');
+
+    expect(parseFloat(wave?.style.top ?? "")).toBeCloseTo(top);
   });
 
   it("모션 감소 설정이어도 같은 레이어를 정지 상태로 그린다", () => {
     vi.mocked(useReducedMotion).mockReturnValueOnce(true);
 
-    const { container } = render(<FundingProgressGraphic color="orange" />);
+    const { container } = render(<FundingProgressGraphic color="orange" percent={50} />);
 
     expect(countSvg(container)).toBe(3);
   });

@@ -138,7 +138,7 @@ export default function FundingProgressCard({
         )}
         <div aria-hidden className={cn("absolute inset-0 rounded-4xl blur-[1px]", theme.blur)} />
         <div aria-hidden className={cn("absolute inset-0 rounded-4xl", FILL, theme.stops)} />
-        <FundingProgressGraphic color={color} />
+        <FundingProgressGraphic color={color} percent={percent} />
         <div className="text-semantic-text-on-fill relative flex min-h-0 w-full flex-1 flex-col justify-between">
           <ProductInfo
             productImageUrl={productImageUrl}

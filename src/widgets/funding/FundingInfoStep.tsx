@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
-import Combobox from "@/components/Combobox";
 import InfoBox from "@/components/InfoBox";
 import SelectBox from "@/components/SelectBox";
 import TextArea from "@/components/TextArea";
@@ -14,6 +13,7 @@ import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
 import { addDays } from "@/utils/funding/addDays";
 import { formatDeadline, getTodayDate } from "@/utils/funding/formatDeadline";
+import TargetAmountField from "@/widgets/funding/TargetAmountField";
 
 // 시트가 이미 떠 있는 상태에서 빈 화면 → Title → 입력 영역 순서로 나타난다 (AddWishBottomSheet 모션 기준)
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
@@ -40,7 +40,6 @@ const STAGE_TITLE: Record<Stage, { title: string; description?: string }> = {
 };
 // 위에 새 필드가 생겨 아래 필드가 밀려 내려갈 때는 등장 delay 없이 바로 따라 내려간다
 const PUSH_DOWN_TRANSITION = { duration: 0.4, ease: EASE_STANDARD };
-const BASE_PRICE_CHIP = { label: "기본 상품 가격", value: "base-price" };
 
 export type FundingInfoValues = {
   targetAmount: string;
@@ -206,27 +205,20 @@ export default function FundingInfoStep({
         // 입력 영역이 다 나타난 뒤에 포커스해야 모션 중 키보드가 올라와 레이아웃이 흔들리지 않는다
         onAnimationComplete={() => focusIfCreating(inputRef.current)}
         className="flex w-full flex-col gap-2">
-        <Combobox
+        <TargetAmountField
           ref={inputRef}
-          label="목표 금액"
-          suffix="원"
-          inputMode="numeric"
-          enterKeyHint="done"
-          autoComplete="off"
-          chips={showDeadline ? undefined : [BASE_PRICE_CHIP]}
-          onChipSelect={() => {
+          price={wish.price}
+          value={targetAmount}
+          showPriceChip={!showDeadline}
+          onChange={setTargetAmount}
+          onPriceChipSelect={() => {
             setTargetAmount(String(wish.price));
             // 칩 클릭은 input blur를 일으키지 않으므로 마감일 단계를 직접 연다
             if (wish.price > 0) setShowDeadline(true);
           }}
-          value={targetAmount ? Number(targetAmount).toLocaleString("ko-KR") : ""}
-          onChange={event => setTargetAmount(event.target.value.replace(/\D/g, ""))}
-          onBlur={revealDeadline}
-          onKeyDown={event => {
-            if (event.key === "Enter") event.currentTarget.blur();
-          }}
-        />
-        {!showDeadline && <InfoBox text={`기본 상품 가격은 ${basePriceText}원이에요`} />}
+          onBlur={revealDeadline}>
+          {!showDeadline && <InfoBox text={`기본 상품 가격은 ${basePriceText}원이에요`} />}
+        </TargetAmountField>
       </motion.div>
       {showPledge && (
         // 키보드가 올라온 터치 기기에서는 CTA가 키보드 위에 떠 입력을 가리므로 모션 없이 숨긴다
