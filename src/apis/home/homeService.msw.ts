@@ -18,8 +18,9 @@ type MockHomeScenario =
   | "WISH_ONLY"
   | "EMPTY";
 
-// 홈 분기(마감·진행 중 / 진행 중만 / 1개 / 마감+확인 대기 / 마감+확인 대기 없음 / 마감+참여자 0명 / 마감 전 100% 달성 / 서프라이즈 / 위시만 / 빈 홈)를 눈으로 확인할 때 이 값만 바꾼다
-const MOCK_HOME_SCENARIO = "IN_PROGRESS" as MockHomeScenario;
+// 홈 분기(마감·진행 중 / 진행 중만(개설 한도) / 1개 / 마감+확인 대기 / 마감+확인 대기 없음 / 마감+참여자 0명 / 마감 전 100% 달성 / 서프라이즈 / 위시만 / 빈 홈)를 눈으로 확인할 때 이 값만 바꾼다
+// 기본값은 개설 흐름이 막히지 않도록 한도 미만 시나리오로 둔다
+const MOCK_HOME_SCENARIO = "SINGLE_FUNDING" as MockHomeScenario;
 
 const [product1, product2, product3, product4] = MOCK_RECOMMENDED_PRODUCTS;
 

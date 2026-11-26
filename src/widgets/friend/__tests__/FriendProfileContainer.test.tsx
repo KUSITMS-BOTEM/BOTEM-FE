@@ -83,15 +83,33 @@ describe("FriendProfileContainer", () => {
     expect(dialog).not.toHaveAttribute("open");
   });
 
-  it("개설 가능 여부를 조회하는 동안에는 '서프라이즈 열기'를 눌러도 아무것도 열지 않는다", async () => {
+  it("개설 가능 여부를 조회하는 동안에는 '서프라이즈 열기'를 눌러도 열지 않고, 조회가 끝나면 위시 선택을 연다", async () => {
     useHomeFundingsQuery.mockReturnValue({ data: undefined, isPending: true });
+    mockQuery({ data: profile() });
+    const user = userEvent.setup();
+    const { rerender } = render(<FriendProfileContainer friendId="5" />);
+
+    await user.click(screen.getByRole("button", { name: /서프라이즈 열기/ }));
+
+    expect(screen.queryByRole("button", { name: "모자 선택하기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    useHomeFundingsQuery.mockReturnValue({ data: { canOpenFunding: true }, isPending: false });
+    rerender(<FriendProfileContainer friendId="5" />);
+
+    expect(screen.queryByRole("button", { name: "모자 선택하기" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /서프라이즈 열기/ }));
+    expect(screen.getByRole("button", { name: "모자 선택하기" })).toBeInTheDocument();
+  });
+
+  it("개설 가능 여부 조회에 실패하면 막지 않고 위시 선택을 연다", async () => {
+    useHomeFundingsQuery.mockReturnValue({ data: undefined, isPending: false });
     mockQuery({ data: profile() });
     render(<FriendProfileContainer friendId="5" />);
 
     await userEvent.setup().click(screen.getByRole("button", { name: /서프라이즈 열기/ }));
 
-    expect(screen.queryByRole("button", { name: "모자 선택하기" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "모자 선택하기" })).toBeInTheDocument();
   });
 
   it("route의 friendId로 친구 프로필을 조회한다", () => {

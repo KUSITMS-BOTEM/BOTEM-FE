@@ -43,6 +43,7 @@ describe("HomeContainer", () => {
     push.mockClear();
     replace.mockClear();
     closedFundingsQuery.mockClear();
+    useErrorDialogStore.getState().closeErrorDialog();
     searchParams = new URLSearchParams();
     vi.mocked(useHomeFundingsQuery).mockReturnValue({
       data: { fundingCards: [], activeFundingCount: 0, canOpenFunding: true },
@@ -139,7 +140,33 @@ describe("HomeContainer", () => {
       "aria-expanded",
       "false",
     );
+  });
+
+  it("자동 열기로 들어오면 펀딩 열기 시트를 열고 open 쿼리를 지운다", () => {
+    render(<HomeContainer autoOpenFunding />);
+
+    expect(screen.getByText("펀딩 열기 시트")).toBeInTheDocument();
+    expect(useErrorDialogStore.getState().message).toBeNull();
+    expect(replace).toHaveBeenCalledWith("/home", { scroll: false });
+  });
+
+  it("자동 열기가 개설 한도에 막히면 한 번만 안내하고 open 쿼리를 지운다", () => {
+    const limited = () =>
+      ({
+        data: { fundingCards: [], activeFundingCount: 5, canOpenFunding: false },
+      }) as unknown as ReturnType<typeof useHomeFundingsQuery>;
+    vi.mocked(useHomeFundingsQuery).mockImplementation(limited);
+    const { rerender } = render(<HomeContainer autoOpenFunding />);
+
+    expect(useErrorDialogStore.getState().message).toBe(ERROR_MESSAGES.FUNDING_019.message);
+    expect(screen.queryByText("펀딩 열기 시트")).not.toBeInTheDocument();
+    expect(replace).toHaveBeenCalledWith("/home", { scroll: false });
+
+    // 재조회로 새 data가 와도 다시 안내하지 않는다
     useErrorDialogStore.getState().closeErrorDialog();
+    rerender(<HomeContainer autoOpenFunding />);
+
+    expect(useErrorDialogStore.getState().message).toBeNull();
   });
 
   it("홈 펀딩을 조회하기 전에는 펀딩 추가 메뉴를 표시하지 않는다", async () => {

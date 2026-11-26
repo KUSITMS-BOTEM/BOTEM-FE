@@ -162,6 +162,15 @@ describe("FriendWishDetailContainer", () => {
     expect(screen.getByRole("button", { name: "친구 몰래 서프라이즈 열기" })).toBeDisabled();
   });
 
+  it("개설 가능 여부 조회에 실패하면 서프라이즈 CTA를 막지 않는다", () => {
+    useHomeFundingsQuery.mockReturnValue({ data: undefined, isPending: false });
+    mockQuery({ data: profile });
+    render(<FriendWishDetailContainer friendId="5" wishId="1" />);
+
+    expect(screen.getByRole("button", { name: "친구 몰래 서프라이즈 열기" })).toBeEnabled();
+    expect(screen.queryByText("펀딩은 최대 5개까지만 열 수 있어요")).not.toBeInTheDocument();
+  });
+
   it("프로필 조회에 실패해도 안내 문구를 보여준다", () => {
     mockQuery({ data: undefined });
     render(<FriendWishDetailContainer friendId="5" wishId="1" />);

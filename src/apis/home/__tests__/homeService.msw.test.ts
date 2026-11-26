@@ -6,6 +6,7 @@ describe("homeHandlers", () => {
   const server = setupServer(...createHomeHandlers("CLOSED_OPEN"));
 
   beforeAll(() => server.listen());
+  afterEach(() => server.resetHandlers());
   afterAll(() => server.close());
 
   it("마감 후 확인 대기가 없으면 GET /api/home/fundings는 open 카드를 반환한다", async () => {
@@ -35,7 +36,6 @@ describe("homeHandlers", () => {
     expect(body.data.fundingCards).toHaveLength(5);
     expect(body.data.activeFundingCount).toBe(5);
     expect(body.data.canOpenFunding).toBe(false);
-    server.resetHandlers();
   });
 
   it("펀딩이 있으면 GET /api/home/no-funding은 409와 HOME_001을 반환한다", async () => {

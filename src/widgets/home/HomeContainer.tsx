@@ -49,19 +49,22 @@ export default function HomeContainer({ autoOpenFunding = false }: HomeContainer
   const giftVerificationBannerVariant = useGiftVerificationBannerVariant();
   const openErrorDialog = useErrorDialogStore(state => state.openErrorDialog);
 
-  // 공유 화면의 "나도 만들기"(/home?open=funding)로 들어오면 한 번 열고 쿼리를 지운다
-  const [autoOpenHandled, setAutoOpenHandled] = useState(false);
-  const shouldAutoOpen = autoOpenFunding && !!homeFundings && !autoOpenHandled;
-  if (shouldAutoOpen) {
-    setAutoOpenHandled(true);
+  // 공유 화면의 "나도 만들기"(/home?open=funding)로 들어오면 한 번 열거나 한도를 안내하고 쿼리를 지운다
+  const [autoOpenResult, setAutoOpenResult] = useState<"opened" | "limited" | null>(null);
+  if (autoOpenFunding && homeFundings && !autoOpenResult) {
+    setAutoOpenResult(homeFundings.canOpenFunding ? "opened" : "limited");
     if (homeFundings.canOpenFunding) setFundingSheetOpen(true);
   }
+  // 외부 store는 렌더 중에 갱신할 수 없다. router 참조가 바뀌어도 다시 안내하지 않도록 아래 effect와 나눈다
   useEffect(() => {
-    if (!autoOpenHandled) return;
+    if (autoOpenResult === "limited") openErrorDialog(ERROR_MESSAGES.FUNDING_019.message);
+  }, [autoOpenResult, openErrorDialog]);
+  useEffect(() => {
+    if (!autoOpenResult) return;
     // searchParams를 의존성에 넣으면 replace로 쿼리가 바뀔 때마다 다시 실행되므로 현재 URL을 직접 읽는다
     const current = new URLSearchParams(window.location.search);
     router.replace(getHomePath(current, { open: null }), { scroll: false });
-  }, [autoOpenHandled, router]);
+  }, [autoOpenResult, router]);
 
   // 홈 page가 searchParams를 읽는 동적 라우트라 router.replace는 탭마다 서버를 다시 거친다. history API는 useSearchParams만 갱신한다
   const changeSegment = (value: SegmentValue) =>
