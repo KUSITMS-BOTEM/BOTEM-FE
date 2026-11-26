@@ -289,7 +289,7 @@ export default function FundingDetailView({
             isGuest && "pb-[calc(8rem+env(safe-area-inset-bottom))]",
           )}>
           <div className="flex flex-col gap-2">
-            <div className="flex items-start gap-2.5 py-1">
+            <div className="flex items-center gap-2.5 py-1">
               <ProfilePink aria-hidden className="size-6 shrink-0" />
               <h1 className="text-semantic-text-strong min-w-0 [letter-spacing:var(--letter-spacing-default)] whitespace-pre-line [font:var(--semantic-title-a2-z-large)]">
                 {funding.title}
