@@ -47,11 +47,11 @@ export default function FundingAccountStep({
     setBank(defaultAccount.bank);
   };
 
-  // 대표 계좌는 한 번만 채운다. 조회가 끝나기 전에 입력한 값은 덮어쓰지 않고, 지운 값도 되살리지 않는다
+  // 대표 계좌는 한 번만 채운다. 사용자가 먼저 입력을 바꿨다면(지운 경우 포함) 채우지 않는다
   const [prefilled, setPrefilled] = useState(Boolean(seed));
   if (defaultAccount && !prefilled) {
     setPrefilled(true);
-    if (!accountNumber && !bank) fillDefaultAccount();
+    fillDefaultAccount();
   }
 
   return (
@@ -59,8 +59,14 @@ export default function FundingAccountStep({
       <PayoutAccountForm
         accountNumber={accountNumber}
         bank={bank}
-        onAccountNumberChange={setAccountNumber}
-        onBankChange={setBank}
+        onAccountNumberChange={value => {
+          setPrefilled(true);
+          setAccountNumber(value);
+        }}
+        onBankChange={code => {
+          setPrefilled(true);
+          setBank(code);
+        }}
         animated={!seed}
       />
       <BottomCTA

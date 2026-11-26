@@ -117,6 +117,18 @@ describe("FundingAccountStep", () => {
     expect(screen.getByLabelText("계좌번호")).toHaveValue("");
   });
 
+  it("대표 계좌를 불러오기 전에 입력했다가 지우면 불러온 뒤에도 채우지 않는다", async () => {
+    mockAccounts(undefined);
+    const { rerender } = render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
+    await userEvent.type(screen.getByLabelText("계좌번호"), "123");
+    await userEvent.clear(screen.getByLabelText("계좌번호"));
+
+    mockAccounts([account({})]);
+    rerender(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
+
+    expect(screen.getByLabelText("계좌번호")).toHaveValue("");
+  });
+
   it("이전을 누르면 onPrev를 호출한다", async () => {
     mockAccounts([]);
     const onPrev = vi.fn();
