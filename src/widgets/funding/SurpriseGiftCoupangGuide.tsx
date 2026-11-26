@@ -60,7 +60,7 @@ export default function SurpriseGiftCoupangGuide({
         />
         <IconShare
           aria-hidden
-          className="text-semantic-text-primary absolute top-[228px] left-[259px] size-[18px]"
+          className="text-semantic-text-primary absolute top-[226.2px] left-[257.2px] size-[21.6px]"
         />
       </div>
       <figcaption className="bg-semantic-fill-neutral-weak text-semantic-text-primary rounded-medium flex w-full items-center justify-center px-2 py-1 tracking-(--letter-spacing-default) [font:var(--semantic-label-x-small)]">
