@@ -29,6 +29,10 @@ vi.mock("@/hooks/queries/friend/useFriendProfileQuery", () => ({
 vi.mock("@/hooks/queries/friend/useFriendWishQuery", () => ({
   useFriendWishQuery: (friendId: string, wishId: string) => useFriendWishQuery(friendId, wishId),
 }));
+const useHomeFundingsQuery = vi.fn();
+vi.mock("@/hooks/queries/home/useHomeFundingsQuery", () => ({
+  useHomeFundingsQuery: () => useHomeFundingsQuery(),
+}));
 vi.mock("@/hooks/queries/payout-account/usePayoutAccountsQuery", () => ({
   usePayoutAccountsQuery: vi.fn(() => ({ data: [] })),
 }));
@@ -81,6 +85,7 @@ describe("FriendWishDetailContainer", () => {
     notFound.mockClear();
     windowOpen.mockClear();
     vi.stubGlobal("open", windowOpen);
+    useHomeFundingsQuery.mockReturnValue({ data: { canOpenFunding: true }, isPending: false });
   });
 
   afterEach(() => {
@@ -129,6 +134,32 @@ describe("FriendWishDetailContainer", () => {
     await userEvent.setup().click(screen.getByRole("button", { name: "같이 보태기" }));
 
     expect(push).toHaveBeenCalledWith("/share/77");
+  });
+
+  it("개설 한도에 걸리면 서프라이즈 CTA를 비활성화하고 안내 문구를 보여준다", () => {
+    useHomeFundingsQuery.mockReturnValue({ data: { canOpenFunding: false }, isPending: false });
+    mockQuery({ data: profile });
+    render(<FriendWishDetailContainer friendId="5" wishId="1" />);
+
+    expect(screen.getByRole("button", { name: "친구 몰래 서프라이즈 열기" })).toBeDisabled();
+    expect(screen.getByText("펀딩은 최대 5개까지만 열 수 있어요")).toBeInTheDocument();
+  });
+
+  it("개설 한도에 걸려도 '같이 보태기'는 막지 않는다", () => {
+    useHomeFundingsQuery.mockReturnValue({ data: { canOpenFunding: false }, isPending: false });
+    mockQuery({ data: profile }, { data: { ...wishDetail, activeSurpriseFundingId: 77 } });
+    render(<FriendWishDetailContainer friendId="5" wishId="1" />);
+
+    expect(screen.getByRole("button", { name: "같이 보태기" })).toBeEnabled();
+    expect(screen.queryByText("펀딩은 최대 5개까지만 열 수 있어요")).not.toBeInTheDocument();
+  });
+
+  it("개설 가능 여부를 조회하는 동안에는 서프라이즈 CTA를 비활성화한다", () => {
+    useHomeFundingsQuery.mockReturnValue({ data: undefined, isPending: true });
+    mockQuery({ data: profile });
+    render(<FriendWishDetailContainer friendId="5" wishId="1" />);
+
+    expect(screen.getByRole("button", { name: "친구 몰래 서프라이즈 열기" })).toBeDisabled();
   });
 
   it("프로필 조회에 실패해도 안내 문구를 보여준다", () => {

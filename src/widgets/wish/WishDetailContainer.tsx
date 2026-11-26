@@ -6,6 +6,7 @@ import { notFound, useParams, useRouter } from "next/navigation";
 
 import { showGlobalErrorDialog } from "@/lib/queryClient";
 import Dialog from "@/components/Dialog";
+import FundingLimitNotice from "@/components/FundingLimitNotice";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
@@ -87,13 +88,7 @@ export default function WishDetailContainer() {
           !isFunding && (wish.status !== "AVAILABLE" || isFundingLimitPending || isLimitReached)
         }
         ctaHelperText={isFunding ? "펀딩 진행중인 위시 상품은 삭제할 수 없어요" : undefined}
-        ctaUpper={
-          isLimitReached ? (
-            <p className="text-semantic-text-tertiary text-center [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-x-small-weak)]">
-              펀딩은 최대 5개까지만 열 수 있어요
-            </p>
-          ) : undefined
-        }
+        ctaUpper={isLimitReached ? <FundingLimitNotice /> : undefined}
       />
       <FundingOpenSheet
         open={fundingSheetOpen}

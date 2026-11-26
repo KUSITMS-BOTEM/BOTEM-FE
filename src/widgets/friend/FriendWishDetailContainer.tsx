@@ -4,11 +4,13 @@ import { useState } from "react";
 
 import { notFound, useRouter } from "next/navigation";
 
+import FundingLimitNotice from "@/components/FundingLimitNotice";
 import ProductDetailFallback from "@/components/ProductDetailFallback";
 import ProductDetailView from "@/components/ProductDetailView";
 import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
 import { useFriendProfileQuery } from "@/hooks/queries/friend/useFriendProfileQuery";
 import { useFriendWishQuery } from "@/hooks/queries/friend/useFriendWishQuery";
+import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { ApiError } from "@/types/api";
 import { toFundingWish } from "@/utils/friend/toFundingWish";
 import { isValidUrl } from "@/utils/isValidUrl";
@@ -28,6 +30,7 @@ export default function FriendWishDetailContainer({
   const profileQuery = useFriendProfileQuery(friendId);
   const wishQuery = useFriendWishQuery(friendId, wishId);
   const [fundingSheetOpen, setFundingSheetOpen] = useState(false);
+  const { data: homeFundings, isPending: isFundingLimitPending } = useHomeFundingsQuery();
   const data = profileQuery.data;
   const wish = wishQuery.data;
 
@@ -50,6 +53,8 @@ export default function FriendWishDetailContainer({
   const fundingWish = toFundingWish(wish);
   // 이 친구를 위한 진행 중 서프라이즈가 있으면(친구당 1개) 새로 열지 않고 그 펀딩에 보탠다
   const activeFundingId = wish.activeSurpriseFundingId;
+  // 같이 보태기는 새로 개설하지 않아 내 개설 한도와 무관하다
+  const isLimitReached = !activeFundingId && homeFundings?.canOpenFunding === false;
 
   return (
     <div className="flex flex-col">
@@ -67,6 +72,8 @@ export default function FriendWishDetailContainer({
           // TODO(API): 참여 화면은 /share/{shareKey}인데 응답엔 fundingId뿐이라 지금 경로는 404다. 서프라이즈 참여 작업에서 shareKey를 받아(BE 요청) 경로를 바꾼다
           activeFundingId ? router.push(`/share/${activeFundingId}`) : setFundingSheetOpen(true)
         }
+        ctaDisabled={!activeFundingId && (isFundingLimitPending || isLimitReached)}
+        ctaUpper={isLimitReached ? <FundingLimitNotice /> : undefined}
       />
       <SurpriseOpenSheet
         open={fundingSheetOpen}

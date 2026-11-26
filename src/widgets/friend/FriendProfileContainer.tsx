@@ -5,11 +5,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import Button from "@/components/Button";
+import Dialog from "@/components/Dialog";
 import Header from "@/components/Header";
 import PageExitMotion from "@/components/effects/PageExitMotion";
 import { getProfileColor } from "@/components/Profile";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFriendProfileQuery } from "@/hooks/queries/friend/useFriendProfileQuery";
+import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import type { FriendWishResponse } from "@/types/friend/friend";
 import { getBirthdayDdayText } from "@/utils/friend/getBirthdayDdayText";
 import { toFundingWish } from "@/utils/friend/toFundingWish";
@@ -33,6 +35,15 @@ export default function FriendProfileContainer({ friendId }: FriendProfileContai
   const [wishSheetOpen, setWishSheetOpen] = useState(false);
   const [surpriseWish, setSurpriseWish] = useState<FriendWishResponse | null>(null);
   const [fundingSheetOpen, setFundingSheetOpen] = useState(false);
+  const [limitDialogOpen, setLimitDialogOpen] = useState(false);
+  const { data: homeFundings, isPending: isFundingLimitPending } = useHomeFundingsQuery();
+
+  const handleSurpriseOpen = () => {
+    // 조회가 끝나기 전에는 개설 가능 여부를 알 수 없다. 조회에 실패하면 개설 요청의 서버 판정에 맡긴다
+    if (isFundingLimitPending) return;
+    if (homeFundings?.canOpenFunding === false) setLimitDialogOpen(true);
+    else setWishSheetOpen(true);
+  };
 
   const handleWishSelect = (wish: FriendWishResponse) => {
     setWishSheetOpen(false);
@@ -81,7 +92,7 @@ export default function FriendProfileContainer({ friendId }: FriendProfileContai
               <FriendWishSection
                 friendId={friendId}
                 wishes={data.wishes}
-                onSurpriseOpen={() => setWishSheetOpen(true)}
+                onSurpriseOpen={handleSurpriseOpen}
               />
               <FriendSurpriseWishSheet
                 open={wishSheetOpen}
@@ -105,6 +116,13 @@ export default function FriendProfileContainer({ friendId }: FriendProfileContai
             onClose={() => setFundingSheetOpen(false)}
           />
         )}
+        <Dialog
+          kind="alert"
+          open={limitDialogOpen}
+          title={"펀딩은 최대 5개까지만\n열 수 있어요"}
+          description={"진행중인 펀딩이 마감되면\n새로운 펀딩을 열 수 있어요"}
+          onConfirm={() => setLimitDialogOpen(false)}
+        />
       </div>
     </PageExitMotion>
   );
