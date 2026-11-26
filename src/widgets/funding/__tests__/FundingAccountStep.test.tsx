@@ -43,20 +43,18 @@ const mockAccounts = (data: PayoutAccountResponse[] | undefined) =>
 
 describe("FundingAccountStep", () => {
   it("계좌 정보가 비어 있으면 펀딩 열기가 비활성화된다", () => {
-    mockAccounts([account({})]);
+    mockAccounts([]);
     render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
 
     expect(screen.getByRole("button", { name: "펀딩 열기" })).toBeDisabled();
   });
 
-  it("대표 계좌 사용하기를 누르면 대표 계좌의 계좌번호와 은행이 채워지고 펀딩 열기가 활성화된다", async () => {
+  it("대표 계좌의 계좌번호와 은행이 채워진 채로 열리고 펀딩 열기가 활성화된다", () => {
     mockAccounts([
       account({ id: 2, bank: "KAKAO_BANK", accountNumber: "3333", isDefault: false }),
       account({}),
     ]);
     render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
-
-    await userEvent.click(screen.getByRole("button", { name: /대표 계좌 사용하기/ }));
 
     expect(screen.getByLabelText("계좌번호")).toHaveValue("100159014821");
     expect(screen.getByRole("button", { name: /^은행.*토스뱅크/ })).toBeInTheDocument();
@@ -73,15 +71,47 @@ describe("FundingAccountStep", () => {
     expect(screen.getByRole("button", { name: /대표 계좌 사용하기/ })).toBeDisabled();
   });
 
-  it("입력된 은행과 계좌번호가 대표 계좌와 같으면 대표 계좌 사용하기가 비활성화되고, 바꾸면 다시 활성화된다", async () => {
+  it("입력된 은행과 계좌번호가 대표 계좌와 같으면 대표 계좌 사용하기가 비활성화되고, 바꾼 뒤 누르면 대표 계좌로 돌아온다", async () => {
+    mockAccounts([account({})]);
+    render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
+    const useDefault = screen.getByRole("button", { name: "대표 계좌 사용하기" });
+    expect(useDefault).toBeDisabled();
+
+    await userEvent.type(screen.getByLabelText("계좌번호"), "9");
+    await userEvent.click(useDefault);
+
+    expect(screen.getByLabelText("계좌번호")).toHaveValue("100159014821");
+    expect(useDefault).toBeDisabled();
+  });
+
+  it("대표 계좌를 늦게 불러와도 이미 입력한 값은 덮어쓰지 않는다", async () => {
+    mockAccounts(undefined);
+    const { rerender } = render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
+    await userEvent.type(screen.getByLabelText("계좌번호"), "123");
+
+    mockAccounts([account({})]);
+    rerender(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
+
+    expect(screen.getByLabelText("계좌번호")).toHaveValue("123");
+  });
+
+  it("대표 계좌를 늦게 불러오면 비어 있는 입력에 채운다", () => {
+    mockAccounts(undefined);
+    const { rerender } = render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
+
+    mockAccounts([account({})]);
+    rerender(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
+
+    expect(screen.getByLabelText("계좌번호")).toHaveValue("100159014821");
+  });
+
+  it("채워진 계좌번호를 지우면 다시 채우지 않는다", async () => {
     mockAccounts([account({})]);
     render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole("button", { name: /대표 계좌 사용하기/ }));
-    expect(screen.getByRole("button", { name: /대표 계좌 사용하기/ })).toBeDisabled();
+    await userEvent.clear(screen.getByLabelText("계좌번호"));
 
-    await userEvent.type(screen.getByLabelText("계좌번호"), "9");
-    expect(screen.getByRole("button", { name: /대표 계좌 사용하기/ })).toBeEnabled();
+    expect(screen.getByLabelText("계좌번호")).toHaveValue("");
   });
 
   it("이전을 누르면 onPrev를 호출한다", async () => {
@@ -98,7 +128,6 @@ describe("FundingAccountStep", () => {
     mockAccounts([account({})]);
     const onSubmit = vi.fn();
     render(<FundingAccountStep onSubmit={onSubmit} onPrev={vi.fn()} />);
-    await userEvent.click(screen.getByRole("button", { name: /대표 계좌 사용하기/ }));
 
     await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
 

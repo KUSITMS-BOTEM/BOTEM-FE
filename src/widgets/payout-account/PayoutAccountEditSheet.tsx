@@ -12,7 +12,6 @@ import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayout
 import type { PayoutAccountResponse } from "@/types/payout-account/payoutAccount";
 import { ACCOUNT_NUMBER_REGEX } from "@/utils/payout-account/parseClipboardAccount";
 import PayoutAccountForm from "@/widgets/payout-account/PayoutAccountForm";
-import IconReset from "@/assets/icons/icon-reset.svg?react";
 
 type PayoutAccountEditSheetProps = {
   open: boolean;
@@ -80,7 +79,7 @@ export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountE
           <TextButton
             size="medium"
             label="계좌 되돌리기"
-            icon={<IconReset />}
+            rightIcon={false}
             disabled={!isChanged}
             onClick={handleReset}
             className="text-semantic-text-secondary"

@@ -9,7 +9,6 @@ import type { BankCode } from "@/constants/bank";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import { ACCOUNT_NUMBER_REGEX } from "@/utils/payout-account/parseClipboardAccount";
 import PayoutAccountForm from "@/widgets/payout-account/PayoutAccountForm";
-import IconReset from "@/assets/icons/icon-reset.svg?react";
 
 export type FundingAccountValues = {
   accountNumber: string;
@@ -48,6 +47,13 @@ export default function FundingAccountStep({
     setBank(defaultAccount.bank);
   };
 
+  // 대표 계좌는 한 번만 채운다. 조회가 끝나기 전에 입력한 값은 덮어쓰지 않고, 지운 값도 되살리지 않는다
+  const [prefilled, setPrefilled] = useState(Boolean(seed));
+  if (defaultAccount && !prefilled) {
+    setPrefilled(true);
+    if (!accountNumber && !bank) fillDefaultAccount();
+  }
+
   return (
     <>
       <PayoutAccountForm
@@ -63,7 +69,7 @@ export default function FundingAccountStep({
             color="neutral"
             size="medium"
             label="대표 계좌 사용하기"
-            icon={<IconReset />}
+            rightIcon={false}
             disabled={!defaultAccount || isDefaultAccountFilled}
             onClick={fillDefaultAccount}
           />
