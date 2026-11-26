@@ -11,11 +11,7 @@ type InfoBoxProps = {
 
 export default function InfoBox({ text, icon, className }: InfoBoxProps) {
   return (
-    <div
-      className={cn(
-        "bg-semantic-fill-neutral-weak flex w-full items-center gap-2 rounded-xl p-3",
-        className,
-      )}>
+    <div className={cn("flex w-full items-center gap-2 p-3", className)}>
       <Asset
         icon={icon ?? <IconInfo aria-hidden />}
         size="xsmall"

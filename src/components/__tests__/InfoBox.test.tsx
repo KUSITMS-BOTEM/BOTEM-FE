@@ -18,7 +18,7 @@ describe("InfoBox", () => {
   it("className이 기본 클래스와 병합되어 루트에 적용되고 충돌하는 기본값은 덮어쓴다", () => {
     const { container } = render(<InfoBox text="안내 문구" className="w-80" />);
 
-    expect(container.firstChild).toHaveClass("w-80", "rounded-xl");
+    expect(container.firstChild).toHaveClass("w-80", "p-3");
     expect(container.firstChild).not.toHaveClass("w-full");
   });
 
