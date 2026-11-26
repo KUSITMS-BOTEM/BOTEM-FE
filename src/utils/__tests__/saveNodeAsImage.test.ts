@@ -1,8 +1,8 @@
-import { toBlob } from "html-to-image";
+import { toSvg } from "html-to-image";
 
-import { saveNodeAsImage, shareOrDownloadImage } from "@/utils/saveNodeAsImage";
+import { createImageFile, saveNodeAsImage, shareOrDownloadImage } from "@/utils/saveNodeAsImage";
 
-vi.mock("html-to-image", () => ({ toBlob: vi.fn() }));
+vi.mock("html-to-image", () => ({ toSvg: vi.fn() }));
 
 const FILENAME = "card.png";
 const node = document.createElement("div");
@@ -23,9 +23,21 @@ const setTouchDevice = (isTouch: boolean) => {
 
 describe("saveNodeAsImage", () => {
   let clickSpy: ReturnType<typeof vi.spyOn>;
+  const context = { drawImage: vi.fn(), clearRect: vi.fn() };
+  const canvasToBlob = vi.fn<(callback: BlobCallback) => void>();
 
   beforeEach(() => {
-    vi.mocked(toBlob).mockResolvedValue(new Blob(["png"], { type: "image/png" }));
+    // jsdom에는 이미지 디코딩과 캔버스가 없다
+    vi.mocked(toSvg).mockResolvedValue("data:image/svg+xml,");
+    HTMLImageElement.prototype.decode = vi.fn().mockResolvedValue(undefined);
+    context.drawImage.mockClear();
+    context.clearRect.mockClear();
+    canvasToBlob.mockClear();
+    canvasToBlob.mockImplementation(callback => callback(new Blob(["png"], { type: "image/png" })));
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+      context as unknown as ReturnType<HTMLCanvasElement["getContext"]>,
+    );
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(canvasToBlob);
     URL.createObjectURL = vi.fn(() => "blob:mock");
     URL.revokeObjectURL = vi.fn();
     clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
@@ -88,8 +100,28 @@ describe("saveNodeAsImage", () => {
     expect(clickSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("상품 사진이 디코딩되도록 한 번 그리고 0.5초 뒤 지우고 다시 그린 결과를 파일로 만든다", async () => {
+    vi.useFakeTimers();
+    try {
+      const file = createImageFile(node, FILENAME);
+
+      await vi.advanceTimersByTimeAsync(499);
+      expect(context.drawImage).toHaveBeenCalledTimes(1);
+      expect(canvasToBlob).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(1);
+      await file;
+      const [first, second] = context.drawImage.mock.invocationCallOrder;
+      const [cleared] = context.clearRect.mock.invocationCallOrder;
+      expect(first).toBeLessThan(cleared);
+      expect(cleared).toBeLessThan(second);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("이미지 생성 결과가 없으면 에러를 던진다", async () => {
-    vi.mocked(toBlob).mockResolvedValue(null);
+    canvasToBlob.mockImplementation(callback => callback(null));
 
     await expect(saveNodeAsImage(node, FILENAME)).rejects.toThrow();
   });
@@ -98,11 +130,11 @@ describe("saveNodeAsImage", () => {
     const share = vi.fn().mockResolvedValue(undefined);
     setShare(share);
     const file = new File(["png"], FILENAME, { type: "image/png" });
-    vi.mocked(toBlob).mockClear();
+    vi.mocked(toSvg).mockClear();
 
     await shareOrDownloadImage(file);
 
-    expect(toBlob).not.toHaveBeenCalled();
+    expect(toSvg).not.toHaveBeenCalled();
     expect(share).toHaveBeenCalledWith({ files: [file] });
   });
 });
