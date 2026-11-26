@@ -98,7 +98,12 @@ export default function PayoutAccountForm({
             onPaste={handleAccountNumberPaste}
           />
           <SelectBox label="은행" value={bankName} onClick={() => setBankSheetOpen(true)} />
-          <ToastMessage show={toastText !== null} text={toastText ?? ""} state={false} />
+          <ToastMessage
+            show={toastText !== null}
+            text={toastText ?? ""}
+            state={false}
+            className="mx-auto"
+          />
         </motion.div>
       </div>
       <BankSelectBottomSheet
