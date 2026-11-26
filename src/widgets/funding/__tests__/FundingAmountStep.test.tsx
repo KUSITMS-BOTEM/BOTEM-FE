@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import FundingAmountStep from "@/widgets/funding/FundingAmountStep";
@@ -109,6 +109,32 @@ describe("FundingAmountStep", () => {
     await userEvent.clear(screen.getByLabelText("목표 금액"));
 
     expect(screen.getByRole("button", { name: "다음" })).toBeDisabled();
+  });
+});
+
+describe("FundingAmountStep capAtBasePrice", () => {
+  const change = (value: string) =>
+    fireEvent.change(screen.getByLabelText("목표 금액"), { target: { value } });
+
+  it("상품 가격보다 큰 목표 금액은 상품 가격으로 제한된다", () => {
+    render(<FundingAmountStep basePrice={468000} capAtBasePrice onNext={vi.fn()} />);
+    change("999999");
+
+    expect(screen.getByLabelText("목표 금액")).toHaveValue("468,000");
+  });
+
+  it("상품 가격이 0원이면 입력한 값을 그대로 둔다", () => {
+    render(<FundingAmountStep basePrice={0} capAtBasePrice onNext={vi.fn()} />);
+    change("5000");
+
+    expect(screen.getByLabelText("목표 금액")).toHaveValue("5,000");
+  });
+
+  it("옵션이 없으면 상품 가격보다 커도 제한하지 않는다", () => {
+    renderStep();
+    change("999999");
+
+    expect(screen.getByLabelText("목표 금액")).toHaveValue("999,999");
   });
 });
 

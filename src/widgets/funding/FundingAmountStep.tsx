@@ -31,6 +31,8 @@ export type FundingAmountValues = {
 type FundingAmountStepProps = {
   // 목표 금액 칩과 안내 문구에 보여줄 상품 가격
   basePrice: number;
+  // 상품 가격보다 큰 목표 금액을 받지 않고 가격으로 맞춘다 (서프라이즈)
+  capAtBasePrice?: boolean;
   onNext: (values: FundingAmountValues) => void;
   // 있으면 수정 모드: 모든 필드를 채워 보여주고, 값이 바뀌어야 CTA가 활성화된다
   initialValues?: FundingAmountValues;
@@ -41,6 +43,7 @@ type FundingAmountStepProps = {
 
 export default function FundingAmountStep({
   basePrice,
+  capAtBasePrice = false,
   onNext,
   initialValues,
   defaultValues,
@@ -143,7 +146,14 @@ export default function FundingAmountStep({
             }}
             helperText={`기본 상품 가격은 ${basePrice.toLocaleString("ko-KR")}원이에요`}
             value={targetAmount ? target.toLocaleString("ko-KR") : ""}
-            onChange={event => changeTarget(event.target.value.replace(/\D/g, ""))}
+            onChange={event => {
+              const digits = event.target.value.replace(/\D/g, "");
+              changeTarget(
+                capAtBasePrice && basePrice > 0 && Number(digits) > basePrice
+                  ? String(basePrice)
+                  : digits,
+              );
+            }}
             onBlur={revealRecommended}
             onKeyDown={event => {
               if (event.key === "Enter") event.currentTarget.blur();

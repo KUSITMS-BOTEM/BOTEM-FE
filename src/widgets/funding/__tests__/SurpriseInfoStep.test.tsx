@@ -1,16 +1,14 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { mockPointer } from "@/__tests__/mockPointer";
 import { pickWheelDate } from "@/__tests__/pickWheelDate";
 import SurpriseInfoStep from "@/widgets/funding/SurpriseInfoStep";
 
-const wish = { id: 1, productName: "상품", productImageUrl: undefined, price: 468000 };
-
 type StepProps = Partial<React.ComponentProps<typeof SurpriseInfoStep>>;
 
 const renderStep = (props: StepProps = {}) =>
-  render(<SurpriseInfoStep wish={wish} recipientName="민지" onNext={vi.fn()} {...props} />);
+  render(<SurpriseInfoStep recipientName="민지" onNext={vi.fn()} {...props} />);
 
 beforeEach(() => {
   mockPointer("coarse");
@@ -20,35 +18,20 @@ beforeEach(() => {
 
 afterEach(() => vi.useRealTimers());
 
-// 목표 금액을 입력하고 마감일(2027-12-25)을 확정해 공개일 단계까지 간다
+// 마감일(2027-12-25)을 확정해 공개일 단계까지 간다
 const goToReveal = async () => {
   const user = userEvent.setup();
-  const amount = await screen.findByLabelText("목표 금액");
-  await waitFor(() => expect(amount).toHaveFocus(), { timeout: 3000 });
-  await user.type(amount, "1000");
-  await user.tab();
   await user.click(screen.getByRole("button", { name: /^마감일/ }));
   await pickWheelDate(user, { year: 2027, month: 12, day: 25 });
 };
 
 describe("SurpriseInfoStep", () => {
-  it("목표 금액 단계에서는 마감일·공개일이 보이지 않는다", () => {
+  it("마감일 단계에서는 공개일이 보이지 않는다", () => {
     renderStep();
-
-    expect(screen.getByText("목표 금액은 얼마인가요?")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^마감일/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^펀딩 공개일/ })).not.toBeInTheDocument();
-  });
-
-  it("목표 금액을 입력하고 포커스가 빠지면 마감일이 나타난다", async () => {
-    renderStep();
-    const amount = await screen.findByLabelText("목표 금액");
-    await waitFor(() => expect(amount).toHaveFocus(), { timeout: 3000 });
-    await userEvent.type(amount, "1000");
-    await userEvent.tab();
 
     expect(screen.getByText("언제까지 모을까요?")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^마감일/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^펀딩 공개일/ })).not.toBeInTheDocument();
   });
 
   it("마감일을 확정하면 공개일이 나타나고 제목과 안내 문구가 바뀐다", async () => {
@@ -74,11 +57,16 @@ describe("SurpriseInfoStep", () => {
     await user.click(within(sheet).getByRole("button", { name: "확인" }));
     await user.click(screen.getByRole("button", { name: "다음" }));
 
-    expect(onNext).toHaveBeenCalledWith({
-      targetAmount: "1000",
-      deadline: "2027-12-25",
-      revealDate: "2027-12-26",
-    });
+    expect(onNext).toHaveBeenCalledWith({ deadline: "2027-12-25", revealDate: "2027-12-26" });
+  });
+
+  it("onPrev가 있으면 이전 버튼이 나타나 누르면 onPrev를 호출한다", async () => {
+    const onPrev = vi.fn();
+    renderStep({ onPrev, defaultValues: { deadline: "2099-11-13", revealDate: "2099-11-14" } });
+
+    await userEvent.click(screen.getByRole("button", { name: "이전" }));
+
+    expect(onPrev).toHaveBeenCalledTimes(1);
   });
 
   describe("생일 사용 칩", () => {
@@ -134,27 +122,10 @@ describe("SurpriseInfoStep", () => {
     expect(screen.getByRole("button", { name: /^펀딩 공개일.*2027.12.26/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "다음" })).toBeEnabled();
   });
-
-  it("상품 가격보다 큰 목표 금액을 입력하면 상품 가격으로 제한된다", () => {
-    renderStep();
-
-    fireEvent.change(screen.getByLabelText("목표 금액"), { target: { value: "999999" } });
-
-    expect(screen.getByLabelText("목표 금액")).toHaveValue("468,000");
-  });
-
-  it("상품 가격이 0원이면 목표 금액을 0으로 고정하지 않고 입력한 값을 그대로 둔다", () => {
-    renderStep({ wish: { ...wish, price: 0 } });
-
-    fireEvent.change(screen.getByLabelText("목표 금액"), { target: { value: "5000" } });
-
-    expect(screen.getByLabelText("목표 금액")).toHaveValue("5,000");
-  });
 });
 
 describe("SurpriseInfoStep 수정 모드", () => {
   const initialValues = {
-    targetAmount: "429000",
     deadline: "2099-11-13",
     revealDate: "2099-11-14",
   };
@@ -162,18 +133,20 @@ describe("SurpriseInfoStep 수정 모드", () => {
   it("입력했던 값이 모두 채워져 있고 수정 완료가 비활성화돼 있다", () => {
     renderStep({ initialValues, submitLabel: "수정 완료" });
 
-    expect(screen.getByLabelText("목표 금액")).toHaveValue("429,000");
+    expect(screen.getByRole("button", { name: /^마감일.*2099\.11\.13/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^펀딩 공개일.*2099\.11\.14/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "수정 완료" })).toBeDisabled();
   });
 
-  it("목표 금액을 바꾸면 수정 완료가 활성화되고 누르면 바뀐 값으로 onNext를 호출한다", async () => {
+  it("공개일을 바꾸면 수정 완료가 활성화되고 누르면 바뀐 값으로 onNext를 호출한다", async () => {
     const onNext = vi.fn();
     renderStep({ initialValues, submitLabel: "수정 완료", onNext });
+    const user = userEvent.setup();
 
-    fireEvent.change(screen.getByLabelText("목표 금액"), { target: { value: "450000" } });
-    await userEvent.click(screen.getByRole("button", { name: "수정 완료" }));
+    await user.click(screen.getByRole("button", { name: /^펀딩 공개일/ }));
+    await pickWheelDate(user, { year: 2099, month: 11, day: 16 });
+    await user.click(screen.getByRole("button", { name: "수정 완료" }));
 
-    expect(onNext).toHaveBeenCalledWith({ ...initialValues, targetAmount: "450000" });
+    expect(onNext).toHaveBeenCalledWith({ ...initialValues, revealDate: "2099-11-16" });
   });
 });

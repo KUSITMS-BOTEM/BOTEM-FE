@@ -170,7 +170,7 @@ describe("FriendWishDetailContainer", () => {
     expect(screen.getByRole("button", { name: /쿠팡 Apple 공식 브랜드관/ })).toBeDisabled();
   });
 
-  it("서프라이즈 CTA를 누르면 위시 선택 없이 펀딩 정보 단계가 열린다", async () => {
+  it("서프라이즈 CTA를 누르면 위시 선택 없이 금액 정보 단계가 열린다", async () => {
     mockQuery({ data: profile });
     render(<FriendWishDetailContainer friendId="5" wishId="1" />);
 
@@ -178,7 +178,7 @@ describe("FriendWishDetailContainer", () => {
       .setup()
       .click(screen.getByRole("button", { name: "친구 몰래 서프라이즈 열기" }));
 
-    expect(await screen.findByText("펀딩 정보")).toBeInTheDocument();
+    expect(await screen.findByText("금액 정보")).toBeInTheDocument();
     expect(screen.getByText("목표 금액은 얼마인가요?")).toBeInTheDocument();
   });
 });
