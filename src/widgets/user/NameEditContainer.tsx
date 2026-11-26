@@ -54,6 +54,7 @@ export default function NameEditContainer({ open = true, onClose }: NameEditCont
         label="이름"
         value={nickname}
         onChange={event => setNickname(event.target.value)}
+        onClear={() => setNickname("")}
       />
       <BottomCTA>
         <Button
