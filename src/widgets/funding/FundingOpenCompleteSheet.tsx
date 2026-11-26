@@ -65,16 +65,21 @@ export default function FundingOpenCompleteSheet({
   });
   const [saveFailed, setSaveFailed] = useState(false);
   const failTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => () => clearTimeout(failTimerRef.current), []);
 
   const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       await saveImage();
     } catch {
       setSaveFailed(true);
       clearTimeout(failTimerRef.current);
       failTimerRef.current = setTimeout(() => setSaveFailed(false), SAVE_FAIL_TOAST_MS);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -90,6 +95,7 @@ export default function FundingOpenCompleteSheet({
             size="xlarge"
             icon={<IconShare />}
             aria-label="공유 카드 저장"
+            disabled={isSaving}
             onClick={handleSave}
           />
         )
@@ -126,7 +132,11 @@ export default function FundingOpenCompleteSheet({
       </div>
       {isSurprise && (
         <BottomCTA direction="horizontal">
-          <Button color="brand" size="xlarge" onClick={handleSave}>
+          <Button
+            color="brand"
+            size="xlarge"
+            states={isSaving ? "loading" : "default"}
+            onClick={handleSave}>
             공유하기
           </Button>
         </BottomCTA>

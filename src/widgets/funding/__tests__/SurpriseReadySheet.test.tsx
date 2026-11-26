@@ -125,6 +125,18 @@ describe("SurpriseReadySheet", () => {
     }
   });
 
+  it("이미지를 만드는 동안 공유하기를 잠가 다시 눌러도 한 번만 만든다", async () => {
+    vi.mocked(createImageFile).mockReturnValueOnce(new Promise<File>(() => {}));
+    render(<SurpriseReadySheet {...baseProps} />);
+    const button = screen.getByRole("button", { name: "공유하기" });
+
+    await userEvent.click(button);
+    await userEvent.click(button);
+
+    expect(button).toBeDisabled();
+    expect(createImageFile).toHaveBeenCalledTimes(1);
+  });
+
   it("이미지 저장에 실패하면 안내 토스트를 보여준다", async () => {
     vi.mocked(createImageFile).mockRejectedValueOnce(new Error("fail"));
     render(<SurpriseReadySheet {...baseProps} />);
