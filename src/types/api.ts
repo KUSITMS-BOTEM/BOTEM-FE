@@ -1,7 +1,7 @@
 export type ApiErrorResponse = {
   code: string;
   message: string;
-  detail?: string;
+  detail?: string | null;
 };
 
 export type ApiResponse<T> = {
@@ -19,9 +19,9 @@ export class ApiError extends Error {
   // 서버가 알려주는 거절 사유. 화면에는 보여주지 않고 원인 추적에 쓴다
   detail?: string;
 
-  constructor(code: string, message?: string, detail?: string) {
+  constructor(code: string, message?: string, detail?: string | null) {
     super(message ?? code);
     this.code = code;
-    this.detail = detail;
+    this.detail = detail ?? undefined;
   }
 }

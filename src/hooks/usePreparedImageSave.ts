@@ -18,30 +18,36 @@ export function usePreparedImageSave(
   { enabled = true, delayMs = 0, contentKey }: PreparedImageSaveOptions = {},
 ) {
   const fileRef = useRef<File | null>(null);
+  const pendingRef = useRef<Promise<File | null> | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
     const timer = setTimeout(() => {
       if (!nodeRef.current) return;
-      createImageFile(nodeRef.current, filename)
+      pendingRef.current = createImageFile(nodeRef.current, filename)
         .then(file => {
           if (!cancelled) fileRef.current = file;
+          return file;
         })
-        .catch(() => {});
+        .catch(() => null);
     }, delayMs);
     return () => {
       cancelled = true;
       clearTimeout(timer);
       fileRef.current = null;
+      pendingRef.current = null;
     };
   }, [nodeRef, filename, enabled, delayMs, contentKey]);
 
   // 실패하면 던진다. 안내는 호출한 화면이 맡는다
   return async () => {
     if (!nodeRef.current) return;
-    // 미리 만든 파일이 없을 때만 지금 만든다. 이 경우 공유창이 막히면 PNG 다운로드로 넘어간다
-    const file = fileRef.current ?? (await createImageFile(nodeRef.current, filename));
+    // 미리 만든 파일이 없으면 만드는 중인 것을 기다리고, 그것도 없거나 실패했을 때만 지금 만든다. 이 경우 공유창이 막히면 PNG 다운로드로 넘어간다
+    const file =
+      fileRef.current ??
+      (await pendingRef.current) ??
+      (await createImageFile(nodeRef.current, filename));
     await shareOrDownloadImage(file);
   };
 }

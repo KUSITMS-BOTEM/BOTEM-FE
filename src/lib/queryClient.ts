@@ -32,7 +32,9 @@ const REPORTED_API_ERROR_CODES = [
 
 function reportUnexpectedError(error: Error) {
   if (error instanceof ApiError && !REPORTED_API_ERROR_CODES.includes(error.code)) return;
-  const detail = error instanceof ApiError ? error.detail : undefined;
+  // 서버 문자열은 필요한 코드에만 실어 보낸다
+  const detail =
+    error instanceof ApiError && error.code === "COMMON_001" ? error.detail : undefined;
   Sentry.captureException(error, detail ? { extra: { detail } } : undefined);
 }
 

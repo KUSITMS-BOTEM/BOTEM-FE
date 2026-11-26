@@ -77,6 +77,26 @@ describe("usePreparedImageSave", () => {
     expect(shareOrDownloadImage).toHaveBeenCalledWith(file);
   });
 
+  it("미리 만드는 중에 저장하면 새로 만들지 않고 그 결과를 기다려 넘긴다", async () => {
+    let finish: (value: File) => void = () => {};
+    vi.mocked(createImageFile).mockReturnValueOnce(
+      new Promise<File>(resolve => {
+        finish = resolve;
+      }),
+    );
+    const { result } = renderPrepared({ node });
+    await flush();
+
+    await act(async () => {
+      const saving = result.current();
+      finish(file);
+      await saving;
+    });
+
+    expect(createImageFile).toHaveBeenCalledTimes(1);
+    expect(shareOrDownloadImage).toHaveBeenCalledWith(file);
+  });
+
   it("enabled가 false면 미리 만들지 않는다", async () => {
     renderPrepared({ node, options: { enabled: false } });
     await flush();

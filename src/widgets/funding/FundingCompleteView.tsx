@@ -54,6 +54,7 @@ export default function FundingCompleteView({
   const cardRef = useRef<HTMLDivElement>(null);
   const [saveFailed, setSaveFailed] = useState(false);
   const failTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [isSharing, setIsSharing] = useState(false);
   const scene = reduceMotion ? 2 : step;
   const isShareScene = scene >= 1;
   const saveImage = usePreparedImageSave(cardRef, `${funding.hostName}에게-보탬.png`, {
@@ -73,12 +74,16 @@ export default function FundingCompleteView({
   useEffect(() => () => clearTimeout(failTimerRef.current), []);
 
   const handleShare = async () => {
+    if (isSharing) return;
+    setIsSharing(true);
     try {
       await saveImage();
     } catch {
       setSaveFailed(true);
       clearTimeout(failTimerRef.current);
       failTimerRef.current = setTimeout(() => setSaveFailed(false), SAVE_FAIL_TOAST_MS);
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -163,7 +168,12 @@ export default function FundingCompleteView({
             }}
             className={`fixed inset-x-0 bottom-0 z-10 mx-auto h-0 w-full ${APP_MAX_WIDTH_CLASS}`}>
             <BottomCTA>
-              <Button color="neutral" size="xlarge" leftIcon={<IconShare />} onClick={handleShare}>
+              <Button
+                color="neutral"
+                size="xlarge"
+                leftIcon={<IconShare />}
+                states={isSharing ? "loading" : "default"}
+                onClick={handleShare}>
                 공유하기
               </Button>
             </BottomCTA>

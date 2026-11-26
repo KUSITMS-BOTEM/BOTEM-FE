@@ -53,6 +53,7 @@ export default function SurpriseReadySheet({
   const cardRef = useRef<HTMLDivElement>(null);
   const [saveFailed, setSaveFailed] = useState(false);
   const failTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [isSaving, setIsSaving] = useState(false);
 
   const saveImage = usePreparedImageSave(cardRef, `${recipientName}-선물-준비-완료.png`, {
     enabled: open,
@@ -62,12 +63,16 @@ export default function SurpriseReadySheet({
   useEffect(() => () => clearTimeout(failTimerRef.current), []);
 
   const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       await saveImage();
     } catch {
       setSaveFailed(true);
       clearTimeout(failTimerRef.current);
       failTimerRef.current = setTimeout(() => setSaveFailed(false), SAVE_FAIL_TOAST_MS);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -103,7 +108,11 @@ export default function SurpriseReadySheet({
         </div>
       </div>
       <BottomCTA>
-        <Button color="brand" size="xlarge" onClick={handleSave}>
+        <Button
+          color="brand"
+          size="xlarge"
+          states={isSaving ? "loading" : "default"}
+          onClick={handleSave}>
           공유하기
         </Button>
       </BottomCTA>

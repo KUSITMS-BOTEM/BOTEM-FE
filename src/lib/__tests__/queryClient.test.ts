@@ -92,6 +92,15 @@ describe("queryClient 전역 onError", () => {
       extra: { detail: "음성 자막 초과" },
     });
   });
+
+  it("COMMON_001이 아닌 코드의 detail은 Sentry에 싣지 않는다", async () => {
+    vi.mocked(Sentry.captureException).mockClear();
+    const error = new ApiError("UNKNOWN_ERROR", "알 수 없는 오류", "서버 내부 문자열");
+
+    await failQuery(error);
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(error, undefined);
+  });
 });
 
 describe("queryClient 인증 에러 처리", () => {
