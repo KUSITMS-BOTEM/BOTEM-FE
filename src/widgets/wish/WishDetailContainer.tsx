@@ -7,6 +7,7 @@ import { notFound, useParams, useRouter } from "next/navigation";
 import { showGlobalErrorDialog } from "@/lib/queryClient";
 import Dialog from "@/components/Dialog";
 import { useDeleteWishMutation } from "@/hooks/mutations/wish/useDeleteWishMutation";
+import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useWishQuery } from "@/hooks/queries/wish/useWishQuery";
 import ProductDetailFallback from "@/components/ProductDetailFallback";
 import ToastMessage from "@/components/ToastMessage";
@@ -27,6 +28,7 @@ export default function WishDetailContainer() {
   const { mutate: deleteWish, isPending: isDeletePending } = useDeleteWishMutation(wishId);
   const errorAction = resolveWishErrorAction(error);
   const showAddedToast = useWishToast("added");
+  const { data: homeFundings, isPending: isFundingLimitPending } = useHomeFundingsQuery();
 
   useEffect(() => {
     if (errorAction === "unauthorized") router.replace("/");
@@ -48,6 +50,8 @@ export default function WishDetailContainer() {
   const { fundingId } = wish;
   // fundingId 없는 FUNDING은 이동할 곳이 없어 CTA가 죽으므로 펀딩 중으로 다루지 않는다(삭제 가능 여부는 서버가 판정)
   const isFunding = wish.status === "FUNDING" && fundingId != null;
+  // 조회에 실패하면 막지 않고 개설 요청의 서버 판정(FUNDING_019)에 맡긴다
+  const isLimitReached = wish.status === "AVAILABLE" && homeFundings?.canOpenFunding === false;
 
   // TODO: wish.status === "DISCONTINUED"일 때 다른 디자인을 보여줄 예정 — 디자인 미정이라 분기는 보류
   return (
@@ -79,8 +83,17 @@ export default function WishDetailContainer() {
           isFunding ? () => router.push(`/funding/${fundingId}`) : () => setFundingSheetOpen(true)
         }
         // 개설할 수 없는 상태(DISCONTINUED, fundingId 없는 FUNDING)는 입력을 마친 뒤에야 실패하지 않도록 진입을 막는다
-        ctaDisabled={!isFunding && wish.status !== "AVAILABLE"}
+        ctaDisabled={
+          !isFunding && (wish.status !== "AVAILABLE" || isFundingLimitPending || isLimitReached)
+        }
         ctaHelperText={isFunding ? "펀딩 진행중인 위시 상품은 삭제할 수 없어요" : undefined}
+        ctaUpper={
+          isLimitReached ? (
+            <p className="text-semantic-text-tertiary text-center [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-label-x-small-weak)]">
+              펀딩은 최대 5개까지만 열 수 있어요
+            </p>
+          ) : undefined
+        }
       />
       <FundingOpenSheet
         open={fundingSheetOpen}
