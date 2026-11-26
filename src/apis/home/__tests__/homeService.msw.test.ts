@@ -26,6 +26,18 @@ describe("homeHandlers", () => {
     expect(body.data.canOpenFunding).toBe(true);
   });
 
+  it("IN_PROGRESS 시나리오는 진행 중 펀딩 5개로 개설 불가 상태를 반환한다", async () => {
+    server.use(...createHomeHandlers("IN_PROGRESS"));
+
+    const response = await fetch("http://localhost/api/home/fundings");
+    const body = await response.json();
+
+    expect(body.data.fundingCards).toHaveLength(5);
+    expect(body.data.activeFundingCount).toBe(5);
+    expect(body.data.canOpenFunding).toBe(false);
+    server.resetHandlers();
+  });
+
   it("펀딩이 있으면 GET /api/home/no-funding은 409와 HOME_001을 반환한다", async () => {
     const response = await fetch("http://localhost/api/home/no-funding");
     const body = await response.json();

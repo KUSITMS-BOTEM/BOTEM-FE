@@ -25,6 +25,9 @@ const [product1, product2, product3, product4] = MOCK_RECOMMENDED_PRODUCTS;
 
 export const MOCK_SURPRISE_REVEAL_ID = 96;
 
+// 진행 중인 펀딩 개설 한도
+const MOCK_FUNDING_LIMIT = 5;
+
 // 프로필 이미지가 있는 회원과 없는 회원·비회원(null)이 섞이도록 둔다
 const MOCK_PARTICIPANT_PREVIEWS = [
   {
@@ -235,7 +238,10 @@ export const createHomeHandlers = (scenario: MockHomeScenario) => [
     const birthdayCards = MOCK_FUNDING_CARDS.filter(card => card.fundingType === "BIRTHDAY");
     const scenarioCards = {
       FUNDING: MOCK_FUNDING_CARDS,
-      IN_PROGRESS: MOCK_FUNDING_CARDS.filter(card => card.cardType === "IN_PROGRESS"),
+      IN_PROGRESS: MOCK_FUNDING_CARDS.filter(card => card.cardType === "IN_PROGRESS").slice(
+        0,
+        MOCK_FUNDING_LIMIT,
+      ),
       SINGLE_FUNDING: MOCK_FUNDING_CARDS.filter(card => card.cardType === "IN_PROGRESS").slice(
         0,
         1,
@@ -284,7 +290,11 @@ export const createHomeHandlers = (scenario: MockHomeScenario) => [
 
     return HttpResponse.json({
       success: true,
-      data: { fundingCards, activeFundingCount, canOpenFunding: activeFundingCount < 3 },
+      data: {
+        fundingCards,
+        activeFundingCount,
+        canOpenFunding: activeFundingCount < MOCK_FUNDING_LIMIT,
+      },
       error: null,
     });
   }),

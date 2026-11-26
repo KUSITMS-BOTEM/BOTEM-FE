@@ -1,7 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
+import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { markWishPromptPending } from "@/utils/wish/wishPromptStorage";
 import HomeContainer from "@/widgets/home/HomeContainer";
 
@@ -121,13 +123,33 @@ describe("HomeContainer", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it("개설이 불가능하면 펀딩 추가 메뉴를 표시하지 않는다", async () => {
+  it("개설이 불가능할 때 '펀딩 추가'를 고르면 메뉴를 닫고 시트 대신 한도 안내 Dialog를 연다", async () => {
     vi.mocked(useHomeFundingsQuery).mockReturnValue({
-      data: { fundingCards: [], activeFundingCount: 3, canOpenFunding: false },
+      data: { fundingCards: [], activeFundingCount: 5, canOpenFunding: false },
     } as unknown as ReturnType<typeof useHomeFundingsQuery>);
     render(<HomeContainer />);
 
     await userEvent.click(screen.getByRole("button", { name: "추가 메뉴 열기" }));
+    await userEvent.click(screen.getByRole("button", { name: "펀딩 추가" }));
+
+    expect(useErrorDialogStore.getState().message).toBe(ERROR_MESSAGES.FUNDING_019.message);
+    expect(screen.queryByText("펀딩 열기 시트")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "펀딩 추가" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "추가 메뉴 열기" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    useErrorDialogStore.getState().closeErrorDialog();
+  });
+
+  it("홈 펀딩을 조회하기 전에는 펀딩 추가 메뉴를 표시하지 않는다", async () => {
+    vi.mocked(useHomeFundingsQuery).mockReturnValue({
+      data: undefined,
+    } as unknown as ReturnType<typeof useHomeFundingsQuery>);
+    render(<HomeContainer />);
+
+    await userEvent.click(screen.getByRole("button", { name: "추가 메뉴 열기" }));
+
     expect(screen.queryByRole("button", { name: "펀딩 추가" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "위시 추가" })).toBeInTheDocument();
   });
