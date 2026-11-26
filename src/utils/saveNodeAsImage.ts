@@ -1,6 +1,7 @@
 import { toBlob } from "html-to-image";
 
-const IMAGE_PIXEL_RATIO = 2;
+// 카드의 CSS 너비가 320~400px라 2배는 휴대폰 화면 폭보다 작아 확대돼 흐려진다
+const IMAGE_PIXEL_RATIO = 4;
 
 // 데스크탑 Chrome·Safari도 파일 공유를 지원해 그대로 두면 다운로드 대신 OS 공유창(AirDrop 등)이 뜬다. 터치 기기에서만 공유창을 쓴다
 const isTouchDevice = () =>
