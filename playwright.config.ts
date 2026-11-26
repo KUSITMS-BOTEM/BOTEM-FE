@@ -13,6 +13,9 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
+  // dev 서버는 라우트를 첫 방문 때 컴파일해 CI에선 화면 이동이 기본 5초(테스트 30초)를 넘길 수 있음
+  timeout: 60_000,
+  expect: { timeout: 15_000 },
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
