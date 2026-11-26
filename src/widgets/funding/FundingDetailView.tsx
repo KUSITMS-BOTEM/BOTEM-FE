@@ -533,7 +533,7 @@ export default function FundingDetailView({
             extended={funding.extended}
             actions={funding.actions}
             shareCard={{
-              cardTitle: `${funding.title} 펀딩`,
+              cardTitle: funding.title,
               wish: {
                 id: 0,
                 productName: funding.productName,

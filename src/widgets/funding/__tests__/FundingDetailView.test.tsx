@@ -1,7 +1,7 @@
 import { createElement, type ReactElement, type ReactNode } from "react";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render as rtlRender, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionGlobalConfig } from "framer-motion";
 import { http, HttpResponse } from "msw";
@@ -836,16 +836,28 @@ describe("FundingDetailView", () => {
       expect(screen.getByText("마감일이 지나면 한 번 더 연장할 수 있어요")).toBeInTheDocument();
     });
 
-    it("공유 카드 다시 받기를 누르면 공유 카드 화면이 열린다", async () => {
-      const user = userEvent.setup();
-      render(<FundingDetailView fundingId="1" variant="owner" ownerDetail={closableOwnerDetail} />);
+    it.each([
+      { variant: "owner", type: "BIRTHDAY", expected: "서연의 펀딩" },
+      { variant: "surprise", type: "SURPRISE", expected: "서연의 서프라이즈 펀딩" },
+    ] as const)(
+      "$type 펀딩의 공유 카드 다시 받기를 누르면 '펀딩'이 한 번만 들어간 제목의 카드가 열린다",
+      async ({ variant, type, expected }) => {
+        const user = userEvent.setup();
+        render(
+          <FundingDetailView
+            fundingId="1"
+            variant={variant}
+            ownerDetail={{ ...closableOwnerDetail, type, title: null }}
+          />,
+        );
 
-      await user.click(await screen.findByRole("button", { name: "더보기" }));
-      await user.click(await screen.findByRole("button", { name: "공유 카드 다시 받기" }));
+        await user.click(await screen.findByRole("button", { name: "더보기" }));
+        await user.click(await screen.findByRole("button", { name: "공유 카드 다시 받기" }));
 
-      expect(await screen.findByRole("button", { name: "공유 카드 저장" })).toBeInTheDocument();
-      expect(screen.getByText("지유의 생일 펀딩")).toBeInTheDocument();
-    });
+        const saveButton = await screen.findByRole("button", { name: "공유 카드 저장" });
+        expect(within(saveButton.closest("dialog")!).getByText(expected)).toBeInTheDocument();
+      },
+    );
 
     it("조기 마감에서 예를 누르면 마감 API를 호출하고 확인 Dialog를 닫는다", async () => {
       const user = userEvent.setup();
