@@ -69,7 +69,7 @@ const mockWishes = ({
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(useMyProfileQuery).mockReturnValue({
-    data: { nickname: "지유" },
+    data: { nickname: "지유", wishProfileUrl: "https://botem.site/@wish-key" },
   } as unknown as ReturnType<typeof useMyProfileQuery>);
 });
 
@@ -82,6 +82,28 @@ describe("HomeWishTab", () => {
     expect(screen.getByRole("heading", { name: "지유의 위시" })).toBeInTheDocument();
     expect(screen.getByText("위시 12개")).toBeInTheDocument();
     expect(screen.getByText("상품1")).toBeInTheDocument();
+  });
+
+  it("링크 아이콘을 누르면 내 위시 프로필 링크를 복사하고 완료 토스트를 보여준다", async () => {
+    const user = userEvent.setup();
+    mockWishes({ content: [makeWish(1, "AVAILABLE")] });
+    render(<HomeWishTab onAddWish={vi.fn()} />);
+
+    await user.click(screen.getByRole("button", { name: "위시 프로필 링크 복사" }));
+
+    expect(await navigator.clipboard.readText()).toBe("https://botem.site/@wish-key");
+    expect(await screen.findByText("위시 프로필 링크가 복사되었습니다")).toBeInTheDocument();
+  });
+
+  it("링크 복사에 실패하면 실패 토스트를 보여준다", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(navigator.clipboard, "writeText").mockRejectedValueOnce(new Error("denied"));
+    mockWishes({ content: [makeWish(1, "AVAILABLE")] });
+    render(<HomeWishTab onAddWish={vi.fn()} />);
+
+    await user.click(screen.getByRole("button", { name: "위시 프로필 링크 복사" }));
+
+    expect(await screen.findByText("링크를 복사하지 못했어요")).toBeInTheDocument();
   });
 
   it("위시 카드는 각 위시의 상세 페이지(/wish/{id})로 연결된다", () => {
