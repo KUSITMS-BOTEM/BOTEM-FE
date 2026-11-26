@@ -10,24 +10,17 @@ import OpenSheet from "@/components/OpenSheet";
 import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
 import { cn } from "@/utils/cn";
+import { toContributeAmounts } from "@/utils/funding/recommendedAmount";
 
 // 시트가 이미 떠 있는 상태에서 빈 화면 → Title → 입력 영역 순서로 나타난다 (FundingInfoStep 모션 기준)
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
 const TITLE_TRANSITION = { delay: 0.15, duration: 0.45, ease: EASE_STANDARD };
 const FIELD_TRANSITION = { delay: 0.4, duration: 0.4, ease: EASE_STANDARD };
 
-const DEFAULT_AMOUNTS = [5000, 10000, 50000];
-
 const toChip = (amount: number): ComboboxChip => ({
   label: `${amount.toLocaleString("ko-KR")}원`,
   value: String(amount),
 });
-
-// 추천 금액은 기본 금액 사이에 금액순으로 끼우고, 같은 금액이면 하나만 남긴다
-const toAmountChips = (recommendedAmount?: number) =>
-  [...new Set(recommendedAmount ? [...DEFAULT_AMOUNTS, recommendedAmount] : DEFAULT_AMOUNTS)]
-    .sort((a, b) => a - b)
-    .map(toChip);
 
 // 지나치게 긴 입력이 Number 정밀도 손실·Infinity로 표시가 깨지지 않게 막는다 (초과 검증은 그대로 걸린다)
 const capAmount = (value: number) => Math.min(value, Number.MAX_SAFE_INTEGER);
@@ -117,7 +110,7 @@ export default function FundingContributeSheet({
             inputMode="numeric"
             enterKeyHint="done"
             autoComplete="off"
-            chips={toAmountChips(recommendedAmount)}
+            chips={toContributeAmounts(recommendedAmount).map(toChip)}
             chipPosition="bottom"
             chipWrap
             value={amount ? amount.toLocaleString("ko-KR") : ""}

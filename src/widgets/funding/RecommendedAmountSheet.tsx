@@ -5,13 +5,15 @@ import { useState } from "react";
 import BottomSheet from "@/components/BottomSheet";
 import Combobox from "@/components/Combobox";
 import {
+  CUSTOM_CHOICE,
   countFunders,
   formatPerPerson,
+  restoreRecommendedChoice,
+  toCustomAmountState,
   toRecommendedAmountOptions,
 } from "@/utils/funding/recommendedAmount";
 import AmountOptionRadio from "@/widgets/funding/AmountOptionRadio";
 
-const CUSTOM = "custom";
 const RADIO_NAME = "recommended-amount";
 
 type RecommendedAmountSheetProps = {
@@ -31,10 +33,7 @@ export default function RecommendedAmountSheet({
   onClose,
 }: RecommendedAmountSheetProps) {
   const options = toRecommendedAmountOptions(targetAmount);
-  const restore = () => {
-    const matched = options.some(option => String(option.amount) === value);
-    return { choice: matched ? value : value ? CUSTOM : null, custom: matched ? "" : value };
-  };
+  const restore = () => restoreRecommendedChoice(options, value);
 
   const [choice, setChoice] = useState<string | null>(() => restore().choice);
   const [custom, setCustom] = useState(() => restore().custom);
@@ -49,10 +48,13 @@ export default function RecommendedAmountSheet({
     }
   }
 
-  const customAmount = Number(custom);
-  const isCustomOverTarget = customAmount > targetAmount;
-  const isCustomValid = customAmount >= 1 && !isCustomOverTarget;
-  const selectedAmount = choice === CUSTOM ? (isCustomValid ? customAmount : null) : Number(choice);
+  const {
+    customAmount,
+    isOverTarget: isCustomOverTarget,
+    isValid: isCustomValid,
+  } = toCustomAmountState(custom, targetAmount);
+  const selectedAmount =
+    choice === CUSTOM_CHOICE ? (isCustomValid ? customAmount : null) : Number(choice);
   const canSelect = choice !== null && selectedAmount !== null;
 
   return (
@@ -83,12 +85,12 @@ export default function RecommendedAmountSheet({
         <div className="flex w-full flex-col gap-3">
           <AmountOptionRadio
             name={RADIO_NAME}
-            checked={choice === CUSTOM}
-            onChange={() => setChoice(CUSTOM)}
+            checked={choice === CUSTOM_CHOICE}
+            onChange={() => setChoice(CUSTOM_CHOICE)}
             title="직접 정할게요"
             description="원하는 금액을 입력해요"
           />
-          {choice === CUSTOM && (
+          {choice === CUSTOM_CHOICE && (
             <Combobox
               label="한 명당 금액"
               suffix="원"
