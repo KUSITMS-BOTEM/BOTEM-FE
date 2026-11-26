@@ -36,12 +36,16 @@ export default function FriendProfileContainer({ friendId }: FriendProfileContai
   const [surpriseWish, setSurpriseWish] = useState<FriendWishResponse | null>(null);
   const [fundingSheetOpen, setFundingSheetOpen] = useState(false);
   const [limitDialogOpen, setLimitDialogOpen] = useState(false);
-  const { data: homeFundings, isPending: isFundingLimitPending } = useHomeFundingsQuery();
+  const {
+    data: homeFundings,
+    isPending: isFundingLimitPending,
+    isError: isFundingLimitError,
+  } = useHomeFundingsQuery();
 
   const handleSurpriseOpen = () => {
-    // 조회가 끝나기 전에는 개설 가능 여부를 알 수 없다. 조회에 실패하면 개설 요청의 서버 판정에 맡긴다
+    // 조회가 끝나기 전에는 개설 가능 여부를 알 수 없다. 조회에 실패하면(재조회 실패로 이전 값이 남아도) 개설 요청의 서버 판정에 맡긴다
     if (isFundingLimitPending) return;
-    if (homeFundings?.canOpenFunding === false) setLimitDialogOpen(true);
+    if (!isFundingLimitError && homeFundings?.canOpenFunding === false) setLimitDialogOpen(true);
     else setWishSheetOpen(true);
   };
 

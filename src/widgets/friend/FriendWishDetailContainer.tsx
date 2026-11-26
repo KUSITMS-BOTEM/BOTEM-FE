@@ -30,7 +30,11 @@ export default function FriendWishDetailContainer({
   const profileQuery = useFriendProfileQuery(friendId);
   const wishQuery = useFriendWishQuery(friendId, wishId);
   const [fundingSheetOpen, setFundingSheetOpen] = useState(false);
-  const { data: homeFundings, isPending: isFundingLimitPending } = useHomeFundingsQuery();
+  const {
+    data: homeFundings,
+    isPending: isFundingLimitPending,
+    isError: isFundingLimitError,
+  } = useHomeFundingsQuery();
   const data = profileQuery.data;
   const wish = wishQuery.data;
 
@@ -54,7 +58,9 @@ export default function FriendWishDetailContainer({
   // 이 친구를 위한 진행 중 서프라이즈가 있으면(친구당 1개) 새로 열지 않고 그 펀딩에 보탠다
   const activeFundingId = wish.activeSurpriseFundingId;
   // 같이 보태기는 새로 개설하지 않아 내 개설 한도와 무관하다
-  const isLimitReached = !activeFundingId && homeFundings?.canOpenFunding === false;
+  // 조회에 실패하면(재조회 실패로 이전 값이 남아도) 막지 않고 개설 요청의 서버 판정(FUNDING_019)에 맡긴다
+  const isLimitReached =
+    !activeFundingId && !isFundingLimitError && homeFundings?.canOpenFunding === false;
 
   return (
     <div className="flex flex-col">

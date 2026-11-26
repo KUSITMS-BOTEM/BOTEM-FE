@@ -29,7 +29,11 @@ export default function WishDetailContainer() {
   const { mutate: deleteWish, isPending: isDeletePending } = useDeleteWishMutation(wishId);
   const errorAction = resolveWishErrorAction(error);
   const showAddedToast = useWishToast("added");
-  const { data: homeFundings, isPending: isFundingLimitPending } = useHomeFundingsQuery();
+  const {
+    data: homeFundings,
+    isPending: isFundingLimitPending,
+    isError: isFundingLimitError,
+  } = useHomeFundingsQuery();
 
   useEffect(() => {
     if (errorAction === "unauthorized") router.replace("/");
@@ -51,8 +55,9 @@ export default function WishDetailContainer() {
   const { fundingId } = wish;
   // fundingId 없는 FUNDING은 이동할 곳이 없어 CTA가 죽으므로 펀딩 중으로 다루지 않는다(삭제 가능 여부는 서버가 판정)
   const isFunding = wish.status === "FUNDING" && fundingId != null;
-  // 조회에 실패하면 막지 않고 개설 요청의 서버 판정(FUNDING_019)에 맡긴다
-  const isLimitReached = wish.status === "AVAILABLE" && homeFundings?.canOpenFunding === false;
+  // 조회에 실패하면(재조회 실패로 이전 값이 남아도) 막지 않고 개설 요청의 서버 판정(FUNDING_019)에 맡긴다
+  const isLimitReached =
+    wish.status === "AVAILABLE" && !isFundingLimitError && homeFundings?.canOpenFunding === false;
 
   // TODO: wish.status === "DISCONTINUED"일 때 다른 디자인을 보여줄 예정 — 디자인 미정이라 분기는 보류
   return (

@@ -112,6 +112,21 @@ describe("FriendProfileContainer", () => {
     expect(screen.getByRole("button", { name: "모자 선택하기" })).toBeInTheDocument();
   });
 
+  it("재조회에 실패하면 이전 한도 값으로 막지 않고 위시 선택을 연다", async () => {
+    useHomeFundingsQuery.mockReturnValue({
+      data: { canOpenFunding: false },
+      isPending: false,
+      isError: true,
+    });
+    mockQuery({ data: profile() });
+    render(<FriendProfileContainer friendId="5" />);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: /서프라이즈 열기/ }));
+
+    expect(screen.getByRole("button", { name: "모자 선택하기" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: /펀딩은 최대 5개까지만/ })).not.toBeInTheDocument();
+  });
+
   it("route의 friendId로 친구 프로필을 조회한다", () => {
     mockQuery({ data: profile() });
     render(<FriendProfileContainer friendId="5" />);

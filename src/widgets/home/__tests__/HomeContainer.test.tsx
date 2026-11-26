@@ -24,10 +24,21 @@ vi.mock("@/widgets/funding/FundingOpenSheet", () => ({
   default: ({ open }: { open: boolean }) => (open ? <div>펀딩 열기 시트</div> : null),
 }));
 vi.mock("@/widgets/home/HomeFundingTab", () => ({
-  default: ({ onAddWish }: { onAddWish: () => void }) => (
-    <button type="button" onClick={onAddWish}>
-      펀딩 탭 위시 추가
-    </button>
+  default: ({
+    onAddWish,
+    onOpenFunding,
+  }: {
+    onAddWish: () => void;
+    onOpenFunding: (wish: object) => void;
+  }) => (
+    <>
+      <button type="button" onClick={onAddWish}>
+        펀딩 탭 위시 추가
+      </button>
+      <button type="button" onClick={() => onOpenFunding({ wishId: 1 })}>
+        추천 위시 펀딩 열기
+      </button>
+    </>
   ),
 }));
 vi.mock("@/widgets/home/GiftVerificationBannerLayer", () => ({
@@ -140,6 +151,18 @@ describe("HomeContainer", () => {
       "aria-expanded",
       "false",
     );
+  });
+
+  it("개설이 불가능할 때 추천 위시의 '펀딩 열기'를 누르면 시트 대신 한도 안내 Dialog를 연다", async () => {
+    vi.mocked(useHomeFundingsQuery).mockReturnValue({
+      data: { fundingCards: [], activeFundingCount: 5, canOpenFunding: false },
+    } as unknown as ReturnType<typeof useHomeFundingsQuery>);
+    render(<HomeContainer />);
+
+    await userEvent.click(screen.getByRole("button", { name: "추천 위시 펀딩 열기" }));
+
+    expect(useErrorDialogStore.getState().message).toBe(ERROR_MESSAGES.FUNDING_019.message);
+    expect(screen.queryByText("펀딩 열기 시트")).not.toBeInTheDocument();
   });
 
   it("자동 열기로 들어오면 펀딩 열기 시트를 열고 open 쿼리를 지운다", () => {

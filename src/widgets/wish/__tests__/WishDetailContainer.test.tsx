@@ -66,10 +66,11 @@ const mockWishQuery = (value: Partial<ReturnType<typeof useWishQuery>>) => {
   } as ReturnType<typeof useWishQuery>);
 };
 
-const mockHomeFundings = (canOpenFunding?: boolean, isPending = false) => {
+const mockHomeFundings = (canOpenFunding?: boolean, isPending = false, isError = false) => {
   vi.mocked(useHomeFundingsQuery).mockReturnValue({
     data: canOpenFunding === undefined ? undefined : { canOpenFunding },
     isPending,
+    isError,
   } as unknown as ReturnType<typeof useHomeFundingsQuery>);
 };
 
@@ -276,6 +277,16 @@ describe("WishDetailContainer", () => {
 
   it("개설 가능 여부 조회에 실패하면 CTA를 막지 않는다", () => {
     mockHomeFundings(undefined);
+    mockWishQuery({ data: mockWish });
+
+    render(<WishDetailContainer />);
+
+    expect(screen.getByRole("button", { name: "이 상품으로 펀딩 열기" })).toBeEnabled();
+    expect(screen.queryByText(LIMIT_MESSAGE)).not.toBeInTheDocument();
+  });
+
+  it("재조회에 실패하면 이전 한도 값으로 CTA를 막지 않는다", () => {
+    mockHomeFundings(false, false, true);
     mockWishQuery({ data: mockWish });
 
     render(<WishDetailContainer />);
