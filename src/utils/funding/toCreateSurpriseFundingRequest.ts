@@ -21,7 +21,8 @@ export function toCreateSurpriseFundingRequest(
     bank: account.bank,
     accountNumber: account.accountNumber,
     targetAmount: Number(info.targetAmount),
-    recommendedAmount: info.recommendedAmount ? Number(info.recommendedAmount) : undefined,
+    recommendedAmount:
+      Number(info.recommendedAmount) > 0 ? Number(info.recommendedAmount) : undefined,
     deadline: info.deadline,
     revealAt: info.revealDate,
     showOnRecipientProfile,

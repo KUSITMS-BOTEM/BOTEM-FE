@@ -23,6 +23,9 @@ describe("toCreateFundingRequest", () => {
     expect(
       toCreateFundingRequest(7, { ...info, recommendedAmount: "" }, account).recommendedAmount,
     ).toBeUndefined();
+    expect(
+      toCreateFundingRequest(7, { ...info, recommendedAmount: "0" }, account).recommendedAmount,
+    ).toBeUndefined();
   });
 
   it("pledge가 비어 있으면 promise를 보내지 않는다", () => {
