@@ -4,6 +4,7 @@ import Asset from "@/components/Asset";
 import Button from "@/components/Button";
 import ToastMessage from "@/components/ToastMessage";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
+import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useHomeWishesQuery } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { useShareLink } from "@/hooks/useShareLink";
@@ -21,6 +22,7 @@ type HomeWishTabProps = {
 
 export default function HomeWishTab({ onAddWish }: HomeWishTabProps) {
   const { data: profile } = useMyProfileQuery();
+  const { data: homeFundings } = useHomeFundingsQuery();
   const { toast, copyLink } = useShareLink();
   const {
     data,
@@ -32,6 +34,11 @@ export default function HomeWishTab({ onAddWish }: HomeWishTabProps) {
     isFetchNextPageError,
   } = useHomeWishesQuery();
   const wishes = data?.pages.flatMap(page => page?.content ?? []) ?? [];
+  // 위시의 FUNDING status는 마감한 펀딩도 포함하므로(완료·취소 전까지) 진행 중 여부는 홈 펀딩 카드로 판정한다
+  const inProgressFundingIds =
+    homeFundings?.fundingCards
+      .filter(card => card.cardType === "IN_PROGRESS")
+      .map(card => card.fundingId) ?? [];
 
   if (isError && !data)
     return <HomeLoadError message="위시를 불러오지 못했어요" onRetry={() => refetch()} />;
@@ -64,7 +71,9 @@ export default function HomeWishTab({ onAddWish }: HomeWishTabProps) {
           <li key={wish.id} className="min-w-0">
             <Link href={`/wish/${wish.id}`} className="block">
               <WishCard
-                type={wish.status === "FUNDING" ? "funding" : "default"}
+                type={
+                  inProgressFundingIds.some(id => id === wish.fundingId) ? "funding" : "default"
+                }
                 productName={wish.productName}
                 price={wish.price}
                 productImageUrl={wish.productImageUrl}

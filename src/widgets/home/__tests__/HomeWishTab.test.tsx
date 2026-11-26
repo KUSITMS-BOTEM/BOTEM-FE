@@ -1,11 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { useHomeWishesQuery } from "@/hooks/queries/wish/useHomeWishesQuery";
+import type { HomeFundingCardType } from "@/types/home/home";
 import type { WishResponse, WishStatus } from "@/types/wish/wish";
 import HomeWishTab from "@/widgets/home/HomeWishTab";
 
+vi.mock("@/hooks/queries/home/useHomeFundingsQuery");
 vi.mock("@/hooks/queries/wish/useHomeWishesQuery");
 vi.mock("@/hooks/queries/user/useMyProfileQuery");
 
@@ -66,8 +69,17 @@ const mockWishes = ({
   } as unknown as ReturnType<typeof useHomeWishesQuery>);
 };
 
+const mockFundings = (cards?: [fundingId: number, cardType: HomeFundingCardType][]) => {
+  vi.mocked(useHomeFundingsQuery).mockReturnValue({
+    data: cards && {
+      fundingCards: cards.map(([fundingId, cardType]) => ({ fundingId, cardType })),
+    },
+  } as unknown as ReturnType<typeof useHomeFundingsQuery>);
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
+  mockFundings([]);
   vi.mocked(useMyProfileQuery).mockReturnValue({
     data: { nickname: "지유", wishProfileUrl: "https://botem.site/@wish-key" },
   } as unknown as ReturnType<typeof useMyProfileQuery>);
@@ -115,12 +127,36 @@ describe("HomeWishTab", () => {
     expect(screen.getByRole("link", { name: /상품22/ })).toHaveAttribute("href", "/wish/22");
   });
 
-  it("펀딩 중인 위시에만 '펀딩 중' 배지를 표시한다", () => {
-    mockWishes({ content: [makeWish(1, "FUNDING"), makeWish(2, "AVAILABLE")] });
+  it("진행 중인 펀딩의 위시에만 '펀딩 중' 배지를 표시한다", () => {
+    mockWishes({
+      content: [
+        { ...makeWish(1, "FUNDING"), fundingId: 1 },
+        // 마감·조기 마감 후 팡을 열기 전
+        { ...makeWish(2, "FUNDING"), fundingId: 2 },
+        // 팡을 연 뒤라 홈 펀딩 카드에 없음
+        { ...makeWish(3, "FUNDING"), fundingId: 3 },
+        makeWish(4, "AVAILABLE"),
+      ],
+    });
+    mockFundings([
+      [1, "IN_PROGRESS"],
+      [2, "CLOSED_UNOPENED"],
+    ]);
 
     render(<HomeWishTab onAddWish={vi.fn()} />);
 
     expect(screen.getAllByText("펀딩 중")).toHaveLength(1);
+    expect(screen.getByRole("link", { name: /상품1/ })).toHaveTextContent("펀딩 중");
+  });
+
+  it("홈 펀딩을 받기 전이거나 조회에 실패하면 배지 없이 위시를 보여준다", () => {
+    mockWishes({ content: [makeWish(1, "FUNDING")] });
+    mockFundings(undefined);
+
+    render(<HomeWishTab onAddWish={vi.fn()} />);
+
+    expect(screen.getByText("상품1")).toBeInTheDocument();
+    expect(screen.queryByText("펀딩 중")).not.toBeInTheDocument();
   });
 
   it("다음 페이지가 있으면 더 보기로 요청하고 받은 위시를 이어서 보여준다", async () => {
