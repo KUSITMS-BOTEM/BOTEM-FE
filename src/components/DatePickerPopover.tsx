@@ -122,14 +122,15 @@ export default function DatePickerPopover({
   };
 
   return (
-    <span ref={containerRef} className="relative size-6 shrink-0">
+    <span ref={containerRef} className="size-6 shrink-0">
+      {/* after 요소가 가장 가까운 relative 조상(SelectBox 박스) 전체를 클릭 영역으로 만든다 */}
       <button
         type="button"
         disabled={disabled}
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(prev => !prev)}
-        className="size-full cursor-pointer disabled:cursor-not-allowed"
+        className="size-full cursor-pointer after:absolute after:inset-0 disabled:cursor-not-allowed"
         {...triggerProps}>
         {children}
       </button>

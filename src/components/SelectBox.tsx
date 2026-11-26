@@ -143,7 +143,7 @@ export default function SelectBox({
             disabled={disabled}
             aria-haspopup="dialog"
             onClick={() => setWheelOpen(true)}
-            className="size-6 shrink-0 cursor-pointer disabled:cursor-not-allowed"
+            className="size-6 shrink-0 cursor-pointer after:absolute after:inset-0 disabled:cursor-not-allowed"
             {...dateAria}>
             {dateIcon}
           </button>
@@ -162,7 +162,7 @@ export default function SelectBox({
     <div className={cn("flex w-full flex-col gap-2", disabled && "opacity-60", className)}>
       {hasDatePicker ? (
         <div
-          className="bg-semantic-fill-neutral-weak flex w-full flex-col items-start justify-center rounded-3xl border-2 border-transparent px-5 py-3"
+          className="bg-semantic-fill-neutral-weak relative flex w-full flex-col items-start justify-center rounded-3xl border-2 border-transparent px-5 py-3"
           // button 전용 attrs(type 등)를 제외하면 div와 호환되는 공통 DOM attrs만 남는다
           {...(props as HTMLAttributes<HTMLDivElement>)}>
           {triggerContent}
