@@ -14,6 +14,7 @@ import { toCreateFundingRequest } from "@/utils/funding/toCreateFundingRequest";
 import FundingAccountStep, {
   type FundingAccountValues,
 } from "@/widgets/funding/FundingAccountStep";
+import FundingAmountStep, { type FundingAmountValues } from "@/widgets/funding/FundingAmountStep";
 import FundingConfirmSheet from "@/widgets/funding/FundingConfirmSheet";
 import FundingInfoStep, { type FundingInfoValues } from "@/widgets/funding/FundingInfoStep";
 import FundingPreviewSheet from "@/widgets/funding/FundingPreviewSheet";
@@ -27,9 +28,13 @@ type FundingOpenSheetProps = {
   className?: string;
 };
 
-type Step = "info" | "account";
+type Step = "amount" | "info" | "account";
 
-const STEP_TITLE: Record<Step, string> = { info: "펀딩 정보", account: "계좌 정보" };
+const STEP_TITLE: Record<Step, string> = {
+  amount: "금액 정보",
+  info: "펀딩 정보",
+  account: "계좌 정보",
+};
 
 export default function FundingOpenSheet({
   open,
@@ -42,10 +47,12 @@ export default function FundingOpenSheet({
   const { data: profile } = useMyProfileQuery();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedWish, setSelectedWish] = useState<FundingWish | null>(initialWish ?? null);
-  const [step, setStep] = useState<Step>("info");
-  // 계좌 단계는 처음 진입할 때 마운트해 대표 계좌 조회와 등장 모션이 그때 시작되게 한다
+  const [step, setStep] = useState<Step>("amount");
+  // 펀딩 정보·계좌 단계는 처음 진입할 때 마운트해 등장 모션(계좌는 대표 계좌 조회도)이 그때 시작되게 한다
+  const [infoVisited, setInfoVisited] = useState(false);
   const [accountVisited, setAccountVisited] = useState(false);
   // 각 단계에서 확정(다음·펀딩 열기)한 값. 확인 시트에 보여주고 수정 시트의 초기값이 된다
+  const [amount, setAmount] = useState<FundingAmountValues | null>(null);
   const [info, setInfo] = useState<FundingInfoValues | null>(null);
   const [account, setAccount] = useState<FundingAccountValues | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -55,21 +62,26 @@ export default function FundingOpenSheet({
   // isPending은 비동기로 갱신돼 더블클릭을 못 막으므로 클릭 즉시 잠그는 1차 방어를 따로 둔다
   const [submitting, setSubmitting] = useState(false);
   // 확인 시트에서 수정한 값. 입력 단계(info·account)에는 반영하지 않고, 펀딩 열기 요청에만 쓰며 시트를 닫으면 버린다
+  const [draftAmount, setDraftAmount] = useState<FundingAmountValues | null>(null);
   const [draftInfo, setDraftInfo] = useState<FundingInfoValues | null>(null);
   const [draftAccount, setDraftAccount] = useState<FundingAccountValues | null>(null);
+  const confirmAmount = draftAmount ?? amount;
   const confirmInfo = draftInfo ?? info;
   const confirmAccount = draftAccount ?? account;
 
-  // 시트를 닫으면 다음에 열 때 위시 선택(initialWish가 있으면 펀딩 정보)부터 다시 시작한다
+  // 시트를 닫으면 다음에 열 때 위시 선택(initialWish가 있으면 금액 정보)부터 다시 시작한다
   const handleClose = () => {
     setSelectedWish(initialWish ?? null);
-    setStep("info");
+    setStep("amount");
+    setInfoVisited(false);
     setAccountVisited(false);
+    setAmount(null);
     setInfo(null);
     setAccount(null);
     setConfirmOpen(false);
     setPreviewOpen(false);
     setEditing(null);
+    setDraftAmount(null);
     setDraftInfo(null);
     setDraftAccount(null);
     // 시트가 항상 마운트돼 있어, 성공 뒤에 풀지 않으면 다시 열었을 때 버튼이 잠긴 채 남는다
@@ -81,6 +93,7 @@ export default function FundingOpenSheet({
     // 요청 중에 닫으면 취소한 줄 아는 사용자가 성공 뒤 갑자기 이동하게 된다
     if (submitting) return;
     setConfirmOpen(false);
+    setDraftAmount(null);
     setDraftInfo(null);
     setDraftAccount(null);
   };
@@ -93,6 +106,12 @@ export default function FundingOpenSheet({
     handleClose();
   };
 
+  const handleAmountNext = (values: FundingAmountValues) => {
+    setAmount(values);
+    setInfoVisited(true);
+    setStep("info");
+  };
+
   const handleInfoNext = (values: FundingInfoValues) => {
     setInfo(values);
     setAccountVisited(true);
@@ -100,10 +119,16 @@ export default function FundingOpenSheet({
   };
 
   const handleConfirm = async () => {
-    if (!selectedWish || !confirmInfo || !confirmAccount) return;
+    if (!selectedWish || !confirmAmount || !confirmInfo || !confirmAccount) return;
     setSubmitting(true);
     try {
-      await createFunding(toCreateFundingRequest(selectedWish.id, confirmInfo, confirmAccount));
+      await createFunding(
+        toCreateFundingRequest(
+          selectedWish.id,
+          { ...confirmAmount, ...confirmInfo },
+          confirmAccount,
+        ),
+      );
     } catch {
       // 에러 안내는 전역 MutationCache onError가 처리하므로 여기서는 재시도할 수 있게 잠금만 푼다
       setSubmitting(false);
@@ -130,13 +155,22 @@ export default function FundingOpenSheet({
         {selectedWish ? (
           // 이전으로 돌아왔을 때 입력값·단계가 남도록 언마운트하지 않고 숨기기만 한다
           <>
-            <div className={cn("w-full", step !== "info" && "hidden")}>
-              <FundingInfoStep
-                wish={selectedWish}
-                defaultValues={info ?? undefined}
-                onNext={handleInfoNext}
+            <div className={cn("w-full", step !== "amount" && "hidden")}>
+              <FundingAmountStep
+                basePrice={selectedWish.price}
+                defaultValues={amount ?? undefined}
+                onNext={handleAmountNext}
               />
             </div>
+            {infoVisited && (
+              <div className={cn("w-full", step !== "info" && "hidden")}>
+                <FundingInfoStep
+                  defaultValues={info ?? undefined}
+                  onNext={handleInfoNext}
+                  onPrev={() => setStep("amount")}
+                />
+              </div>
+            )}
             {accountVisited && (
               <div className={cn("w-full", step !== "account" && "hidden")}>
                 <FundingAccountStep
@@ -162,24 +196,26 @@ export default function FundingOpenSheet({
         onCancel={() => setLeaveOpen(false)}
         onConfirm={handleLeave}
       />
-      {selectedWish && confirmInfo && confirmAccount && (
+      {selectedWish && confirmAmount && confirmInfo && confirmAccount && (
         <>
           <FundingConfirmSheet
             open={confirmOpen}
             wish={selectedWish}
+            amount={confirmAmount}
             info={confirmInfo}
             account={confirmAccount}
             onClose={handleConfirmClose}
             submitting={submitting || isPending}
             onConfirm={handleConfirm}
             onPreview={() => setPreviewOpen(true)}
+            onEditAmount={() => setEditing("amount")}
             onEditInfo={() => setEditing("info")}
             onEditAccount={() => setEditing("account")}
           />
           <FundingPreviewSheet
             open={previewOpen}
             wish={selectedWish}
-            info={confirmInfo}
+            info={{ ...confirmAmount, ...confirmInfo }}
             title={profile?.name ? `${profile.name}의 펀딩` : "내 펀딩"}
             onClose={() => setPreviewOpen(false)}
             className={className}
@@ -189,9 +225,19 @@ export default function FundingOpenSheet({
             title={STEP_TITLE[editing ?? "info"]}
             onClose={() => setEditing(null)}
             className={className}>
+            {editing === "amount" && (
+              <FundingAmountStep
+                basePrice={selectedWish.price}
+                initialValues={confirmAmount}
+                submitLabel="수정 완료"
+                onNext={values => {
+                  setDraftAmount(values);
+                  setEditing(null);
+                }}
+              />
+            )}
             {editing === "info" && (
               <FundingInfoStep
-                wish={selectedWish}
                 initialValues={confirmInfo}
                 submitLabel="수정 완료"
                 onNext={values => {

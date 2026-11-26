@@ -14,6 +14,8 @@ export type CreateFundingRequest = {
   bank: BankCode;
   accountNumber: string;
   targetAmount: number;
+  // 한 명당 추천 금액. 정하지 않으면 보내지 않는다
+  recommendedAmount?: number;
   // "YYYY-MM-DD"
   deadline: string;
   story: string;

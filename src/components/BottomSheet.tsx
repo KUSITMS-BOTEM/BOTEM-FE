@@ -12,6 +12,8 @@ type BottomSheetButtons = {
   leftColor?: "neutral" | "brand";
   rightLabel: string;
   rightColor?: "brand" | "neutral";
+  // 기본은 neutral이면 weak, 그 외 fill. 검정 채움 버튼이 필요할 때 neutral과 함께 fill로 지정한다
+  rightVariant?: "fill" | "weak";
   onLeftClick?: () => void;
   onRightClick?: () => void;
   leftDisabled?: boolean;
@@ -179,7 +181,10 @@ export default function BottomSheet({
                           )}
                           <Button
                             color={buttons.rightColor ?? "brand"}
-                            variant={buttons.rightColor === "neutral" ? "weak" : "fill"}
+                            variant={
+                              buttons.rightVariant ??
+                              (buttons.rightColor === "neutral" ? "weak" : "fill")
+                            }
                             size="xlarge"
                             className="flex-1"
                             disabled={buttons.rightDisabled}
