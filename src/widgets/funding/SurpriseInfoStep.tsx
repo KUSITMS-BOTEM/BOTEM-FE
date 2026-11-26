@@ -216,9 +216,9 @@ export default function SurpriseInfoStep({
             // 칩 클릭은 input blur를 일으키지 않으므로 마감일 단계를 직접 연다
             if (wish.price > 0) setShowDeadline(true);
           }}
-          onBlur={revealDeadline}
-        />
-        {!showDeadline && <InfoBox text={`기본 상품 가격은 ${basePriceText}원이에요`} />}
+          onBlur={revealDeadline}>
+          {!showDeadline && <InfoBox text={`기본 상품 가격은 ${basePriceText}원이에요`} />}
+        </TargetAmountField>
       </motion.div>
       {showCta && (
         // 키보드가 올라온 터치 기기에서는 CTA가 키보드 위에 떠 입력을 가리므로 모션 없이 숨긴다

@@ -48,6 +48,24 @@ describe("TargetAmountField", () => {
     expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 
+  it("토스트는 도움말을 가리지 않게 도움말 뒤에 놓인다", () => {
+    render(
+      <TargetAmountField
+        price={468000}
+        value=""
+        showPriceChip
+        onChange={vi.fn()}
+        onPriceChipSelect={vi.fn()}
+        onBlur={vi.fn()}>
+        <p>도움말</p>
+      </TargetAmountField>,
+    );
+
+    expect(screen.getByText("도움말").compareDocumentPosition(screen.getByRole("status"))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
   it("토스트는 잠시 뒤 사라진다", async () => {
     renderField(468000);
     input("500000");

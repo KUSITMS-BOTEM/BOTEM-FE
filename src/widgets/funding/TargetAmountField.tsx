@@ -1,6 +1,6 @@
 "use client";
 
-import { type Ref, useEffect, useState } from "react";
+import { type ReactNode, type Ref, useEffect, useState } from "react";
 
 import Combobox from "@/components/Combobox";
 import ToastMessage from "@/components/ToastMessage";
@@ -18,6 +18,8 @@ type TargetAmountFieldProps = {
   onChange: (digits: string) => void;
   onPriceChipSelect: () => void;
   onBlur: () => void;
+  // 입력 아래 도움말. 토스트가 도움말을 가리지 않게 그 아래에 띄운다
+  children?: ReactNode;
 };
 
 export default function TargetAmountField({
@@ -28,6 +30,7 @@ export default function TargetAmountField({
   onChange,
   onPriceChipSelect,
   onBlur,
+  children,
 }: TargetAmountFieldProps) {
   const [toastShown, setToastShown] = useState(false);
 
@@ -38,7 +41,7 @@ export default function TargetAmountField({
   }, [toastShown]);
 
   return (
-    <div className="relative w-full">
+    <div className="relative flex w-full flex-col gap-2">
       <Combobox
         ref={ref}
         label="목표 금액"
@@ -61,11 +64,13 @@ export default function TargetAmountField({
           if (event.key === "Enter") event.currentTarget.blur();
         }}
       />
+      {children}
       <ToastMessage
         show={toastShown}
         state={false}
         text={`최대 ${price.toLocaleString("ko-KR")}원까지 설정할 수 있어요`}
-        className="pointer-events-none absolute top-full left-1/2 z-10 mt-2 -translate-x-1/2 whitespace-nowrap"
+        // 위 간격 8px는 부모 gap이 비어 있는 status 영역 앞에 이미 만든다
+        className="pointer-events-none absolute top-full left-1/2 z-10 -translate-x-1/2 whitespace-nowrap"
       />
     </div>
   );
