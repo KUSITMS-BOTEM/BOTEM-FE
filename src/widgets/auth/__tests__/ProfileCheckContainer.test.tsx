@@ -145,6 +145,20 @@ describe("ProfileCheckContainer", () => {
     expect(sessionStorage.getItem("signupFlow")).toContain('"birthday":"03-05"');
   });
 
+  it("이름의 지우기 버튼을 누르면 이름이 비워지고 '다음으로' 버튼이 비활성화된다", async () => {
+    setSignupFlow({ step: "profile", nickname: "지유", birthday: "10-13" });
+    vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());
+    const user = userEvent.setup();
+
+    renderContainer();
+    const input = screen.getByRole("textbox", { name: "이름" });
+    await user.click(input);
+    await user.click(screen.getByRole("button", { name: "입력 내용 지우기" }));
+
+    expect(input).toHaveValue("");
+    expect(screen.getByRole("button", { name: "다음으로" })).toBeDisabled();
+  });
+
   it("뒤로가기 클릭 시 로그아웃에 성공하면 accessToken을 지우고 '/'로 이동한다", async () => {
     setSignupFlow({ step: "profile", nickname: "지유", birthday: "10-13" });
     vi.mocked(userService.getMyProfile).mockReturnValue(pendingProfilePromise());

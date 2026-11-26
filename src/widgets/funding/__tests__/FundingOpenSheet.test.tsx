@@ -273,8 +273,7 @@ describe("FundingOpenSheet", () => {
           data: [{ accountNumber: "100159014821", bank: "TOSS_BANK", isDefault: true }],
         } as unknown as ReturnType<typeof usePayoutAccountsQuery>);
         await goToAccountStep();
-        await userEvent.click(await screen.findByRole("button", { name: /대표 계좌 사용하기/ }));
-        await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
+        await userEvent.click(await screen.findByRole("button", { name: "펀딩 열기" }));
         await screen.findByText("이대로 펀딩을 열까요?");
       };
 

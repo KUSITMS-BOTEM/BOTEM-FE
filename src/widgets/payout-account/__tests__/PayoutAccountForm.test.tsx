@@ -53,6 +53,17 @@ describe("PayoutAccountForm", () => {
     expect(screen.getByLabelText("계좌번호")).toHaveValue("10015");
   });
 
+  it("지우기 버튼을 누르면 계좌번호만 비워지고 은행은 유지된다", async () => {
+    render(<Harness initialBank="TOSS_BANK" />);
+    const input = screen.getByLabelText("계좌번호");
+
+    await userEvent.type(input, "10015");
+    await userEvent.click(screen.getByRole("button", { name: "입력 내용 지우기" }));
+
+    expect(input).toHaveValue("");
+    expect(screen.getByRole("button", { name: /은행.*토스뱅크/ })).toBeInTheDocument();
+  });
+
   it("전달받은 은행의 이름을 은행 필드에 보여준다", () => {
     render(<Harness initialBank="TOSS_BANK" />);
 

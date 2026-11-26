@@ -197,7 +197,6 @@ export default function SurpriseOpenSheet({
         <div className={cn("w-full", step !== "amount" && "hidden")}>
           <FundingAmountStep
             basePrice={wish.price}
-            capAtBasePrice
             defaultValues={amount ?? undefined}
             onNext={handleAmountNext}
           />
@@ -266,7 +265,6 @@ export default function SurpriseOpenSheet({
             {editing === "amount" && (
               <FundingAmountStep
                 basePrice={wish.price}
-                capAtBasePrice
                 initialValues={confirmAmount}
                 submitLabel="수정 완료"
                 onNext={values => {

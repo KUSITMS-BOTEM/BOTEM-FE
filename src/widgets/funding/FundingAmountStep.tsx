@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 import BottomCTA from "@/components/BottomCTA";
 import Button from "@/components/Button";
-import Combobox from "@/components/Combobox";
+import InfoBox from "@/components/InfoBox";
 import SelectBox from "@/components/SelectBox";
 import Title from "@/components/Title";
 import { cn } from "@/utils/cn";
@@ -19,8 +19,7 @@ import {
   TITLE_TRANSITION,
 } from "@/widgets/funding/fundingStepMotion";
 import RecommendedAmountSheet from "@/widgets/funding/RecommendedAmountSheet";
-
-const BASE_PRICE_CHIP = { label: "기본 상품 가격", value: "base-price" };
+import TargetAmountField from "@/widgets/funding/TargetAmountField";
 
 export type FundingAmountValues = {
   targetAmount: string;
@@ -31,8 +30,6 @@ export type FundingAmountValues = {
 type FundingAmountStepProps = {
   // 목표 금액 칩과 안내 문구에 보여줄 상품 가격
   basePrice: number;
-  // 상품 가격보다 큰 목표 금액을 받지 않고 가격으로 맞춘다 (서프라이즈)
-  capAtBasePrice?: boolean;
   onNext: (values: FundingAmountValues) => void;
   // 있으면 수정 모드: 모든 필드를 채워 보여주고, 값이 바뀌어야 CTA가 활성화된다
   initialValues?: FundingAmountValues;
@@ -43,7 +40,6 @@ type FundingAmountStepProps = {
 
 export default function FundingAmountStep({
   basePrice,
-  capAtBasePrice = false,
   onNext,
   initialValues,
   defaultValues,
@@ -131,34 +127,22 @@ export default function FundingAmountStep({
           // 입력 영역이 다 나타난 뒤에 포커스해야 모션 중 키보드가 올라와 레이아웃이 흔들리지 않는다
           onAnimationComplete={() => focusIfCreating(inputRef.current)}
           className="w-full">
-          <Combobox
+          <TargetAmountField
             ref={inputRef}
-            label="목표 금액"
-            suffix="원"
-            inputMode="numeric"
-            enterKeyHint="done"
-            autoComplete="off"
-            chips={[BASE_PRICE_CHIP]}
-            onChipSelect={() => {
+            price={basePrice}
+            value={targetAmount}
+            showPriceChip
+            onChange={changeTarget}
+            onPriceChipSelect={() => {
               changeTarget(String(basePrice));
               // 칩 클릭은 input blur를 일으키지 않으므로 추천 금액 단계를 직접 연다
               if (basePrice > 0) setShowRecommended(true);
             }}
-            helperText={`기본 상품 가격은 ${basePrice.toLocaleString("ko-KR")}원이에요`}
-            value={targetAmount ? target.toLocaleString("ko-KR") : ""}
-            onChange={event => {
-              const digits = event.target.value.replace(/\D/g, "");
-              changeTarget(
-                capAtBasePrice && basePrice > 0 && Number(digits) > basePrice
-                  ? String(basePrice)
-                  : digits,
-              );
-            }}
-            onBlur={revealRecommended}
-            onKeyDown={event => {
-              if (event.key === "Enter") event.currentTarget.blur();
-            }}
-          />
+            onBlur={revealRecommended}>
+            {!showRecommended && (
+              <InfoBox text={`기본 상품 가격은 ${basePrice.toLocaleString("ko-KR")}원이에요`} />
+            )}
+          </TargetAmountField>
         </motion.div>
         {showRecommended && (
           // 키보드가 올라온 터치 기기에서는 CTA가 키보드 위에 떠 입력을 가리므로 모션 없이 숨긴다

@@ -96,9 +96,15 @@ export default function PayoutAccountForm({
             value={accountNumber}
             onChange={event => onAccountNumberChange(event.target.value.replace(/\D/g, ""))}
             onPaste={handleAccountNumberPaste}
+            onClear={() => onAccountNumberChange("")}
           />
           <SelectBox label="은행" value={bankName} onClick={() => setBankSheetOpen(true)} />
-          <ToastMessage show={toastText !== null} text={toastText ?? ""} state={false} />
+          <ToastMessage
+            show={toastText !== null}
+            text={toastText ?? ""}
+            state={false}
+            className="mx-auto"
+          />
         </motion.div>
       </div>
       <BankSelectBottomSheet

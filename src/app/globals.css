@@ -27,6 +27,19 @@ html:has(dialog:modal) {
   overflow: hidden;
 }
 
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    scale: var(--scale-dialog);
+  }
+}
+
+@keyframes dim-enter {
+  from {
+    opacity: 0;
+  }
+}
+
 @keyframes dot-pulse {
   0%,
   100% {

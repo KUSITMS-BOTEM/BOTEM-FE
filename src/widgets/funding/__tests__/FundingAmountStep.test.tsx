@@ -112,29 +112,22 @@ describe("FundingAmountStep", () => {
   });
 });
 
-describe("FundingAmountStep capAtBasePrice", () => {
+describe("FundingAmountStep", () => {
   const change = (value: string) =>
     fireEvent.change(screen.getByLabelText("목표 금액"), { target: { value } });
 
   it("상품 가격보다 큰 목표 금액은 상품 가격으로 제한된다", () => {
-    render(<FundingAmountStep basePrice={468000} capAtBasePrice onNext={vi.fn()} />);
+    render(<FundingAmountStep basePrice={468000} onNext={vi.fn()} />);
     change("999999");
 
     expect(screen.getByLabelText("목표 금액")).toHaveValue("468,000");
   });
 
   it("상품 가격이 0원이면 입력한 값을 그대로 둔다", () => {
-    render(<FundingAmountStep basePrice={0} capAtBasePrice onNext={vi.fn()} />);
+    render(<FundingAmountStep basePrice={0} onNext={vi.fn()} />);
     change("5000");
 
     expect(screen.getByLabelText("목표 금액")).toHaveValue("5,000");
-  });
-
-  it("옵션이 없으면 상품 가격보다 커도 제한하지 않는다", () => {
-    renderStep();
-    change("999999");
-
-    expect(screen.getByLabelText("목표 금액")).toHaveValue("999,999");
   });
 });
 
@@ -162,9 +155,9 @@ describe("FundingAmountStep 수정 모드", () => {
     const onNext = vi.fn();
     renderEdit(onNext);
 
-    await userEvent.type(screen.getByLabelText("목표 금액"), "0");
+    fireEvent.change(screen.getByLabelText("목표 금액"), { target: { value: "300000" } });
     await userEvent.click(screen.getByRole("button", { name: "수정 완료" }));
 
-    expect(onNext).toHaveBeenCalledWith({ targetAmount: "4290000", recommendedAmount: "50000" });
+    expect(onNext).toHaveBeenCalledWith({ targetAmount: "300000", recommendedAmount: "50000" });
   });
 });

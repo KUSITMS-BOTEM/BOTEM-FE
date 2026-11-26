@@ -51,6 +51,17 @@ describe("NameEditContainer", () => {
     expect(submit).toBeEnabled();
   });
 
+  it("지우기 버튼을 누르면 이름이 비워지고 수정 완료가 비활성이다", async () => {
+    render(<NameEditContainer />);
+    const input = screen.getByLabelText("이름");
+
+    await userEvent.click(input);
+    await userEvent.click(screen.getByRole("button", { name: "입력 내용 지우기" }));
+
+    expect(input).toHaveValue("");
+    expect(screen.getByRole("button", { name: "수정 완료" })).toBeDisabled();
+  });
+
   it("뒤로 가기는 이전 화면으로 돌아간다", async () => {
     render(<NameEditContainer />);
 

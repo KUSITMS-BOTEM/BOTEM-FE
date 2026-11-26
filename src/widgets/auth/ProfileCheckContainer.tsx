@@ -132,6 +132,7 @@ export default function ProfileCheckContainer() {
                 label="이름"
                 value={nickname}
                 onChange={event => setNickname(event.target.value)}
+                onClear={() => setNickname("")}
               />
               <SelectBox
                 variant="birth"

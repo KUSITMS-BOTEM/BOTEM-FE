@@ -77,8 +77,7 @@ const openConfirm = async (showOnProfile: "예" | "아니오" = "아니오") => 
   render(<Harness />);
   await goToExposure();
   await userEvent.click(await screen.findByRole("button", { name: showOnProfile }));
-  await userEvent.click(await screen.findByRole("button", { name: /대표 계좌 사용하기/ }));
-  await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
+  await userEvent.click(await screen.findByRole("button", { name: "펀딩 열기" }));
   await screen.findByText("이대로 서프라이즈 펀딩을 열까요?");
 };
 
