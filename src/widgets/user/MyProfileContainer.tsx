@@ -21,16 +21,18 @@ import { useWithdrawMutation } from "@/hooks/mutations/user/useWithdrawMutation"
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
 import { handleWithdrawClick } from "@/utils/auth/handleWithdrawClick";
+import { cn } from "@/utils/cn";
 import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
 import { getDisplayName } from "@/utils/user/getDisplayName";
 import BirthdayEditContainer from "@/widgets/user/BirthdayEditContainer";
 import ConnectedAccountBottomSheet from "@/widgets/user/ConnectedAccountBottomSheet";
+import MenuTrailing from "@/widgets/user/MenuTrailing";
 import NameEditContainer from "@/widgets/user/NameEditContainer";
 import IconLeft from "@/assets/icons/icon-left.svg?react";
 
 const removeProtocol = (url: string) => url.replace(/^https?:\/\//, "");
 
-const VALUE_BUTTON_CLASS = "text-semantic-text-secondary max-w-36";
+const VALUE_CLASS = "max-w-36";
 
 export default function MyProfileContainer() {
   const router = useRouter();
@@ -94,26 +96,24 @@ export default function MyProfileContainer() {
               </div>
               <List
                 title="이름"
+                onClick={() => setNameSheetOpen(true)}
+                // 이미지 저장이 업로드 시작 시점의 이름·생일을 함께 보내, 그 사이 수정하면 덮어써진다
+                disabled={isImageBusy}
                 right={
-                  <TextButton
-                    size="medium"
+                  <MenuTrailing
                     label={profile ? getDisplayName(profile) : ""}
-                    onClick={() => setNameSheetOpen(true)}
-                    // 이미지 저장이 업로드 시작 시점의 이름·생일을 함께 보내, 그 사이 수정하면 덮어써진다
-                    disabled={isImageBusy}
-                    className={VALUE_BUTTON_CLASS}
+                    className={cn(VALUE_CLASS, isImageBusy && "opacity-30")}
                   />
                 }
               />
               <List
                 title="생일"
+                onClick={() => setBirthdaySheetOpen(true)}
+                disabled={isImageBusy}
                 right={
-                  <TextButton
-                    size="medium"
+                  <MenuTrailing
                     label={profile?.birthday ? formatBirthdayDisplay(profile.birthday) : ""}
-                    onClick={() => setBirthdaySheetOpen(true)}
-                    disabled={isImageBusy}
-                    className={VALUE_BUTTON_CLASS}
+                    className={cn(VALUE_CLASS, isImageBusy && "opacity-30")}
                   />
                 }
               />

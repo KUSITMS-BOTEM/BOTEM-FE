@@ -78,10 +78,10 @@ describe("MyProfileContainer", () => {
     expect(screen.getByRole("button", { name: "링크 복사" })).toBeDisabled();
   });
 
-  it("이름·생일 값을 행에 보여주고, 누르면 각 수정 시트를 연다", async () => {
+  it("이름·생일 행 전체를 누르면 각 수정 시트를 연다", async () => {
     render(<MyProfileContainer />);
 
-    await userEvent.click(screen.getByRole("button", { name: "지유" }));
+    await userEvent.click(screen.getByRole("button", { name: /이름.*지유/ }));
     expect(screen.getByRole("dialog", { name: "이름 수정" })).toBeInTheDocument();
     await userEvent.click(
       within(screen.getByRole("dialog", { name: "이름 수정" })).getByRole("button", {
@@ -89,7 +89,7 @@ describe("MyProfileContainer", () => {
       }),
     );
 
-    await userEvent.click(screen.getByRole("button", { name: "10월 13일" }));
+    await userEvent.click(screen.getByRole("button", { name: /생일.*10월 13일/ }));
     expect(screen.getByRole("dialog", { name: "생일 수정" })).toBeInTheDocument();
   });
 

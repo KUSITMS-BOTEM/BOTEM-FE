@@ -24,6 +24,7 @@ type ListProps = {
   textSize?: ComponentProps<typeof ListText>["size"];
   right?: ReactNode;
   onClick?: () => void;
+  disabled?: boolean;
   className?: string;
 };
 
@@ -41,6 +42,7 @@ export default function List({
   textSize,
   right,
   onClick,
+  disabled = false,
   className,
 }: ListProps) {
   const isProduct = type === "product";
@@ -101,7 +103,8 @@ export default function List({
       <button
         type="button"
         onClick={onClick}
-        className={cn(rootClassName, "cursor-pointer text-left")}>
+        disabled={disabled}
+        className={cn(rootClassName, "cursor-pointer text-left disabled:cursor-not-allowed")}>
         {content}
       </button>
     );
