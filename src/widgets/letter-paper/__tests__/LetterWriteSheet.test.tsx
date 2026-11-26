@@ -588,6 +588,30 @@ describe("LetterWriteSheet", () => {
       );
     });
 
+    it("자막이 500자를 넘으면 앞 500자만 담는다", async () => {
+      // 이모지는 UTF-16 길이가 2라 코드 포인트로 세는지도 함께 확인한다
+      class LongRecognition extends MockRecognition {
+        start() {
+          this.onresult?.({
+            resultIndex: 0,
+            results: [{ isFinal: true, 0: { transcript: "🎂".repeat(501) } }],
+          });
+        }
+      }
+      vi.stubGlobal("webkitSpeechRecognition", LongRecognition);
+      const onNext = vi.fn();
+      await renderSheet({ onNext });
+      typeLetter("생일 축하해");
+
+      await openRecordSheet();
+      await userEvent.click(screen.getByRole("button", { name: "녹음 시작" }));
+      await userEvent.click(await screen.findByRole("button", { name: "녹음 중지" }));
+      await userEvent.click(screen.getByRole("button", { name: "녹음 완료" }));
+      await userEvent.click(screen.getByRole("button", { name: "다음" }));
+
+      expect(onNext.mock.calls[0][0].voice.transcript).toBe("🎂".repeat(500));
+    });
+
     it("녹음을 완료한 뒤 녹음 툴을 다시 고르면 이전 녹음 없이 처음 상태로 시작한다", async () => {
       await renderSheet();
       await openRecordSheet();

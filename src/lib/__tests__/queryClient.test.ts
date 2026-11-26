@@ -81,6 +81,17 @@ describe("queryClient 전역 onError", () => {
     }
     expect(Sentry.captureException).toHaveBeenCalledTimes(3);
   });
+
+  it("COMMON_001은 서버가 알려준 사유와 함께 Sentry에 보고한다", async () => {
+    vi.mocked(Sentry.captureException).mockClear();
+    const error = new ApiError("COMMON_001", "입력값이 올바르지 않습니다.", "음성 자막 초과");
+
+    await failQuery(error);
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(error, {
+      extra: { detail: "음성 자막 초과" },
+    });
+  });
 });
 
 describe("queryClient 인증 에러 처리", () => {

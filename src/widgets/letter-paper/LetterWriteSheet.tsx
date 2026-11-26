@@ -102,6 +102,8 @@ type LetterWriteSheetProps = {
 };
 
 const TOAST_DURATION_MS = 2000;
+// 서버가 받는 음성 자막 길이(코드 포인트). 넘으면 보탬 요청 전체가 COMMON_001로 거절된다
+const VOICE_TRANSCRIPT_MAX_LENGTH = 500;
 
 export default function LetterWriteSheet({
   open,
@@ -338,7 +340,7 @@ export default function LetterWriteSheet({
     if (recorder.blob)
       setVoice({
         blob: recorder.blob,
-        transcript: recorder.transcript,
+        transcript: Array.from(recorder.transcript).slice(0, VOICE_TRANSCRIPT_MAX_LENGTH).join(""),
         durationSeconds: recorder.durationSeconds,
       });
     recorder.reset();

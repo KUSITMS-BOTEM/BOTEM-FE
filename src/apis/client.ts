@@ -11,7 +11,10 @@ const getUrl = (path: string) => `${BASE_URL}${path}`;
 const getAuthUrl = (path: string) => (process.env.NODE_ENV === "production" ? getUrl(path) : path);
 
 function unwrap<T>(json: ApiResponse<T>): T | null {
-  if (!json.success) throw new ApiError(json.error?.code ?? "UNKNOWN_ERROR", json.error?.message);
+  if (!json.success) {
+    const { code = "UNKNOWN_ERROR", message, detail } = json.error ?? {};
+    throw new ApiError(code, message, detail);
+  }
   return json.data;
 }
 

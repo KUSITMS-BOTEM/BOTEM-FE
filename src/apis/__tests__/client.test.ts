@@ -60,6 +60,26 @@ describe("clientApi", () => {
     await expect(clientApi.get("/seed-pools")).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
+  it("서버가 알려준 거절 사유(detail)를 ApiError에 담는다", async () => {
+    server.use(
+      http.post(`${BASE_URL}/seed-pools`, () =>
+        HttpResponse.json(
+          {
+            success: false,
+            data: null,
+            error: { code: "COMMON_001", message: "입력값 오류", detail: "message: 초과" },
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+
+    await expect(clientApi.post("/seed-pools")).rejects.toMatchObject({
+      code: "COMMON_001",
+      detail: "message: 초과",
+    });
+  });
+
   it("네트워크 에러면 ApiError(NETWORK_ERROR)로 변환한다", async () => {
     server.use(http.get(`${BASE_URL}/seed-pools`, () => HttpResponse.error()));
 
