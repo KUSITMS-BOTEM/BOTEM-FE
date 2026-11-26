@@ -39,6 +39,8 @@ export type FundingDetailResponse = {
   celebrantName: string;
   celebrantProfileImageUrl: string | null;
   targetAmount: number;
+  // 개설자가 정한 한 명당 추천 금액. 정하지 않았으면 null
+  recommendedAmount: number | null;
   product: FundingProduct;
   productChanged: boolean;
   productChangedAt: string | null;

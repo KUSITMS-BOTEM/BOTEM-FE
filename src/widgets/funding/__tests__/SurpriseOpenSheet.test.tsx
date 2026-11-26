@@ -58,17 +58,19 @@ function Harness({ onClose = vi.fn() }: { onClose?: () => void }) {
   );
 }
 
-// 금액 → 마감일 → 생일 칩으로 공개일 → 다음까지 눌러 프로필 노출 시트를 연다
+// 금액 → 다음 → 마감일 → 생일 칩으로 공개일 → 다음까지 눌러 프로필 노출 시트를 연다
 const goToExposure = async () => {
   const user = userEvent.setup();
   const amount = await screen.findByLabelText("목표 금액");
   await waitFor(() => expect(amount).toHaveFocus(), { timeout: 3000 });
   await user.type(amount, "1000");
   await user.tab();
+  // 숨겨진 단계의 버튼과 겹치므로 마지막(현재 단계) 버튼을 누른다
+  await user.click(screen.getAllByRole("button", { name: "다음" }).at(-1)!);
   await user.click(screen.getByRole("button", { name: /^마감일/ }));
   await pickWheelDate(user, { year: 2027, month: 12, day: 25 });
   await user.click(screen.getByRole("button", { name: "생일 12월 26일 사용" }));
-  await user.click(screen.getByRole("button", { name: "다음" }));
+  await user.click(screen.getAllByRole("button", { name: "다음" }).at(-1)!);
 };
 
 const openConfirm = async (showOnProfile: "예" | "아니오" = "아니오") => {
@@ -112,14 +114,14 @@ describe("SurpriseOpenSheet 미리보기", () => {
 });
 
 describe("SurpriseOpenSheet", () => {
-  it("펀딩 정보부터 시작한다", () => {
+  it("금액 정보부터 시작한다", () => {
     render(<Harness />);
 
-    expect(screen.getByText("펀딩 정보")).toBeInTheDocument();
+    expect(screen.getByText("금액 정보")).toBeInTheDocument();
     expect(screen.getByText("목표 금액은 얼마인가요?")).toBeInTheDocument();
   });
 
-  it("펀딩 정보에서 다음을 누르면 프로필 노출 선택 시트가 열린다", async () => {
+  it("서프라이즈 정보에서 다음을 누르면 프로필 노출 선택 시트가 열린다", async () => {
     render(<Harness />);
     await goToExposure();
 
@@ -146,13 +148,13 @@ describe("SurpriseOpenSheet", () => {
     expect(screen.queryByLabelText("계좌번호")).not.toBeInTheDocument();
   });
 
-  it("계좌 단계에서 이전을 누르면 펀딩 정보로 돌아오고 값이 남아 있다", async () => {
+  it("계좌 단계에서 이전을 누르면 서프라이즈 정보로 돌아오고 값이 남아 있다", async () => {
     render(<Harness />);
     await goToExposure();
     await userEvent.click(await screen.findByRole("button", { name: "예" }));
-    await userEvent.click(await screen.findByRole("button", { name: "이전" }));
+    await userEvent.click((await screen.findAllByRole("button", { name: "이전" })).at(-1)!);
 
-    expect(screen.getByText("펀딩 정보")).toBeInTheDocument();
+    expect(screen.getByText("서프라이즈 정보")).toBeInTheDocument();
     expect(screen.getByLabelText("목표 금액")).toHaveValue("1,000");
   });
 
@@ -238,7 +240,7 @@ describe("SurpriseOpenSheet", () => {
       createSurprise.mockResolvedValue({ fundingId: 8 });
       await openConfirm("아니오");
 
-      await userEvent.click(confirmSheet().getAllByRole("button", { name: "변경하기" })[1]);
+      await userEvent.click(confirmSheet().getAllByRole("button", { name: "변경하기" })[2]);
       await userEvent.click(await screen.findByRole("button", { name: "예" }));
 
       await waitFor(() => expect(confirmSheet().getByText("보여주기로 설정")).toBeInTheDocument());

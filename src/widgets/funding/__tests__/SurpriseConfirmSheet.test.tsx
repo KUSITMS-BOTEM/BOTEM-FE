@@ -26,7 +26,8 @@ const wish = {
   productImageUrl: "https://example.com/1.png",
   price: 468000,
 };
-const info = { targetAmount: "429000", deadline: "2099-11-13", revealDate: "2099-11-14" };
+const amount = { targetAmount: "429000", recommendedAmount: "" };
+const info = { deadline: "2099-11-13", revealDate: "2099-11-14" };
 const account = { accountNumber: "100159014821", bank: "TOSS_BANK" } as const;
 
 const renderSheet = (props = {}) =>
@@ -35,12 +36,14 @@ const renderSheet = (props = {}) =>
       open
       wish={wish}
       recipientName="민지"
+      amount={amount}
       info={info}
       account={account}
       showOnRecipientProfile
       onClose={vi.fn()}
       onConfirm={vi.fn()}
       onPreview={vi.fn()}
+      onEditAmount={vi.fn()}
       onEditInfo={vi.fn()}
       onEditExposure={vi.fn()}
       onEditAccount={vi.fn()}
@@ -54,11 +57,21 @@ describe("SurpriseConfirmSheet", () => {
 
     expect(screen.getByText("이대로 서프라이즈 펀딩을 열까요?")).toBeInTheDocument();
     expect(screen.getByText("소니 WH-1000XM5")).toBeInTheDocument();
-    expect(screen.getByText("목표 429,000원")).toBeInTheDocument();
+    expect(screen.getByText("429,000원")).toBeInTheDocument();
     expect(screen.getByText(/^2099\.11\.13/)).toBeInTheDocument();
     expect(screen.getByText(/^2099\.11\.14.*\/ 밤 12시$/)).toBeInTheDocument();
     expect(screen.getByText("토스뱅크")).toBeInTheDocument();
     expect(screen.getByText("100159014821")).toBeInTheDocument();
+  });
+
+  it("추천 금액이 있을 때만 한 명당 금액을 보여준다", () => {
+    const { unmount } = renderSheet();
+    expect(screen.queryByText("추천 금액")).not.toBeInTheDocument();
+    unmount();
+
+    renderSheet({ amount: { ...amount, recommendedAmount: "43000" } });
+    expect(screen.getByText("추천 금액")).toBeInTheDocument();
+    expect(screen.getByText("한 명당 43,000원씩")).toBeInTheDocument();
   });
 
   it("보여주기로 했으면 받는 사람 프로필 문구를 보여준다", () => {
@@ -79,16 +92,21 @@ describe("SurpriseConfirmSheet", () => {
   });
 
   it("각 영역의 변경하기가 해당 수정 콜백을 호출한다", async () => {
+    const onEditAmount = vi.fn();
     const onEditInfo = vi.fn();
     const onEditExposure = vi.fn();
     const onEditAccount = vi.fn();
-    renderSheet({ onEditInfo, onEditExposure, onEditAccount });
-    const [info, showOnProfile, account] = screen.getAllByRole("button", { name: "변경하기" });
+    renderSheet({ onEditAmount, onEditInfo, onEditExposure, onEditAccount });
+    const [amountEdit, info, showOnProfile, account] = screen.getAllByRole("button", {
+      name: "변경하기",
+    });
 
+    await userEvent.click(amountEdit);
     await userEvent.click(info);
     await userEvent.click(showOnProfile);
     await userEvent.click(account);
 
+    expect(onEditAmount).toHaveBeenCalledTimes(1);
     expect(onEditInfo).toHaveBeenCalledTimes(1);
     expect(onEditExposure).toHaveBeenCalledTimes(1);
     expect(onEditAccount).toHaveBeenCalledTimes(1);

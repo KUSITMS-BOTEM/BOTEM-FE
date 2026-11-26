@@ -119,7 +119,7 @@ describe("FriendProfileContainer", () => {
     },
   );
 
-  it("서프라이즈 열기 → 위시 선택하기를 누르면 그 위시로 펀딩 정보 단계가 열린다", async () => {
+  it("서프라이즈 열기 → 위시 선택하기를 누르면 그 위시로 금액 정보 단계가 열린다", async () => {
     mockQuery({ data: profile() });
     const user = userEvent.setup();
     render(<FriendProfileContainer friendId="5" />);
@@ -127,7 +127,7 @@ describe("FriendProfileContainer", () => {
     await user.click(screen.getByRole("button", { name: /서프라이즈 열기/ }));
     await user.click(await screen.findByRole("button", { name: "모자 선택하기" }));
 
-    expect(await screen.findByText("펀딩 정보")).toBeInTheDocument();
+    expect(await screen.findByText("금액 정보")).toBeInTheDocument();
     expect(screen.getByText("목표 금액은 얼마인가요?")).toBeInTheDocument();
   });
 

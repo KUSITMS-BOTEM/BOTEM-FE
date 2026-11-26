@@ -2,6 +2,8 @@ import type { CreateFundingRequest } from "@/types/funding/funding";
 
 type FundingInfoInput = {
   targetAmount: string;
+  // 선택 입력이라 정하지 않으면 빈 문자열이거나 없다
+  recommendedAmount?: string;
   deadline: string;
   story: string;
   pledge: string;
@@ -17,6 +19,8 @@ export function toCreateFundingRequest(
     bank: account.bank,
     accountNumber: account.accountNumber,
     targetAmount: Number(info.targetAmount),
+    recommendedAmount:
+      Number(info.recommendedAmount) > 0 ? Number(info.recommendedAmount) : undefined,
     deadline: info.deadline,
     story: info.story,
     promise: info.pledge || undefined,

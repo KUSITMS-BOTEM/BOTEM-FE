@@ -84,16 +84,16 @@ describe("WishDetailContainer", () => {
     expect(screen.getByRole("button", { name: "이 상품으로 펀딩 열기" })).toBeInTheDocument();
   });
 
-  it("'이 상품으로 펀딩 열기'를 누르면 펀딩 정보 시트가 열린다", async () => {
+  it("'이 상품으로 펀딩 열기'를 누르면 금액 정보 시트가 열린다", async () => {
     const user = userEvent.setup();
     mockWishQuery({ data: mockWish });
 
     render(<WishDetailContainer />);
-    expect(screen.queryByRole("dialog", { name: "펀딩 정보" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "금액 정보" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "이 상품으로 펀딩 열기" }));
 
-    expect(screen.getByRole("dialog", { name: "펀딩 정보" })).toHaveAttribute("open");
+    expect(screen.getByRole("dialog", { name: "금액 정보" })).toHaveAttribute("open");
   });
 
   it("판매처를 누르면 상품 링크를 새 탭으로 연다", async () => {

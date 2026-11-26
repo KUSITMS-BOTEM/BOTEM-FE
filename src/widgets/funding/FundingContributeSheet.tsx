@@ -10,16 +10,17 @@ import OpenSheet from "@/components/OpenSheet";
 import Title from "@/components/Title";
 import ToastMessage from "@/components/ToastMessage";
 import { cn } from "@/utils/cn";
+import { toContributeAmounts } from "@/utils/funding/recommendedAmount";
 
 // 시트가 이미 떠 있는 상태에서 빈 화면 → Title → 입력 영역 순서로 나타난다 (FundingInfoStep 모션 기준)
 const EASE_STANDARD = [0.2, 0, 0, 1] as const;
 const TITLE_TRANSITION = { delay: 0.15, duration: 0.45, ease: EASE_STANDARD };
 const FIELD_TRANSITION = { delay: 0.4, duration: 0.4, ease: EASE_STANDARD };
 
-const AMOUNT_CHIPS: ComboboxChip[] = [5000, 10000, 50000].map(amount => ({
+const toChip = (amount: number): ComboboxChip => ({
   label: `${amount.toLocaleString("ko-KR")}원`,
   value: String(amount),
-}));
+});
 
 // 지나치게 긴 입력이 Number 정밀도 손실·Infinity로 표시가 깨지지 않게 막는다 (초과 검증은 그대로 걸린다)
 const capAmount = (value: number) => Math.min(value, Number.MAX_SAFE_INTEGER);
@@ -29,6 +30,8 @@ type FundingContributeSheetProps = {
   hostName: string;
   // 이 금액을 넘으면 다음 버튼을 막는다 (목표 금액 - 현재 모인 금액)
   maxAmount: number;
+  // 개설자가 정한 한 명당 추천 금액. 없으면 안내 문구와 칩을 보여주지 않는다
+  recommendedAmount?: number;
   onClose: () => void;
   // 우측 상단 X·ESC에서 호출된다. 입력값은 지우지 않고 부모가 나가기 확인을 받게 한다.
   // 넘기면 handleClose(입력 초기화 + onClose)가 호출되지 않으므로, 초기화는 부모가 key로 재마운트해 맡는다
@@ -41,6 +44,7 @@ export default function FundingContributeSheet({
   open,
   hostName,
   maxAmount,
+  recommendedAmount,
   onClose,
   onExit,
   onNext,
@@ -82,7 +86,15 @@ export default function FundingContributeSheet({
           animate={{ opacity: 1, y: 0 }}
           transition={TITLE_TRANSITION}
           className="w-full">
-          <Title type="a2z" title="얼마를 보탤까요?" />
+          <Title
+            type="a2z"
+            title="얼마를 보탤까요?"
+            description={
+              recommendedAmount
+                ? `추천 금액은 ${recommendedAmount.toLocaleString("ko-KR")}원이에요.\n자유롭게 수정할 수 있어요`
+                : undefined
+            }
+          />
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 28 }}
@@ -98,8 +110,9 @@ export default function FundingContributeSheet({
             inputMode="numeric"
             enterKeyHint="done"
             autoComplete="off"
-            chips={AMOUNT_CHIPS}
+            chips={toContributeAmounts(recommendedAmount).map(toChip)}
             chipPosition="bottom"
+            chipWrap
             value={amount ? amount.toLocaleString("ko-KR") : ""}
             onChange={event => {
               setTouched(true);

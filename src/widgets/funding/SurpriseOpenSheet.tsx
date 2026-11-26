@@ -14,6 +14,7 @@ import { formatSurpriseTitle } from "@/utils/funding/toOwnerFundingView";
 import FundingAccountStep, {
   type FundingAccountValues,
 } from "@/widgets/funding/FundingAccountStep";
+import FundingAmountStep, { type FundingAmountValues } from "@/widgets/funding/FundingAmountStep";
 import FundingOpenCompleteSheet from "@/widgets/funding/FundingOpenCompleteSheet";
 import FundingPreviewSheet from "@/widgets/funding/FundingPreviewSheet";
 import SurpriseConfirmSheet from "@/widgets/funding/SurpriseConfirmSheet";
@@ -32,9 +33,13 @@ type SurpriseOpenSheetProps = {
   className?: string;
 };
 
-type Step = "info" | "account";
+type Step = "amount" | "info" | "account";
 
-const STEP_TITLE: Record<Step, string> = { info: "펀딩 정보", account: "펀딩 계좌" };
+const STEP_TITLE: Record<Step, string> = {
+  amount: "금액 정보",
+  info: "서프라이즈 정보",
+  account: "펀딩 계좌",
+};
 
 export default function SurpriseOpenSheet({
   open,
@@ -48,10 +53,12 @@ export default function SurpriseOpenSheet({
 }: SurpriseOpenSheetProps) {
   const router = useRouter();
   const { mutateAsync: createSurprise, isPending } = useCreateSurpriseFundingMutation();
-  const [step, setStep] = useState<Step>("info");
-  // 계좌 단계는 처음 진입할 때 마운트해 대표 계좌 조회와 등장 모션이 그때 시작되게 한다
+  const [step, setStep] = useState<Step>("amount");
+  // 정보·계좌 단계는 처음 진입할 때 마운트해 등장 모션(계좌는 대표 계좌 조회도)이 그때 시작되게 한다
+  const [infoVisited, setInfoVisited] = useState(false);
   const [accountVisited, setAccountVisited] = useState(false);
   // 각 단계에서 확정한 값. 확인 시트에 보여주고 수정 시트의 초기값이 된다
+  const [amount, setAmount] = useState<FundingAmountValues | null>(null);
   const [info, setInfo] = useState<SurpriseInfoValues | null>(null);
   const [account, setAccount] = useState<FundingAccountValues | null>(null);
   const [showOnProfile, setShowOnProfile] = useState<boolean | null>(null);
@@ -70,16 +77,20 @@ export default function SurpriseOpenSheet({
   // isPending은 비동기로 갱신돼 더블클릭을 못 막으므로 클릭 즉시 잠그는 1차 방어를 따로 둔다
   const [submitting, setSubmitting] = useState(false);
   // 확인 시트에서 수정한 값. 입력 단계에는 반영하지 않고 개설 요청에만 쓰며 시트를 닫으면 버린다
+  const [draftAmount, setDraftAmount] = useState<FundingAmountValues | null>(null);
   const [draftInfo, setDraftInfo] = useState<SurpriseInfoValues | null>(null);
   const [draftAccount, setDraftAccount] = useState<FundingAccountValues | null>(null);
   const [draftShowOnProfile, setDraftShowOnProfile] = useState<boolean | null>(null);
+  const confirmAmount = draftAmount ?? amount;
   const confirmInfo = draftInfo ?? info;
   const confirmAccount = draftAccount ?? account;
   const confirmShowOnProfile = draftShowOnProfile ?? showOnProfile;
 
   const handleClose = () => {
-    setStep("info");
+    setStep("amount");
+    setInfoVisited(false);
     setAccountVisited(false);
+    setAmount(null);
     setInfo(null);
     setAccount(null);
     setShowOnProfile(null);
@@ -92,6 +103,7 @@ export default function SurpriseOpenSheet({
     setCreatedDeadline(null);
     setEditing(null);
     setEditingExposure(false);
+    setDraftAmount(null);
     setDraftInfo(null);
     setDraftAccount(null);
     setDraftShowOnProfile(null);
@@ -104,6 +116,7 @@ export default function SurpriseOpenSheet({
     // 요청 중에 닫으면 취소한 줄 아는 사용자가 성공 뒤 갑자기 이동하게 된다
     if (submitting) return;
     setConfirmOpen(false);
+    setDraftAmount(null);
     setDraftInfo(null);
     setDraftAccount(null);
     setDraftShowOnProfile(null);
@@ -118,6 +131,12 @@ export default function SurpriseOpenSheet({
   // 위시 상세를 히스토리에서 교체해야 상세에서 뒤로 갈 때 위시 상세를 거치지 않고 친구 프로필로 간다
   const handleCompleteClose = () => {
     router.replace(`/funding/${createdFundingId}?friendId=${encodeURIComponent(recipientId)}`);
+  };
+
+  const handleAmountNext = (values: FundingAmountValues) => {
+    setAmount(values);
+    setInfoVisited(true);
+    setStep("info");
   };
 
   const handleInfoNext = (values: SurpriseInfoValues) => {
@@ -138,14 +157,14 @@ export default function SurpriseOpenSheet({
   };
 
   const handleConfirm = async () => {
-    if (!confirmInfo || !confirmAccount || confirmShowOnProfile === null) return;
+    if (!confirmAmount || !confirmInfo || !confirmAccount || confirmShowOnProfile === null) return;
     setSubmitting(true);
     try {
       const created = await createSurprise(
         toCreateSurpriseFundingRequest(
           recipientId,
           wish.id,
-          confirmInfo,
+          { ...confirmAmount, ...confirmInfo },
           confirmAccount,
           confirmShowOnProfile,
         ),
@@ -162,7 +181,6 @@ export default function SurpriseOpenSheet({
   };
 
   const infoStepProps = {
-    wish,
     recipientName,
     recipientBirthday,
     recipientBirthdayDday,
@@ -176,13 +194,23 @@ export default function SurpriseOpenSheet({
         onClose={() => setLeaveOpen(true)}
         className={className}>
         {/* 이전으로 돌아왔을 때 입력값·단계가 남도록 언마운트하지 않고 숨기기만 한다 */}
-        <div className={cn("w-full", step !== "info" && "hidden")}>
-          <SurpriseInfoStep
-            {...infoStepProps}
-            defaultValues={info ?? undefined}
-            onNext={handleInfoNext}
+        <div className={cn("w-full", step !== "amount" && "hidden")}>
+          <FundingAmountStep
+            basePrice={wish.price}
+            defaultValues={amount ?? undefined}
+            onNext={handleAmountNext}
           />
         </div>
+        {infoVisited && (
+          <div className={cn("w-full", step !== "info" && "hidden")}>
+            <SurpriseInfoStep
+              {...infoStepProps}
+              defaultValues={info ?? undefined}
+              onNext={handleInfoNext}
+              onPrev={() => setStep("amount")}
+            />
+          </div>
+        )}
         {accountVisited && (
           <div className={cn("w-full", step !== "account" && "hidden")}>
             <FundingAccountStep
@@ -210,12 +238,13 @@ export default function SurpriseOpenSheet({
         onCancel={() => setLeaveOpen(false)}
         onConfirm={handleLeave}
       />
-      {confirmInfo && confirmAccount && confirmShowOnProfile !== null && (
+      {confirmAmount && confirmInfo && confirmAccount && confirmShowOnProfile !== null && (
         <>
           <SurpriseConfirmSheet
             open={confirmOpen}
             wish={wish}
             recipientName={recipientName}
+            amount={confirmAmount}
             info={confirmInfo}
             account={confirmAccount}
             showOnRecipientProfile={confirmShowOnProfile}
@@ -223,6 +252,7 @@ export default function SurpriseOpenSheet({
             onClose={handleConfirmClose}
             onConfirm={handleConfirm}
             onPreview={() => setPreviewOpen(true)}
+            onEditAmount={() => setEditing("amount")}
             onEditInfo={() => setEditing("info")}
             onEditExposure={() => setEditingExposure(true)}
             onEditAccount={() => setEditing("account")}
@@ -232,6 +262,17 @@ export default function SurpriseOpenSheet({
             title={STEP_TITLE[editing ?? "info"]}
             onClose={() => setEditing(null)}
             className={className}>
+            {editing === "amount" && (
+              <FundingAmountStep
+                basePrice={wish.price}
+                initialValues={confirmAmount}
+                submitLabel="수정 완료"
+                onNext={values => {
+                  setDraftAmount(values);
+                  setEditing(null);
+                }}
+              />
+            )}
             {editing === "info" && (
               <SurpriseInfoStep
                 {...infoStepProps}
@@ -266,7 +307,7 @@ export default function SurpriseOpenSheet({
           <FundingPreviewSheet
             open={previewOpen}
             wish={wish}
-            info={confirmInfo}
+            info={{ ...confirmAmount, ...confirmInfo }}
             title={formatSurpriseTitle(recipientName)}
             locked
             onClose={() => setPreviewOpen(false)}
@@ -278,7 +319,11 @@ export default function SurpriseOpenSheet({
               variant="surprise"
               recipientName={recipientName}
               wish={wish}
-              info={{ ...confirmInfo, deadline: createdDeadline ?? confirmInfo.deadline }}
+              info={{
+                ...confirmAmount,
+                ...confirmInfo,
+                deadline: createdDeadline ?? confirmInfo.deadline,
+              }}
               shareKey={createdShareKey}
               onClose={handleCompleteClose}
               className={className}

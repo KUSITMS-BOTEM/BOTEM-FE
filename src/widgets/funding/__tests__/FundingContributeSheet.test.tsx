@@ -22,9 +22,13 @@ beforeEach(() => {
 
 const MAX_AMOUNT = 49382715;
 
-type HarnessProps = { onNext?: (amount: number) => void; onClose?: () => void };
+type HarnessProps = {
+  onNext?: (amount: number) => void;
+  onClose?: () => void;
+  recommendedAmount?: number;
+};
 
-function Harness({ onNext = vi.fn(), onClose }: HarnessProps) {
+function Harness({ onNext = vi.fn(), onClose, recommendedAmount }: HarnessProps) {
   const [open, setOpen] = useState(true);
   return (
     <>
@@ -33,6 +37,7 @@ function Harness({ onNext = vi.fn(), onClose }: HarnessProps) {
         open={open}
         hostName="지유"
         maxAmount={MAX_AMOUNT}
+        recommendedAmount={recommendedAmount}
         onClose={() => {
           onClose?.();
           setOpen(false);
@@ -245,6 +250,39 @@ describe("FundingContributeSheet", () => {
       await user.click(screen.getByRole("button", { name: "열기" }));
 
       expect(await screen.findByRole("textbox", { name: "보탬 금액" })).toHaveValue("");
+    });
+  });
+
+  describe("추천 금액", () => {
+    it("추천 금액이 있으면 안내 문구와 칩을 보여주고, 칩을 누르면 금액이 채워진다", async () => {
+      const user = userEvent.setup();
+      render(<Harness recommendedAmount={15000} />);
+
+      expect(screen.getByText(/추천 금액은 15,000원이에요\./)).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "15,000원" }));
+
+      expect(getInput()).toHaveValue("15,000");
+    });
+
+    it("추천 금액 칩은 기본 칩 사이에 금액순으로 놓인다", () => {
+      render(<Harness recommendedAmount={15000} />);
+
+      const labels = screen
+        .getAllByRole("button", { name: /^[\d,]+원$/ })
+        .map(button => button.textContent);
+      expect(labels).toEqual(["5,000원", "10,000원", "15,000원", "50,000원"]);
+    });
+
+    it("추천 금액이 없으면 안내 문구를 보여주지 않는다", () => {
+      render(<Harness />);
+
+      expect(screen.queryByText(/추천 금액은/)).not.toBeInTheDocument();
+    });
+
+    it("추천 금액이 기본 칩과 같으면 칩을 하나만 보여준다", () => {
+      render(<Harness recommendedAmount={10000} />);
+
+      expect(screen.getAllByRole("button", { name: "10,000원" })).toHaveLength(1);
     });
   });
 });

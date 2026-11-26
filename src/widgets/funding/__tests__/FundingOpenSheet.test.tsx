@@ -92,12 +92,12 @@ describe("FundingOpenSheet", () => {
     expect(screen.getByText("내 위시에서 고르기")).toBeInTheDocument();
   });
 
-  it("위시를 선택하면 제목이 펀딩 정보로 바뀌고 목표 금액 입력 화면으로 교체된다", async () => {
+  it("위시를 선택하면 제목이 금액 정보로 바뀌고 목표 금액 입력 화면으로 교체된다", async () => {
     render(<Harness />);
 
     await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
 
-    expect(await screen.findByText("펀딩 정보")).toBeInTheDocument();
+    expect(await screen.findByText("금액 정보")).toBeInTheDocument();
     expect(screen.queryByText("펀딩 열기")).not.toBeInTheDocument();
     expect(screen.queryByText("내 위시에서 고르기")).not.toBeInTheDocument();
     expect(screen.getByLabelText("목표 금액")).toHaveValue("");
@@ -106,7 +106,7 @@ describe("FundingOpenSheet", () => {
   it("시트를 그만두고 다시 열면 위시 선택부터 다시 시작한다", async () => {
     render(<Harness />);
     await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
-    await screen.findByText("펀딩 정보");
+    await screen.findByText("금액 정보");
 
     await userEvent.click(screen.getByRole("button", { name: "닫기" }));
     await userEvent.click(screen.getByRole("button", { name: "그만두기" }));
@@ -116,7 +116,7 @@ describe("FundingOpenSheet", () => {
     expect(screen.getByText("내 위시에서 고르기")).toBeInTheDocument();
   });
 
-  it("initialWish가 있으면 위시 선택 없이 펀딩 정보부터 시작한다", () => {
+  it("initialWish가 있으면 위시 선택 없이 금액 정보부터 시작한다", () => {
     render(
       <FundingOpenSheet
         open
@@ -125,12 +125,12 @@ describe("FundingOpenSheet", () => {
       />,
     );
 
-    expect(screen.getByText("펀딩 정보")).toBeInTheDocument();
+    expect(screen.getByText("금액 정보")).toBeInTheDocument();
     expect(screen.queryByText("내 위시에서 고르기")).not.toBeInTheDocument();
     expect(screen.getByLabelText("목표 금액")).toBeInTheDocument();
   });
 
-  it("initialWish로 시작한 시트를 그만두고 다시 열면 입력값 없이 펀딩 정보부터 시작한다", async () => {
+  it("initialWish로 시작한 시트를 그만두고 다시 열면 입력값 없이 금액 정보부터 시작한다", async () => {
     render(<Harness initialWish={{ id: 1, productName: "모자", price: 429000 }} />);
     await userEvent.type(screen.getByLabelText("목표 금액"), "1000");
 
@@ -138,7 +138,7 @@ describe("FundingOpenSheet", () => {
     await userEvent.click(screen.getByRole("button", { name: "그만두기" }));
     await userEvent.click(screen.getByRole("button", { name: "열기", hidden: true }));
 
-    expect(await screen.findByText("펀딩 정보")).toBeInTheDocument();
+    expect(await screen.findByText("금액 정보")).toBeInTheDocument();
     expect(screen.queryByText("내 위시에서 고르기")).not.toBeInTheDocument();
     expect(screen.getByLabelText("목표 금액")).toHaveValue("");
   });
@@ -174,7 +174,7 @@ describe("FundingOpenSheet", () => {
       const onClose = vi.fn();
       render(<FundingOpenSheet open onClose={onClose} />);
       await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
-      await screen.findByText("펀딩 정보");
+      await screen.findByText("금액 정보");
 
       await userEvent.click(screen.getByRole("button", { name: "닫기" }));
 
@@ -200,7 +200,7 @@ describe("FundingOpenSheet", () => {
       const onClose = vi.fn();
       render(<FundingOpenSheet open onClose={onClose} />);
       await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
-      await screen.findByText("펀딩 정보");
+      await screen.findByText("금액 정보");
 
       await userEvent.click(screen.getByRole("button", { name: "닫기" }));
       await userEvent.click(screen.getByRole("button", { name: "그만두기" }));
@@ -209,23 +209,45 @@ describe("FundingOpenSheet", () => {
     });
   });
 
-  describe("펀딩 정보 → 계좌 정보 단계", () => {
+  describe("금액 정보 → 펀딩 정보 → 계좌 정보 단계", () => {
     const goToAccountStep = async () => {
       render(<Harness />);
       await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
       // 필드 모션이 끝나면 자동 포커스가 걸려 타이핑 도중 포커스를 가져가므로, 먼저 포커스가 옮겨올 때까지 기다린다
       const amount = await screen.findByLabelText("목표 금액");
       await waitFor(() => expect(amount).toHaveFocus(), { timeout: 3000 });
-      await userEvent.type(amount, "1000");
-      await userEvent.tab();
-      await userEvent.click(screen.getByRole("button", { name: "마감일 선택해주세요" }));
+      await userEvent.type(amount, "1000{Enter}");
+      await userEvent.click(screen.getByRole("button", { name: "다음" }));
+      // 숨겨진 단계의 버튼과 겹치므로 마지막(가장 나중에 마운트된 단계)을 쓴다
+      await userEvent.click(await screen.findByRole("button", { name: "마감일 선택해주세요" }));
       await pickWheelDate(userEvent.setup(), { year: 2027, month: 12, day: 25 });
       const story = screen.getByLabelText("사연");
       await waitFor(() => expect(story).toHaveFocus(), { timeout: 3000 });
       await userEvent.type(story, "생일 선물");
       fireEvent.blur(story);
-      await userEvent.click(screen.getByRole("button", { name: "다음" }));
+      await userEvent.click(screen.getAllByRole("button", { name: "다음" }).at(-1)!);
     };
+
+    it("금액 정보에서 다음을 누르면 제목이 펀딩 정보로 바뀌고 마감일 입력 화면이 나타난다", async () => {
+      render(<Harness />);
+      await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
+      const amount = await screen.findByLabelText("목표 금액");
+      await waitFor(() => expect(amount).toHaveFocus(), { timeout: 3000 });
+      await userEvent.type(amount, "1000{Enter}");
+
+      await userEvent.click(screen.getByRole("button", { name: "다음" }));
+
+      expect(await screen.findByText("펀딩 정보")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "마감일 선택해주세요" })).toBeInTheDocument();
+    });
+
+    it("펀딩 정보에서 이전을 누르면 금액 정보로 돌아가 입력했던 목표 금액이 남아 있다", async () => {
+      await goToAccountStep();
+      await userEvent.click((await screen.findAllByRole("button", { name: "이전" })).at(0)!);
+
+      expect(screen.getByText("금액 정보")).toBeInTheDocument();
+      expect(screen.getByLabelText("목표 금액")).toHaveValue("1,000");
+    });
 
     it("다음을 누르면 제목이 계좌 정보로 바뀌고 계좌 입력 화면이 나타난다", async () => {
       await goToAccountStep();
@@ -238,7 +260,7 @@ describe("FundingOpenSheet", () => {
 
     it("이전을 누르면 펀딩 정보로 돌아오고 입력했던 값이 그대로 남아 있다", async () => {
       await goToAccountStep();
-      await userEvent.click(await screen.findByRole("button", { name: "이전" }));
+      await userEvent.click((await screen.findAllByRole("button", { name: "이전" })).at(-1)!);
 
       expect(screen.getByText("펀딩 정보")).toBeInTheDocument();
       expect(screen.getByLabelText("사연")).toHaveValue("생일 선물");
@@ -269,7 +291,8 @@ describe("FundingOpenSheet", () => {
         await openConfirm();
 
         expect(confirmSheet().getByText("상품468")).toBeInTheDocument();
-        expect(confirmSheet().getByText("목표 1,000원 · 마감 12월 25일")).toBeInTheDocument();
+        expect(confirmSheet().getByText("1,000원")).toBeInTheDocument();
+        expect(confirmSheet().getByText("12월 25일")).toBeInTheDocument();
         expect(confirmSheet().getByText("생일 선물")).toBeInTheDocument();
         expect(confirmSheet().getByText("100159014821")).toBeInTheDocument();
       });
@@ -333,9 +356,23 @@ describe("FundingOpenSheet", () => {
         expect(push).not.toHaveBeenCalled();
       });
 
-      it("펀딩 정보를 변경하면 확인 시트에 수정된 값이 반영된다", async () => {
+      it("금액 정보를 변경하면 확인 시트에 수정된 목표 금액이 반영되고 그 값으로 요청한다", async () => {
         await openConfirm();
         await userEvent.click(screen.getAllByRole("button", { name: /변경하기/ })[0]);
+
+        await userEvent.type(screen.getAllByLabelText("목표 금액").at(-1)!, "0");
+        await userEvent.click(await screen.findByRole("button", { name: "수정 완료" }));
+
+        await waitFor(() => expect(confirmSheet().getByText("10,000원")).toBeInTheDocument());
+        await userEvent.click(confirmSheet().getByRole("button", { name: "펀딩 열기" }));
+        expect(createFunding).toHaveBeenCalledWith(
+          expect.objectContaining({ targetAmount: 10000 }),
+        );
+      });
+
+      it("펀딩 정보를 변경하면 확인 시트에 수정된 값이 반영된다", async () => {
+        await openConfirm();
+        await userEvent.click(screen.getAllByRole("button", { name: /변경하기/ })[1]);
 
         const editButton = await screen.findByRole("button", { name: "수정 완료" });
         expect(editButton).toBeDisabled();
@@ -348,7 +385,7 @@ describe("FundingOpenSheet", () => {
 
       it("계좌를 변경하면 확인 시트에 수정된 계좌번호가 반영된다", async () => {
         await openConfirm();
-        await userEvent.click(screen.getAllByRole("button", { name: /변경하기/ })[1]);
+        await userEvent.click(screen.getAllByRole("button", { name: /변경하기/ })[2]);
 
         await userEvent.type(screen.getAllByLabelText("계좌번호").at(-1)!, "9");
         await userEvent.click(await screen.findByRole("button", { name: "수정 완료" }));
@@ -358,7 +395,7 @@ describe("FundingOpenSheet", () => {
 
       it("확인 시트에서 수정한 값으로 개설 요청을 보낸다", async () => {
         await openConfirm();
-        await userEvent.click(screen.getAllByRole("button", { name: /변경하기/ })[0]);
+        await userEvent.click(screen.getAllByRole("button", { name: /변경하기/ })[1]);
         await userEvent.type(screen.getAllByLabelText("사연").at(-1)!, "!");
         await userEvent.click(await screen.findByRole("button", { name: "수정 완료" }));
         await waitFor(() => expect(confirmSheet().getByText("생일 선물!")).toBeInTheDocument());
@@ -372,7 +409,7 @@ describe("FundingOpenSheet", () => {
 
       it("확인 시트에서 수정하고 그냥 닫으면 입력 단계는 수정 전 값을 유지하고 다시 열어도 수정 전 값으로 요청한다", async () => {
         await openConfirm();
-        await userEvent.click(screen.getAllByRole("button", { name: /변경하기/ })[0]);
+        await userEvent.click(screen.getAllByRole("button", { name: /변경하기/ })[1]);
         await userEvent.type(screen.getAllByLabelText("사연").at(-1)!, "!");
         await userEvent.click(await screen.findByRole("button", { name: "수정 완료" }));
         await waitFor(() => expect(confirmSheet().getByText("생일 선물!")).toBeInTheDocument());
@@ -393,7 +430,7 @@ describe("FundingOpenSheet", () => {
       vi.mocked(usePayoutAccountsQuery).mockClear();
       render(<Harness />);
       await userEvent.click(screen.getByRole("button", { name: /상품468/ }));
-      await screen.findByText("펀딩 정보");
+      await screen.findByText("금액 정보");
 
       expect(usePayoutAccountsQuery).not.toHaveBeenCalled();
     });

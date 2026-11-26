@@ -17,6 +17,17 @@ describe("toCreateSurpriseFundingRequest", () => {
     });
   });
 
+  it("추천 금액이 있으면 숫자로 담고 없으면 담지 않는다", () => {
+    expect(
+      toCreateSurpriseFundingRequest("3", 9, { ...info, recommendedAmount: "35000" }, account, true)
+        .recommendedAmount,
+    ).toBe(35000);
+    expect(
+      toCreateSurpriseFundingRequest("3", 9, { ...info, recommendedAmount: "" }, account, true)
+        .recommendedAmount,
+    ).toBeUndefined();
+  });
+
   it("알리지 않기로 하면 showOnRecipientProfile가 false다", () => {
     expect(
       toCreateSurpriseFundingRequest("3", 9, info, account, false).showOnRecipientProfile,

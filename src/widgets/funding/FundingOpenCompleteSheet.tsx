@@ -13,7 +13,6 @@ import { usePreparedImageSave } from "@/hooks/usePreparedImageSave";
 import type { FundingWish } from "@/types/funding/funding";
 import { cn } from "@/utils/cn";
 import FundingShareCard from "@/widgets/funding/FundingShareCard";
-import type { FundingInfoValues } from "@/widgets/funding/FundingInfoStep";
 import IconShare from "@/assets/icons/icon-share.svg?react";
 
 const SAVE_FAIL_TOAST_MS = 2000;
@@ -21,7 +20,7 @@ const SAVE_FAIL_TOAST_MS = 2000;
 type FundingOpenCompleteSheetProps = {
   open: boolean;
   wish: FundingWish;
-  info: Pick<FundingInfoValues, "targetAmount" | "deadline">;
+  info: { targetAmount: string; deadline: string };
   shareKey: string;
   onClose: () => void;
   className?: string;

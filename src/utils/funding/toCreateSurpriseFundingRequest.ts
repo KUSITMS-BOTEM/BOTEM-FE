@@ -2,6 +2,8 @@ import type { CreateFundingRequest, CreateSurpriseFundingRequest } from "@/types
 
 type SurpriseInfoInput = {
   targetAmount: string;
+  // 선택 입력이라 정하지 않으면 빈 문자열이거나 없다
+  recommendedAmount?: string;
   deadline: string;
   revealDate: string;
 };
@@ -19,6 +21,8 @@ export function toCreateSurpriseFundingRequest(
     bank: account.bank,
     accountNumber: account.accountNumber,
     targetAmount: Number(info.targetAmount),
+    recommendedAmount:
+      Number(info.recommendedAmount) > 0 ? Number(info.recommendedAmount) : undefined,
     deadline: info.deadline,
     revealAt: info.revealDate,
     showOnRecipientProfile,

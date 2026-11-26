@@ -304,6 +304,7 @@ const MOCK_FUNDING_DETAIL: FundingDetailResponse = {
   celebrantName: "민재",
   celebrantProfileImageUrl: null,
   targetAmount: 300000,
+  recommendedAmount: 15000,
   product: {
     name: "소니 WH-1000XM5",
     imageUrl: faker.image.urlPicsumPhotos({ width: 160, height: 160, blur: 0 }),

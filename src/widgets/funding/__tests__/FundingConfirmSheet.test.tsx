@@ -31,7 +31,8 @@ const wish: WishResponse = {
   status: "AVAILABLE",
   fundingId: null,
 };
-const info = { targetAmount: "429000", deadline: "2099-11-13", story: "생일이에요", pledge: "" };
+const amount = { targetAmount: "429000", recommendedAmount: "50000" };
+const info = { deadline: "2099-11-13", story: "생일이에요", pledge: "" };
 const account = { accountNumber: "100159014821", bank: "TOSS_BANK" } as const;
 
 const renderSheet = (props = {}) =>
@@ -39,11 +40,13 @@ const renderSheet = (props = {}) =>
     <FundingConfirmSheet
       open
       wish={wish}
+      amount={amount}
       info={info}
       account={account}
       onClose={vi.fn()}
       onConfirm={vi.fn()}
       onPreview={vi.fn()}
+      onEditAmount={vi.fn()}
       onEditInfo={vi.fn()}
       onEditAccount={vi.fn()}
       {...props}
@@ -56,10 +59,17 @@ describe("FundingConfirmSheet", () => {
 
     expect(screen.getByText("이대로 펀딩을 열까요?")).toBeInTheDocument();
     expect(screen.getByText("소니 WH-1000XM5")).toBeInTheDocument();
-    expect(screen.getByText("목표 429,000원 · 마감 11월 13일")).toBeInTheDocument();
+    expect(screen.getByText("429,000원")).toBeInTheDocument();
+    expect(screen.getByText("한 명당 50,000원씩")).toBeInTheDocument();
+    expect(screen.getByText("11월 13일")).toBeInTheDocument();
     expect(screen.getByText("생일이에요")).toBeInTheDocument();
     expect(screen.getByText("토스뱅크")).toBeInTheDocument();
     expect(screen.getByText("100159014821")).toBeInTheDocument();
+  });
+
+  it("추천 금액이 없으면 추천 금액 행을 보여주지 않는다", () => {
+    renderSheet({ amount: { targetAmount: "429000", recommendedAmount: "" } });
+    expect(screen.queryByText("추천 금액")).not.toBeInTheDocument();
   });
 
   it("공약이 비어 있으면 공약 행을 보여주지 않는다", () => {
@@ -74,14 +84,19 @@ describe("FundingConfirmSheet", () => {
   });
 
   it("각 섹션의 변경하기를 누르면 해당 수정 콜백을 호출한다", async () => {
+    const onEditAmount = vi.fn();
     const onEditInfo = vi.fn();
     const onEditAccount = vi.fn();
-    renderSheet({ onEditInfo, onEditAccount });
+    renderSheet({ onEditAmount, onEditInfo, onEditAccount });
 
-    const [infoButton, accountButton] = screen.getAllByRole("button", { name: /변경하기/ });
+    const [amountButton, infoButton, accountButton] = screen.getAllByRole("button", {
+      name: /변경하기/,
+    });
+    await userEvent.click(amountButton);
     await userEvent.click(infoButton);
     await userEvent.click(accountButton);
 
+    expect(onEditAmount).toHaveBeenCalledTimes(1);
     expect(onEditInfo).toHaveBeenCalledTimes(1);
     expect(onEditAccount).toHaveBeenCalledTimes(1);
   });
