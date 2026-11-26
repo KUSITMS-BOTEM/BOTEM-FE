@@ -60,6 +60,7 @@ export default function RecommendedWishContainer() {
           ) : (
             <div className="flex flex-col gap-3">
               <Title
+                type="a2z"
                 title="이런 선물은 어때요?"
                 description="혼자 사긴 부담되는 선물을 골라봤어요."
               />
