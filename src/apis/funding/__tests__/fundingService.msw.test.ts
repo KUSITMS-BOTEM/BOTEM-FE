@@ -13,6 +13,19 @@ const getResult = async (fundingId: number | string) => {
   return response.json();
 };
 
+describe("fundingHandlers POST /close", () => {
+  it.each([
+    [14, "CANCELLED"],
+    [12, "CLOSED"],
+  ])("펀딩 %i의 마감 요청은 %s 상태를 반환한다", async (fundingId, status) => {
+    const response = await fetch(`http://localhost/api/fundings/${fundingId}/close`, {
+      method: "POST",
+    });
+
+    expect((await response.json()).data.status).toBe(status);
+  });
+});
+
 describe("fundingHandlers GET /result", () => {
   it("펀딩 12는 5명이 보탠 목표 미달성(100% 미만) 결과를 반환한다", async () => {
     const body = await getResult(12);

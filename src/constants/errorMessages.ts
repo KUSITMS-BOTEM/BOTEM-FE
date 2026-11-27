@@ -48,6 +48,8 @@ export const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
   FUNDING_036: { message: "이미 사용 중인 이름이에요.", action: "dialog" },
   FUNDING_048: { message: "지금은 보탬을 수정할 수 없어요.", action: "dialog" },
   FUNDING_057: { message: "이미 이 펀딩에 보탰어요.", action: "dialog" },
+  FUNDING_042: { message: "지금은 펀딩을 마감할 수 없어요.", action: "dialog" },
+  FUNDING_061: { message: "지금은 펀딩을 마감할 수 없어요.", action: "dialog" },
   // 입금 미확인 보탬에 감사 카드를 보내면 시트가 입금 확인 안내 Dialog를 직접 띄운다
   FUNDING_049: { message: "입금을 먼저 확인해주세요.", action: "inline" },
   FUNDING_044: { message: "자기 자신에게는 서프라이즈 펀딩을 열 수 없어요.", action: "dialog" },
