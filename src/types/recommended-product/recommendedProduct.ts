@@ -14,6 +14,7 @@ export type RecommendedProductResponse = {
   imageUrl: string;
   price: number;
   sellerName: string;
+  productUrl: string;
   category: RecommendedProductCategory;
   status: RecommendedProductStatus;
   wishId: number | null;

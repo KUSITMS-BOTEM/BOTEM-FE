@@ -12,6 +12,7 @@ import ProductDetailFallback from "@/components/ProductDetailFallback";
 import ProductDetailView from "@/components/ProductDetailView";
 import ProductDetailViewSkeleton from "@/components/skeleton/ProductDetailViewSkeleton";
 import ToastMessage from "@/components/ToastMessage";
+import { isValidUrl } from "@/utils/isValidUrl";
 import { resolveRecommendedProductErrorAction } from "@/utils/recommended-product/resolveRecommendedProductErrorAction";
 
 export default function RecommendedProductDetailContainer() {
@@ -87,6 +88,8 @@ export default function RecommendedProductDetailContainer() {
         productName={product.name}
         price={product.price}
         sellerName={product.sellerName}
+        sellerDisabled={!isValidUrl(product.productUrl)}
+        onSellerClick={() => window.open(product.productUrl, "_blank", "noopener,noreferrer")}
         onBack={() => router.back()}
         ctaLabel="위시에 담기"
         ctaColor="neutral"
