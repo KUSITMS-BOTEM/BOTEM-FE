@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/utils/cn";
+import BubbleTail from "@/assets/icons/multicolor/bubble-tail.svg?react";
 
 // Figma Motion 노트: 사연 → 공약을 각 5초씩 보여주고(10초 루프), 진입 400ms ease.standard / 퇴장 300ms ease.exit, 이동 24px
 const SLIDE_INTERVAL_MS = 5000;
@@ -34,7 +35,12 @@ export default function FundingMessage({ story, pledge, className }: FundingMess
   if (texts.length === 0) return null;
 
   return (
-    <div className={cn("bg-semantic-fill-neutral-weak rounded-[20px] px-5 py-3", className)}>
+    <div
+      className={cn("bg-semantic-fill-neutral-weak relative rounded-[20px] px-5 py-3", className)}>
+      <BubbleTail
+        aria-hidden
+        className="text-semantic-fill-neutral-weak absolute bottom-full left-5 h-1.5 w-5"
+      />
       {/* 슬라이드 중 박스 높이가 출렁이지 않게 모든 문구를 같은 칸에 숨겨 쌓아 가장 긴 문구에 높이를 맞춘다 */}
       <div
         className={cn(

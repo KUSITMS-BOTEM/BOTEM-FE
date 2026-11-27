@@ -4,12 +4,10 @@ import { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import Asset from "@/components/Asset";
 import List from "@/components/List";
 import ListHeader from "@/components/ListHeader";
 import CloseSheet from "@/components/CloseSheet";
 import TextButton from "@/components/TextButton";
-import { cn } from "@/utils/cn";
 import { showGlobalErrorDialog } from "@/lib/queryClient";
 import { useLogoutMutation } from "@/hooks/mutations/auth/useLogoutMutation";
 import { useClosedFundingsQuery } from "@/hooks/queries/funding/useClosedFundingsQuery";
@@ -23,6 +21,7 @@ import { formatBirthdayDisplay } from "@/utils/user/formatBirthdayDisplay";
 import { getDisplayName } from "@/utils/user/getDisplayName";
 import ClosedFundingSheet from "@/widgets/funding/ClosedFundingSheet";
 import PayoutAccountEditSheet from "@/widgets/payout-account/PayoutAccountEditSheet";
+import MenuTrailing from "@/widgets/user/MenuTrailing";
 import MyMenuProfileRow from "@/widgets/user/MyMenuProfileRow";
 import MyMenuSkeleton from "@/widgets/user/skeleton/MyMenuSkeleton";
 import IconAccount from "@/assets/icons/multicolor/icon-account.svg?react";
@@ -31,22 +30,8 @@ import IconFriend from "@/assets/icons/multicolor/icon-friend.svg?react";
 import IconFundingOpen from "@/assets/icons/multicolor/icon-funding-open.svg?react";
 import IconNotification from "@/assets/icons/multicolor/icon-notification.svg?react";
 import IconTerms from "@/assets/icons/multicolor/icon-terms.svg?react";
-import IconRight from "@/assets/icons/icon-right.svg?react";
 
 const MENU_TEXT_BUTTON_CLASS = "text-semantic-text-secondary";
-
-function MenuTrailing({ label }: { label: string }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center [letter-spacing:var(--letter-spacing-default)] whitespace-nowrap [font:var(--semantic-label-small)]",
-        MENU_TEXT_BUTTON_CLASS,
-      )}>
-      {label}
-      <Asset icon={<IconRight aria-hidden />} size="xsmall" className="shrink-0" />
-    </span>
-  );
-}
 
 type MyMenuSheetProps = {
   open: boolean;
@@ -119,12 +104,7 @@ export default function MyMenuSheet({ open, onClose, slideInOnOpen }: MyMenuShee
                   useFriendsEntryStore.getState().setSlideIn(true);
                   router.push("/friends");
                 }}
-                right={
-                  <span
-                    className={cn("[font:var(--semantic-label-small)]", MENU_TEXT_BUTTON_CLASS)}>
-                    {`${friends?.totalCount ?? 0}명`}
-                  </span>
-                }
+                right={<MenuTrailing label={`${friends?.totalCount ?? 0}명`} />}
               />
               <List
                 leading={<IconFundingOpen />}
