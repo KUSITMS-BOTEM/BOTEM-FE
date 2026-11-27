@@ -4,13 +4,18 @@ import { Suspense, useEffect, useState } from "react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 
+import ToastMessage from "@/components/ToastMessage";
 import { useHomeWishesQuery } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useGiftVerificationBannerVariant } from "@/hooks/useGiftVerificationBannerSession";
+import { usePendingToast } from "@/hooks/usePendingToast";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
+import { useFundingCloseToastStore } from "@/store/fundingCloseToastStore";
 import type { FundingWish } from "@/types/funding/funding";
 import type { HomeWishCardResponse } from "@/types/home/home";
+import { cn } from "@/utils/cn";
 import { getHomePath } from "@/utils/home/getHomePath";
 import { isValidUrl } from "@/utils/isValidUrl";
 import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
@@ -48,6 +53,7 @@ export default function HomeContainer({ autoOpenFunding = false }: HomeContainer
   const [fundingWish, setFundingWish] = useState<FundingWish | null>(null);
   const giftVerificationBannerVariant = useGiftVerificationBannerVariant();
   const openErrorDialog = useErrorDialogStore(state => state.openErrorDialog);
+  const showClosedToast = usePendingToast(useFundingCloseToastStore);
 
   // 공유 화면의 "나도 만들기"(/home?open=funding)로 들어오면 한 번 열거나 한도를 안내하고 쿼리를 지운다
   const [autoOpenResult, setAutoOpenResult] = useState<"opened" | "limited" | null>(null);
@@ -126,6 +132,14 @@ export default function HomeContainer({ autoOpenFunding = false }: HomeContainer
         )}
       </main>
       <FloatingButton items={floatingMenuItems} onSelect={handleFloatingMenuSelect} />
+      {/* 우하단 플로팅 버튼과 겹치지 않게 그 위에 띄운다 */}
+      <div
+        className={cn(
+          "pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-20 mx-auto flex w-full justify-center",
+          APP_MAX_WIDTH_CLASS,
+        )}>
+        <ToastMessage show={showClosedToast} state text="펀딩을 마감했어요." />
+      </div>
       <FundingOpenSheet
         // 시트는 initialWish를 처음 마운트할 때만 읽으므로 위시가 바뀌면 새로 마운트한다
         key={fundingWish?.id ?? "select"}

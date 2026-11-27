@@ -22,21 +22,21 @@ describe("FundingRevealEmptyView", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it("'닫기'를 누르면 onClose만 호출한다", async () => {
+  it("'펀딩 마감하기'를 누르면 onClose만 호출한다", async () => {
     const onExtend = vi.fn();
     const onClose = vi.fn();
     render(<FundingRevealEmptyView onExtend={onExtend} onClose={onClose} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+    await userEvent.click(screen.getByRole("button", { name: "펀딩 마감하기" }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onExtend).not.toHaveBeenCalled();
   });
 
-  it("종료 요청 중이면 두 버튼을 막고 '닫기'에 로딩을 표시한다", () => {
+  it("종료 요청 중이면 두 버튼을 막고 '펀딩 마감하기'에 로딩을 표시한다", () => {
     render(<FundingRevealEmptyView isClosing onClose={vi.fn()} />);
 
-    const closeButton = screen.getByRole("button", { name: "닫기" });
+    const closeButton = screen.getByRole("button", { name: "펀딩 마감하기" });
     expect(closeButton).toBeDisabled();
     expect(closeButton).toHaveAttribute("aria-busy", "true");
     expect(screen.getByRole("button", { name: "기간 연장하러 가기" })).toBeDisabled();

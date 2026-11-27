@@ -1,9 +1,9 @@
 import { act, renderHook } from "@testing-library/react";
 
-import { useFundingExtendToast } from "@/hooks/useFundingExtendToast";
+import { usePendingToast } from "@/hooks/usePendingToast";
 import { useFundingExtendToastStore } from "@/store/fundingExtendToastStore";
 
-describe("useFundingExtendToast", () => {
+describe("usePendingToast", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     useFundingExtendToastStore.setState({ pending: false });
@@ -14,7 +14,7 @@ describe("useFundingExtendToast", () => {
   });
 
   it("예약이 없으면 false다", () => {
-    const { result } = renderHook(() => useFundingExtendToast());
+    const { result } = renderHook(() => usePendingToast(useFundingExtendToastStore));
 
     expect(result.current).toBe(false);
   });
@@ -22,7 +22,7 @@ describe("useFundingExtendToast", () => {
   it("예약돼 있으면 true로 시작해 1초 뒤 사라지고 예약을 비운다", () => {
     useFundingExtendToastStore.getState().mark();
 
-    const { result } = renderHook(() => useFundingExtendToast());
+    const { result } = renderHook(() => usePendingToast(useFundingExtendToastStore));
 
     expect(result.current).toBe(true);
     expect(useFundingExtendToastStore.getState().pending).toBe(false);

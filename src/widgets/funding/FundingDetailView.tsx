@@ -11,7 +11,8 @@ import ProfileBox from "@/components/ProfileBox";
 import ToastMessage from "@/components/ToastMessage";
 import Tooltip from "@/components/Tooltip";
 import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
-import { useFundingExtendToast } from "@/hooks/useFundingExtendToast";
+import { usePendingToast } from "@/hooks/usePendingToast";
+import { useFundingExtendToastStore } from "@/store/fundingExtendToastStore";
 import { useShareLink } from "@/hooks/useShareLink";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingContributionStore } from "@/store/fundingContributionStore";
@@ -209,7 +210,7 @@ export default function FundingDetailView({
   useEffect(() => {
     if (memberIntent === "myBotem") window.history.replaceState(null, "", window.location.pathname);
   }, [memberIntent]);
-  const showExtendedToast = useFundingExtendToast();
+  const showExtendedToast = usePendingToast(useFundingExtendToastStore);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);

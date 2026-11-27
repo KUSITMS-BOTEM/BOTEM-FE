@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
+import { useFundingCloseToastStore } from "@/store/fundingCloseToastStore";
 import { markWishPromptPending } from "@/utils/wish/wishPromptStorage";
 import HomeContainer from "@/widgets/home/HomeContainer";
 
@@ -55,10 +56,26 @@ describe("HomeContainer", () => {
     replace.mockClear();
     closedFundingsQuery.mockClear();
     useErrorDialogStore.getState().closeErrorDialog();
+    useFundingCloseToastStore.setState({ pending: false });
     searchParams = new URLSearchParams();
     vi.mocked(useHomeFundingsQuery).mockReturnValue({
       data: { fundingCards: [], activeFundingCount: 0, canOpenFunding: true },
     } as unknown as ReturnType<typeof useHomeFundingsQuery>);
+  });
+
+  it("펀딩을 마감하고 들어오면 토스트를 보여주고 예약을 비운다", () => {
+    useFundingCloseToastStore.getState().mark();
+
+    render(<HomeContainer />);
+
+    expect(screen.getByText("펀딩을 마감했어요.")).toBeInTheDocument();
+    expect(useFundingCloseToastStore.getState().pending).toBe(false);
+  });
+
+  it("마감 없이 들어오면 마감 토스트를 보여주지 않는다", () => {
+    render(<HomeContainer />);
+
+    expect(screen.queryByText("펀딩을 마감했어요.")).not.toBeInTheDocument();
   });
 
   it("tab 쿼리가 없으면 펀딩 탭을 보여준다", () => {
