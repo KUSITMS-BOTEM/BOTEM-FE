@@ -11,6 +11,7 @@ import { useCloseFundingMutation } from "@/hooks/mutations/funding/useCloseFundi
 import { useOpenFundingResultMutation } from "@/hooks/mutations/funding/useOpenFundingResultMutation";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { usePageExit } from "@/hooks/usePageExit";
+import { useFundingCloseToastStore } from "@/store/fundingCloseToastStore";
 import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import FundingExtendFlow from "@/widgets/funding/FundingExtendFlow";
 import FundingRevealEmptyView from "@/widgets/funding/FundingRevealEmptyView";
@@ -39,7 +40,13 @@ export default function FundingRevealContainer() {
   // 보탠 친구가 없는 마감 펀딩은 한 번 더 마감 요청을 보내야 종료돼 홈 카드가 사라진다. 실패 때만 잠금을 푼다
   const endEmptyFunding = () => {
     setClosing(true);
-    closeFunding(id, { onSuccess: close, onError: () => setClosing(false) });
+    closeFunding(id, {
+      onSuccess: () => {
+        useFundingCloseToastStore.getState().mark();
+        close();
+      },
+      onError: () => setClosing(false),
+    });
   };
 
   const showMessages = (opened: FundingResultResponse) => {

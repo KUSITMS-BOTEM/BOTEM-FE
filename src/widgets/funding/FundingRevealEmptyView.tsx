@@ -56,7 +56,7 @@ export default function FundingRevealEmptyView({
             size="xlarge"
             states={isClosing ? "loading" : "default"}
             onClick={onClose}>
-            닫기
+            펀딩 마감하기
           </Button>
         </motion.div>
       </BottomCTA>
