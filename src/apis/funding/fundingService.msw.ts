@@ -823,15 +823,19 @@ export const fundingHandlers = [
   // 조기 마감 확인 Dialog의 로딩 상태를 눈으로 확인할 수 있게 지연을 둔다
   http.post("*/api/fundings/:fundingId/close", async ({ params }) => {
     await delay(1000);
+    const fundingId = Number(params.fundingId);
+    const card = MOCK_FUNDING_CARDS.find(item => item.fundingId === fundingId);
+    // 마감일이 지났고 참여자가 없는 펀딩은 조기 마감이 아니라 종료(취소) 응답이다
+    const isEnded = card?.cardType === "CLOSED_UNOPENED" && card.participantCount === 0;
     return HttpResponse.json({
       success: true,
       data: {
-        fundingId: Number(params.fundingId),
+        fundingId,
         type: "BIRTHDAY",
-        status: "CLOSED",
+        status: isEnded ? "CANCELLED" : "CLOSED",
         deadline: "2026-12-31",
         revealAt: null,
-        earlyClosedAt: new Date().toISOString(),
+        earlyClosedAt: isEnded ? null : new Date().toISOString(),
       },
       error: null,
     });

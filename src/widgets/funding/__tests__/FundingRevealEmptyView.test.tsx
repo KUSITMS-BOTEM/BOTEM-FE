@@ -33,6 +33,15 @@ describe("FundingRevealEmptyView", () => {
     expect(onExtend).not.toHaveBeenCalled();
   });
 
+  it("종료 요청 중이면 두 버튼을 막고 '닫기'에 로딩을 표시한다", () => {
+    render(<FundingRevealEmptyView isClosing onClose={vi.fn()} />);
+
+    const closeButton = screen.getByRole("button", { name: "닫기" });
+    expect(closeButton).toBeDisabled();
+    expect(closeButton).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("button", { name: "기간 연장하러 가기" })).toBeDisabled();
+  });
+
   it("onExtend 없이 '기간 연장하러 가기'를 눌러도 에러 없이 onClose를 호출하지 않는다", async () => {
     const onClose = vi.fn();
     render(<FundingRevealEmptyView onClose={onClose} />);

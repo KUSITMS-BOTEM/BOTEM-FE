@@ -7,7 +7,8 @@ export type CloseFundingResponse = {
   status: string;
   deadline: string;
   revealAt: string | null;
-  earlyClosedAt: string;
+  // 참여자 0명 종료(status CANCELLED)면 null이다
+  earlyClosedAt: string | null;
 };
 
 export type ExtendFundingRequest = {

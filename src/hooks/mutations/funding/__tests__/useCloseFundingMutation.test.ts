@@ -5,8 +5,10 @@ import { renderHook, waitFor } from "@testing-library/react";
 
 import { fundingService } from "@/apis/funding/fundingService";
 import { useCloseFundingMutation } from "@/hooks/mutations/funding/useCloseFundingMutation";
+import { closedFundingsQueryKey } from "@/hooks/queries/funding/useClosedFundingsQuery";
 import { fundingManagementQueryKey } from "@/hooks/queries/funding/useFundingManagementQuery";
 import { homeQueryKey } from "@/hooks/queries/home/useHomeFundingsQuery";
+import { wishesQueryKey } from "@/hooks/queries/wish/useWishesQuery";
 
 vi.mock("@/apis/funding/fundingService", () => ({
   fundingService: { closeFunding: vi.fn() },
@@ -44,7 +46,7 @@ describe("useCloseFundingMutation", () => {
     expect(vi.mocked(fundingService.closeFunding).mock.calls[0][0]).toBe(7);
   });
 
-  it("성공하면 그 펀딩의 관리(상세) 캐시와 홈 캐시를 무효화한다", async () => {
+  it("성공하면 그 펀딩의 관리(상세)·홈·보관함·위시 캐시를 무효화한다", async () => {
     vi.mocked(fundingService.closeFunding).mockResolvedValue(closeResponse);
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
     const { result } = renderHook(() => useCloseFundingMutation(), { wrapper: createWrapper() });
@@ -53,6 +55,24 @@ describe("useCloseFundingMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: fundingManagementQueryKey(7) });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: homeQueryKey });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: closedFundingsQueryKey });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: wishesQueryKey });
+  });
+
+  it("종료(CANCELLED) 응답이면 사라진 펀딩의 관리 캐시는 무효화하지 않는다", async () => {
+    vi.mocked(fundingService.closeFunding).mockResolvedValue({
+      ...closeResponse,
+      status: "CANCELLED",
+      earlyClosedAt: null,
+    });
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+    const { result } = renderHook(() => useCloseFundingMutation(), { wrapper: createWrapper() });
+
+    result.current.mutate(7);
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: fundingManagementQueryKey(7) });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: homeQueryKey });
   });
 
