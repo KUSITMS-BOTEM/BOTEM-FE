@@ -44,6 +44,27 @@ describe("Profile", () => {
     expect(container.querySelector("svg")).not.toBeInTheDocument();
   });
 
+  it.each([
+    [
+      "썸네일",
+      "https://img1.kakaocdn.net/thumb/R640x640.q70/?fname=https%3A%2F%2Ft1.kakaocdn.net%2Faccount_images%2Fdefault_profile.jpeg",
+    ],
+    ["원본", "https://t1.kakaocdn.net/account_images/default_profile.jpeg"],
+  ])("카카오 기본 프로필 %s URL이면 기본 아바타가 보인다", (_, imageUrl) => {
+    const { container } = render(<Profile imageUrl={imageUrl} showIconButton={false} />);
+
+    expect(container.querySelector("svg")).toBeInTheDocument();
+    expect(container.querySelector("img")).not.toBeInTheDocument();
+  });
+
+  it("직접 설정한 카카오 프로필 사진은 이미지로 렌더된다", () => {
+    const imageUrl =
+      "https://img1.kakaocdn.net/thumb/R640x640.q70/?fname=https%3A%2F%2Fk.kakaocdn.net%2Fdn%2Fabc%2Fimg_640x640.jpg";
+    const { container } = render(<Profile imageUrl={imageUrl} showIconButton={false} />);
+
+    expect(container.querySelector("img")).toHaveAttribute("src", imageUrl);
+  });
+
   it("alt를 넘기지 않으면 '프로필 이미지'이고, 넘기면 그 값을 쓴다", () => {
     const { container, rerender } = render(
       <Profile imageUrl="https://example.com/a.png" showIconButton={false} />,
