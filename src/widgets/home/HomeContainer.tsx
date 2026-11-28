@@ -7,10 +7,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useHomeWishesQuery } from "@/hooks/queries/wish/useHomeWishesQuery";
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useGiftVerificationBannerVariant } from "@/hooks/useGiftVerificationBannerSession";
+import { useFundingCloseToast } from "@/hooks/useFundingCloseToast";
+import ToastMessage from "@/components/ToastMessage";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
 import type { FundingWish } from "@/types/funding/funding";
 import type { HomeWishCardResponse } from "@/types/home/home";
+import { cn } from "@/utils/cn";
 import { getHomePath } from "@/utils/home/getHomePath";
 import { isValidUrl } from "@/utils/isValidUrl";
 import FundingOpenSheet from "@/widgets/funding/FundingOpenSheet";
@@ -40,6 +44,7 @@ type HomeContainerProps = {
 export default function HomeContainer({ autoOpenFunding = false }: HomeContainerProps) {
   useHomeWishesQuery();
   const { data: homeFundings } = useHomeFundingsQuery();
+  const showFundingClosedToast = useFundingCloseToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const segment: SegmentValue = searchParams.get("tab") === "wish" ? "wish" : "funding";
@@ -125,6 +130,13 @@ export default function HomeContainer({ autoOpenFunding = false }: HomeContainer
           <HomeWishTab onAddWish={goToRecommendedWish} />
         )}
       </main>
+      <div
+        className={cn(
+          "pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-20 mx-auto flex w-full justify-center",
+          APP_MAX_WIDTH_CLASS,
+        )}>
+        <ToastMessage show={showFundingClosedToast} state text="펀딩을 마감했어요." />
+      </div>
       <FloatingButton items={floatingMenuItems} onSelect={handleFloatingMenuSelect} />
       <FundingOpenSheet
         // 시트는 initialWish를 처음 마운트할 때만 읽으므로 위시가 바뀌면 새로 마운트한다

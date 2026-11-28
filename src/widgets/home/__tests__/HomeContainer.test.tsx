@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { useHomeFundingsQuery } from "@/hooks/queries/home/useHomeFundingsQuery";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
+import { useFundingCloseToastStore } from "@/store/fundingCloseToastStore";
 import { markWishPromptPending } from "@/utils/wish/wishPromptStorage";
 import HomeContainer from "@/widgets/home/HomeContainer";
 
@@ -223,5 +224,19 @@ describe("HomeContainer", () => {
     render(<HomeContainer />);
 
     expect(push).not.toHaveBeenCalled();
+  });
+
+  it("참여자 0명 화면에서 펀딩을 마감하고 돌아오면 마감 토스트를 보여준다", () => {
+    useFundingCloseToastStore.getState().mark();
+    render(<HomeContainer />);
+
+    expect(screen.getByText("펀딩을 마감했어요.")).toBeInTheDocument();
+  });
+
+  it("마감하고 돌아온 게 아니면 마감 토스트를 보여주지 않는다", () => {
+    useFundingCloseToastStore.setState({ pending: false });
+    render(<HomeContainer />);
+
+    expect(screen.queryByText("펀딩을 마감했어요.")).not.toBeInTheDocument();
   });
 });
