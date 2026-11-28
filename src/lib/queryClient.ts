@@ -12,7 +12,8 @@ import { setLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 declare module "@tanstack/react-query" {
   interface Register {
     // quietCodes: 해당 에러 코드만 전역 안내를 건너뛴다(정상 흐름인 409 등). 나머지 에러는 그대로 안내한다
-    queryMeta: { skipGlobalError?: boolean; quietCodes?: string[] };
+    // quietRefetch: 이미 보여준 값이 있을 때의 일시적 통신 장애(폴링 등)는 화면을 그대로 두고 안내하지 않는다
+    queryMeta: { skipGlobalError?: boolean; quietCodes?: string[]; quietRefetch?: boolean };
     mutationMeta: { skipGlobalError?: boolean };
   }
 }
@@ -75,6 +76,9 @@ export function showErrorDialogThen(error: Error, onClose: () => void) {
 // 인증 만료·재발급 일시 장애·로그아웃 뒤 401은 reissue가 이미 재시도를 마친 결과라 다시 시도하면 지연만 늘어난다 (기본 retry 3회 ≈ 7초)
 const NON_RETRYABLE_CODES = [AUTH_EXPIRED, REISSUE_UNAVAILABLE, SIGNED_OUT];
 
+// 다음 재조회(폴링)가 스스로 복구할 수 있는 장애만 넘긴다. 인증·비즈니스 에러는 값이 있어도 안내해야 한다
+const QUIET_REFETCH_CODES = ["NETWORK_ERROR", "INVALID_RESPONSE"];
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -87,6 +91,13 @@ export const queryClient = new QueryClient({
     onError: (error, query) => {
       reportUnexpectedError(error);
       if (query.meta?.skipGlobalError) return;
+      if (
+        query.meta?.quietRefetch &&
+        query.state.data !== undefined &&
+        error instanceof ApiError &&
+        QUIET_REFETCH_CODES.includes(error.code)
+      )
+        return;
       if (error instanceof ApiError && query.meta?.quietCodes?.includes(error.code)) return;
       showGlobalErrorDialog(error);
     },

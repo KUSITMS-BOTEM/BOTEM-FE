@@ -42,7 +42,7 @@ export default function FundingDetailLoader({
   const { data, error, isError, isFetchedAfterMount, refetch } = useFundingDetailQuery(
     shareKey,
     isLoggedIn,
-    { enabled: !needsLogin, skipGlobalError: surprise !== undefined },
+    { enabled: !needsLogin, skipGlobalError: surprise !== undefined, poll: true },
   );
   // 서버가 받아 둔 값은 토큰 없이 조회한 것이라, 회원은 마운트 뒤 재조회가 끝나야 개설자 여부가 확정된다
   const verifying = isLoggedIn && !isFetchedAfterMount;
@@ -75,7 +75,8 @@ export default function FundingDetailLoader({
         revealDateLabel={surprise?.revealAt ? formatRevealLabel(surprise.revealAt) : undefined}
       />
     );
-  if (isError)
+  // 폴링이 한 번 실패해도 이미 보여준 상세는 그대로 둔다
+  if (isError && !data)
     return <ErrorView onRetry={() => void refetch()} onClose={() => router.replace("/")} />;
   if (!data || verifying || isHostOnShare || hasGiftProof) return <FundingDetailViewSkeleton />;
 

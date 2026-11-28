@@ -1,6 +1,6 @@
 import { createElement, type ReactNode } from "react";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { focusManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 
 import { fundingService } from "@/apis/funding/fundingService";
@@ -65,6 +65,51 @@ describe("useFundingManagementQuery", () => {
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
+  });
+});
+
+describe("useFundingManagementQuery 폴링", () => {
+  const POLL_INTERVAL = 20_000;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    focusManager.setFocused(true);
+  });
+
+  afterEach(() => {
+    focusManager.setFocused(undefined);
+    vi.useRealTimers();
+  });
+
+  const renderPolling = async (managementState: string) => {
+    vi.mocked(fundingService.getFundingManagement).mockResolvedValue({
+      ...mockManagement,
+      managementState,
+    } as OwnerFundingDetailResponse);
+
+    const { result } = renderHook(() => useFundingManagementQuery(12, { poll: true }), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  };
+
+  it.each(["IN_PROGRESS", "NO_PARTICIPANTS"])(
+    "poll이 켜져 있고 %s면 20초 뒤 다시 요청한다",
+    async state => {
+      await renderPolling(state);
+
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+      expect(fundingService.getFundingManagement).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it.each(["CLOSED", "TARGET_REACHED"])("%s면 다시 요청하지 않는다", async state => {
+    await renderPolling(state);
+
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+    expect(fundingService.getFundingManagement).toHaveBeenCalledTimes(1);
   });
 });
 
