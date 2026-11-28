@@ -34,9 +34,11 @@ vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
   useMyProfileQuery: () => ({ data: { name: "민지" } }),
 }));
 
-vi.mock("@/hooks/queries/funding/useFundingDetailQuery", async () => {
+// 관리 상세 훅이 이 모듈의 폴링 간격 상수를 쓰므로 나머지 export는 원본을 유지한다
+vi.mock("@/hooks/queries/funding/useFundingDetailQuery", async importOriginal => {
   const { FUNDING_DETAIL } = await import("@/widgets/funding/__tests__/fixtures/fundingDetail");
   return {
+    ...(await importOriginal<typeof import("@/hooks/queries/funding/useFundingDetailQuery")>()),
     useFundingDetailQuery: () => ({
       data: FUNDING_DETAIL,
       isError: false,

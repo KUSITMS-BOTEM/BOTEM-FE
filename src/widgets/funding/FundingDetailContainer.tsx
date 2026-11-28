@@ -20,7 +20,7 @@ export default function FundingDetailContainer({
   friendId,
 }: FundingDetailContainerProps) {
   const router = useRouter();
-  const ownerQuery = useFundingManagementQuery(Number(fundingId));
+  const ownerQuery = useFundingManagementQuery(Number(fundingId), { poll: true });
   const variant = ownerQuery.data?.type === "SURPRISE" ? "surprise" : "owner";
   const isClosed =
     ownerQuery.data?.managementState === "CLOSED" ||
