@@ -336,7 +336,7 @@ export default function FundingDetailView({
                 profiles={profiles}
                 extraCount={funding.extraParticipantCount}
                 notification={confirmsDeposits && unconfirmedCount > 0}
-                className="bg-semantic-fill-default shadow-[0_4px_8px_0_var(--color-semantic-shadow-weak)]"
+                className="bg-semantic-fill-default min-w-[58px] shadow-[0_4px_8px_0_var(--color-semantic-shadow-weak)]"
               />
             </button>
           )}
