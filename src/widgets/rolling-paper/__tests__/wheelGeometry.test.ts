@@ -2,6 +2,7 @@ import {
   PX_PER_STEP,
   WHEEL_ITEM_COUNT,
   toCardPose,
+  toCardZIndex,
   toProfilePose,
   clampProgress,
   toLetterIndex,
@@ -121,5 +122,17 @@ describe("toWheelOffset·clampProgress", () => {
     expect(clampProgress(-0.5, 3)).toBe(0);
     expect(clampProgress(2.6, 3)).toBe(2);
     expect(clampProgress(1.4, 1)).toBe(0);
+  });
+});
+
+describe("toCardZIndex", () => {
+  it("가운데 편지지가 위·아래 편지지보다 위에 쌓인다", () => {
+    expect(toCardZIndex(0)).toBeGreaterThan(toCardZIndex(1));
+    expect(toCardZIndex(0)).toBeGreaterThan(toCardZIndex(-1));
+    expect(toCardZIndex(1)).toBeGreaterThan(toCardZIndex(2));
+  });
+
+  it("드래그 중에도 가운데에 더 가까운 편지지가 위에 온다", () => {
+    expect(toCardZIndex(0.4)).toBeGreaterThan(toCardZIndex(-0.6));
   });
 });
