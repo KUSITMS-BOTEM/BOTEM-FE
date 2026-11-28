@@ -78,8 +78,8 @@ describe("useFundingResultQuery", () => {
   });
 });
 
-describe("useFundingResultQuery quiet", () => {
-  it("quiet이면 실패해도 재시도하지 않고 FUNDING_005만 전역 에러 안내를 건너뛰도록 표시한다", async () => {
+describe("useFundingResultQuery quietCodes", () => {
+  it("quietCodes를 넘기면 실패해도 재시도하지 않고 그 코드만 전역 에러 안내를 건너뛰도록 표시한다", async () => {
     vi.mocked(fundingService.getResult).mockRejectedValue(new Error("FUNDING_005"));
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: 3, retryDelay: 0 } },
@@ -87,7 +87,9 @@ describe("useFundingResultQuery quiet", () => {
     const wrapper = ({ children }: { children: ReactNode }) =>
       createElement(QueryClientProvider, { client: queryClient }, children);
 
-    const { result } = renderHook(() => useFundingResultQuery(12, true, true), { wrapper });
+    const { result } = renderHook(() => useFundingResultQuery(12, true, ["FUNDING_005"]), {
+      wrapper,
+    });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(fundingService.getResult).toHaveBeenCalledTimes(1);
