@@ -12,15 +12,15 @@ const riseIn = (delay: number, opacityDuration: number, yDuration: number): Tran
 });
 
 type FundingRevealEmptyViewProps = {
-  onExtend?: () => void;
-  onCloseFunding: () => void;
   isClosing?: boolean;
+  onExtend?: () => void;
+  onClose: () => void;
 };
 
 export default function FundingRevealEmptyView({
-  onExtend,
-  onCloseFunding,
   isClosing = false,
+  onExtend,
+  onClose,
 }: FundingRevealEmptyViewProps) {
   const reduceMotion = useReducedMotion();
 
@@ -48,7 +48,7 @@ export default function FundingRevealEmptyView({
           animate={{ opacity: 1, y: 0 }}
           transition={riseIn(0.95, 0.35, 0.5)}>
           {onExtend && (
-            <Button color="brand" size="xlarge" onClick={onExtend}>
+            <Button color="brand" size="xlarge" disabled={isClosing} onClick={onExtend}>
               기간 연장하러 가기
             </Button>
           )}
@@ -56,9 +56,8 @@ export default function FundingRevealEmptyView({
             color="neutral"
             variant="weak"
             size="xlarge"
-            disabled={isClosing}
             states={isClosing ? "loading" : "default"}
-            onClick={onCloseFunding}>
+            onClick={onClose}>
             펀딩 마감하기
           </Button>
         </motion.div>

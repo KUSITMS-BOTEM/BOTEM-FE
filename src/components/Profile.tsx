@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 import { cn } from "@/utils/cn";
+import { isKakaoDefaultImage } from "@/utils/isKakaoDefaultImage";
 import type { Color } from "@/constants/color";
 import { useImageFileSelect } from "@/hooks/useImageFileSelect";
 import IconButton from "@/components/IconButton";
@@ -92,7 +93,7 @@ export default function Profile({
     // button 안에도 들어갈 수 있도록(From 영역) div 대신 span을 쓴다
     <span className={cn("relative block size-[68px]", className)} aria-busy={isUploading}>
       <span className="relative block size-full overflow-hidden rounded-full">
-        {displayUrl && !imageLoadError ? (
+        {displayUrl && !isKakaoDefaultImage(displayUrl) && !imageLoadError ? (
           <Image
             src={displayUrl}
             alt={alt}

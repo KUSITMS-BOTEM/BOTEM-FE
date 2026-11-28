@@ -65,6 +65,22 @@ describe("ProfileBox", () => {
     expect(container.querySelectorAll("svg")).toHaveLength(1);
   });
 
+  it("imageUrl이 카카오 기본 프로필이면 색 아이콘으로 그린다", () => {
+    const { container } = render(
+      <ProfileBox
+        profiles={[
+          {
+            color: "orange",
+            imageUrl: "https://t1.kakaocdn.net/account_images/default_profile.jpeg",
+          },
+        ]}
+      />,
+    );
+
+    expect(container.querySelector("img")).not.toBeInTheDocument();
+    expect(container.querySelectorAll("svg")).toHaveLength(1);
+  });
+
   it("스크린 리더에 전체 참여자 수(profiles + extraCount)를 제공한다", () => {
     render(<ProfileBox profiles={[{ color: "orange" }, { color: "lime" }]} extraCount={3} />);
 

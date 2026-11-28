@@ -7,7 +7,7 @@ export type CloseFundingResponse = {
   status: string;
   deadline: string;
   revealAt: string | null;
-  // 마감일이 지나 참여자 0명으로 종료한 펀딩(status CANCELLED)은 조기 마감이 아니라 null
+  // 참여자 0명 종료(status CANCELLED)면 null이다
   earlyClosedAt: string | null;
 };
 

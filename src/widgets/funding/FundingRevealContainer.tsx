@@ -42,23 +42,23 @@ export default function FundingRevealContainer() {
   });
   const { mutate: openResult, isPending: isOpening } = useOpenFundingResultMutation();
   const [opening, setOpening] = useState(false);
+  const { mutate: closeFunding, isPending: isClosePending } = useCloseFundingMutation();
+  const [closing, setClosing] = useState(false);
   const searchParams = useSearchParams();
   // 시트에서 상세로 이동했다가 뒤로 오면 이 화면이 새로 마운트되므로, 시트가 열려 있었는지는 URL로 복원한다
   const [messagesOpen, setMessagesOpen] = useState(searchParams.get("messages") === "open");
   const [extendOpen, setExtendOpen] = useState(false);
-  const { mutate: closeFunding, isPending: isClosingFunding } = useCloseFundingMutation();
-  const [closingFunding, setClosingFunding] = useState(false);
   const close = () => router.replace("/home");
 
-  // 참여자 0명으로 마감일이 지난 펀딩을 종료한다. 이동하면 언마운트되므로 실패했을 때만 잠금을 푼다
-  const handleCloseFunding = () => {
-    setClosingFunding(true);
+  // 보탠 친구가 없는 마감 펀딩은 한 번 더 마감 요청을 보내야 종료돼 홈 카드가 사라진다. 실패 때만 잠금을 푼다
+  const endEmptyFunding = () => {
+    setClosing(true);
     closeFunding(id, {
       onSuccess: () => {
         useFundingCloseToastStore.getState().mark();
         close();
       },
-      onError: () => setClosingFunding(false),
+      onError: () => setClosing(false),
     });
   };
 
@@ -121,9 +121,9 @@ export default function FundingRevealContainer() {
       return (
         <>
           <FundingRevealEmptyView
+            isClosing={closing || isClosePending}
             onExtend={management?.actions.canExtend ? () => setExtendOpen(true) : undefined}
-            onCloseFunding={handleCloseFunding}
-            isClosing={closingFunding || isClosingFunding}
+            onClose={endEmptyFunding}
           />
           <FundingExtendFlow
             fundingId={id}

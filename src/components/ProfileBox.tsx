@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { cn } from "@/utils/cn";
+import { isKakaoDefaultImage } from "@/utils/isKakaoDefaultImage";
 import ProfileOrange from "@/assets/icons/multicolor/profile-orange.svg?react";
 import ProfileLime from "@/assets/icons/multicolor/profile-lime.svg?react";
 import ProfilePink from "@/assets/icons/multicolor/profile-pink.svg?react";
@@ -43,7 +44,7 @@ export default function ProfileBox({
       <div className={cn("flex items-center", extraCount > 0 && "-mr-1")}>
         {profiles.map(({ color, imageUrl }, index) => {
           const avatarClassName = cn("size-6 shrink-0", index < profiles.length - 1 && "-mr-1");
-          if (imageUrl) {
+          if (imageUrl && !isKakaoDefaultImage(imageUrl)) {
             return (
               <span
                 key={index}

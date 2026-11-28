@@ -2,7 +2,7 @@ import { useAuthStore } from "../authStore";
 
 describe("useAuthStore", () => {
   afterEach(() => {
-    useAuthStore.getState().clearAccessToken();
+    useAuthStore.setState({ accessToken: null, signedOut: false });
   });
 
   it("초기 accessToken은 null이다", () => {
@@ -20,5 +20,13 @@ describe("useAuthStore", () => {
     useAuthStore.getState().clearAccessToken();
 
     expect(useAuthStore.getState().accessToken).toBeNull();
+  });
+
+  it("markSignedOut으로 직접 로그아웃했음을 남기고, 다시 토큰을 받으면 해제된다", () => {
+    useAuthStore.getState().markSignedOut();
+    expect(useAuthStore.getState().signedOut).toBe(true);
+
+    useAuthStore.getState().setAccessToken("access-token");
+    expect(useAuthStore.getState().signedOut).toBe(false);
   });
 });

@@ -27,7 +27,7 @@ beforeAll(async () => {
 
 afterEach(() => {
   server.resetHandlers();
-  useAuthStore.getState().clearAccessToken();
+  useAuthStore.setState({ accessToken: null, signedOut: false });
 });
 
 afterAll(() => {
@@ -305,5 +305,35 @@ describe("reissue 실패 유형 구분", () => {
 
     await expect(clientApi.get("/seed-pools")).resolves.toEqual({ id: 3 });
     expect(useAuthStore.getState().accessToken).toBe(VALID_TOKEN);
+  });
+});
+
+describe("직접 로그아웃·탈퇴한 뒤의 401", () => {
+  it("남은 조회가 401을 받아도 재발급하지 않고 인증 만료가 아닌 SIGNED_OUT으로 끝난다", async () => {
+    useAuthStore.getState().markSignedOut();
+    let reissueCount = 0;
+
+    server.use(
+      http.post(`${BASE_URL}/api/auth/reissue`, () => {
+        reissueCount += 1;
+        return new HttpResponse(null, { status: 401 });
+      }),
+      http.get(`${BASE_URL}/seed-pools`, () => new HttpResponse(null, { status: 401 })),
+    );
+
+    await expect(clientApi.get("/seed-pools")).rejects.toMatchObject({ code: "SIGNED_OUT" });
+    expect(reissueCount).toBe(0);
+  });
+
+  it("다시 로그인해 토큰을 받으면 이후 401은 평소처럼 재발급을 시도한다", async () => {
+    useAuthStore.getState().markSignedOut();
+    useAuthStore.getState().setAccessToken(VALID_TOKEN);
+
+    server.use(
+      http.post(`${BASE_URL}/api/auth/reissue`, () => new HttpResponse(null, { status: 401 })),
+      http.get(`${BASE_URL}/seed-pools`, () => new HttpResponse(null, { status: 401 })),
+    );
+
+    await expect(clientApi.get("/seed-pools")).rejects.toMatchObject({ code: "AUTH_EXPIRED" });
   });
 });

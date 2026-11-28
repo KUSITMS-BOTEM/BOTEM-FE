@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
@@ -147,6 +147,18 @@ describe("FundingAccountStep", () => {
     await userEvent.click(screen.getByRole("button", { name: "펀딩 열기" }));
 
     expect(onSubmit).toHaveBeenCalledWith({ accountNumber: "100159014821", bank: "TOSS_BANK" });
+  });
+
+  it("계좌번호 입력에 포커스가 있으면 터치 기기에서 CTA를 숨기고, 입력란이 아닌 곳으로 포커스가 옮겨지면 다시 보인다", async () => {
+    mockAccounts([]);
+    render(<FundingAccountStep onSubmit={vi.fn()} onPrev={vi.fn()} />);
+    const cta = screen.getByRole("button", { name: "펀딩 열기" }).closest(".fixed");
+
+    expect(cta).not.toHaveClass("pointer-coarse:hidden");
+    await userEvent.click(screen.getByLabelText("계좌번호"));
+    expect(cta).toHaveClass("pointer-coarse:hidden");
+    act(() => screen.getByRole("button", { name: "복사한 계좌 붙여넣기" }).focus());
+    expect(cta).not.toHaveClass("pointer-coarse:hidden");
   });
 
   describe("수정 모드", () => {

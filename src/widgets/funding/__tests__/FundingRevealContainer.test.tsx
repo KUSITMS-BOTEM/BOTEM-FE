@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { useCloseFundingMutation } from "@/hooks/mutations/funding/useCloseFundingMutation";
 import { useOpenFundingResultMutation } from "@/hooks/mutations/funding/useOpenFundingResultMutation";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useFundingCloseToastStore } from "@/store/fundingCloseToastStore";
@@ -15,13 +16,11 @@ let canExtend = true;
 vi.mock("@/hooks/queries/funding/useFundingManagementQuery", () => ({
   useFundingManagementQuery: () => ({ data: { actions: { canExtend } } }),
 }));
+vi.mock("@/hooks/mutations/funding/useCloseFundingMutation", () => ({
+  useCloseFundingMutation: vi.fn(),
+}));
 vi.mock("@/hooks/mutations/funding/useOpenFundingResultMutation", () => ({
   useOpenFundingResultMutation: vi.fn(),
-}));
-const closeFunding = vi.fn();
-let isClosingFunding = false;
-vi.mock("@/hooks/mutations/funding/useCloseFundingMutation", () => ({
-  useCloseFundingMutation: () => ({ mutate: closeFunding, isPending: isClosingFunding }),
 }));
 vi.mock("@/components/effects/RevealMotion", () => ({
   default: ({ names }: { names: string[] }) => (
@@ -77,6 +76,7 @@ vi.mock("next/navigation", () => ({
 
 const refetch = vi.fn();
 const mutate = vi.fn();
+const closeFunding = vi.fn();
 
 const mockQuery = (value: {
   data?: FundingResultResponse;
@@ -132,6 +132,7 @@ const makeResult = (
   ...overrides,
 });
 
+// mutate의 onSuccess를 바로 호출해 팡 열기 성공을 흉내 낸다
 const resolveOpenWith = (opened: FundingResultResponse) => {
   mutate.mockImplementation(
     (_id: number, options: { onSuccess: (data: FundingResultResponse) => void }) =>
@@ -140,12 +141,16 @@ const resolveOpenWith = (opened: FundingResultResponse) => {
 };
 
 beforeEach(() => {
+  useFundingCloseToastStore.setState({ pending: false });
   vi.clearAllMocks();
   search = "";
   canExtend = true;
-  isClosingFunding = false;
   window.history.replaceState(null, "", "/");
   mockMutation();
+  vi.mocked(useCloseFundingMutation).mockReturnValue({
+    mutate: closeFunding,
+    isPending: false,
+  } as unknown as ReturnType<typeof useCloseFundingMutation>);
 });
 
 describe("FundingRevealContainer", () => {
@@ -227,6 +232,7 @@ describe("FundingRevealContainer", () => {
     render(<FundingRevealContainer />);
 
     expect(screen.queryByRole("button", { name: "기간 연장하러 가기" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "펀딩 마감하기" })).toBeInTheDocument();
   });
 
   it("달성률이 100% 미만이면 친구 수와 확정 금액만 보여주고 '목표 달성'은 붙이지 않는다", () => {
@@ -358,45 +364,60 @@ describe("FundingRevealContainer", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/home"));
   });
 
-  describe("빈 화면의 '펀딩 마감하기'", () => {
-    beforeEach(() => {
-      useFundingCloseToastStore.setState({ pending: false });
-      mockQuery({ data: makeResult(0, 0, 0) });
-    });
+  const getEndButton = () => screen.getByRole("button", { name: "펀딩 마감하기" });
 
-    it("마감 요청이 성공하면 마감 토스트를 예약하고 홈으로 replace 한다", async () => {
-      closeFunding.mockImplementation((_id: number, options: { onSuccess: () => void }) =>
-        options.onSuccess(),
-      );
-      render(<FundingRevealContainer />);
+  it("'펀딩 마감하기'를 누르면 펀딩 종료를 요청하고, 성공한 뒤에 토스트를 예약하고 홈으로 replace 한다", async () => {
+    mockQuery({ data: makeResult(0, 0, 0) });
+    render(<FundingRevealContainer />);
 
-      await userEvent.click(screen.getByRole("button", { name: "펀딩 마감하기" }));
+    await userEvent.click(getEndButton());
 
-      expect(closeFunding).toHaveBeenCalledWith(12, expect.anything());
-      expect(useFundingCloseToastStore.getState().pending).toBe(true);
-      expect(replace).toHaveBeenCalledWith("/home");
-      expect(replace).toHaveBeenCalledTimes(1);
-    });
+    expect(closeFunding).toHaveBeenCalledWith(12, expect.any(Object));
+    expect(replace).not.toHaveBeenCalled();
+    expect(useFundingCloseToastStore.getState().pending).toBe(false);
 
-    it("마감 요청이 실패하면 이동·토스트 없이 버튼 잠금을 풀어 다시 누를 수 있다", async () => {
-      closeFunding.mockImplementation((_id: number, options: { onError: () => void }) =>
-        options.onError(),
-      );
-      render(<FundingRevealContainer />);
+    act(() => closeFunding.mock.calls[0]![1].onSuccess());
 
-      const button = screen.getByRole("button", { name: "펀딩 마감하기" });
-      await userEvent.click(button);
+    expect(replace).toHaveBeenCalledWith("/home");
+    expect(useFundingCloseToastStore.getState().pending).toBe(true);
+  });
 
-      expect(button).toBeEnabled();
-      expect(useFundingCloseToastStore.getState().pending).toBe(false);
-      expect(replace).not.toHaveBeenCalled();
-    });
+  it("종료 요청 중에는 '펀딩 마감하기'와 '기간 연장하러 가기'를 막아 다시 누를 수 없다", async () => {
+    mockQuery({ data: makeResult(0, 0, 0) });
+    render(<FundingRevealContainer />);
 
-    it("마감 요청 중에는 버튼을 막아 다시 누를 수 없다", () => {
-      isClosingFunding = true;
-      render(<FundingRevealContainer />);
+    const button = getEndButton();
+    await userEvent.click(button);
+    await userEvent.click(button);
 
-      expect(screen.getByRole("button", { name: "펀딩 마감하기" })).toBeDisabled();
-    });
+    expect(closeFunding).toHaveBeenCalledTimes(1);
+    expect(button).toBeDisabled();
+    expect(screen.getByRole("button", { name: "기간 연장하러 가기" })).toBeDisabled();
+  });
+
+  it("종료 요청이 실패하면 토스트 예약 없이 화면에 남고 다시 누를 수 있다", async () => {
+    mockQuery({ data: makeResult(0, 0, 0) });
+    closeFunding.mockImplementation((_id: number, options: { onError: () => void }) =>
+      options.onError(),
+    );
+    render(<FundingRevealContainer />);
+
+    const button = getEndButton();
+    await userEvent.click(button);
+
+    expect(replace).not.toHaveBeenCalled();
+    expect(useFundingCloseToastStore.getState().pending).toBe(false);
+    expect(button).toBeEnabled();
+  });
+
+  it("빈 화면에서 헤더의 '닫기'는 펀딩을 종료하지 않고 홈으로만 이동한다", async () => {
+    mockQuery({ data: makeResult(0, 0, 0) });
+    render(<FundingRevealContainer />);
+
+    await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/home"));
+    expect(closeFunding).not.toHaveBeenCalled();
+    expect(useFundingCloseToastStore.getState().pending).toBe(false);
   });
 });

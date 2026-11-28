@@ -73,6 +73,11 @@ export function toCardPose(offset: number): WheelPose {
   };
 }
 
+// 슬롯은 DOM 순서대로 겹쳐 뒤 슬롯이 가운데 편지지를 덮으므로, 가운데에 가까울수록 위에 쌓는다
+export function toCardZIndex(offset: number) {
+  return Math.round((WHEEL_ITEM_COUNT - Math.abs(offset)) * 10);
+}
+
 export function toProfilePose(offset: number): WheelPose {
   const angle = offset * STEP_RAD;
   const side = sideRatio(offset);

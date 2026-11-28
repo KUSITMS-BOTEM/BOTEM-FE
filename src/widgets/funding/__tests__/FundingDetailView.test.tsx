@@ -254,12 +254,19 @@ const writeLetter = async (user: User, { withName }: { withName: boolean }) => {
   await clickTopmost(user, "다음");
 };
 
+// 금액 시트의 다음은 확정 다이얼로그를 거쳐야 편지 시트로 넘어간다
+const confirmAmount = async (user: User) => {
+  await clickTopmost(user, "다음");
+  const dialog = await screen.findByRole("dialog", { name: "이 금액으로 확정할까요?" });
+  await user.click(within(dialog).getByRole("button", { name: "예" }));
+};
+
 // 금액 입력 → 편지 작성까지 진행해 비밀번호 시트 직전 단계로 간다
 const goToPasswordSheet = async (user: User) => {
   await enterGuestContributeMode(user);
   await user.click(screen.getByRole("button", { name: "보태기" }));
   await user.type(await screen.findByRole("textbox", { name: "보탬 금액" }), "50000");
-  await clickTopmost(user, "다음");
+  await confirmAmount(user);
   await writeLetter(user, { withName: true });
 };
 
@@ -676,7 +683,7 @@ describe("FundingDetailView", () => {
       render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="contribute" />);
       await user.click(screen.getByRole("button", { name: "보태기" }));
       await user.type(await screen.findByRole("textbox", { name: "보탬 금액" }), "50000");
-      await clickTopmost(user, "다음");
+      await confirmAmount(user);
 
       await screen.findByRole("textbox", { name: "편지 내용" });
       expect(screen.queryByRole("textbox", { name: "친구에게 보여질 이름" })).toBeNull();
@@ -690,6 +697,23 @@ describe("FundingDetailView", () => {
       await clickTopmost(user, "완료하기");
 
       await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/share/share-key-1/complete"));
+    });
+
+    it("송금 안내에서 뒤로 가기를 누르면 편지 시트로 돌아가지 않고 종료 확인을 띄운다", async () => {
+      const user = userEvent.setup();
+      render(<FundingDetailView detail={DETAIL} fundingId="1" memberIntent="contribute" />);
+      await user.click(screen.getByRole("button", { name: "보태기" }));
+      await user.type(await screen.findByRole("textbox", { name: "보탬 금액" }), "50000");
+      await confirmAmount(user);
+      await writeLetter(user, { withName: false });
+      await screen.findByRole("heading", { level: 1, name: /민재의 계좌로/ });
+
+      await clickTopmost(user, "뒤로 가기");
+
+      expect(
+        await screen.findByRole("dialog", { name: /보태기를 그만둘까요/ }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("heading", { level: 1, name: /민재의 계좌로/ })).toBeInTheDocument();
     });
 
     it("메시지 보태기는 편지 다음에 비밀번호 없이 바로 완료 페이지로 이동한다", async () => {

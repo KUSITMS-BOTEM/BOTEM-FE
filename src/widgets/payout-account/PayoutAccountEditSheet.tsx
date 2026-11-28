@@ -10,6 +10,7 @@ import type { BankCode } from "@/constants/bank";
 import { useUpdatePayoutAccountMutation } from "@/hooks/mutations/payout-account/useUpdatePayoutAccountMutation";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
 import type { PayoutAccountResponse } from "@/types/payout-account/payoutAccount";
+import { cn } from "@/utils/cn";
 import { ACCOUNT_NUMBER_REGEX } from "@/utils/payout-account/parseClipboardAccount";
 import PayoutAccountForm from "@/widgets/payout-account/PayoutAccountForm";
 
@@ -25,6 +26,8 @@ export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountE
   const [original, setOriginal] = useState<PayoutAccountResponse>();
   const [accountNumber, setAccountNumber] = useState("");
   const [bank, setBank] = useState<BankCode | null>(null);
+  // 웹은 키보드 열림·닫힘 이벤트가 없어 계좌번호 입력란의 focus·blur를 키보드가 올라온 시점으로 본다
+  const [isTyping, setIsTyping] = useState(false);
   const defaultAccount = payoutAccounts?.find(account => account.isDefault);
 
   if (defaultAccount && !original) {
@@ -45,6 +48,7 @@ export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountE
   const handleClose = () => {
     if (isPending) return;
     handleReset();
+    setIsTyping(false);
     onClose();
   };
 
@@ -59,6 +63,7 @@ export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountE
           setOriginal(saved);
           setBank(saved.bank);
           setAccountNumber(saved.accountNumber);
+          setIsTyping(false);
           onClose();
         },
       },
@@ -67,14 +72,21 @@ export default function PayoutAccountEditSheet({ open, onClose }: PayoutAccountE
 
   return (
     <CloseSheet open={open} title="대표 계좌 수정" onClose={handleClose}>
-      <PayoutAccountForm
-        accountNumber={accountNumber}
-        bank={bank}
-        onAccountNumberChange={setAccountNumber}
-        onBankChange={setBank}
-        animated={false}
-      />
+      <div
+        className="contents"
+        onFocus={event => setIsTyping(event.target instanceof HTMLInputElement)}
+        onBlur={() => setIsTyping(false)}>
+        <PayoutAccountForm
+          accountNumber={accountNumber}
+          bank={bank}
+          onAccountNumberChange={setAccountNumber}
+          onBankChange={setBank}
+          animated={false}
+        />
+      </div>
+      {/* 키보드가 올라온 터치 기기에서는 CTA가 키보드 위에 떠 입력을 가리므로 숨긴다 */}
       <BottomCTA
+        className={cn(isTyping && "pointer-coarse:hidden")}
         upper={
           <TextButton
             size="medium"

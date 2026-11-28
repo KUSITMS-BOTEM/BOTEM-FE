@@ -20,6 +20,7 @@ const mockRecommendedProduct: RecommendedProductResponse = {
   imageUrl: "https://example.com/airpods.png",
   price: 359000,
   sellerName: "애플",
+  productUrl: "https://link.coupang.com/a/example",
   category: "EARPHONE_HEADPHONE",
   status: "ON_SALE",
   wishId: null,

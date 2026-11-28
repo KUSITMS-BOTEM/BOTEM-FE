@@ -13,13 +13,25 @@ type Participant = OwnerFundingDetailResponse["participants"][number];
 const toSafeImageUrl = (url: string | null) => (url && isValidUrl(url) ? url : undefined);
 
 // 같은 회원이 여러 번 보태면 participants에 여러 줄로 오지만 order가 같다
-const toPeople = (participants: Participant[]) => {
-  const firstByOrder = new Map<number, Participant>();
+const groupByOrder = (participants: Participant[]) => {
+  const byOrder = new Map<number, Participant[]>();
   participants.forEach(participant => {
-    if (!firstByOrder.has(participant.order)) firstByOrder.set(participant.order, participant);
+    byOrder.set(participant.order, [...(byOrder.get(participant.order) ?? []), participant]);
   });
-  return [...firstByOrder.values()];
+  return [...byOrder.values()];
 };
+
+// 감사카드는 한 사람에게 한 장만 보낸다. 서버는 입금 확인(CONFIRMED)된 보탬에만 카드를 받아, 메시지만 보탠 줄로 보내면 실패한다
+const toPeople = (participants: Participant[]) =>
+  groupByOrder(participants).map(([first, ...rest]) => {
+    const contributions = [first, ...rest];
+    return {
+      ...first,
+      thankCardSent: contributions.some(({ thankCardSent }) => thankCardSent),
+      thankCardContributionId: contributions.find(({ status }) => status === "CONFIRMED")
+        ?.contributionId,
+    };
+  });
 
 export function toOwnerFundingView(detail: OwnerFundingDetailResponse) {
   const people = toPeople(detail.participants);
@@ -57,6 +69,7 @@ export function toOwnerFundingView(detail: OwnerFundingDetailResponse) {
       contributedAt: person.participatedAt,
       profileImageUrl: toSafeImageUrl(person.profileImageUrl),
       thankCardSent: person.thankCardSent,
+      thankCardContributionId: person.thankCardContributionId,
     })),
   };
 }

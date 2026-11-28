@@ -30,6 +30,7 @@ const mockProduct: RecommendedProductResponse = {
   imageUrl: "https://example.com/airpods.png",
   price: 359000,
   sellerName: "쿠팡",
+  productUrl: "https://link.coupang.com/a/example",
   category: "EARPHONE_HEADPHONE",
   status: "ON_SALE",
   wishId: null,
@@ -73,6 +74,26 @@ describe("RecommendedProductDetailContainer", () => {
     expect(screen.getByText("에어팟 프로 3")).toBeInTheDocument();
     expect(screen.getByText("359,000원")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "위시에 담기" })).toBeInTheDocument();
+  });
+
+  it("판매처를 누르면 상품 페이지를 새 탭으로 연다", async () => {
+    const user = userEvent.setup();
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+    mockProductQuery({ data: mockProduct });
+
+    render(<RecommendedProductDetailContainer />);
+    await user.click(screen.getByRole("button", { name: /판매처/ }));
+
+    expect(open).toHaveBeenCalledWith(mockProduct.productUrl, "_blank", "noopener,noreferrer");
+    open.mockRestore();
+  });
+
+  it("상품 URL이 http/https가 아니면 판매처 버튼이 비활성화된다", () => {
+    mockProductQuery({ data: { ...mockProduct, productUrl: "javascript:alert(1)" } });
+
+    render(<RecommendedProductDetailContainer />);
+
+    expect(screen.getByRole("button", { name: /판매처/ })).toBeDisabled();
   });
 
   it("위시 삭제 직후 이동해 왔으면 삭제 토스트를 보여준다", () => {

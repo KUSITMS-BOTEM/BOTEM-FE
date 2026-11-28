@@ -101,9 +101,10 @@ export default function FriendsContainer() {
               size="small"
               className="shrink-0"
               disabled={!profile?.wishProfileUrl}
-              onClick={() =>
-                profile && share({ title: "보탬에 친구와 함께해요!", url: profile.wishProfileUrl })
-              }>
+              onClick={() => {
+                if (!profile?.wishProfileUrl) return;
+                share({ title: "보탬에 친구와 함께해요!", url: profile.wishProfileUrl });
+              }}>
               초대링크 전송
             </Button>
           </div>
@@ -164,7 +165,7 @@ export default function FriendsContainer() {
         </main>
         <div
           className={cn(
-            "pointer-events-none fixed inset-x-0 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-20 mx-auto flex w-full justify-center",
+            "pointer-events-none fixed inset-x-0 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-20 mx-auto flex w-full justify-center",
             APP_MAX_WIDTH_CLASS,
           )}>
           <ToastMessage
