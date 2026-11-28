@@ -7,6 +7,7 @@ import Button from "@/components/Button";
 import TextButton from "@/components/TextButton";
 import type { BankCode } from "@/constants/bank";
 import { usePayoutAccountsQuery } from "@/hooks/queries/payout-account/usePayoutAccountsQuery";
+import { cn } from "@/utils/cn";
 import { ACCOUNT_NUMBER_REGEX } from "@/utils/payout-account/parseClipboardAccount";
 import PayoutAccountForm from "@/widgets/payout-account/PayoutAccountForm";
 
@@ -35,6 +36,8 @@ export default function FundingAccountStep({
   const seed = initialValues ?? defaultValues;
   const [accountNumber, setAccountNumber] = useState(seed?.accountNumber ?? "");
   const [bank, setBank] = useState<BankCode | null>(seed?.bank ?? null);
+  // 웹은 키보드 열림·닫힘 이벤트가 없어 계좌번호 입력란의 focus·blur를 키보드가 올라온 시점으로 본다
+  const [isTyping, setIsTyping] = useState(false);
   const { data: payoutAccounts } = usePayoutAccountsQuery();
   const defaultAccount = payoutAccounts?.find(account => account.isDefault);
 
@@ -56,20 +59,27 @@ export default function FundingAccountStep({
 
   return (
     <>
-      <PayoutAccountForm
-        accountNumber={accountNumber}
-        bank={bank}
-        onAccountNumberChange={value => {
-          setPrefilled(true);
-          setAccountNumber(value);
-        }}
-        onBankChange={code => {
-          setPrefilled(true);
-          setBank(code);
-        }}
-        animated={!seed}
-      />
+      <div
+        className="contents"
+        onFocus={event => setIsTyping(event.target instanceof HTMLInputElement)}
+        onBlur={() => setIsTyping(false)}>
+        <PayoutAccountForm
+          accountNumber={accountNumber}
+          bank={bank}
+          onAccountNumberChange={value => {
+            setPrefilled(true);
+            setAccountNumber(value);
+          }}
+          onBankChange={code => {
+            setPrefilled(true);
+            setBank(code);
+          }}
+          animated={!seed}
+        />
+      </div>
+      {/* 키보드가 올라온 터치 기기에서는 CTA가 키보드 위에 떠 입력을 가리므로 숨긴다 */}
       <BottomCTA
+        className={cn(isTyping && "pointer-coarse:hidden")}
         upper={
           <TextButton
             color="neutral"

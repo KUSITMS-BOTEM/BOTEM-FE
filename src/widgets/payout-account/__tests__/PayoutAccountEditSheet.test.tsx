@@ -170,6 +170,28 @@ describe("PayoutAccountEditSheet", () => {
     expect(getButtons().submit).toBeDisabled();
   });
 
+  it("계좌번호 입력에 포커스가 있으면 터치 기기에서 CTA를 숨기고, 입력란이 아닌 곳으로 포커스가 옮겨지면 다시 보인다", async () => {
+    render(<PayoutAccountEditSheet open onClose={vi.fn()} />);
+    const cta = getButtons().submit.closest(".fixed");
+
+    expect(cta).not.toHaveClass("pointer-coarse:hidden");
+    await userEvent.click(screen.getByLabelText("계좌번호"));
+    expect(cta).toHaveClass("pointer-coarse:hidden");
+    act(() => screen.getByRole("button", { name: "복사한 계좌 붙여넣기" }).focus());
+    expect(cta).not.toHaveClass("pointer-coarse:hidden");
+  });
+
+  it("입력 중에 닫았다가 다시 열면 CTA가 보인다", async () => {
+    const { rerender } = render(<PayoutAccountEditSheet open onClose={vi.fn()} />);
+    await userEvent.click(screen.getByLabelText("계좌번호"));
+    await userEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+    rerender(<PayoutAccountEditSheet open={false} onClose={vi.fn()} />);
+    rerender(<PayoutAccountEditSheet open onClose={vi.fn()} />);
+
+    expect(getButtons().submit.closest(".fixed")).not.toHaveClass("pointer-coarse:hidden");
+  });
+
   describe("요청 중일 때", () => {
     beforeEach(() => {
       vi.mocked(useUpdatePayoutAccountMutation).mockReturnValue({

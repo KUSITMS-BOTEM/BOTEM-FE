@@ -7,12 +7,16 @@ import type { FriendListResponse, FriendResponse } from "@/types/friend/friend";
 
 const back = vi.fn();
 const useFriendsQuery = vi.fn();
+const useMyProfileQuery = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ back }),
 }));
 vi.mock("@/hooks/queries/friend/useFriendsQuery", () => ({
   useFriendsQuery: () => useFriendsQuery(),
+}));
+vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
+  useMyProfileQuery: () => useMyProfileQuery(),
 }));
 
 const friend = (userId: number, name: string, birthdayDday: number | null): FriendResponse => ({
@@ -26,11 +30,52 @@ const friend = (userId: number, name: string, birthdayDday: number | null): Frie
   surpriseFundingInProgress: false,
 });
 
+const WISH_PROFILE_URL = "https://botem.me/@wish-key";
+
 const mockData = (data: FriendListResponse) => useFriendsQuery.mockReturnValue({ data });
 
 describe("FriendsContainer", () => {
   beforeEach(() => {
     back.mockClear();
+    useMyProfileQuery.mockReturnValue({ data: { wishProfileUrl: WISH_PROFILE_URL } });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(navigator, "share", { value: undefined, configurable: true });
+  });
+
+  it("초대링크 전송을 누르면 내 위시 프로필 링크로 기기 공유창을 연다", async () => {
+    const shareMock = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "share", { value: shareMock, configurable: true });
+    mockData({ totalCount: 0, upcomingBirthdayFriends: [], friends: [] });
+    render(<FriendsContainer />);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "초대링크 전송" }));
+
+    expect(shareMock).toHaveBeenCalledWith({
+      title: "보탬에 친구와 함께해요!",
+      url: WISH_PROFILE_URL,
+    });
+  });
+
+  it("공유창을 지원하지 않으면 링크를 복사하고 토스트를 보여준다", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    mockData({ totalCount: 0, upcomingBirthdayFriends: [], friends: [] });
+    render(<FriendsContainer />);
+
+    await user.click(screen.getByRole("button", { name: "초대링크 전송" }));
+
+    expect(writeText).toHaveBeenCalledWith(WISH_PROFILE_URL);
+    expect(await screen.findByText("초대 링크를 복사했어요")).toBeInTheDocument();
+  });
+
+  it("프로필 링크가 아직 없으면 초대링크 전송 버튼을 비활성화한다", () => {
+    useMyProfileQuery.mockReturnValue({ data: undefined });
+    mockData({ totalCount: 0, upcomingBirthdayFriends: [], friends: [] });
+    render(<FriendsContainer />);
+
+    expect(screen.getByRole("button", { name: "초대링크 전송" })).toBeDisabled();
   });
 
   it("뒤로가기 버튼을 클릭하면 router.back을 호출한다", async () => {
