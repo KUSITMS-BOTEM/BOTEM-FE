@@ -103,6 +103,71 @@ describe("queryClient 전역 onError", () => {
   });
 });
 
+describe("queryClient quietRefetch", () => {
+  const replace = vi.fn();
+  let keySeq = 0;
+
+  // 값이 이미 있는 쿼리를 quietRefetch meta로 다시 받다 실패시킨다
+  const failRefetch = (error: Error, { hasData = true } = {}) => {
+    const queryKey = ["quiet-refetch", keySeq++];
+    if (hasData) queryClient.setQueryData(queryKey, "이미 보여준 값");
+    return queryClient
+      .fetchQuery({
+        queryKey,
+        queryFn: () => Promise.reject(error),
+        retry: false,
+        meta: { quietRefetch: true },
+      })
+      .catch(() => undefined);
+  };
+
+  beforeEach(() => {
+    replace.mockClear();
+    vi.stubGlobal("location", { ...window.location, replace });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    useErrorDialogStore.getState().closeErrorDialog();
+  });
+
+  it.each(["NETWORK_ERROR", "INVALID_RESPONSE"])(
+    "데이터가 있고 %s면 Dialog를 띄우지 않는다",
+    async code => {
+      await failRefetch(new ApiError(code));
+
+      expect(useErrorDialogStore.getState().message).toBeNull();
+    },
+  );
+
+  it("데이터가 있어도 AUTH_EXPIRED면 Dialog를 띄우고 확인하면 랜딩으로 이동한다", async () => {
+    await failRefetch(new ApiError("AUTH_EXPIRED"));
+
+    expect(useErrorDialogStore.getState().message).toBe(
+      "인증이 만료되었습니다. 다시 로그인해주세요.",
+    );
+    expect(replace).not.toHaveBeenCalled();
+
+    useErrorDialogStore.getState().closeErrorDialog();
+
+    expect(replace).toHaveBeenCalledWith("/");
+  });
+
+  it("데이터가 있어도 Dialog 대상 비즈니스 에러면 Dialog를 띄운다", async () => {
+    await failRefetch(new ApiError("USER_002"));
+
+    expect(useErrorDialogStore.getState().message).toBe(
+      "진행 중인 펀딩이 끝난 뒤 탈퇴할 수 있어요.",
+    );
+  });
+
+  it("데이터가 없으면 NETWORK_ERROR여도 Dialog를 띄운다", async () => {
+    await failRefetch(new ApiError("NETWORK_ERROR"), { hasData: false });
+
+    expect(useErrorDialogStore.getState().message).not.toBeNull();
+  });
+});
+
 describe("queryClient 인증 에러 처리", () => {
   const replace = vi.fn();
 

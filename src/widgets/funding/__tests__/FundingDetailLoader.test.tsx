@@ -80,6 +80,14 @@ describe("FundingDetailLoader", () => {
     expect(refetch).toHaveBeenCalled();
   });
 
+  it("이미 상세를 보여주는 중에 조회가 실패해도 에러 화면 대신 상세를 유지한다", () => {
+    setQuery({ data: FUNDING_DETAIL, isError: true, error: new ApiError("NETWORK_ERROR") });
+    render(<FundingDetailLoader shareKey="1" />);
+
+    expect(screen.getByRole("heading", { level: 1, name: "민재의 펀딩" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "다시 시도" })).not.toBeInTheDocument();
+  });
+
   it("로그인 회원은 토큰 재조회가 끝나기 전까지 스켈레톤을 보여준다", () => {
     setQuery({ data: FUNDING_DETAIL, isFetchedAfterMount: false });
     render(<FundingDetailLoader shareKey="1" isLoggedIn />);

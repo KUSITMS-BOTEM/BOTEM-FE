@@ -1,6 +1,6 @@
 import { createElement, type ReactNode } from "react";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { focusManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 
 import { fundingService } from "@/apis/funding/fundingService";
@@ -66,6 +66,64 @@ describe("useFundingDetailQuery", () => {
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(fundingService.getFundingDetail).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("useFundingDetailQuery 폴링", () => {
+  const POLL_INTERVAL = 20_000;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    focusManager.setFocused(true);
+  });
+
+  afterEach(() => {
+    focusManager.setFocused(undefined);
+    vi.useRealTimers();
+  });
+
+  const renderPolling = async (detail: Partial<FundingDetailResponse>, poll?: boolean) => {
+    vi.mocked(fundingService.getFundingDetail).mockResolvedValue({
+      ...mockDetail,
+      ...detail,
+    } as FundingDetailResponse);
+
+    const { result } = renderHook(() => useFundingDetailQuery("share-key-12", false, { poll }), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  };
+
+  it("poll이 켜져 있고 진행 중이면 20초 뒤 다시 요청한다", async () => {
+    await renderPolling({ displayStatus: "IN_PROGRESS", pendingPercentage: 0 }, true);
+
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+    expect(fundingService.getFundingDetail).toHaveBeenCalledTimes(2);
+  });
+
+  it("poll이 켜져 있어도 마감됐고 확인 대기가 0%면 다시 요청하지 않는다", async () => {
+    await renderPolling({ displayStatus: "CLOSED", pendingPercentage: 0 }, true);
+
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+    expect(fundingService.getFundingDetail).toHaveBeenCalledTimes(1);
+  });
+
+  it("마감됐어도 확인 대기 %가 남아 있으면 계속 다시 요청한다", async () => {
+    await renderPolling({ displayStatus: "CLOSED", pendingPercentage: 10 }, true);
+
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
+    expect(fundingService.getFundingDetail).toHaveBeenCalledTimes(2);
+  });
+
+  it("poll이 없으면 진행 중이어도 다시 요청하지 않는다", async () => {
+    await renderPolling({ displayStatus: "IN_PROGRESS", pendingPercentage: 0 });
+
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL);
+
     expect(fundingService.getFundingDetail).toHaveBeenCalledTimes(1);
   });
 });
