@@ -19,8 +19,9 @@ export type BotemPopupFriend = {
   name: string;
   contributedAt: string;
   profileImageUrl?: string;
-  // 펀딩 주인 팝업에서 감사카드를 아직 안 보낸 친구에게만 배지를 띄운다
   thankCardSent?: boolean;
+  // 감사카드를 보낼 보탬. 입금 확인된 보탬이 없으면 비어 있어 보내기 배지를 숨긴다
+  thankCardContributionId?: number;
 };
 
 type BotemPopupProps = {
@@ -230,7 +231,8 @@ export default function BotemPopup({
                     )}
                   </div>
                   {isOwner ? (
-                    !friend.thankCardSent && (
+                    !friend.thankCardSent &&
+                    friend.thankCardContributionId !== undefined && (
                       <button
                         type="button"
                         aria-label={`${friend.name}에게 감사카드 보내기`}

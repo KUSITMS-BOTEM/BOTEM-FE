@@ -486,12 +486,12 @@ export default function FundingDetailView({
             }}
           />
         )}
-        {/* 닫으면 언마운트돼 다음 친구에게는 빈 카드로 다시 시작한다. owner 친구의 id는 contributionId다 */}
-        {isOwner && thankCardFriend && (
+        {/* 닫으면 언마운트돼 다음 친구에게는 빈 카드로 다시 시작한다 */}
+        {isOwner && thankCardFriend?.thankCardContributionId !== undefined && (
           <ThankCardSheet
             open
             fundingId={Number(fundingId)}
-            contributionId={thankCardFriend.id}
+            contributionId={thankCardFriend.thankCardContributionId}
             recipientName={thankCardFriend.name}
             onClose={() => setThankCardFriend(null)}
             onDepositUnconfirmed={() => {

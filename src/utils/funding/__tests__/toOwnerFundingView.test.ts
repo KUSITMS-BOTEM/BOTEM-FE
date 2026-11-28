@@ -166,6 +166,7 @@ describe("toOwnerFundingView", () => {
         contributedAt: "2026-11-20T14:03:12",
         profileImageUrl: "https://image.example.com/a.jpg",
         thankCardSent: true,
+        thankCardContributionId: 1,
       },
       {
         id: 3,
@@ -173,7 +174,43 @@ describe("toOwnerFundingView", () => {
         contributedAt: "2026-11-20T14:03:12",
         profileImageUrl: undefined,
         thankCardSent: false,
+        thankCardContributionId: 3,
       },
+    ]);
+  });
+
+  it("메시지만 보탰거나 입금 확인 전인 친구는 감사카드를 보낼 보탬이 없다", () => {
+    const view = toOwnerFundingView(
+      detail({
+        participants: [
+          { ...participant(1, 1), status: "MESSAGE_ONLY" },
+          { ...participant(2, 2), status: "PENDING_CONFIRMATION" },
+        ],
+      }),
+    );
+
+    expect(view.friends.map(friend => friend.thankCardContributionId)).toEqual([
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it("같은 친구가 여러 번 보태면 첫 입금 확인 보탬으로 감사카드를 보내고, 한 건이라도 보냈으면 보낸 것으로 본다", () => {
+    const view = toOwnerFundingView(
+      detail({
+        participants: [
+          { ...participant(1, 1), status: "MESSAGE_ONLY" },
+          participant(2, 1),
+          participant(3, 1),
+          { ...participant(4, 2), status: "MESSAGE_ONLY" },
+          { ...participant(5, 2), thankCardSent: true },
+        ],
+      }),
+    );
+
+    expect(view.friends).toMatchObject([
+      { id: 1, thankCardSent: false, thankCardContributionId: 2 },
+      { id: 4, thankCardSent: true, thankCardContributionId: 5 },
     ]);
   });
 });

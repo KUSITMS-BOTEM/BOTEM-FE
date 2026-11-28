@@ -232,8 +232,22 @@ describe("BotemPopup 열림 상태", () => {
 
 describe("BotemPopup 펀딩 주인", () => {
   const OWNER_FRIENDS: BotemPopupFriend[] = [
-    { id: 1, name: "이동현", contributedAt: "2026-10-13T09:30:00", thankCardSent: false },
-    { id: 2, name: "김서진", contributedAt: "2026-10-11T09:30:00", thankCardSent: true },
+    {
+      id: 1,
+      name: "이동현",
+      contributedAt: "2026-10-13T09:30:00",
+      thankCardSent: false,
+      thankCardContributionId: 1,
+    },
+    {
+      id: 2,
+      name: "김서진",
+      contributedAt: "2026-10-11T09:30:00",
+      thankCardSent: true,
+      thankCardContributionId: 2,
+    },
+    // 메시지만 보탰거나 입금 확인 전이라 감사카드를 보낼 보탬이 없다
+    { id: 3, name: "박준희", contributedAt: "2026-10-10T09:30:00", thankCardSent: false },
   ];
 
   it("확인대기가 있으면 건수와 안내를 보여주고 클릭하면 onUnconfirmedClick이 호출된다", () => {
@@ -282,6 +296,14 @@ describe("BotemPopup 펀딩 주인", () => {
     expect(
       screen.queryByRole("button", { name: "김서진에게 감사카드 보내기" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("입금 확인된 보탬이 없는 친구에게는 감사카드 배지를 보여주지 않는다", () => {
+    renderPopup({ isOwner: true, friends: OWNER_FRIENDS });
+
+    const row = screen.getByText("박준희").closest("li");
+    expect(row).not.toHaveTextContent("감사카드 보내기");
+    expect(row).not.toHaveTextContent("카드 전송 완료");
   });
 
   it("감사카드 배지를 클릭하면 onThankCardClick이 해당 친구로 호출된다", () => {
