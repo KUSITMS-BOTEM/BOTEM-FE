@@ -83,7 +83,7 @@ export default function ProfileCheckContainer() {
       // 로그아웃이 실패하면 화면을 그대로 두고, 성공한 뒤에만 빠져나간다
       onSuccess: () =>
         exitPage("slide", () => {
-          useAuthStore.getState().clearAccessToken();
+          useAuthStore.getState().markSignedOut();
           queryClient.removeQueries({ queryKey: ["users", "me"] });
           queryClient.removeQueries({ queryKey: ["friends"] });
           router.replace("/");

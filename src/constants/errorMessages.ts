@@ -92,6 +92,7 @@ export const ERROR_MESSAGES: Record<string, ErrorMessageEntry> = {
     action: "dialog",
   },
   REISSUE_FAILED: { message: "토큰 재발급에 실패했습니다.", action: "none" }, // reissueOrThrow가 즉시 AUTH_EXPIRED로 치환, UI 미도달 (일시 장애는 REISSUE_UNAVAILABLE)
+  SIGNED_OUT: { message: "로그아웃되었습니다.", action: "none" },
   UNKNOWN_ERROR: { message: "알 수 없는 오류가 발생했어요.", action: "dialog" },
 };
 

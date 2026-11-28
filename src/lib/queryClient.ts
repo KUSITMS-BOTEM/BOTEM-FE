@@ -4,7 +4,7 @@ import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { DEFAULT_ERROR_MESSAGE, ERROR_MESSAGES } from "@/constants/errorMessages";
 import { useAuthStore } from "@/store/authStore";
 import { useErrorDialogStore } from "@/store/errorDialogStore";
-import { ApiError, AUTH_EXPIRED, REISSUE_UNAVAILABLE } from "@/types/api";
+import { ApiError, AUTH_EXPIRED, REISSUE_UNAVAILABLE, SIGNED_OUT } from "@/types/api";
 import { clearLoggedInCookie } from "@/utils/auth/clearLoggedInCookie";
 import { setLoginReturnPath } from "@/utils/auth/loginReturnPathStorage";
 
@@ -72,8 +72,8 @@ export function showErrorDialogThen(error: Error, onClose: () => void) {
   useErrorDialogStore.getState().openErrorDialog(getErrorEntry(error).message, onClose);
 }
 
-// 인증 만료·재발급 일시 장애는 reissue가 이미 재시도를 마친 결과라 다시 시도하면 지연만 늘어난다 (기본 retry 3회 ≈ 7초)
-const NON_RETRYABLE_CODES = [AUTH_EXPIRED, REISSUE_UNAVAILABLE];
+// 인증 만료·재발급 일시 장애·로그아웃 뒤 401은 reissue가 이미 재시도를 마친 결과라 다시 시도하면 지연만 늘어난다 (기본 retry 3회 ≈ 7초)
+const NON_RETRYABLE_CODES = [AUTH_EXPIRED, REISSUE_UNAVAILABLE, SIGNED_OUT];
 
 export const queryClient = new QueryClient({
   defaultOptions: {

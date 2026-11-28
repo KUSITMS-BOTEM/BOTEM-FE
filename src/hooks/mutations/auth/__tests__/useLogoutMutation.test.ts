@@ -59,7 +59,7 @@ describe("useLogoutMutation", () => {
     expect(useGuestBotemStore.getState()).toMatchObject({ shareKey: null, password: null });
   });
 
-  it("로그아웃 성공 시 accessToken과 프로필 캐시를 지운다", async () => {
+  it("로그아웃 성공 시 accessToken과 프로필 캐시를 지우고 직접 로그아웃했음을 남긴다", async () => {
     useAuthStore.getState().setAccessToken("access-token");
     vi.spyOn(queryClient, "removeQueries");
     vi.mocked(authService.postLogout).mockResolvedValue(null);
@@ -69,6 +69,7 @@ describe("useLogoutMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(useAuthStore.getState().accessToken).toBeNull();
+    expect(useAuthStore.getState().signedOut).toBe(true);
     expect(queryClient.removeQueries).toHaveBeenCalledWith({ queryKey: ["users", "me"] });
   });
 
