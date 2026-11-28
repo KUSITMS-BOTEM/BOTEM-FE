@@ -3,14 +3,24 @@ import userEvent from "@testing-library/user-event";
 
 import { useOpenFundingResultMutation } from "@/hooks/mutations/funding/useOpenFundingResultMutation";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
+import { useFundingCloseToastStore } from "@/store/fundingCloseToastStore";
 import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import FundingRevealContainer from "@/widgets/funding/FundingRevealContainer";
 
 vi.mock("@/hooks/queries/funding/useFundingResultQuery", () => ({
   useFundingResultQuery: vi.fn(),
 }));
+let canExtend = true;
+vi.mock("@/hooks/queries/funding/useFundingManagementQuery", () => ({
+  useFundingManagementQuery: () => ({ data: { actions: { canExtend } } }),
+}));
 vi.mock("@/hooks/mutations/funding/useOpenFundingResultMutation", () => ({
   useOpenFundingResultMutation: vi.fn(),
+}));
+const closeFunding = vi.fn();
+let isClosingFunding = false;
+vi.mock("@/hooks/mutations/funding/useCloseFundingMutation", () => ({
+  useCloseFundingMutation: () => ({ mutate: closeFunding, isPending: isClosingFunding }),
 }));
 vi.mock("@/components/effects/RevealMotion", () => ({
   default: ({ names }: { names: string[] }) => (
@@ -116,7 +126,6 @@ const makeResult = (
   ...overrides,
 });
 
-// mutate의 onSuccess를 바로 호출해 팡 열기 성공을 흉내 낸다
 const resolveOpenWith = (opened: FundingResultResponse) => {
   mutate.mockImplementation(
     (_id: number, options: { onSuccess: (data: FundingResultResponse) => void }) =>
@@ -127,6 +136,8 @@ const resolveOpenWith = (opened: FundingResultResponse) => {
 beforeEach(() => {
   vi.clearAllMocks();
   search = "";
+  canExtend = true;
+  isClosingFunding = false;
   window.history.replaceState(null, "", "/");
   mockMutation();
 });
@@ -189,6 +200,15 @@ describe("FundingRevealContainer", () => {
     const flow = screen.getByTestId("extend-flow");
     expect(flow).toHaveAttribute("data-funding-id", "12");
     expect(flow).toHaveAttribute("data-collected-amount", "0");
+  });
+
+  it("연장할 수 없는 펀딩(마감 전·연장 완료 등)이면 빈 화면에 '기간 연장하러 가기'를 보여주지 않는다", () => {
+    canExtend = false;
+    mockQuery({ data: makeResult(0, 0, 0) });
+
+    render(<FundingRevealContainer />);
+
+    expect(screen.queryByRole("button", { name: "기간 연장하러 가기" })).not.toBeInTheDocument();
   });
 
   it("달성률이 100% 미만이면 친구 수와 확정 금액만 보여주고 '목표 달성'은 붙이지 않는다", () => {
@@ -320,14 +340,45 @@ describe("FundingRevealContainer", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/home"));
   });
 
-  it("빈 화면의 '닫기'를 누르면 홈으로 replace 한다", async () => {
-    mockQuery({ data: makeResult(0, 0, 0) });
-    render(<FundingRevealContainer />);
+  describe("빈 화면의 '펀딩 마감하기'", () => {
+    beforeEach(() => {
+      useFundingCloseToastStore.setState({ pending: false });
+      mockQuery({ data: makeResult(0, 0, 0) });
+    });
 
-    const closeButtons = screen.getAllByRole("button", { name: "닫기" });
-    await userEvent.click(closeButtons[closeButtons.length - 1]!);
+    it("마감 요청이 성공하면 마감 토스트를 예약하고 홈으로 replace 한다", async () => {
+      closeFunding.mockImplementation((_id: number, options: { onSuccess: () => void }) =>
+        options.onSuccess(),
+      );
+      render(<FundingRevealContainer />);
 
-    expect(replace).toHaveBeenCalledWith("/home");
-    expect(replace).toHaveBeenCalledTimes(1);
+      await userEvent.click(screen.getByRole("button", { name: "펀딩 마감하기" }));
+
+      expect(closeFunding).toHaveBeenCalledWith(12, expect.anything());
+      expect(useFundingCloseToastStore.getState().pending).toBe(true);
+      expect(replace).toHaveBeenCalledWith("/home");
+      expect(replace).toHaveBeenCalledTimes(1);
+    });
+
+    it("마감 요청이 실패하면 이동·토스트 없이 버튼 잠금을 풀어 다시 누를 수 있다", async () => {
+      closeFunding.mockImplementation((_id: number, options: { onError: () => void }) =>
+        options.onError(),
+      );
+      render(<FundingRevealContainer />);
+
+      const button = screen.getByRole("button", { name: "펀딩 마감하기" });
+      await userEvent.click(button);
+
+      expect(button).toBeEnabled();
+      expect(useFundingCloseToastStore.getState().pending).toBe(false);
+      expect(replace).not.toHaveBeenCalled();
+    });
+
+    it("마감 요청 중에는 버튼을 막아 다시 누를 수 없다", () => {
+      isClosingFunding = true;
+      render(<FundingRevealContainer />);
+
+      expect(screen.getByRole("button", { name: "펀딩 마감하기" })).toBeDisabled();
+    });
   });
 });

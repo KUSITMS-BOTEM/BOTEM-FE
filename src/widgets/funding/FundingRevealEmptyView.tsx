@@ -13,10 +13,15 @@ const riseIn = (delay: number, opacityDuration: number, yDuration: number): Tran
 
 type FundingRevealEmptyViewProps = {
   onExtend?: () => void;
-  onClose: () => void;
+  onCloseFunding: () => void;
+  isClosing?: boolean;
 };
 
-export default function FundingRevealEmptyView({ onExtend, onClose }: FundingRevealEmptyViewProps) {
+export default function FundingRevealEmptyView({
+  onExtend,
+  onCloseFunding,
+  isClosing = false,
+}: FundingRevealEmptyViewProps) {
   const reduceMotion = useReducedMotion();
 
   return (
@@ -42,11 +47,19 @@ export default function FundingRevealEmptyView({ onExtend, onClose }: FundingRev
           initial={reduceMotion ? false : { opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={riseIn(0.95, 0.35, 0.5)}>
-          <Button color="brand" size="xlarge" onClick={onExtend}>
-            기간 연장하러 가기
-          </Button>
-          <Button color="neutral" variant="weak" size="xlarge" onClick={onClose}>
-            닫기
+          {onExtend && (
+            <Button color="brand" size="xlarge" onClick={onExtend}>
+              기간 연장하러 가기
+            </Button>
+          )}
+          <Button
+            color="neutral"
+            variant="weak"
+            size="xlarge"
+            disabled={isClosing}
+            states={isClosing ? "loading" : "default"}
+            onClick={onCloseFunding}>
+            펀딩 마감하기
           </Button>
         </motion.div>
       </BottomCTA>
