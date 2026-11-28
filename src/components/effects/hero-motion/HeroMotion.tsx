@@ -29,9 +29,13 @@ export default function HeroMotion({ className }: HeroMotionProps) {
 
   return (
     // 공이 Title 바로 밑에서 떨어지기 시작하도록 위쪽만 클리핑을 푼다 (좌우·아래는 그대로 자른다)
+    // clip-path는 보이는 것만 자르고 스크롤 영역은 그대로라, 좌우로 튀는 컨페티가 페이지 가로 스크롤을 만들지 않도록 overflow-x-clip을 함께 건다
     <div
       aria-hidden
-      className={cn("relative h-77 w-80 shrink-0 [clip-path:inset(-100vh_0_0_0)]", className)}>
+      className={cn(
+        "relative h-77 w-80 shrink-0 overflow-x-clip [clip-path:inset(-100vh_0_0_0)]",
+        className,
+      )}>
       {playing && (
         <div className="absolute inset-0 overflow-hidden">
           {SNOW_CONFETTI.map((particle, index) => (
