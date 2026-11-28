@@ -12,6 +12,7 @@ import {
 } from "@/widgets/rolling-paper/rollingPaperMotion";
 import {
   toCardPose,
+  toCardZIndex,
   toTransform,
   toWheelOffset,
   type WheelPose,
@@ -45,6 +46,7 @@ export default function RollingPaperWheelCard({
   );
   const transform = useTransform(pose, toTransform);
   const opacity = useTransform(pose, ({ opacity }) => opacity);
+  const zIndex = useTransform(progress, value => toCardZIndex(toWheelOffset(index, value, count)));
 
   return (
     <motion.div
@@ -54,6 +56,7 @@ export default function RollingPaperWheelCard({
         height: WHEEL_CARD_HEIGHT,
         marginLeft: -WHEEL_CARD_WIDTH / 2,
         marginTop: -WHEEL_CARD_HEIGHT / 2,
+        zIndex,
       }}
       initial={
         entrance
