@@ -166,6 +166,56 @@ describe("useContributionFlow", () => {
     });
   });
 
+  it("금액 확정 다이얼로그에서 예를 누르면 금액을 저장하고 편지 시트를 연다", () => {
+    const { result } = render();
+    act(() => result.current.startContribute());
+
+    act(() => result.current.requestAmountConfirm(10000));
+    expect(result.current.isAmountConfirmOpen).toBe(true);
+    expect(result.current.isLetterOpen).toBe(false);
+
+    act(() => result.current.confirmAmount());
+
+    expect(result.current.isAmountConfirmOpen).toBe(false);
+    expect(result.current.isLetterOpen).toBe(true);
+    expect(useFundingContributionStore.getState().amount).toBe(10000);
+  });
+
+  it("금액 확정 다이얼로그에서 아니오를 누르면 금액을 저장하지 않고 금액 시트에 남는다", () => {
+    const { result } = render();
+    act(() => result.current.startContribute());
+    act(() => result.current.requestAmountConfirm(10000));
+
+    act(() => result.current.cancelAmountConfirm());
+
+    expect(result.current.isAmountConfirmOpen).toBe(false);
+    expect(result.current.isLetterOpen).toBe(false);
+    expect(result.current.isContributeOpen).toBe(true);
+    expect(useFundingContributionStore.getState().amount).not.toBe(10000);
+  });
+
+  it("같은 금액을 다시 확정하면 같은 요청 키로, 다른 금액이면 새 요청 키로 제출한다", async () => {
+    vi.mocked(contributionService.createContribution).mockRejectedValue(new Error("fail"));
+    const { result } = render(true);
+    const submitWith = async (amount: number) => {
+      act(() => result.current.requestAmountConfirm(amount));
+      act(() => result.current.confirmAmount());
+      writeLetter();
+      act(() => result.current.submitContribution());
+      await waitFor(() => expect(result.current.isSubmitting).toBe(false));
+    };
+    const requestKeyAt = (call: number) =>
+      vi.mocked(contributionService.createContribution).mock.calls[call][1].requestKey;
+    act(() => result.current.startContribute());
+
+    await submitWith(10000);
+    await submitWith(10000);
+    await submitWith(20000);
+
+    expect(requestKeyAt(1)).toBe(requestKeyAt(0));
+    expect(requestKeyAt(2)).not.toBe(requestKeyAt(0));
+  });
+
   it("보태기를 그만두면 열린 시트를 모두 닫고 입력값을 비우며 flowKey를 올린다", () => {
     const { result } = render();
     act(() => result.current.startContribute());

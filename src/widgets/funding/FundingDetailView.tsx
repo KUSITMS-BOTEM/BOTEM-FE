@@ -15,7 +15,6 @@ import { usePendingToast } from "@/hooks/usePendingToast";
 import { useFundingExtendToastStore } from "@/store/fundingExtendToastStore";
 import { useShareLink } from "@/hooks/useShareLink";
 import { usePageExit } from "@/hooks/usePageExit";
-import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { useGuestBotemStore } from "@/store/guestBotemStore";
@@ -219,7 +218,6 @@ export default function FundingDetailView({
   const closePopup = () => setIsPopupOpen(false);
   const {
     isMemberGuideOpen,
-    setIsMemberGuideOpen,
     isContributeOpen,
     setIsContributeOpen,
     isLetterOpen,
@@ -231,13 +229,15 @@ export default function FundingDetailView({
     setIsExitOpen,
     flowKey,
     contributeAmount,
-    setAmount,
+    isAmountConfirmOpen,
+    requestAmountConfirm,
+    cancelAmountConfirm,
+    confirmAmount,
     setLetter,
     setPassword,
     isSubmitting,
     markTransferSent,
     submitted,
-    requestKeyRef,
     requestExit,
     startMessage,
     startContribute,
@@ -568,12 +568,16 @@ export default function FundingDetailView({
           recommendedAmount={funding.recommendedAmount}
           onClose={() => setIsContributeOpen(false)}
           onExit={requestExit}
-          onNext={amount => {
-            if (amount !== useFundingContributionStore.getState().amount)
-              requestKeyRef.current = crypto.randomUUID();
-            setAmount(amount);
-            setIsLetterOpen(true);
-          }}
+          onNext={requestAmountConfirm}
+        />
+        <Dialog
+          kind="confirm"
+          open={isAmountConfirmOpen}
+          title="이 금액으로 확정할까요?"
+          description="확정된 금액은 변경하기 어려워요"
+          confirmColor="neutral"
+          onCancel={cancelAmountConfirm}
+          onConfirm={confirmAmount}
         />
         {/* TODO: 쿠키가 httpOnly라 로그인 여부를 클라이언트에서 못 읽어, 공유 화면에서 로그인해 돌아온 경우(memberIntent)만 회원으로 본다 */}
         <LetterWriteSheet
@@ -593,13 +597,14 @@ export default function FundingDetailView({
           }}
         />
         {/* replace라 완료 뒤 뒤로가기로 보태기 플로우에 돌아오지 않는다 */}
+        {/* 참여가 이미 서버에 저장돼 이전 시트로 돌아가 금액을 바꾸면 중복 참여로 막히므로, 이전은 종료 확인으로만 받는다 */}
         {submitted && (
           <FundingTransferGuideSheet
             open={isMemberGuideOpen}
             hostName={funding.hostName}
             amount={contributeAmount}
             account={submitted.account}
-            onClose={() => setIsMemberGuideOpen(false)}
+            onClose={requestExit}
             isPending={markTransferSent.isPending}
             onComplete={completeTransfer}
           />
