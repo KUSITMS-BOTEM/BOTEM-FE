@@ -14,6 +14,10 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/hooks/queries/friend/useFriendsQuery", () => ({
   useFriendsQuery: () => useFriendsQuery(),
 }));
+const WISH_PROFILE_URL = "https://botem.site/@abc";
+vi.mock("@/hooks/queries/user/useMyProfileQuery", () => ({
+  useMyProfileQuery: () => ({ data: { wishProfileUrl: WISH_PROFILE_URL } }),
+}));
 
 const friend = (userId: number, name: string, birthdayDday: number | null): FriendResponse => ({
   userId,
@@ -40,6 +44,34 @@ describe("FriendsContainer", () => {
     await userEvent.setup().click(screen.getByRole("button", { name: "뒤로가기" }));
 
     await waitFor(() => expect(back).toHaveBeenCalledTimes(1));
+  });
+
+  describe("초대링크 전송", () => {
+    afterEach(() => {
+      Reflect.deleteProperty(navigator, "share");
+    });
+
+    it("기기 공유창이 있으면 내 위시 프로필 링크로 공유창을 연다", async () => {
+      const share = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "share", { value: share, configurable: true });
+      mockData({ totalCount: 0, upcomingBirthdayFriends: [], friends: [] });
+      render(<FriendsContainer />);
+
+      await userEvent.setup().click(screen.getByRole("button", { name: "초대링크 전송" }));
+
+      expect(share).toHaveBeenCalledWith(expect.objectContaining({ url: WISH_PROFILE_URL }));
+    });
+
+    it("기기 공유창이 없으면 링크를 복사하고 토스트를 보여준다", async () => {
+      const user = userEvent.setup();
+      mockData({ totalCount: 0, upcomingBirthdayFriends: [], friends: [] });
+      render(<FriendsContainer />);
+
+      await user.click(screen.getByRole("button", { name: "초대링크 전송" }));
+
+      expect(await navigator.clipboard.readText()).toBe(WISH_PROFILE_URL);
+      expect(await screen.findByText("초대 링크를 복사했어요")).toBeInTheDocument();
+    });
   });
 
   it("마이 메뉴에서 들어오면 진입 후 슬라이드 표시를 꺼, 뒤로 돌아올 땐 다시 슬라이드되지 않는다", () => {

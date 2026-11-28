@@ -11,11 +11,16 @@ import Header from "@/components/Header";
 import Logo from "@/components/Logo";
 import PageExitMotion from "@/components/effects/PageExitMotion";
 import ListHeader from "@/components/ListHeader";
+import ToastMessage from "@/components/ToastMessage";
+import { APP_MAX_WIDTH_CLASS } from "@/constants/layout";
 import { SLIDE_TRANSITION } from "@/constants/motion";
 import { usePageExit } from "@/hooks/usePageExit";
+import { useShareLink } from "@/hooks/useShareLink";
 import { useFriendsQuery } from "@/hooks/queries/friend/useFriendsQuery";
+import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { useFriendsEntryStore } from "@/store/friendsEntryStore";
 import type { FriendResponse } from "@/types/friend/friend";
+import { cn } from "@/utils/cn";
 import { toFriendItemProps } from "@/utils/friend/toFriendItemProps";
 import FriendListItem from "@/widgets/friend/FriendListItem";
 import FriendsSkeleton from "@/widgets/friend/skeleton/FriendsSkeleton";
@@ -51,6 +56,8 @@ export default function FriendsContainer() {
   const router = useRouter();
   const { pageExit, exitPage } = usePageExit();
   const { data, isPending, isError, refetch } = useFriendsQuery();
+  const { data: profile } = useMyProfileQuery();
+  const { toast, share } = useShareLink();
   const [expanded, setExpanded] = useState(false);
   const [slideIn] = useState(() => useFriendsEntryStore.getState().slideIn);
 
@@ -89,7 +96,14 @@ export default function FriendsContainer() {
                 보탬에 친구와 함께해요!
               </p>
             </div>
-            <Button color="brand" size="small" className="shrink-0">
+            <Button
+              color="brand"
+              size="small"
+              className="shrink-0"
+              disabled={!profile?.wishProfileUrl}
+              onClick={() =>
+                profile && share({ title: "보탬에 친구와 함께해요!", url: profile.wishProfileUrl })
+              }>
               초대링크 전송
             </Button>
           </div>
@@ -148,6 +162,17 @@ export default function FriendsContainer() {
             )}
           </div>
         </main>
+        <div
+          className={cn(
+            "pointer-events-none fixed inset-x-0 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-20 mx-auto flex w-full justify-center",
+            APP_MAX_WIDTH_CLASS,
+          )}>
+          <ToastMessage
+            show={toast !== null}
+            state={toast === "success"}
+            text={toast === "fail" ? "링크를 복사하지 못했어요" : "초대 링크를 복사했어요"}
+          />
+        </div>
       </div>
     </PageExitMotion>
   );
