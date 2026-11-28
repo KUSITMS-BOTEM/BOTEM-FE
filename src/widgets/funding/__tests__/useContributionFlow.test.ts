@@ -166,6 +166,88 @@ describe("useContributionFlow", () => {
     });
   });
 
+  it("송금 확인 요청 중에는 종료 확인을 열지 않아 입력한 이름으로 본인 확인을 저장한다", async () => {
+    vi.mocked(contributionService.createContribution).mockResolvedValue({
+      contributionId: 98,
+      payoutAccount: { bankName: "토스뱅크", accountNumber: "1000", accountHolder: "김민재" },
+    } as never);
+    let resolveTransfer: (value: never) => void = () => {};
+    vi.mocked(contributionService.markTransferSent).mockReturnValue(
+      new Promise(resolve => (resolveTransfer = resolve)),
+    );
+    const { result } = render();
+
+    act(() => result.current.startContribute());
+    writeLetter();
+    act(() => result.current.setPassword("1234"));
+    act(() => result.current.submitContribution("1234"));
+    await waitFor(() => expect(result.current.submitted).not.toBeNull());
+    let transfer: Promise<void> = Promise.resolve();
+    act(() => {
+      transfer = result.current.completeTransfer();
+    });
+    await waitFor(() => expect(result.current.markTransferSent.isPending).toBe(true));
+
+    act(() => result.current.requestExit());
+    expect(result.current.isExitOpen).toBe(false);
+
+    await act(async () => {
+      resolveTransfer({} as never);
+      await transfer;
+    });
+    expect(useGuestBotemStore.getState()).toMatchObject({ name: "민지", password: "1234" });
+  });
+
+  it("금액 확정 다이얼로그에서 예를 누르면 금액을 저장하고 편지 시트를 연다", () => {
+    const { result } = render();
+    act(() => result.current.startContribute());
+
+    act(() => result.current.requestAmountConfirm(10000));
+    expect(result.current.isAmountConfirmOpen).toBe(true);
+    expect(result.current.isLetterOpen).toBe(false);
+
+    act(() => result.current.confirmAmount());
+
+    expect(result.current.isAmountConfirmOpen).toBe(false);
+    expect(result.current.isLetterOpen).toBe(true);
+    expect(useFundingContributionStore.getState().amount).toBe(10000);
+  });
+
+  it("금액 확정 다이얼로그에서 아니오를 누르면 금액을 저장하지 않고 금액 시트에 남는다", () => {
+    const { result } = render();
+    act(() => result.current.startContribute());
+    act(() => result.current.requestAmountConfirm(10000));
+
+    act(() => result.current.cancelAmountConfirm());
+
+    expect(result.current.isAmountConfirmOpen).toBe(false);
+    expect(result.current.isLetterOpen).toBe(false);
+    expect(result.current.isContributeOpen).toBe(true);
+    expect(useFundingContributionStore.getState().amount).not.toBe(10000);
+  });
+
+  it("같은 금액을 다시 확정하면 같은 요청 키로, 다른 금액이면 새 요청 키로 제출한다", async () => {
+    vi.mocked(contributionService.createContribution).mockRejectedValue(new Error("fail"));
+    const { result } = render(true);
+    const submitWith = async (amount: number) => {
+      act(() => result.current.requestAmountConfirm(amount));
+      act(() => result.current.confirmAmount());
+      writeLetter();
+      act(() => result.current.submitContribution());
+      await waitFor(() => expect(result.current.isSubmitting).toBe(false));
+    };
+    const requestKeyAt = (call: number) =>
+      vi.mocked(contributionService.createContribution).mock.calls[call][1].requestKey;
+    act(() => result.current.startContribute());
+
+    await submitWith(10000);
+    await submitWith(10000);
+    await submitWith(20000);
+
+    expect(requestKeyAt(1)).toBe(requestKeyAt(0));
+    expect(requestKeyAt(2)).not.toBe(requestKeyAt(0));
+  });
+
   it("보태기를 그만두면 열린 시트를 모두 닫고 입력값을 비우며 flowKey를 올린다", () => {
     const { result } = render();
     act(() => result.current.startContribute());

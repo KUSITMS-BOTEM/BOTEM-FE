@@ -26,6 +26,8 @@ export function useContributionFlow({
   const contributeAmount = useFundingContributionStore(state => state.amount);
   const { setAmount, setLetter, setPassword, reset } = useFundingContributionStore.getState();
   const [isExitOpen, setIsExitOpen] = useState(false);
+  // 금액 시트에서 다음을 눌러 확정 다이얼로그를 띄운 동안의 금액. null이면 다이얼로그가 닫혀 있다
+  const [pendingAmount, setPendingAmount] = useState<number | null>(null);
   // 메시지 보태기는 금액·송금 없이 편지 → 비밀번호만 거친다
   const [isMessageOnly, setIsMessageOnly] = useState(false);
   // 올리면 금액·편지 시트가 새로 마운트되어 입력값이 모두 초기화된다
@@ -41,9 +43,9 @@ export function useContributionFlow({
   } | null>(null);
   // 같은 플로우에서 실패 후 재시도하면 같은 키로 보내 서버가 중복 참여를 만들지 않게 한다. 금액이 바뀌면 새로 만든다
   const requestKeyRef = useRef("");
-  // 제출 중에 종료하면 입력이 초기화돼 이후 송금 확인이 빈 비밀번호로 나가므로 막는다
+  // 제출·송금 확인 중에 종료하면 입력이 초기화돼 이후 요청이 빈 비밀번호·이름으로 이어지므로 막는다
   const requestExit = () => {
-    if (!isSubmitting) setIsExitOpen(true);
+    if (!isSubmitting && !markTransferSent.isPending) setIsExitOpen(true);
   };
   // 보태기를 마치면 돌아왔을 때 하단이 '내 보탬 확인'이 되도록 이 펀딩의 본인 확인을 기록한다 (회원은 비밀번호가 없다)
   const goToComplete = (password = "") => {
@@ -63,6 +65,16 @@ export function useContributionFlow({
     reset();
     setIsMessageOnly(false);
     setIsContributeOpen(true);
+  };
+
+  // 확정한 금액으로 편지 시트를 연다. 금액이 바뀌면 이전 시도와 다른 요청이므로 키를 새로 만든다
+  const confirmAmount = () => {
+    if (pendingAmount === null) return;
+    if (pendingAmount !== useFundingContributionStore.getState().amount)
+      requestKeyRef.current = crypto.randomUUID();
+    setAmount(pendingAmount);
+    setPendingAmount(null);
+    setIsLetterOpen(true);
   };
 
   // 편지를 서버에 제출한다. 메시지 보태기는 바로 완료 화면으로, 금액 보태기는 응답 계좌로 송금 안내를 연다. 회원은 비밀번호 없이 보낸다
@@ -114,6 +126,7 @@ export function useContributionFlow({
     setIsLetterOpen(false);
     setIsPasswordOpen(false);
     setIsMemberGuideOpen(false);
+    setPendingAmount(null);
     reset();
     setFlowKey(key => key + 1);
   };
@@ -132,13 +145,15 @@ export function useContributionFlow({
     isMessageOnly,
     flowKey,
     contributeAmount,
-    setAmount,
+    isAmountConfirmOpen: pendingAmount !== null,
+    requestAmountConfirm: setPendingAmount,
+    cancelAmountConfirm: () => setPendingAmount(null),
+    confirmAmount,
     setLetter,
     setPassword,
     isSubmitting,
     markTransferSent,
     submitted,
-    requestKeyRef,
     requestExit,
     startMessage,
     startContribute,

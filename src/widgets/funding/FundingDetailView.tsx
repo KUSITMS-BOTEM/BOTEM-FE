@@ -15,7 +15,6 @@ import { usePendingToast } from "@/hooks/usePendingToast";
 import { useFundingExtendToastStore } from "@/store/fundingExtendToastStore";
 import { useShareLink } from "@/hooks/useShareLink";
 import { usePageExit } from "@/hooks/usePageExit";
-import { useFundingContributionStore } from "@/store/fundingContributionStore";
 import { useKakaoLoginUriMutation } from "@/hooks/mutations/auth/useKakaoLoginUriMutation";
 import { useMyProfileQuery } from "@/hooks/queries/user/useMyProfileQuery";
 import { useGuestBotemStore } from "@/store/guestBotemStore";
@@ -74,33 +73,6 @@ type FundingDetailViewProps = FundingDetailViewBaseProps &
 const MAX_PROFILES = 3;
 const PROFILE_COLORS = ["orange", "blue", "pink", "lime"] as const;
 
-// TODO(API): 아래 값은 두 상세 응답에 없어 목으로 남긴다. 개설자 화면은 toOwnerFundingView 값이 덮어쓴다
-const MOCK_FUNDING = {
-  hostName: "지유",
-  closed: false,
-  // 보태기 버튼은 참여자 화면(guest)에만 있고, 그쪽은 공유용 상세 응답 값이 덮어쓴다
-  canContributeAmount: true,
-  canParticipate: true,
-  // 개설자 화면은 보태기 시트를 열지 않아 값이 없다
-  recommendedAmount: undefined as number | undefined,
-  // 개설자는 자기 펀딩에 금액을 보태지 않아 개설자 응답에는 없다
-  remainingAmount: 0,
-  extended: false,
-  actions: { canCloseEarly: true, canReissueShareCard: true },
-  pendingContributionCount: 3,
-  // TODO(API): 펀딩 주인이 받은 메세지 수·친구별 감사카드 발송 여부를 서버 값으로 교체한다
-  messageCount: 8,
-  friends: [
-    { id: 1, name: "민수", contributedAt: "2026-11-10T09:00:00", thankCardSent: false },
-    {
-      id: 2,
-      name: "서연",
-      contributedAt: "2026-11-12T18:30:00",
-      thankCardSent: true,
-    },
-  ],
-};
-
 // 공유용 상세 응답에는 금액이 없고 달성률만 있어, 화면이 쓰는 모양으로 옮겨 담는다
 const toShareFundingView = (detail: FundingDetailResponse) => ({
   hostName: detail.celebrantName,
@@ -130,12 +102,23 @@ const toShareFundingView = (detail: FundingDetailResponse) => ({
     imageUrl: participant.profileImageUrl ?? undefined,
   })),
   extraParticipantCount: Math.max(0, detail.participantCount - MAX_PROFILES),
+  // 아래는 개설자 화면에서만 쓰는 값이라 공유용 응답에는 없다
+  extended: false,
+  actions: { canCloseEarly: false, canReissueShareCard: false },
+  pendingContributionCount: 0,
+  messageCount: 0,
+  friends: [],
 });
 
 const toHostFundingView = (ownerDetail: OwnerFundingDetailResponse) => {
   const view = toOwnerFundingView(ownerDetail);
   return {
     ...view,
+    hostName: ownerDetail.celebrantName,
+    // 보태기 버튼·시트는 참여자 화면에만 있어 개설자 응답에는 없다. canParticipate는 서프라이즈 주최자의 확인 대기 툴팁을 띄우는 조건이라 true로 둔다
+    canContributeAmount: false,
+    canParticipate: true,
+    recommendedAmount: undefined,
     pendingPercentage: ownerDetail.pendingPercentage,
     participantCount: ownerDetail.participantCount,
     // 개설자 응답엔 남은 금액이 없어 목표 금액에서 확정·확인 대기 달성률을 뺀 값으로 근사한다 (서버가 최종 검증)
@@ -160,10 +143,9 @@ export default function FundingDetailView({
 }: FundingDetailViewProps) {
   const { pageExit, exitPage } = usePageExit();
   const { toast, copyLink } = useShareLink();
-  const { profiles, ...view } = source.ownerDetail
+  const { profiles, ...funding } = source.ownerDetail
     ? toHostFundingView(source.ownerDetail)
     : toShareFundingView(source.detail);
-  const funding = { ...MOCK_FUNDING, ...view };
   // 참여자용 API와 공유 링크는 shareKey로, 개설자용 API는 fundingId로 호출한다
   const { shareKey } = source.ownerDetail ?? source.detail;
   const unconfirmedCount = funding.pendingContributionCount;
@@ -219,7 +201,6 @@ export default function FundingDetailView({
   const closePopup = () => setIsPopupOpen(false);
   const {
     isMemberGuideOpen,
-    setIsMemberGuideOpen,
     isContributeOpen,
     setIsContributeOpen,
     isLetterOpen,
@@ -231,13 +212,15 @@ export default function FundingDetailView({
     setIsExitOpen,
     flowKey,
     contributeAmount,
-    setAmount,
+    isAmountConfirmOpen,
+    requestAmountConfirm,
+    cancelAmountConfirm,
+    confirmAmount,
     setLetter,
     setPassword,
     isSubmitting,
     markTransferSent,
     submitted,
-    requestKeyRef,
     requestExit,
     startMessage,
     startContribute,
@@ -286,7 +269,6 @@ export default function FundingDetailView({
         <div
           className={cn(
             "flex flex-col gap-4 px-5 pb-[calc(var(--padding-large)+env(safe-area-inset-bottom))]",
-            // fixed 하단 CTA(그라데이션 36 + 버튼 56 + 여백)에 내용이 가려지지 않게 비운다
             isGuest && "pb-[calc(8rem+env(safe-area-inset-bottom))]",
           )}>
           <div className="flex flex-col gap-2">
@@ -315,13 +297,11 @@ export default function FundingDetailView({
               className="pointer-events-none absolute inset-x-0 top-full z-20 w-full max-w-none"
             />
           </div>
-          {/* 마감된 내 펀딩도 확인 대기 입금이 남아 있으면 입금 확인 진입점(프로필 버튼)을 유지한다 */}
           {!isGuest && (!showRollingPaperCta || unconfirmedCount > 0) && (
             <button
               type="button"
               onClick={() => setIsPopupOpen(true)}
               className="flex cursor-pointer items-center gap-2 self-end">
-              {/* Figma FUND-PG-008: 펀딩 주인 화면은 툴팁 없이 프로필 묶음만 보여준다 */}
               {!isOwner && funding.canParticipate && (
                 <Tooltip>
                   {isSurprise
@@ -568,12 +548,16 @@ export default function FundingDetailView({
           recommendedAmount={funding.recommendedAmount}
           onClose={() => setIsContributeOpen(false)}
           onExit={requestExit}
-          onNext={amount => {
-            if (amount !== useFundingContributionStore.getState().amount)
-              requestKeyRef.current = crypto.randomUUID();
-            setAmount(amount);
-            setIsLetterOpen(true);
-          }}
+          onNext={requestAmountConfirm}
+        />
+        <Dialog
+          kind="confirm"
+          open={isAmountConfirmOpen}
+          title="이 금액으로 확정할까요?"
+          description="확정된 금액은 변경하기 어려워요"
+          confirmColor="neutral"
+          onCancel={cancelAmountConfirm}
+          onConfirm={confirmAmount}
         />
         {/* TODO: 쿠키가 httpOnly라 로그인 여부를 클라이언트에서 못 읽어, 공유 화면에서 로그인해 돌아온 경우(memberIntent)만 회원으로 본다 */}
         <LetterWriteSheet
@@ -593,13 +577,14 @@ export default function FundingDetailView({
           }}
         />
         {/* replace라 완료 뒤 뒤로가기로 보태기 플로우에 돌아오지 않는다 */}
+        {/* 참여가 이미 서버에 저장돼 이전 시트로 돌아가 금액을 바꾸면 중복 참여로 막히므로, 이전은 종료 확인으로만 받는다 */}
         {submitted && (
           <FundingTransferGuideSheet
             open={isMemberGuideOpen}
             hostName={funding.hostName}
             amount={contributeAmount}
             account={submitted.account}
-            onClose={() => setIsMemberGuideOpen(false)}
+            onClose={requestExit}
             isPending={markTransferSent.isPending}
             onComplete={completeTransfer}
           />
@@ -624,7 +609,6 @@ export default function FundingDetailView({
           onCancel={() => setIsExitOpen(false)}
           onConfirm={handleExitConfirm}
         />
-        {/* BottomCTA(여백 20 + 버튼 56) 바로 위 중앙. 홈 인디케이터 영역만큼 함께 올린다 */}
         <div
           className={cn(
             "pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-20 mx-auto flex w-full justify-center",
