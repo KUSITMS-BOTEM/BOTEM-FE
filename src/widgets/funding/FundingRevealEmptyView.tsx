@@ -47,9 +47,11 @@ export default function FundingRevealEmptyView({
           initial={reduceMotion ? false : { opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={riseIn(0.95, 0.35, 0.5)}>
-          <Button color="brand" size="xlarge" disabled={isClosing} onClick={onExtend}>
-            기간 연장하러 가기
-          </Button>
+          {onExtend && (
+            <Button color="brand" size="xlarge" disabled={isClosing} onClick={onExtend}>
+              기간 연장하러 가기
+            </Button>
+          )}
           <Button
             color="neutral"
             variant="weak"

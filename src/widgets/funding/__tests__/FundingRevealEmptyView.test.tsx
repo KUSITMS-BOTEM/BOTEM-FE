@@ -34,7 +34,7 @@ describe("FundingRevealEmptyView", () => {
   });
 
   it("종료 요청 중이면 두 버튼을 막고 '펀딩 마감하기'에 로딩을 표시한다", () => {
-    render(<FundingRevealEmptyView isClosing onClose={vi.fn()} />);
+    render(<FundingRevealEmptyView isClosing onExtend={vi.fn()} onClose={vi.fn()} />);
 
     const closeButton = screen.getByRole("button", { name: "펀딩 마감하기" });
     expect(closeButton).toBeDisabled();
@@ -42,12 +42,10 @@ describe("FundingRevealEmptyView", () => {
     expect(screen.getByRole("button", { name: "기간 연장하러 가기" })).toBeDisabled();
   });
 
-  it("onExtend 없이 '기간 연장하러 가기'를 눌러도 에러 없이 onClose를 호출하지 않는다", async () => {
-    const onClose = vi.fn();
-    render(<FundingRevealEmptyView onClose={onClose} />);
+  it("연장할 수 없어 onExtend가 없으면 '기간 연장하러 가기'를 보여주지 않는다", () => {
+    render(<FundingRevealEmptyView onClose={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "기간 연장하러 가기" }));
-
-    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "기간 연장하러 가기" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "펀딩 마감하기" })).toBeInTheDocument();
   });
 });

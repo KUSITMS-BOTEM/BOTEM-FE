@@ -13,10 +13,10 @@ export const fundingResultQueryOptions = (fundingId: number) =>
     staleTime: 60_000,
   });
 
-// quiet: 결과를 아직 열 수 없는 409(FUNDING_005)가 정상 흐름인 화면용. 이 에러만 전역 안내를 건너뛰고, 재시도는 끈다
-export const useFundingResultQuery = (fundingId: number, enabled = true, quiet = false) =>
+// quietCodes: 화면이 직접 처리하는 에러 코드. 이 코드만 전역 안내를 건너뛰고, 재시도는 끈다
+export const useFundingResultQuery = (fundingId: number, enabled = true, quietCodes?: string[]) =>
   useQuery({
     ...fundingResultQueryOptions(fundingId),
     enabled,
-    ...(quiet && { meta: { quietCodes: ["FUNDING_005"] }, retry: false }),
+    ...(quietCodes && { meta: { quietCodes }, retry: false }),
   });
