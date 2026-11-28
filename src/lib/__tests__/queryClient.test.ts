@@ -174,7 +174,14 @@ describe("queryClient 인증 에러 처리", () => {
     expect(clearLoggedInCookie).not.toHaveBeenCalled();
   });
 
-  it.each(["AUTH_EXPIRED", "REISSUE_UNAVAILABLE"])(
+  it("SIGNED_OUT은 Dialog를 띄우지 않고 이동하지도 않는다", async () => {
+    await failQuery(new ApiError("SIGNED_OUT"));
+
+    expect(useErrorDialogStore.getState().message).toBeNull();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it.each(["AUTH_EXPIRED", "REISSUE_UNAVAILABLE", "SIGNED_OUT"])(
     "%s는 기본 retry를 타지 않고 1회만 호출한다",
     async code => {
       const queryFn = vi.fn().mockRejectedValue(new ApiError(code));

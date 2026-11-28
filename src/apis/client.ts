@@ -1,7 +1,13 @@
 import ky, { isNetworkError } from "ky";
 
 import { useAuthStore } from "@/store/authStore";
-import { ApiError, type ApiResponse, AUTH_EXPIRED, REISSUE_UNAVAILABLE } from "@/types/api";
+import {
+  ApiError,
+  type ApiResponse,
+  AUTH_EXPIRED,
+  REISSUE_UNAVAILABLE,
+  SIGNED_OUT,
+} from "@/types/api";
 import { isTokenExpired } from "@/utils/isTokenExpired";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
@@ -111,6 +117,8 @@ export function reissue(): Promise<ReissueTokens> {
 
 // beforeRequest(선제 재발급)·afterResponse(401 재시도) 양쪽에서 재발급 실패를 동일하게 처리한다.
 async function reissueOrThrow(): Promise<ReissueTokens> {
+  // 로그아웃·탈퇴로 refreshToken이 이미 지워졌으니 재발급은 반드시 실패한다
+  if (useAuthStore.getState().signedOut) throw new ApiError(SIGNED_OUT);
   try {
     return await reissue();
   } catch (error) {

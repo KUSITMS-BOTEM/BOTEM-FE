@@ -8,7 +8,7 @@ export const useWithdrawMutation = () =>
   useMutation({
     mutationFn: userService.withdraw,
     onSuccess: () => {
-      useAuthStore.getState().clearAccessToken();
+      useAuthStore.getState().markSignedOut();
       queryClient.removeQueries({ queryKey: ["users", "me"] });
       queryClient.removeQueries({ queryKey: ["friends"] });
     },

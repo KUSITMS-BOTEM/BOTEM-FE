@@ -10,7 +10,7 @@ export const useLogoutMutation = () =>
   useMutation({
     mutationFn: authService.postLogout,
     onSuccess: () => {
-      useAuthStore.getState().clearAccessToken();
+      useAuthStore.getState().markSignedOut();
       queryClient.removeQueries({ queryKey: ["users", "me"] });
       queryClient.removeQueries({ queryKey: ["friends"] });
       // 이전 계정의 내 보탬 조회 결과가 같은 공유 링크에서 다음 방문자에게 쓰이지 않게 한다

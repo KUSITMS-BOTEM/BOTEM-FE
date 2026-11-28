@@ -46,7 +46,7 @@ describe("useWithdrawMutation", () => {
     expect(result.current.error).toBe(error);
   });
 
-  it("탈퇴 성공 시 accessToken과 프로필 캐시를 지운다", async () => {
+  it("탈퇴 성공 시 accessToken과 프로필 캐시를 지우고 직접 세션을 끝냈음을 남긴다", async () => {
     useAuthStore.getState().setAccessToken("access-token");
     vi.spyOn(queryClient, "removeQueries");
     vi.mocked(userService.withdraw).mockResolvedValue(null);
@@ -56,6 +56,7 @@ describe("useWithdrawMutation", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(useAuthStore.getState().accessToken).toBeNull();
+    expect(useAuthStore.getState().signedOut).toBe(true);
     expect(queryClient.removeQueries).toHaveBeenCalledWith({ queryKey: ["users", "me"] });
   });
 });
