@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { useOpenFundingResultMutation } from "@/hooks/mutations/funding/useOpenFundingResultMutation";
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { useFundingCloseToastStore } from "@/store/fundingCloseToastStore";
+import { ApiError } from "@/types/api";
 import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import FundingRevealContainer from "@/widgets/funding/FundingRevealContainer";
 
@@ -77,9 +78,14 @@ vi.mock("next/navigation", () => ({
 const refetch = vi.fn();
 const mutate = vi.fn();
 
-const mockQuery = (value: { data?: FundingResultResponse; isLoading?: boolean }) => {
+const mockQuery = (value: {
+  data?: FundingResultResponse;
+  isLoading?: boolean;
+  error?: Error | null;
+}) => {
   vi.mocked(useFundingResultQuery).mockReturnValue({
     data: undefined,
+    error: null,
     isLoading: false,
     refetch,
     ...value,
@@ -148,7 +154,7 @@ describe("FundingRevealContainer", () => {
 
     render(<FundingRevealContainer />);
 
-    expect(useFundingResultQuery).toHaveBeenCalledWith(12);
+    expect(useFundingResultQuery).toHaveBeenCalledWith(12, true, ["FUNDING_002"]);
   });
 
   it("로딩 중이면 로딩 안내만 보여주고 결과·에러·빈 화면 본문을 렌더하지 않는다", () => {
@@ -168,6 +174,18 @@ describe("FundingRevealContainer", () => {
 
     expect(screen.getByText("펀딩 결과를 불러오지 못했어요")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
+  });
+
+  it("종료된 펀딩(FUNDING_002)이면 '다시 시도' 대신 종료 안내와 '홈으로' 버튼을 보여주고, 누르면 홈으로 replace 한다", async () => {
+    mockQuery({ error: new ApiError("FUNDING_002") });
+    render(<FundingRevealContainer />);
+
+    expect(screen.getByText("이미 종료되었거나 찾을 수 없는 펀딩이에요")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "다시 시도" })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "홈으로" }));
+
+    expect(replace).toHaveBeenCalledWith("/home");
   });
 
   it("'다시 시도'를 누르면 refetch를 호출한다", async () => {

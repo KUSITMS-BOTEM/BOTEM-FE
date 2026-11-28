@@ -13,6 +13,7 @@ import { useFundingManagementQuery } from "@/hooks/queries/funding/useFundingMan
 import { useFundingResultQuery } from "@/hooks/queries/funding/useFundingResultQuery";
 import { usePageExit } from "@/hooks/usePageExit";
 import { useFundingCloseToastStore } from "@/store/fundingCloseToastStore";
+import { ApiError } from "@/types/api";
 import type { FundingResultResponse } from "@/types/funding/fundingResult";
 import FundingExtendFlow from "@/widgets/funding/FundingExtendFlow";
 import FundingRevealEmptyView from "@/widgets/funding/FundingRevealEmptyView";
@@ -21,14 +22,24 @@ import RollingPaperContainer from "@/widgets/rolling-paper/RollingPaperContainer
 import IconClose from "@/assets/icons/icon-close.svg?react";
 
 const MESSAGES_OPEN_QUERY = "messages=open";
+// 참여자 0명으로 종료(CANCELLED)한 펀딩은 서버가 없는 펀딩으로 보고 404로 준다
+const FUNDING_NOT_FOUND = "FUNDING_002";
 
 export default function FundingRevealContainer() {
   const router = useRouter();
   const { pageExit, exitPage } = usePageExit();
   const { fundingId } = useParams<{ fundingId: string }>();
   const id = Number(fundingId);
-  const { data: result, isLoading, refetch } = useFundingResultQuery(id);
-  const { data: management } = useFundingManagementQuery(id);
+  const {
+    data: result,
+    error,
+    isLoading,
+    refetch,
+  } = useFundingResultQuery(id, true, [FUNDING_NOT_FOUND]);
+  // 연장 가능 여부는 참여자 0명 화면에서만 쓴다. 결과 조회가 실패한 펀딩(종료 등)엔 관리 상세도 요청하지 않는다
+  const { data: management } = useFundingManagementQuery(id, {
+    enabled: result?.participantCount === 0,
+  });
   const { mutate: openResult, isPending: isOpening } = useOpenFundingResultMutation();
   const [opening, setOpening] = useState(false);
   const searchParams = useSearchParams();
@@ -84,6 +95,16 @@ export default function FundingRevealContainer() {
           <LoadingAnimation size="large" />
           <span className="sr-only">펀딩 결과를 불러오는 중이에요</span>
         </div>
+      );
+    }
+    if (error instanceof ApiError && error.code === FUNDING_NOT_FOUND) {
+      return (
+        <main className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+          <p className="text-semantic-text-secondary [font:var(--semantic-subtext-large)]">
+            이미 종료되었거나 찾을 수 없는 펀딩이에요
+          </p>
+          <Button onClick={close}>홈으로</Button>
+        </main>
       );
     }
     if (!result) {
