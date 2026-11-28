@@ -231,15 +231,18 @@ export default function BotemPopup({
                     )}
                   </div>
                   {isOwner ? (
-                    !friend.thankCardSent &&
-                    friend.thankCardContributionId !== undefined && (
-                      <button
-                        type="button"
-                        aria-label={`${friend.name}에게 감사카드 보내기`}
-                        onClick={() => onThankCardClick?.(friend)}
-                        className="shrink-0 cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-black/20 focus-visible:outline-none">
-                        <Badge color="brand" variant="fill" label="감사카드 보내기" />
-                      </button>
+                    friend.thankCardSent ? (
+                      <Badge color="neutral" variant="weak" label="카드 전송 완료" />
+                    ) : (
+                      friend.thankCardContributionId !== undefined && (
+                        <button
+                          type="button"
+                          aria-label={`${friend.name}에게 감사카드 보내기`}
+                          onClick={() => onThankCardClick?.(friend)}
+                          className="shrink-0 cursor-pointer rounded-lg focus-visible:ring-2 focus-visible:ring-black/20 focus-visible:outline-none">
+                          <Badge color="brand" variant="fill" label="감사카드 보내기" />
+                        </button>
+                      )
                     )
                   ) : (
                     <span className="text-semantic-text-secondary shrink-0 [letter-spacing:var(--letter-spacing-default)] [font:var(--semantic-subtext-medium)]">

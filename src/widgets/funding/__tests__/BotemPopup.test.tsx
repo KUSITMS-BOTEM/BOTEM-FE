@@ -298,6 +298,14 @@ describe("BotemPopup 펀딩 주인", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("감사카드를 보낸 친구에게는 '카드 전송 완료' 배지를 버튼이 아닌 표시로 보여준다", () => {
+    renderPopup({ isOwner: true, friends: OWNER_FRIENDS });
+
+    expect(screen.getAllByText("카드 전송 완료")).toHaveLength(1);
+    expect(screen.getByText("김서진").closest("li")).toHaveTextContent("카드 전송 완료");
+    expect(screen.queryByRole("button", { name: /카드 전송 완료/ })).not.toBeInTheDocument();
+  });
+
   it("입금 확인된 보탬이 없는 친구에게는 감사카드 배지를 보여주지 않는다", () => {
     renderPopup({ isOwner: true, friends: OWNER_FRIENDS });
 
