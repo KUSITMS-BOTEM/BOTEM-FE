@@ -166,6 +166,38 @@ describe("useContributionFlow", () => {
     });
   });
 
+  it("송금 확인 요청 중에는 종료 확인을 열지 않아 입력한 이름으로 본인 확인을 저장한다", async () => {
+    vi.mocked(contributionService.createContribution).mockResolvedValue({
+      contributionId: 98,
+      payoutAccount: { bankName: "토스뱅크", accountNumber: "1000", accountHolder: "김민재" },
+    } as never);
+    let resolveTransfer: (value: never) => void = () => {};
+    vi.mocked(contributionService.markTransferSent).mockReturnValue(
+      new Promise(resolve => (resolveTransfer = resolve)),
+    );
+    const { result } = render();
+
+    act(() => result.current.startContribute());
+    writeLetter();
+    act(() => result.current.setPassword("1234"));
+    act(() => result.current.submitContribution("1234"));
+    await waitFor(() => expect(result.current.submitted).not.toBeNull());
+    let transfer: Promise<void> = Promise.resolve();
+    act(() => {
+      transfer = result.current.completeTransfer();
+    });
+    await waitFor(() => expect(result.current.markTransferSent.isPending).toBe(true));
+
+    act(() => result.current.requestExit());
+    expect(result.current.isExitOpen).toBe(false);
+
+    await act(async () => {
+      resolveTransfer({} as never);
+      await transfer;
+    });
+    expect(useGuestBotemStore.getState()).toMatchObject({ name: "민지", password: "1234" });
+  });
+
   it("금액 확정 다이얼로그에서 예를 누르면 금액을 저장하고 편지 시트를 연다", () => {
     const { result } = render();
     act(() => result.current.startContribute());

@@ -43,9 +43,9 @@ export function useContributionFlow({
   } | null>(null);
   // 같은 플로우에서 실패 후 재시도하면 같은 키로 보내 서버가 중복 참여를 만들지 않게 한다. 금액이 바뀌면 새로 만든다
   const requestKeyRef = useRef("");
-  // 제출 중에 종료하면 입력이 초기화돼 이후 송금 확인이 빈 비밀번호로 나가므로 막는다
+  // 제출·송금 확인 중에 종료하면 입력이 초기화돼 이후 요청이 빈 비밀번호·이름으로 이어지므로 막는다
   const requestExit = () => {
-    if (!isSubmitting) setIsExitOpen(true);
+    if (!isSubmitting && !markTransferSent.isPending) setIsExitOpen(true);
   };
   // 보태기를 마치면 돌아왔을 때 하단이 '내 보탬 확인'이 되도록 이 펀딩의 본인 확인을 기록한다 (회원은 비밀번호가 없다)
   const goToComplete = (password = "") => {
